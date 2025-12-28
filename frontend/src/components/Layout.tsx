@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { Sidebar } from './Sidebar'
 
 interface LayoutProps {
   showOnlyCoreItems?: boolean
@@ -27,17 +27,21 @@ const Layout: React.FC<LayoutProps> = ({ showOnlyCoreItems = false, children }) 
   // Removed authentication check to allow guest access
 
   return (
-    <div className="min-h-screen bg-secondary-50 flex">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} showOnlyCoreItems={showOnlyCoreItems} />
-
+    <div className="min-h-screen bg-secondary-50">
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
         <Header setSidebarOpen={setSidebarOpen} />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
-            {children || <Outlet />}
-          </div>
-        </main>
+        <div className="flex-1 flex overflow-hidden">
+          {!showOnlyCoreItems && (
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} showOnlyCoreItems={showOnlyCoreItems} />
+          )}
+
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-7xl mx-auto">
+              {children || <Outlet />}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   )
