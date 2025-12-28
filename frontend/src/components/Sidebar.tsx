@@ -80,21 +80,21 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
         <>
             {/* Mobile sidebar backdrop */}
             {isOpen && (
-                <div
-                    className="fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-40 lg:hidden"
+                <div                 
+                   className="fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-20 lg:hidden"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside className={clsx(
-                "fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-md border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto",
+                "fixed inset-y-0 left-0 z-10 w-64 h-screen bg-white/80 backdrop-blur-md border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:h-auto lg:min-h-full lg:translate-x-0 lg:static lg:inset-auto",
                 isOpen ? 'translate-x-0' : '-translate-x-full'
             )}>
-                <div className="h-full flex flex-col">
+                <div className="min-h-full flex flex-col">
 
                     {/* Navigation */}
-                    <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                    <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-0">
                         {navigation.map((item: NavItem) => {
                             // Check if this is a hash link (for student course detail)
                             const isHashLink = item.href.startsWith('#')
@@ -145,38 +145,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
                         })}
                     </nav>
 
-                    {/* Bottom actions */}
-                    <div className="p-4 border-t border-secondary-200/50 space-y-1">
-                        {user ? (
-                            <>
-                                <Link
-                                    to="/settings"
-                                    className="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900 transition-colors group"
-                                >
-                                    <Cog6ToothIcon className="h-6 w-6 text-secondary-400 group-hover:text-secondary-600 transition-colors" />
-                                    <span>Settings</span>
-                                </Link>
-                                <button
-                                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-danger-600 hover:bg-danger-50 transition-colors group"
-                                    onClick={() => {
-                                        logout()
-                                        navigate('/login')
-                                    }}
-                                >
-                                    <ArrowRightStartOnRectangleIcon className="h-6 w-6 group-hover:text-danger-700 transition-colors" />
-                                    <span>Sign Out</span>
-                                </button>
-                            </>
-                        ) : (
-                            <Link
-                                to="/login"
-                                className="flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-primary-600 hover:bg-primary-50 transition-colors group"
-                            >
-                                <ArrowRightStartOnRectangleIcon className="h-6 w-6 group-hover:text-primary-700 transition-colors" />
-                                <span>Sign In</span>
-                            </Link>
-                        )}
-                    </div>
+                    {/* Bottom actions removed per UI change */}
                 </div>
             </aside>
         </>
