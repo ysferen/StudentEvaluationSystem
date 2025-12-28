@@ -92,12 +92,6 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
                 isOpen ? 'translate-x-0' : '-translate-x-full'
             )}>
                 <div className="h-full flex flex-col">
-                    {/* Logo */}
-                    <div className="h-16 flex items-center justify-between px-6 border-b border-secondary-200/50">
-                        <Link to="/" className="flex items-center space-x-3">
-                            <span className="text-xl font-bold text-secondary-900 tracking-tight">SES</span>
-                        </Link>
-                    </div>
 
                     {/* Navigation */}
                     <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
