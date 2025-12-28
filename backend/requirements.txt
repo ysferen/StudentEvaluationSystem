@@ -7,7 +7,7 @@ drf-spectacular==0.29.0
 django-cors-headers==4.9.0
 
 # Testing dependencies
-pytest==8.3.4
+pytest==9.0.2
 pytest-django==4.9.0
 pytest-cov==6.0.0
 factory-boy==3.3.1
