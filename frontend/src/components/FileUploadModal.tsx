@@ -93,23 +93,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const validationMutation = useCoreFileImportAssignmentScoresValidateCreate({
     mutation: {
       onSuccess: (data: FileValidationResponse) => {
-        // Convert FileValidationResponse to ValidationResult format
+        // The data already comes in the correct ValidationResult format
         const validationResult: ValidationResult = {
-          is_valid: data.message.includes('success') || data.message.includes('valid'),
-          errors: data.message.includes('error') ? [{
-            message: data.message,
-            category: 'validation',
-            severity: 'error'
-          }] : undefined,
-          validation_details: {
-            file_info: {
-              name: typeof data.file_info === 'object' && data.file_info ? (data.file_info as any).name || 'Unknown' : 'Unknown',
-              size: typeof data.file_info === 'object' && data.file_info ? (data.file_info as any).size || 0 : 0,
-              size_mb: typeof data.file_info === 'object' && data.file_info ? (data.file_info as any).size_mb || 0 : 0,
-              extension: typeof data.file_info === 'object' && data.file_info ? (data.file_info as any).extension || 'Unknown' : 'Unknown',
-            },
-            available_sheets: data.available_sheets
-          }
+          is_valid: (data as any).is_valid ?? true,
+          errors: (data as any).errors,
+          warnings: (data as any).warnings,
+          suggestions: (data as any).suggestions,
+          validation_details: (data as any).validation_details,
+          course_info: (data as any).course_info,
+          file_info: (data as any).file_info
         }
         setValidationResult(validationResult)
       },

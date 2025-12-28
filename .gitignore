@@ -13,6 +13,10 @@ local_settings.py
 db.sqlite3
 media/
 
+# Coverage
+.coverage
+htmlcov/
+
 # Node
 node_modules/
 dist/
@@ -26,3 +30,5 @@ coverage/
 
 # AI Agents
 .ai-agents/
+.claude/
+

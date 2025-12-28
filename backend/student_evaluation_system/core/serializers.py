@@ -88,12 +88,12 @@ class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
         fields = ['id', 'code', 'description', 'course', 'created_at']
 
 class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer):
-    learning_outcome = CoreLearningOutcomeSerializer(read_only=True)
-    program_outcome = ProgramOutcomeSerializer(read_only=True)
+    learning_outcome_detail = CoreLearningOutcomeSerializer(source='learning_outcome', read_only=True)
+    program_outcome_detail = ProgramOutcomeSerializer(source='program_outcome', read_only=True)
     
     class Meta:
         model = LearningOutcomeProgramOutcomeMapping
-        fields = ['id', 'course', 'learning_outcome', 'program_outcome', 'weight']
+        fields = ['id', 'course', 'learning_outcome', 'program_outcome', 'learning_outcome_detail', 'program_outcome_detail', 'weight']
 
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()

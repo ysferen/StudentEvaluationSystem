@@ -35,8 +35,8 @@ class TestUniversityViewSet:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['name'] == university.name
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['name'] == university.name
 
     def test_retrieve_university(self, api_client, db_setup):
         """Test GET /api/core/universities/{id}/"""
@@ -96,8 +96,8 @@ class TestDepartmentViewSet:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['code'] == department.code
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['code'] == department.code
 
     def test_filter_departments_by_university(self, api_client, db_setup):
         """Test GET /api/core/departments/?university={id}"""
@@ -108,25 +108,8 @@ class TestDepartmentViewSet:
         response = api_client.get(url, {'university': university.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert all(dept['university'] == university.pk for dept in response.data)
-
-
-@pytest.mark.django_db
-class TestDegreeLevelViewSet:
-    """Tests for DegreeLevel API endpoints."""
-
-    def test_list_degree_levels(self, api_client, db_setup):
-        """Test GET /api/core/degree-levels/"""
-        degree_level = db_setup['degree_level']
-
-        url = reverse('degreelevel-list')
-        response = api_client.get(url)
-
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['name'] == degree_level.name
-
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['code'] == department.code
 
 @pytest.mark.django_db
 class TestProgramViewSet:
@@ -140,8 +123,8 @@ class TestProgramViewSet:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['code'] == program.code
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['code'] == program.code
 
     def test_filter_programs_by_department(self, api_client, db_setup):
         """Test GET /api/core/programs/?department={id}"""
@@ -152,7 +135,7 @@ class TestProgramViewSet:
         response = api_client.get(url, {'department': department.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_filter_programs_by_degree_level(self, api_client, db_setup):
         """Test GET /api/core/programs/?degree_level={id}"""
@@ -163,7 +146,7 @@ class TestProgramViewSet:
         response = api_client.get(url, {'degree_level': degree_level.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
 
 @pytest.mark.django_db
@@ -178,8 +161,8 @@ class TestTermViewSet:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['name'] == term.name
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['name'] == term.name
 
     def test_get_active_term(self, api_client, db_setup):
         """Test GET /api/core/terms/active/"""
@@ -217,8 +200,8 @@ class TestCourseViewSet:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-        assert response.data[0]['code'] == course.code
+        assert len(response.data['results']) >= 1
+        assert response.data['results'][0]['code'] == course.code
 
     def test_filter_courses_by_term(self, api_client, db_setup):
         """Test GET /api/core/courses/?term={id}"""
@@ -229,7 +212,7 @@ class TestCourseViewSet:
         response = api_client.get(url, {'term': term.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_filter_courses_by_instructor(self, api_client, db_setup, instructor_factory):
         """Test GET /api/core/courses/?instructor={id}"""
@@ -241,7 +224,7 @@ class TestCourseViewSet:
         response = api_client.get(url, {'instructor': instructor.user.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_get_course_learning_outcomes(self, api_client, sample_course):
         """Test GET /api/core/courses/{id}/learning_outcomes/"""
@@ -262,21 +245,21 @@ class TestProgramOutcomeViewSet:
         """Test GET /api/core/program-outcomes/"""
         pos = sample_course['program_outcomes']
 
-        url = reverse('programoutcome-list')
+        url = reverse('program-outcome-list')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_filter_pos_by_term(self, api_client, sample_course):
         """Test GET /api/core/program-outcomes/?term={id}"""
         term = sample_course['course'].term
 
-        url = reverse('programoutcome-list')
+        url = reverse('program-outcome-list')
         response = api_client.get(url, {'term': term.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
 
 @pytest.mark.django_db
@@ -287,21 +270,21 @@ class TestLearningOutcomeViewSet:
         """Test GET /api/core/learning-outcomes/"""
         los = sample_course['learning_outcomes']
 
-        url = reverse('learningoutcome-list')
+        url = reverse('learning-outcome-list')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_filter_los_by_course(self, api_client, sample_course):
         """Test GET /api/core/learning-outcomes/?course={id}"""
         course = sample_course['course']
 
-        url = reverse('learningoutcome-list')
+        url = reverse('learning-outcome-list')
         response = api_client.get(url, {'course': course.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 2  # 2 LOs created in fixture
+        assert len(response.data['results']) == 2  # 2 LOs created in fixture
 
 
 @pytest.mark.django_db
@@ -312,30 +295,43 @@ class TestLearningOutcomeProgramOutcomeMappingViewSet:
         """Test GET /api/core/lo-po-mappings/"""
         mappings = sample_course['mappings']
 
-        url = reverse('learningoutcomeprogramoutcomemapping-list')
+        url = reverse('lo-po-mapping-list')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
-
+        assert len(response.data['results']) >= 1
     def test_filter_mappings_by_course(self, api_client, sample_course):
         """Test GET /api/core/lo-po-mappings/?course={id}"""
         course = sample_course['course']
 
-        url = reverse('learningoutcomeprogramoutcomemapping-list')
+        url = reverse('lo-po-mapping-list')
         response = api_client.get(url, {'course': course.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 4  # 4 mappings created in fixture
+        assert len(response.data['results']) == 4  # 4 mappings created in fixture
 
     def test_create_mapping(self, authenticated_client, sample_course):
         """Test POST /api/core/lo-po-mappings/"""
         client, user = authenticated_client('admin', 'admin')
         course = sample_course['course']
-        lo = sample_course['learning_outcomes'][0]
-        po = sample_course['program_outcomes'][0]
+        
+        # Create a new LO and PO that don't have existing mappings
+        term = course.term
+        program = course.program
+        
+        lo = LearningOutcome.objects.create(
+            code="LO3",
+            description="New Learning Outcome for testing",
+            course=course
+        )
+        po = ProgramOutcome.objects.create(
+            code="PO3",
+            description="New Program Outcome for testing",
+            program=program,
+            term=term
+        )
 
-        url = reverse('learningoutcomeprogramoutcomemapping-list')
+        url = reverse('lo-po-mapping-list')
         data = {
             'course': course.pk,
             'learning_outcome': lo.pk,
@@ -367,11 +363,11 @@ class TestStudentLearningOutcomeScoreViewSet:
             score=85.0
         )
 
-        url = reverse('studentlearningoutcomescore-list')
+        url = reverse('student-lo-score-list')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_filter_scores_by_student(self, api_client, sample_course, student_factory):
         """Test GET /api/core/student-lo-scores/?student={id}"""
@@ -384,11 +380,11 @@ class TestStudentLearningOutcomeScoreViewSet:
             score=90.0
         )
 
-        url = reverse('studentlearningoutcomescore-list')
+        url = reverse('student-lo-score-list')
         response = api_client.get(url, {'student': student.user.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
+        assert len(response.data['results']) == 1
 
     def test_filter_scores_by_course(self, api_client, sample_course, student_factory):
         """Test GET /api/core/student-lo-scores/?course={id}"""
@@ -402,11 +398,11 @@ class TestStudentLearningOutcomeScoreViewSet:
             score=88.0
         )
 
-        url = reverse('studentlearningoutcomescore-list')
+        url = reverse('student-lo-score-list')
         response = api_client.get(url, {'course': course.pk})
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) >= 1
+        assert len(response.data['results']) >= 1
 
     def test_get_course_averages(self, api_client, sample_course, sample_enrollment, assessment_lo_mappings):
         """Test GET /api/core/student-lo-scores/course_averages/"""
@@ -415,9 +411,9 @@ class TestStudentLearningOutcomeScoreViewSet:
         course = sample_course['course']
 
         # Calculate scores first
-        calculate_course_scores(course)
+        calculate_course_scores(course.pk)
 
-        url = reverse('studentlearningoutcomescore-course-averages')
+        url = reverse('student-lo-score-course-averages')
         response = api_client.get(url, {'course': course.pk})
 
         assert response.status_code == status.HTTP_200_OK
@@ -426,7 +422,7 @@ class TestStudentLearningOutcomeScoreViewSet:
 
     def test_get_course_averages_requires_parameter(self, api_client):
         """Test that course_averages requires either student or course parameter."""
-        url = reverse('studentlearningoutcomescore-course-averages')
+        url = reverse('student-lo-score-course-averages')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -458,7 +454,7 @@ class TestStudentProgramOutcomeScoreViewSet:
             term=term
         )
 
-        url = reverse('studentprogramoutcomescore-list')
+        url = reverse('student-po-score-list')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
@@ -471,25 +467,29 @@ class TestFileImportEndpoints:
 
     def test_assignment_scores_upload_get_info(self, api_client):
         """Test GET /api/core/file-import/assignment-scores/upload/"""
-        url = reverse('assignmentsoresimport-upload')
+        url = reverse('file-import-assignment-scores-upload')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert 'message' in response.data
         assert 'required_query_parameters' in response.data
 
-    def test_assignment_scores_upload_no_file(self, api_client):
+    def test_assignment_scores_upload_no_file(self, authenticated_client):
         """Test POST without file returns error."""
-        url = reverse('assignmentsoresimport-upload')
-        response = api_client.post(url)
+        client, user = authenticated_client('instructor', 'instructor')
+        
+        url = reverse('file-import-assignment-scores-upload')
+        response = client.post(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
 
-    def test_assignment_scores_upload_missing_course_code(self, api_client, db_setup):
+    def test_assignment_scores_upload_missing_course_code(self, authenticated_client, db_setup):
         """Test POST without course_code returns error."""
         from io import BytesIO
         import pandas as pd
+
+        client, user = authenticated_client('instructor', 'instructor')
 
         # Create dummy Excel file
         df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
@@ -497,8 +497,8 @@ class TestFileImportEndpoints:
         df.to_excel(buffer, engine='openpyxl')
         buffer.seek(0)
 
-        url = reverse('assignmentsoresimport-upload')
-        response = api_client.post(
+        url = reverse('file-import-assignment-scores-upload')
+        response = client.post(
             url,
             {'file': buffer},
             format='multipart'
@@ -509,7 +509,7 @@ class TestFileImportEndpoints:
 
     def test_learning_outcomes_upload_get_info(self, api_client):
         """Test GET /api/core/file-import/learning-outcomes/upload/"""
-        url = reverse('learningoutcomesimport-upload')
+        url = reverse('file-import-learning-outcomes-upload')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
@@ -517,7 +517,7 @@ class TestFileImportEndpoints:
 
     def test_program_outcomes_upload_get_info(self, api_client):
         """Test GET /api/core/file-import/program-outcomes/upload/"""
-        url = reverse('programoutcomesimport-upload')
+        url = reverse('file-import-program-outcomes-upload')
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK

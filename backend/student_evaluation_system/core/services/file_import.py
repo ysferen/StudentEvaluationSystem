@@ -110,6 +110,8 @@ class ExcelParser(FileParser):
         
         if file_obj.size > self.MAX_FILE_SIZE:
             raise FileImportError(f"File size must be less than {self.MAX_FILE_SIZE // (1024*1024)}MB. Your file is {file_obj.size / (1024*1024):.2f}MB")
+        if file_obj.size == 0:
+            raise FileImportError("File is empty")
         
         return True
     
@@ -165,7 +167,6 @@ class FileImportService:
     
     # Expected column mappings for different data types
     REQUIRED_COLUMNS = {
-        'assessment_scores': ['student_id', 'assessment_name', 'score'],
         'learning_outcomes': ['code', 'description', 'course_code'],
         'program_outcomes': ['code', 'description', 'program_code', 'term_name'],
         'assignment_scores': ['öğrenci no', 'adı', 'soyadı']
@@ -260,7 +261,7 @@ class FileImportService:
                 raise FileImportError(f"No assessments found for course {course.code}. Please create assessments first.")
             
             # Validate required columns
-            self._validate_required_columns(df, 'assignment_scores')
+            self._validate_assignment_scores(df, course, course.term)
             
             # Find student ID column
             student_id_col = self._find_student_id_column(df.columns)
@@ -396,7 +397,7 @@ class FileImportService:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj, sheet_name)
+            df = self.parser.parse_sheet(self.file_obj)
             
             # Validate required columns
             self._validate_required_columns(df, 'learning_outcomes')
@@ -454,7 +455,7 @@ class FileImportService:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj, sheet_name)
+            df = self.parser.parse_sheet(self.file_obj)
             
             # Validate required columns
             self._validate_required_columns(df, 'program_outcomes')
@@ -566,7 +567,7 @@ class FileImportService:
                 return col
         raise FileImportError("Student ID column not found. Expected columns containing 'öğrenci no'")
     
-    def _validate_assessment_scores(self, dataframe: pd.DataFrame, course: Course, term: Term):
+    def _validate_assignment_scores(self, dataframe: pd.DataFrame, course: Course, term: Term):
         """
         Validate that all required columns are present in dataframe for assessment scores.
         
@@ -578,7 +579,7 @@ class FileImportService:
             FileImportError: If required columns are missing
         """
         try:
-            self._validate_required_columns(dataframe, 'assessment_scores', assessments=self._get_assessments_by_course(course))
+            self._validate_required_columns(dataframe, 'assignment_scores', assessments=self._get_assessments_by_course(course))
             self._validate_students(dataframe, course)
         except Exception as e:
             raise FileImportError(f"Validation error: {str(e)}")
@@ -609,24 +610,20 @@ class FileImportService:
 
         # Check for assessment names if applicable
         if assessments:
-            assessment_names = [assessment.name.lower().strip() for assessment in assessments]
-            df_cols = [str(col).lower().strip() for col in dataframe.columns]
+            # Use _extract_assessment_columns to get cleaned assessment names from columns
+            assessment_columns = self._extract_assessment_columns(dataframe.columns)
+            found_assessment_names = [name for _, name in assessment_columns]
 
-            assessment_col_found = [False for _ in assessment_names]
-            df_col_found = [False for _ in df_cols]
-
-            for idx1, df_col in enumerate(dataframe.columns):
-                if df_col_found[idx1]:
-                    continue
-                for idx2, assessment_name in enumerate(assessment_names):
-                    if assessment_col_found[idx2]:
-                        continue
-                    if assessment_name == str(df_col).lower().strip():
-                        df_col_found[idx1] = True
-                        assessment_col_found[idx2] = True
+            assessment_col_found = []
+            for assessment in assessments:
+                # Check if assessment name is in the found assessment columns
+                if assessment.name.lower().strip() in [name.lower().strip() for name in found_assessment_names]:
+                    assessment_col_found.append(True)
+                else:
+                    assessment_col_found.append(False)
 
             if not all(assessment_col_found):
-                missing_columns.extend([assessments[i] for i, found in enumerate(assessment_col_found) if not found])
+                missing_columns.extend([assessments[i].name for i, found in enumerate(assessment_col_found) if not found])
             
         if missing_columns:
             raise FileImportError(
@@ -637,23 +634,25 @@ class FileImportService:
     def _validate_students(self, dataframe: pd.DataFrame, course: Course):
         """
         Validate that all students in the dataframe are enrolled in the course.
-        
+
         Args:
             dataframe (pd.DataFrame): Data to validate
             course (Course): Course to check enrollments against
-            
+
         Raises:
             FileImportError: If any student is not enrolled in the course
         """
-        student_ids = [str(sid).strip() for sid in dataframe.get('student_id', [])]
+        student_id_col = self._find_student_id_column(dataframe.columns)
+
+        student_ids = [str(sid).strip() for sid in dataframe[student_id_col]]
         enrolled_students = CourseEnrollment.objects.filter(
             course=course,
             student__student_profile__student_id__in=student_ids
         ).values_list('student__student_profile__student_id', flat=True)
-        
+
         enrolled_student_ids = set(str(sid).strip() for sid in enrolled_students)
         missing_students = [sid for sid in student_ids if sid not in enrolled_student_ids]
-        
+
         if missing_students:
             raise FileImportError(
                 f"The following students are not enrolled in course {course.code}: "

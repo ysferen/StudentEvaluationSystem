@@ -5,21 +5,7 @@ This module provides common fixtures used across all test modules.
 """
 
 import pytest
-from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
 from datetime import date
-from core.models import (
-    University, Department, DegreeLevel, Program, Term,
-    Course, ProgramOutcome, LearningOutcome,
-    LearningOutcomeProgramOutcomeMapping, StudentLearningOutcomeScore,
-    StudentProgramOutcomeScore
-)
-from evaluation.models import (
-    Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
-)
-from users.models import StudentProfile, InstructorProfile
-
-User = get_user_model()
 
 
 @pytest.fixture
@@ -27,17 +13,22 @@ def api_client():
     """
     Returns an instance of DRF's APIClient for making API requests.
     """
+    from rest_framework.test import APIClient
     return APIClient()
 
 
 @pytest.fixture
-def db_setup():
+def db_setup(db):
     """
     Sets up basic database objects for testing.
 
     Creates a university, department, degree level, program, term, and course.
     Returns a dictionary containing all created objects.
     """
+    from core.models import (
+        University, Department, DegreeLevel, Program, Term, Course
+    )
+    
     # Create university
     university = University.objects.create(name="Test University")
 
@@ -90,6 +81,11 @@ def user_factory(db_setup):
         user = user_factory('username', 'student')
         instructor = user_factory('instructor', 'instructor')
     """
+    from django.contrib.auth import get_user_model
+    from users.models import StudentProfile, InstructorProfile
+    
+    User = get_user_model()
+
     def _create_user(username, role='student', **kwargs):
         university = db_setup['university']
         department = db_setup['department']
@@ -130,6 +126,8 @@ def student_factory(db_setup, user_factory):
         student = student_factory('student1')
         student_with_program = student_factory('student2', program_id=1)
     """
+    from users.models import StudentProfile
+    
     def _create_student(username, **kwargs):
         term = db_setup['term']
         program = db_setup['program']
@@ -163,6 +161,8 @@ def instructor_factory(db_setup, user_factory):
     Usage:
         instructor = instructor_factory('instructor1')
     """
+    from users.models import InstructorProfile
+    
     def _create_instructor(username, title='Professor', **kwargs):
         # Create user with instructor role
         user = user_factory(username, role='instructor', **kwargs)
@@ -201,6 +201,10 @@ def sample_course(db_setup):
 
     Returns a dictionary with course, LOS, and POs.
     """
+    from core.models import (
+        ProgramOutcome, LearningOutcome, LearningOutcomeProgramOutcomeMapping
+    )
+    
     course = db_setup['course']
     term = db_setup['term']
     program = db_setup['program']
@@ -272,8 +276,23 @@ def sample_assessments(sample_course):
 
     Returns a dictionary with course and assessments.
     """
+    from evaluation.models import Assessment
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
     course = sample_course['course']
-    user = User.objects.filter(role='instructor').first()
+
+    # Get or create an instructor user
+    user, created = User.objects.get_or_create(
+        username='test_instructor',
+        defaults={
+            'email': 'instructor@test.com',
+            'first_name': 'Test',
+            'last_name': 'Instructor',
+            'role': 'instructor',
+            'password': 'testpass123'
+        }
+    )
 
     # Create assessments
     midterm = Assessment.objects.create(
@@ -322,6 +341,8 @@ def sample_enrollment(sample_course, student_factory):
 
     Returns a dictionary with course and enrolled students.
     """
+    from evaluation.models import CourseEnrollment
+    
     course = sample_course['course']
 
     # Create students
@@ -348,6 +369,8 @@ def sample_grades(sample_assessments, sample_enrollment):
 
     Returns a dictionary with assessments, students, and grades.
     """
+    from evaluation.models import StudentGrade
+    
     assessments = sample_assessments['assessments']
     students = sample_enrollment['students']
 
@@ -375,6 +398,8 @@ def assessment_lo_mappings(sample_assessments, sample_course):
 
     Returns a dictionary with mappings.
     """
+    from evaluation.models import AssessmentLearningOutcomeMapping
+    
     assessments = sample_assessments['assessments']
     learning_outcomes = sample_course['learning_outcomes']
 
@@ -393,3 +418,18 @@ def assessment_lo_mappings(sample_assessments, sample_course):
         'assessments': assessments,
         'learning_outcomes': learning_outcomes
     }
+
+
+# Add this at the end of your conftest.py to ensure Django is setup
+def pytest_configure():
+    """Configure Django for pytest."""
+    import os
+    import django
+    from django.conf import settings
+
+    # Set the Django settings module environment variable
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'student_evaluation_system.settings')
+    
+    # Configure Django if not already configured
+    if not settings.configured:
+        django.setup()
