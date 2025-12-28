@@ -1,41 +1,111 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
+export default defineConfig(({ mode }) => {
+  // Load env file based on `mode` (development, production, etc.)
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
+    plugins: [react()],
+
+    // Path resolution
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@components': path.resolve(__dirname, './src/components'),
+        '@pages': path.resolve(__dirname, './src/pages'),
+        '@hooks': path.resolve(__dirname, './src/hooks'),
+        '@services': path.resolve(__dirname, './src/services'),
+        '@types': path.resolve(__dirname, './src/types'),
+        '@utils': path.resolve(__dirname, './src/utils'),
+        '@api': path.resolve(__dirname, './src/api'),
       },
     },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // React core libraries - ~150KB
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          
-          // React Query for API state management - ~50KB
-          'query-vendor': ['@tanstack/react-query'],
-          
-          // Chart library - ~500KB (biggest chunk)
-          'charts': ['react-apexcharts', 'apexcharts'],
-          
-          // Icon libraries - ~30KB
-          'icons': ['@heroicons/react'],
+
+    // Development server configuration
+    server: {
+      port: env.VITE_PORT ? Number(env.VITE_PORT) : 5173,
+      strictPort: false,
+      host: true,
+
+      // Proxy API requests to Django backend
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL || 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false,
+          // Don't rewrite path - keep /api prefix
+          rewrite: (path) => path,
+          // Log proxied requests in debug mode
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              if (env.VITE_ENABLE_DEBUG === 'true') {
+                console.log('[Proxy]', req.method, req.url, '→', options.target + req.url)
+              }
+            })
+          },
+        },
+        // Proxy media files (user uploads, etc.)
+        '/media': {
+          target: env.VITE_API_URL || 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false,
+        },
+        // Proxy static files if needed
+        '/static': {
+          target: env.VITE_API_URL || 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false,
         },
       },
     },
-    // Increase warning limit since we're intentionally creating larger chunks
-    chunkSizeWarningLimit: 1000,
-    
-    // Enable gzip size reporting to track improvements
-    reportCompressedSize: true,
-  },
+
+    // Build configuration
+    build: {
+      outDir: 'dist',
+      sourcemap: mode !== 'production',
+
+      // Code splitting for better caching
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // React core libraries
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+
+            // React Query for API state management
+            'query-vendor': ['@tanstack/react-query'],
+
+            // Chart library
+            'charts': ['react-apexcharts', 'apexcharts'],
+
+            // Icon libraries
+            'icons': ['@heroicons/react'],
+
+            // Additional vendor chunk
+            'vendor': ['axios'],
+          },
+        },
+      },
+
+      // Chunk size warnings
+      chunkSizeWarningLimit: 1000, // 1MB
+
+      // Enable gzip size reporting
+      reportCompressedSize: true,
+    },
+
+    // Define global constants (available in code)
+    define: {
+      __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION || '1.0.0'),
+      __API_URL__: JSON.stringify(env.VITE_API_URL),
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    },
+
+    // Optimize dependencies
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom', 'axios'],
+    },
+  }
 })

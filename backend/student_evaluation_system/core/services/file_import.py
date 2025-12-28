@@ -99,22 +99,22 @@ class FileParser(ABC):
 
 class ExcelParser(FileParser):
     """Parser for Excel files (.xlsx, .xls)."""
-    
+
     # Maximum file size: 10MB
     MAX_FILE_SIZE = 10 * 1024 * 1024
-    
+
     def validate_file(self, file_obj) -> bool:
         """Validate Excel file format."""
         if not file_obj.name.endswith(('.xlsx', '.xls')):
             raise FileImportError("File must be an Excel file (.xlsx or .xls)")
-        
+
         if file_obj.size > self.MAX_FILE_SIZE:
             raise FileImportError(f"File size must be less than {self.MAX_FILE_SIZE // (1024*1024)}MB. Your file is {file_obj.size / (1024*1024):.2f}MB")
         if file_obj.size == 0:
             raise FileImportError("File is empty")
-        
+
         return True
-    
+
     def get_sheet_names(self, file_obj) -> List[str]:
         """Get Excel sheet names."""
         try:
@@ -122,37 +122,92 @@ class ExcelParser(FileParser):
             return workbook.sheet_names
         except Exception as e:
             raise FileImportError(f"Error reading Excel file: {str(e)}")
-    
-    def parse_sheet(self, file_obj) -> pd.DataFrame:
-        """Parse Excel sheet into DataFrame."""
+
+    def _get_dtype_mapping(self, import_type: str) -> Dict[str, Any]:
+        """
+        Get appropriate dtype mapping for import type.
+
+        Args:
+            import_type: Type of data being imported
+
+        Returns:
+            Dict mapping column names to pandas dtypes
+        """
+        dtype_mappings = {
+            'assignment_scores': {
+                # Preserve leading zeros in student IDs
+                # Let Pandas infer score columns (dynamic names)
+            },
+            'learning_outcomes': {
+                'code': 'str',
+                'description': 'str',
+                'course_code': 'str'
+            },
+            'program_outcomes': {
+                'code': 'str',
+                'description': 'str',
+                'program_code': 'str',
+                'term_name': 'str'
+            },
+        }
+
+        return dtype_mappings.get(import_type, {})
+
+    def parse_sheet(self, file_obj, import_type: str = None) -> pd.DataFrame:
+        """
+        Parse Excel sheet with proper dtype specifications.
+
+        Args:
+            file_obj: Excel file object
+            import_type: Type hint for column interpretation
+
+        Returns:
+            DataFrame with properly typed columns
+        """
         try:
             workbook = pd.ExcelFile(file_obj)
-            return pd.read_excel(workbook)
+
+            # Get dtype mapping for this import type
+            dtype_map = self._get_dtype_mapping(import_type) if import_type else {}
+
+            # Read with explicit dtypes and nullable backend
+            df = pd.read_excel(
+                workbook,
+                dtype=dtype_map if dtype_map else None,
+                dtype_backend='numpy_nullable',  # Better null handling
+                na_values=['', 'NA', 'N/A', 'null', 'NULL', '-']  # Standard null values
+            )
+
+            return df
         except Exception as e:
             raise FileImportError(f"Error parsing file: {str(e)}")
 
 
 class CSVParser(FileParser):
     """Parser for CSV files - Future implementation."""
-    
+
     def validate_file(self, file_obj) -> bool:
         """Validate CSV file format."""
         if not file_obj.name.endswith('.csv'):
             raise FileImportError("File must be a CSV file (.csv)")
-        
+
         if file_obj.size > 10 * 1024 * 1024:  # 10MB limit
             raise FileImportError("File size must be less than 10MB")
-        
+
         return True
-    
+
     def get_sheet_names(self, file_obj) -> List[str]:
         """CSV files have single sheet."""
         return ['data']
-    
-    def parse_sheet(self, file_obj, sheet_name: str) -> pd.DataFrame:
-        """Parse CSV into DataFrame."""
+
+    def parse_sheet(self, file_obj, sheet_name: str = None, import_type: str = None) -> pd.DataFrame:
+        """Parse CSV into DataFrame with proper dtypes."""
         try:
-            return pd.read_csv(file_obj)
+            return pd.read_csv(
+                file_obj,
+                dtype_backend='numpy_nullable',
+                na_values=['', 'NA', 'N/A', 'null', 'NULL', '-']
+            )
         except Exception as e:
             raise FileImportError(f"Error parsing CSV file: {str(e)}")
 
@@ -241,16 +296,16 @@ class FileImportService:
     def import_assignment_scores(self, course_code: str, term_id: int):
         """
         Import assignment scores from Turkish Excel format.
-        
+
         Args:
             course_code (str): Code of the course for which grades are being imported
             term_id (int): ID of the academic term for which grades are being imported
-            
+
         Returns:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj)
+            df = self.parser.parse_sheet(self.file_obj, import_type='assignment_scores')
             course = self._get_course_by_code_and_term(course_code, term_id)
             
             # Get assessments for this course and build lookup dict
@@ -389,15 +444,15 @@ class FileImportService:
     def import_learning_outcomes(self, sheet_name: str = 'learning_outcomes'):
         """
         Import learning outcome data from file sheet/section.
-        
+
         Args:
             sheet_name (str): Name of sheet/section containing learning outcome data
-            
+
         Returns:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj)
+            df = self.parser.parse_sheet(self.file_obj, import_type='learning_outcomes')
             
             # Validate required columns
             self._validate_required_columns(df, 'learning_outcomes')
@@ -447,15 +502,15 @@ class FileImportService:
     def import_program_outcomes(self, sheet_name: str = 'program_outcomes'):
         """
         Import program outcome data from file sheet/section.
-        
+
         Args:
             sheet_name (str): Name of sheet/section containing program outcome data
-            
+
         Returns:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj)
+            df = self.parser.parse_sheet(self.file_obj, import_type='program_outcomes')
             
             # Validate required columns
             self._validate_required_columns(df, 'program_outcomes')

@@ -28,6 +28,14 @@ coverage/
 .vscode/
 .clinerules/
 
+# Environment files (local overrides only)
+.env.local
+.env.*.local
+
+# Keep template env files
+!.env.development
+!.env.production
+
 # AI Agents
 .ai-agents/
 .claude/
