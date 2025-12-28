@@ -10,6 +10,7 @@ import {
     ArrowRightStartOnRectangleIcon,
     ClipboardDocumentListIcon,
     ChartPieIcon,
+    ShieldCheckIcon,
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 
@@ -74,6 +75,21 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
 
     let navigation: NavItem[] = []
     navigation = showOnlyCoreItems ? [] : getNavigationForRole(user?.role || null)
+
+    // Add a global Settings nav item for authenticated users,
+    // but when inside settings/security show the focused account/security sidebar
+    const inAccountArea = location.pathname.startsWith('/settings') || location.pathname.startsWith('/security')
+    if (inAccountArea) {
+        navigation = [
+            { name: 'Account', href: '/settings', icon: Cog6ToothIcon },
+            { name: 'Security', href: '/security', icon: ShieldCheckIcon },
+        ]
+    } else if (user && !showOnlyCoreItems) {
+        const hasSettings = navigation.some(n => n.href === '/settings' || n.name === 'Settings')
+        if (!hasSettings) {
+            navigation.push({ name: 'Settings', href: '/settings', icon: Cog6ToothIcon })
+        }
+    }
 
 
     return (
