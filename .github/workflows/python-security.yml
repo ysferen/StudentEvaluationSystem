@@ -1,0 +1,32 @@
+name: Python Security Scan
+
+on:
+  push:
+    branches: [main, dev, 'feature/**']
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - name: Install Bandit
+        run: pip install bandit[toml]
+      - name: Run Bandit
+        working-directory: backend
+        run: |
+          bandit -r student_evaluation_system/ -f json -o bandit-report.json || true
+          bandit -r student_evaluation_system/ -f screen
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: backend/bandit-report.json
+          retention-days: 30

@@ -43,15 +43,16 @@ export const customInstance = <T>(
   options?: AxiosRequestConfig,
 ): Promise<T> => {
   const source = Axios.CancelToken.source();
-  
+
   const promise = axiosInstance({
     ...config,
     ...options,
     cancelToken: source.token,
   }).then(({ data }) => data);
 
-  // @ts-ignore
-  promise.cancel = () => {
+  // Add cancel function to the promise
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (promise as any).cancel = () => {
     source.cancel('Query was cancelled');
   };
 

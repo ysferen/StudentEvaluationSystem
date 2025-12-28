@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Frontend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Erenimo3442"
+    groups:
+      react-dependencies:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      build-dependencies:
+        patterns:
+          - "vite"
+          - "typescript"
+          - "eslint*"
+          - "@typescript-eslint/*"
+
+  # Backend Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Erenimo3442"
+    groups:
+      django-dependencies:
+        patterns:
+          - "django*"
+          - "djangorestframework*"

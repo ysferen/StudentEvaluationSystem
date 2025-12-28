@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -315,7 +315,6 @@ const StudentCourseDetail = () => {
               {/* Assessment List */}
               <div className="space-y-4">
                 {studentGrades.map((grade) => {
-                  const percentage = (grade.score / (grade.assessment?.total_score || 1)) * 100
                   return (
                     <Card key={grade.id} className="flex items-center justify-between">
                       <div className="flex-1">

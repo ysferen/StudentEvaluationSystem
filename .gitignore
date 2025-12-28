@@ -13,6 +13,10 @@ local_settings.py
 db.sqlite3
 media/
 
+# Coverage
+.coverage
+htmlcov/
+
 # Node
 node_modules/
 dist/
@@ -23,4 +27,16 @@ yarn-error.log*
 coverage/
 .vscode/
 .clinerules/
-.github/
+
+# Environment files (local overrides only)
+.env.local
+.env.*.local
+
+# Keep template env files
+!.env.development
+!.env.production
+
+# AI Agents
+.ai-agents/
+.claude/
+

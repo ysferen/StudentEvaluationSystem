@@ -13,6 +13,8 @@ const HeadDashboard = lazy(() => import('./pages/HeadDashboard'))
 const StudentCourses = lazy(() => import('./pages/StudentCourses'))
 const InstructorCourses = lazy(() => import('./pages/InstructorCourses'))
 const HeadCourses = lazy(() => import('./pages/HeadCourses'))
+const Settings = lazy(() => import('./pages/Settings'))
+const Safety = lazy(() => import('./pages/Safety'))
 
 // Loading fallback component for route transitions
 function RouteLoadingFallback() {
@@ -64,6 +66,12 @@ function App() {
       </Route>
 
       {/* Legacy routes - redirect to role-specific routes */}
+      <Route path="/settings" element={<Layout />}>
+        <Route index element={<Settings />} />
+      </Route>
+      <Route path="/security" element={<Layout />}>
+        <Route index element={<Safety />} />
+      </Route>
       <Route path="/lecturer" element={<Navigate to="/instructor" replace />} />
       <Route path="/course/:id" element={<Navigate to="/" replace />} />
     </Routes>

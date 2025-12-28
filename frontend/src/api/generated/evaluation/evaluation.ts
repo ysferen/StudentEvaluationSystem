@@ -3080,12 +3080,6 @@ export const evaluationGradesCourseAveragesRetrieve = (
 
 
 
-export const getEvaluationGradesCourseAveragesRetrieveInfiniteQueryKey = (params?: EvaluationGradesCourseAveragesRetrieveParams,) => {
-    return [
-    'infinate', `/api/evaluation/grades/course_averages/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
 export const getEvaluationGradesCourseAveragesRetrieveQueryKey = (params?: EvaluationGradesCourseAveragesRetrieveParams,) => {
     return [
     `/api/evaluation/grades/course_averages/`, ...(params ? [params]: [])
@@ -3093,69 +3087,6 @@ export const getEvaluationGradesCourseAveragesRetrieveQueryKey = (params?: Evalu
     }
 
     
-export const getEvaluationGradesCourseAveragesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, EvaluationGradesCourseAveragesRetrieveParams['page']>, TError = unknown>(params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesCourseAveragesRetrieveInfiniteQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']> = ({ signal, pageParam }) => evaluationGradesCourseAveragesRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type EvaluationGradesCourseAveragesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>>
-export type EvaluationGradesCourseAveragesRetrieveInfiniteQueryError = unknown
-
-
-export function useEvaluationGradesCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, EvaluationGradesCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params: undefined |  EvaluationGradesCourseAveragesRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEvaluationGradesCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, EvaluationGradesCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEvaluationGradesCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, EvaluationGradesCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useEvaluationGradesCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, EvaluationGradesCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData, QueryKey, EvaluationGradesCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getEvaluationGradesCourseAveragesRetrieveInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
 export const getEvaluationGradesCourseAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError = unknown>(params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 

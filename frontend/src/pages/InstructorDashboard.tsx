@@ -184,8 +184,6 @@ const InstructorDashboard = () => {
     }
   })
 
-  const loading = coursesLoading || analyticsQueries.some(q => q.isLoading)
-
   const nextCourse = () => setCurrentIndex((prev) => (prev + 1) % coursesWithAnalytics.length)
   const prevCourse = () => setCurrentIndex((prev) => (prev - 1 + coursesWithAnalytics.length) % coursesWithAnalytics.length)
 
@@ -200,23 +198,25 @@ const InstructorDashboard = () => {
     gradeDistribution: []
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-secondary-600 font-medium">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  // Get loading state for current course analytics
+  const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length 
+    ? analyticsQueries[currentIndex]?.isLoading 
+    : false
 
   return (
     <>
       {/* Main Content */}
       <main className="p-6 max-w-7xl mx-auto">
         {/* Course Selector */}
-        <div className="flex items-center justify-center gap-6 mb-6">
+        {coursesLoading ? (
+          <div className="flex items-center justify-center mb-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary-600 mx-auto"></div>
+              <p className="mt-3 text-secondary-600 font-medium">Loading courses...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-6 mb-6">
           <button
             onClick={prevCourse}
             disabled={coursesWithAnalytics.length <= 1}
@@ -236,6 +236,7 @@ const InstructorDashboard = () => {
             <ChevronRight className="w-6 h-6 text-secondary-600" />
           </button>
         </div>
+        )}
 
         {/* Course Overview Card */}
         <Card className="overflow-hidden mb-6">
@@ -277,7 +278,14 @@ const InstructorDashboard = () => {
 
               {/* Chart Display */}
               <div className="h-80">
-                {activeChart === 'radar' ? (
+                {currentCourseAnalyticsLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary-600 mx-auto"></div>
+                      <p className="mt-3 text-secondary-600 font-medium">Loading chart data...</p>
+                    </div>
+                  </div>
+                ) : activeChart === 'radar' ? (
                   <ChartWidget
                     key={`radar-chart-${course.id}`}
                     title=""
@@ -379,7 +387,15 @@ const InstructorDashboard = () => {
 
             {/* Right: Stats */}
             <div className="w-full lg:w-64 p-6">
-              <div className="space-y-6">
+              {currentCourseAnalyticsLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-primary-600 mx-auto"></div>
+                    <p className="mt-3 text-secondary-600 text-sm">Loading stats...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
                 <div>
                   <p className="text-secondary-500 text-sm mb-1">Students</p>
                   <p className="text-3xl font-bold text-secondary-900">{course.students}</p>
@@ -405,6 +421,7 @@ const InstructorDashboard = () => {
                   <p className="text-3xl font-bold text-secondary-900">{course.credits}</p>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </Card>

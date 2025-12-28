@@ -39,19 +39,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   })
 
-  useEffect(() => {
-    if (currentUser) {
-      setUser(currentUser)
-    }
-    if (userError instanceof Error) {
-      // Token is invalid, clear it
-      logout()
-    }
-    if (!userLoading) {
-      setIsLoading(false)
-    }
-  }, [currentUser, userLoading, userError])
-
   // Create a custom login mutation that accepts password
   const loginMutation = useUsersAuthLoginCreate({
     mutation: {
@@ -96,18 +83,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [currentUser, userLoading, userError, logout])
 
   const login = useCallback(async (username: string, password: string) => {
-    try {
-      // Create login data - we need to cast to include password since the type doesn't have it
-      const loginData = { 
-        username, 
-        email: '', // Required field but not used for login
-        password: password // This will be sent in the request
-      } as CustomUser & { password: string }
-      
-      await loginMutation.mutateAsync({ data: loginData })
-    } catch (error) {
-      throw error
-    }
+    // Create login data - we need to cast to include password since the type doesn't have it
+    const loginData = {
+      username,
+      email: '', // Required field but not used for login
+      password: password // This will be sent in the request
+    } as CustomUser & { password: string }
+
+    await loginMutation.mutateAsync({ data: loginData })
   }, [loginMutation])
 
   const value: AuthContextType = React.useMemo(() => ({

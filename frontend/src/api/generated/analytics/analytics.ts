@@ -6,21 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
-  useInfiniteQuery,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
-  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
-  InfiniteData,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseInfiniteQueryOptions,
-  UseInfiniteQueryResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -73,12 +68,6 @@ export const coreStudentLoScoresCourseAveragesRetrieve = (
 
 
 
-export const getCoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryKey = (params?: CoreStudentLoScoresCourseAveragesRetrieveParams,) => {
-    return [
-    'infinate', `/api/core/student-lo-scores/course_averages/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
 export const getCoreStudentLoScoresCourseAveragesRetrieveQueryKey = (params?: CoreStudentLoScoresCourseAveragesRetrieveParams,) => {
     return [
     `/api/core/student-lo-scores/course_averages/`, ...(params ? [params]: [])
@@ -86,69 +75,6 @@ export const getCoreStudentLoScoresCourseAveragesRetrieveQueryKey = (params?: Co
     }
 
     
-export const getCoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>, TError = unknown>(params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']> = ({ signal, pageParam }) => coreStudentLoScoresCourseAveragesRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>>
-export type CoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryError = unknown
-
-
-export function useCoreStudentLoScoresCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params: undefined |  CoreStudentLoScoresCourseAveragesRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresCourseAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresCourseAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresCourseAveragesRetrieveInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
 export const getCoreStudentLoScoresCourseAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError = unknown>(params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -244,12 +170,6 @@ export const coreStudentLoScoresLoAveragesRetrieve = (
 
 
 
-export const getCoreStudentLoScoresLoAveragesRetrieveInfiniteQueryKey = (params?: CoreStudentLoScoresLoAveragesRetrieveParams,) => {
-    return [
-    'infinate', `/api/core/student-lo-scores/lo_averages/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
 export const getCoreStudentLoScoresLoAveragesRetrieveQueryKey = (params?: CoreStudentLoScoresLoAveragesRetrieveParams,) => {
     return [
     `/api/core/student-lo-scores/lo_averages/`, ...(params ? [params]: [])
@@ -257,69 +177,6 @@ export const getCoreStudentLoScoresLoAveragesRetrieveQueryKey = (params?: CoreSt
     }
 
     
-export const getCoreStudentLoScoresLoAveragesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, CoreStudentLoScoresLoAveragesRetrieveParams['page']>, TError = unknown>(params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresLoAveragesRetrieveInfiniteQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']> = ({ signal, pageParam }) => coreStudentLoScoresLoAveragesRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresLoAveragesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>>
-export type CoreStudentLoScoresLoAveragesRetrieveInfiniteQueryError = unknown
-
-
-export function useCoreStudentLoScoresLoAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, CoreStudentLoScoresLoAveragesRetrieveParams['page']>, TError = unknown>(
- params: CoreStudentLoScoresLoAveragesRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresLoAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, CoreStudentLoScoresLoAveragesRetrieveParams['page']>, TError = unknown>(
- params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresLoAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, CoreStudentLoScoresLoAveragesRetrieveParams['page']>, TError = unknown>(
- params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresLoAveragesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, CoreStudentLoScoresLoAveragesRetrieveParams['page']>, TError = unknown>(
- params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData, QueryKey, CoreStudentLoScoresLoAveragesRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresLoAveragesRetrieveInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
 export const getCoreStudentLoScoresLoAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError = unknown>(params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 

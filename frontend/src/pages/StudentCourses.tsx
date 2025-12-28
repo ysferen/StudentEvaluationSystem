@@ -10,7 +10,6 @@ import {
   ChartBarIcon,
   CalendarIcon,
   UserIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline'
 import { evaluationEnrollmentsList } from '../api/generated/evaluation/evaluation'
 

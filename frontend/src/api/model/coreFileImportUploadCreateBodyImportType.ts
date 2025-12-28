@@ -9,7 +9,6 @@
 export type CoreFileImportUploadCreateBodyImportType = typeof CoreFileImportUploadCreateBodyImportType[keyof typeof CoreFileImportUploadCreateBodyImportType];
 
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const CoreFileImportUploadCreateBodyImportType = {
   auto: 'auto',
   students: 'students',

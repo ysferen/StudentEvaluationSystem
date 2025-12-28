@@ -6,23 +6,18 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
-  useInfiniteQuery,
   useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
-  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
-  InfiniteData,
   MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
-  UseInfiniteQueryOptions,
-  UseInfiniteQueryResult,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -71,12 +66,6 @@ export const coreFileImportAssignmentScoresUploadRetrieve = (
 
 
 
-export const getCoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryKey = (params?: CoreFileImportAssignmentScoresUploadRetrieveParams,) => {
-    return [
-    'infinate', `/api/core/file-import/assignment-scores/upload/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
 export const getCoreFileImportAssignmentScoresUploadRetrieveQueryKey = (params?: CoreFileImportAssignmentScoresUploadRetrieveParams,) => {
     return [
     `/api/core/file-import/assignment-scores/upload/`, ...(params ? [params]: [])
@@ -84,72 +73,6 @@ export const getCoreFileImportAssignmentScoresUploadRetrieveQueryKey = (params?:
     }
 
     
-export const getCoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']> = ({ signal, pageParam }) => coreFileImportAssignmentScoresUploadRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>>
-export type CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryError = CoreFileImportAssignmentScoresUploadRetrieve400
-
-
-export function useCoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(
- params: CoreFileImportAssignmentScoresUploadRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(
- params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(
- params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Upload and import assessment scores
- */
-
-export function useCoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(
- params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
 export const getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400>(params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -305,12 +228,6 @@ export const coreFileImportAssignmentScoresValidateRetrieve = (
 
 
 
-export const getCoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryKey = (params?: CoreFileImportAssignmentScoresValidateRetrieveParams,) => {
-    return [
-    'infinate', `/api/core/file-import/assignment-scores/validate/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
 export const getCoreFileImportAssignmentScoresValidateRetrieveQueryKey = (params?: CoreFileImportAssignmentScoresValidateRetrieveParams,) => {
     return [
     `/api/core/file-import/assignment-scores/validate/`, ...(params ? [params]: [])
@@ -318,72 +235,6 @@ export const getCoreFileImportAssignmentScoresValidateRetrieveQueryKey = (params
     }
 
     
-export const getCoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(params: CoreFileImportAssignmentScoresValidateRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']> = ({ signal, pageParam }) => coreFileImportAssignmentScoresValidateRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>>
-export type CoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryError = CoreFileImportAssignmentScoresValidateRetrieve400
-
-
-export function useCoreFileImportAssignmentScoresValidateRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(
- params: CoreFileImportAssignmentScoresValidateRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresValidateRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(
- params: CoreFileImportAssignmentScoresValidateRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresValidateRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(
- params: CoreFileImportAssignmentScoresValidateRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Validate assessment scores file
- */
-
-export function useCoreFileImportAssignmentScoresValidateRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(
- params: CoreFileImportAssignmentScoresValidateRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData, QueryKey, CoreFileImportAssignmentScoresValidateRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreFileImportAssignmentScoresValidateRetrieveInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
 export const getCoreFileImportAssignmentScoresValidateRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError = CoreFileImportAssignmentScoresValidateRetrieve400>(params: CoreFileImportAssignmentScoresValidateRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 

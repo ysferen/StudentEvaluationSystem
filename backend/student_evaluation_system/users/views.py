@@ -14,6 +14,35 @@ from .serializers import (
 )
 
 
+@extend_schema(
+    summary="Change password",
+    description="Allow authenticated users to change their password by providing the current and new password.",
+    request={"current_password": str, "new_password": str},
+    responses={200: dict, 400: dict, 401: dict},
+    tags=['Authentication']
+)
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        if not current_password or not new_password:
+            return Response({'error': 'current_password and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(current_password):
+            return Response({'error': 'Current password is incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            user.set_password(new_password)
+            user.save()
+            return Response({'detail': 'Password changed successfully'})
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 # Response serializers for authentication
 class TokenResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
