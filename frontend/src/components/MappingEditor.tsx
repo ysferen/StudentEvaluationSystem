@@ -19,6 +19,7 @@ import {
   AcademicCapIcon,
   ClipboardDocumentListIcon,
   ChartBarIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
 import api from '../services/api'
 
@@ -474,12 +475,22 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
       if (weightModal.editMode && weightModal.mappingId) {
         // Update existing mapping
         if (weightModal.type === 'assessment-lo') {
-          const response = await api.patch(`/api/evaluation/assessment-lo-mappings/${weightModal.mappingId}/`, {
-            weight,
-          })
+          // Optimistic update
+          const previousMappings = assessmentLOMappings
           setAssessmentLOMappings(assessmentLOMappings.map((m) => 
-            m.id === weightModal.mappingId ? { ...m, weight: response.data.weight } : m
+            m.id === weightModal.mappingId ? { ...m, weight } : m
           ))
+          setWeightModal(null)
+
+          try {
+            await api.patch(`/api/evaluation/assessment-lo-mappings/${weightModal.mappingId}/`, {
+              weight,
+            })
+          } catch (error) {
+            // Rollback on error
+            setAssessmentLOMappings(previousMappings)
+            throw error
+          }
         } else {
           const response = await api.patch(`/api/core/lo-po-mappings/${weightModal.mappingId}/`, {
             weight,
@@ -487,16 +498,38 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
           setLoPOMappings(loPOMappings.map((m) => 
             m.id === weightModal.mappingId ? { ...m, weight: response.data.weight } : m
           ))
+          setWeightModal(null)
         }
       } else {
         // Create new mapping
         if (weightModal.type === 'assessment-lo') {
-          const response = await api.post('/api/evaluation/assessment-lo-mappings/', {
-            assessment_id: weightModal.fromId,
-            learning_outcome_id: weightModal.toId,
+          // Optimistic update with temporary ID
+          const tempId = -Date.now() // Temporary negative ID
+          const tempMapping = {
+            id: tempId,
+            assessment: weightModal.fromId,
+            learning_outcome: weightModal.toId,
             weight,
-          })
-          setAssessmentLOMappings([...assessmentLOMappings, response.data])
+          }
+          setAssessmentLOMappings([...assessmentLOMappings, tempMapping as any])
+          setWeightModal(null)
+
+          // Update with real data from backend
+          try {
+            const response = await api.post('/api/evaluation/assessment-lo-mappings/', {
+              assessment_id: weightModal.fromId,
+              learning_outcome_id: weightModal.toId,
+              weight,
+            })
+            // Replace temp mapping with real one
+            setAssessmentLOMappings(prev => 
+              prev.map(m => m.id === tempId ? response.data : m)
+            )
+          } catch (error) {
+            // Remove temp mapping on error
+            setAssessmentLOMappings(prev => prev.filter(m => m.id !== tempId))
+            throw error
+          }
         } else {
           const response = await api.post('/api/core/lo-po-mappings/', {
             course: courseId,
@@ -505,6 +538,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
             weight,
           })
           setLoPOMappings([...loPOMappings, response.data])
+          setWeightModal(null)
         }
       }
     } catch (error: any) {
@@ -517,16 +551,20 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
         || 'Failed to save mapping'
       alert(errorMsg)
     }
-
-    setWeightModal(null)
   }
 
   const handleDeleteALOMapping = async (mappingId: number) => {
+    // Optimistic update - remove immediately
+    const previousMappings = assessmentLOMappings
+    setAssessmentLOMappings(assessmentLOMappings.filter((m) => m.id !== mappingId))
+
     try {
       await api.delete(`/api/evaluation/assessment-lo-mappings/${mappingId}/`)
-      setAssessmentLOMappings(assessmentLOMappings.filter((m) => m.id !== mappingId))
     } catch (error) {
       console.error('Error deleting mapping:', error)
+      // Rollback on error
+      setAssessmentLOMappings(previousMappings)
+      alert('Failed to delete mapping. Please try again.')
     }
   }
 
@@ -585,9 +623,22 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Outcome Mapping Editor</h2>
-            <p className="text-gray-500 mt-1">
-              Drag assessments to learning outcomes, and learning outcomes to program outcomes
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-gray-500">
+                Drag assessments to learning outcomes, and learning outcomes to program outcomes
+              </p>
+              <div className="group relative flex-shrink-0">
+                <QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-help" />
+                <div className="absolute left-0 top-8 hidden group-hover:block z-50 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl">
+                  <div className="space-y-1.5">
+                    <p><span className="font-semibold">Drag & Drop:</span> Assessment → LO or LO → PO</p>
+                    <p><span className="font-semibold">Edit:</span> Click badge to change weight</p>
+                    <p><span className="font-semibold">Delete:</span> Click X on badge</p>
+                    <p className="text-gray-300 mt-2">Each column scrolls independently</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           {onClose && (
             <button
@@ -601,43 +652,92 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
         </div>
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-6" style={{ height: 'calc(95vh - 100px)', minHeight: '600px' }}>
           {/* Assessments Column */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <ClipboardDocumentListIcon className="h-5 w-5 text-primary-600" />
-              <h3 className="font-semibold text-gray-900">Assessments</h3>
+          <Card className="p-4 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <ClipboardDocumentListIcon className="h-5 w-5 text-primary-600" />
+                <h3 className="font-semibold text-gray-900">Assessments</h3>
+              </div>
+              {(() => {
+                const unmappedCount = assessments.filter(a => 
+                  !assessmentLOMappings.some(m => m.assessment === a.id)
+                ).length
+                if (unmappedCount > 0) {
+                  return (
+                    <span className="text-xs font-medium px-2 py-1 bg-red-100 text-red-700 rounded">
+                      {unmappedCount} unmapped
+                    </span>
+                  )
+                }
+                return null
+              })()}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto flex-1 pr-2">
               {assessments.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No assessments found</p>
               ) : (
-                assessments.map((assessment) => (
+                assessments.map((assessment) => {
+                  const isMapped = assessmentLOMappings.some(m => m.assessment === assessment.id)
+                  return (
                   <DraggableItem
                     key={assessment.id}
                     id={`assessment-${assessment.id}`}
                     type="assessment"
                     data={{ id: assessment.id, name: assessment.name }}
                   >
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
-                      <p className="font-medium text-blue-900">{assessment.name}</p>
-                      <p className="text-xs text-blue-600 capitalize">
-                        {assessment.assessment_type} • {(assessment.weight * 100).toFixed(0)}%
-                      </p>
+                    <div className={`p-3 rounded-lg hover:bg-blue-100 transition-colors ${
+                      isMapped ? 'bg-blue-50 border border-blue-200' : 'bg-red-50 border-2 border-red-300'
+                    }`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className={`font-medium ${
+                            isMapped ? 'text-blue-900' : 'text-red-900'
+                          }`}>{assessment.name}</p>
+                          <p className={`text-xs capitalize ${
+                            isMapped ? 'text-blue-600' : 'text-red-600'
+                          }`}>
+                            {assessment.assessment_type} • {(assessment.weight * 100).toFixed(0)}%
+                          </p>
+                        </div>
+                        {!isMapped && (
+                          <span className="text-xs font-medium px-1.5 py-0.5 bg-red-200 text-red-800 rounded whitespace-nowrap">
+                            Not mapped
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </DraggableItem>
-                ))
+                )})
               )}
             </div>
           </Card>
 
           {/* Learning Outcomes Column */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <AcademicCapIcon className="h-5 w-5 text-teal-600" />
-              <h3 className="font-semibold text-gray-900">Learning Outcomes</h3>
+          <Card className="p-4 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <AcademicCapIcon className="h-5 w-5 text-teal-600" />
+                <h3 className="font-semibold text-gray-900">Learning Outcomes</h3>
+              </div>
+              {(() => {
+                const completedCount = learningOutcomes.filter(lo => {
+                  const total = getAssessmentMappingsForLO(lo.id).reduce((sum, m) => sum + m.weight, 0)
+                  return Math.round(total * 100) >= 100
+                }).length
+                const totalCount = learningOutcomes.length
+                const isAllComplete = completedCount === totalCount && totalCount > 0
+                return (
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    isAllComplete ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {completedCount}/{totalCount} complete
+                  </span>
+                )
+              })()}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto flex-1 pr-2">
               {learningOutcomes.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No learning outcomes found</p>
               ) : (
@@ -719,7 +819,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                                         e.stopPropagation()
                                         handleDeleteALOMapping(mapping.id!)
                                       }}
-                                      className="hover:text-red-600"
+                                      className="p-0.5 hover:text-red-600 -mr-1"
                                       title="Remove mapping"
                                       aria-label="Remove mapping"
                                     >
@@ -779,7 +879,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                                         e.stopPropagation()
                                         handleDeleteLOPOMapping(mapping.id!)
                                       }}
-                                      className="hover:text-red-600"
+                                      className="p-0.5 hover:text-red-600 -mr-1"
                                       title="Remove mapping"
                                       aria-label="Remove mapping"
                                     >
@@ -800,12 +900,29 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
           </Card>
 
           {/* Program Outcomes Column */}
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <ChartBarIcon className="h-5 w-5 text-purple-600" />
-              <h3 className="font-semibold text-gray-900">Program Outcomes</h3>
+          <Card className="p-4 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <ChartBarIcon className="h-5 w-5 text-purple-600" />
+                <h3 className="font-semibold text-gray-900">Program Outcomes</h3>
+              </div>
+              {(() => {
+                const completedCount = programOutcomes.filter(po => {
+                  const total = getLOMappingsForPO(po.id).reduce((sum, m) => sum + m.weight, 0)
+                  return Math.round(total * 100) >= 100
+                }).length
+                const totalCount = programOutcomes.length
+                const isAllComplete = completedCount === totalCount && totalCount > 0
+                return (
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    isAllComplete ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {completedCount}/{totalCount} complete
+                  </span>
+                )
+              })()}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto flex-1 pr-2">
               {programOutcomes.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No program outcomes found</p>
               ) : (
@@ -884,7 +1001,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                                       e.stopPropagation()
                                       handleDeleteLOPOMapping(mapping.id!)
                                     }}
-                                    className="hover:text-red-600"
+                                    className="p-0.5 hover:text-red-600 -mr-1"
                                     title="Remove mapping"
                                     aria-label="Remove mapping"
                                   >
@@ -903,31 +1020,6 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
             </div>
           </Card>
         </div>
-
-        {/* Legend */}
-        <Card className="p-4 bg-gray-50">
-          <h4 className="font-medium text-gray-900 mb-2">How to use:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>
-              <span className="font-medium text-blue-600">1.</span> Drag an{' '}
-              <span className="text-blue-600 font-medium">Assessment</span> and drop it on a{' '}
-              <span className="text-teal-600 font-medium">Learning Outcome</span> to create a mapping
-            </li>
-            <li>
-              <span className="font-medium text-teal-600">2.</span> Drag a{' '}
-              <span className="text-teal-600 font-medium">Learning Outcome</span> and drop it on a{' '}
-              <span className="text-purple-600 font-medium">Program Outcome</span> to create a mapping
-            </li>
-            <li>
-              <span className="font-medium text-gray-600">3.</span> Click on a mapping badge to{' '}
-              <span className="font-medium">edit its weight</span>
-            </li>
-            <li>
-              <span className="font-medium text-gray-600">4.</span> Click the{' '}
-              <XMarkIcon className="h-3 w-3 inline" /> button on a mapping to remove it
-            </li>
-          </ul>
-        </Card>
       </div>
 
       {/* Drag Overlay */}

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { coreCoursesRetrieve, coreLearningOutcomesList } from '../api/generated/core/core'
@@ -27,6 +28,18 @@ const { id: courseId } = useParams<{ id: string }>()
 const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
 const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
 const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  // Prevent body scroll when mapping editor is open
+  useEffect(() => {
+    if (isMappingEditorOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMappingEditorOpen])
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['course', courseId],
@@ -582,15 +595,35 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       />
 
       {/* Mapping Editor Modal */}
-      {isMappingEditorOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto p-6">
+      {isMappingEditorOpen && createPortal(
+        <div 
+          className="fixed bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ 
+            position: 'fixed',
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0,
+            zIndex: 9999 
+          }}
+          onWheel={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsMappingEditorOpen(false)
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl w-full max-w-7xl h-[95vh] overflow-hidden p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MappingEditor
               courseId={Number(courseId)}
               onClose={() => setIsMappingEditorOpen(false)}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
