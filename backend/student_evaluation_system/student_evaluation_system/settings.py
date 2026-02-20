@@ -188,6 +188,12 @@ REST_FRAMEWORK = {
         'login': env("LOGIN_THROTTLE_RATE", default='5/minute'),
         'file_upload': env("FILE_UPLOAD_THROTTLE_RATE", default='10/minute'),
     },
+    # API Versioning (currently using URL path versioning via explicit routes)
+    # When adding v2, uncomment below and implement version switching logic
+    # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    # 'DEFAULT_VERSION': 'v1',
+    # 'ALLOWED_VERSIONS': ['v1', 'v2'],
+    # 'VERSION_PARAM': 'version',
 }
 
 
