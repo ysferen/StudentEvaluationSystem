@@ -76,6 +76,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Custom exception middleware for logging
+    "student_evaluation_system.exception_handler.ExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "student_evaluation_system.urls"
@@ -173,6 +175,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
     'MAX_PAGE_SIZE': 1000,
+    # Exception handling
+    'EXCEPTION_HANDLER': 'student_evaluation_system.exception_handler.custom_exception_handler',
     # Rate limiting/throttling
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
