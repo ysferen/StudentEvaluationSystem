@@ -1,0 +1,18 @@
+# Minimal Pre-commit Configuration
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Security: Never commit private keys
+      - id: detect-private-key
+
+      # Prevent committing merge conflict markers
+      - id: check-merge-conflict
+
+      # Auto-fix: Trim trailing whitespace
+      - id: trailing-whitespace
+
+      # Auto-fix: Ensure files end with newline
+      - id: end-of-file-fixer
