@@ -15,10 +15,13 @@ class TimeStampedModel(models.Model):
 
 class Term(models.Model):
     name = models.CharField(max_length=100, help_text="e.g., Fall 2025")
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ['-is_active', '-name']
+        indexes = [
+            models.Index(fields=['-is_active', '-name']),
+        ]
         verbose_name = "Academic Term"
         verbose_name_plural = "Academic Terms"
 
@@ -44,15 +47,19 @@ class University(models.Model):
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=10, unique=True)
+    code = models.CharField(max_length=10, unique=True, db_index=True)
     university = models.ForeignKey(
         University, 
         on_delete=models.CASCADE, 
-        related_name='departments'
+        related_name='departments',
+        db_index=True
     )
 
     class Meta:
         ordering = ['code']
+        indexes = [
+            models.Index(fields=['university', 'code']),
+        ]
         verbose_name = "Department"
         verbose_name_plural = "Departments"
 
@@ -72,20 +79,25 @@ class DegreeLevel(models.Model):
 
 class Program(models.Model):
     name = models.CharField(max_length=255) 
-    code = models.CharField(max_length=10, unique=True) 
+    code = models.CharField(max_length=10, unique=True, db_index=True) 
     degree_level = models.ForeignKey(
         DegreeLevel, 
         on_delete=models.CASCADE, 
-        related_name='programs'
+        related_name='programs',
+        db_index=True
     )
     department = models.ForeignKey(
         Department, 
         on_delete=models.CASCADE, 
-        related_name='programs'
+        related_name='programs',
+        db_index=True
     )
     
     class Meta:
         ordering = ['code']
+        indexes = [
+            models.Index(fields=['department', 'degree_level']),
+        ]
         verbose_name = "Program"
         verbose_name_plural = "Programs"
     
@@ -128,17 +140,19 @@ class ProgramOutcome(TimeStampedModel):
 
 class Course(TimeStampedModel):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=10)
+    code = models.CharField(max_length=10, db_index=True)
     credits = models.PositiveIntegerField(default=3)
     program = models.ForeignKey(
         Program, 
         on_delete=models.CASCADE, 
-        related_name='courses'
+        related_name='courses',
+        db_index=True
     )
     term = models.ForeignKey(
         Term, 
         on_delete=models.CASCADE, 
-        related_name='courses'
+        related_name='courses',
+        db_index=True
     )
     instructors = models.ManyToManyField(
         settings.AUTH_USER_MODEL, 
@@ -153,6 +167,10 @@ class Course(TimeStampedModel):
                 fields=['code', 'program', 'term'], 
                 name='unique_course_code_per_program_term'
             )
+        ]
+        indexes = [
+            # Composite index for common query patterns
+            models.Index(fields=['program', 'term']),
         ]
         verbose_name = "Course"
         verbose_name_plural = "Courses"

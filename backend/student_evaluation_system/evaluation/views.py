@@ -1,6 +1,7 @@
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, Count, F, Sum, FloatField
@@ -18,6 +19,10 @@ from .serializers import (
 )
 from .services import calculate_course_scores, calculate_student_po_scores
 from core.models import StudentLearningOutcomeScore, StudentProgramOutcomeScore
+from core.permissions import (
+    IsInstructorOrAdmin, IsInstructorOfCourse,
+    IsOwnerOrInstructorOrAdmin
+)
 
 @extend_schema_view(
     list=extend_schema(
@@ -38,8 +43,15 @@ from core.models import StudentLearningOutcomeScore, StudentProgramOutcomeScore
     )
 )
 class AssessmentViewSet(viewsets.ModelViewSet):
-    """CRUD operations for assessments."""
+    """
+    CRUD operations for assessments.
+    
+    Permissions:
+    - Read: Instructors and Admins
+    - Write: Instructors (own courses) and Admins
+    """
     queryset = Assessment.objects.select_related('course', 'created_by').all()
+    permission_classes = [IsAuthenticated, IsInstructorOfCourse]
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -116,11 +128,18 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     )
 )
 class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
-    """CRUD operations for assessment-LO mappings."""
+    """
+    CRUD operations for assessment-LO mappings.
+    
+    Permissions:
+    - Read: Instructors and Admins
+    - Write: Instructors (own courses) and Admins
+    """
     queryset = AssessmentLearningOutcomeMapping.objects.select_related(
         'assessment', 'assessment__course', 'learning_outcome'
     ).all()
     serializer_class = AssessmentLearningOutcomeMappingSerializer
+    permission_classes = [IsAuthenticated, IsInstructorOfCourse]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -203,10 +222,17 @@ class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
     )
 )
 class StudentGradeViewSet(viewsets.ModelViewSet):
-    """CRUD operations for student grades."""
+    """
+    CRUD operations for student grades.
+    
+    Permissions:
+    - Read: Students (own grades), Instructors (their students), Admins (all)
+    - Write: Instructors (their courses) and Admins
+    """
     queryset = StudentGrade.objects.select_related(
         'student', 'assessment', 'assessment__course'
     ).all()
+    permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -403,9 +429,16 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
     )
 )
 class CourseEnrollmentViewSet(viewsets.ModelViewSet):
-    """CRUD operations for course enrollments."""
+    """
+    CRUD operations for course enrollments.
+    
+    Permissions:
+    - Read: Instructors and Admins
+    - Write: Instructors (own courses) and Admins
+    """
     queryset = CourseEnrollment.objects.select_related('student', 'course').all()
     serializer_class = CourseEnrollmentSerializer
+    permission_classes = [IsAuthenticated, IsInstructorOfCourse]
     
     def get_queryset(self):
         queryset = super().get_queryset()

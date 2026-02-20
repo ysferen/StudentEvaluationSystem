@@ -55,26 +55,32 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE, 
-        related_name='student_profile'
+        related_name='student_profile',
+        db_index=True
     )
-    student_id = models.CharField(max_length=20, unique=True)
+    student_id = models.CharField(max_length=20, unique=True, db_index=True)
     enrollment_term = models.ForeignKey(
         'core.Term', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name='enrolled_students'
+        related_name='enrolled_students',
+        db_index=True
     )
     program = models.ForeignKey(
         'core.Program', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
-        related_name='students'
+        related_name='students',
+        db_index=True
     )
 
     class Meta:
         ordering = ['student_id']
+        indexes = [
+            models.Index(fields=['program', 'student_id']),
+        ]
         verbose_name = "Student Profile"
         verbose_name_plural = "Student Profiles"
     
