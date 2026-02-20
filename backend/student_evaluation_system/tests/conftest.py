@@ -420,6 +420,87 @@ def assessment_lo_mappings(sample_assessments, sample_course):
     }
 
 
+# Factory-boy fixtures for new tests
+# These return factory classes that are called with keyword arguments
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+def _import_factory(factory_name):
+    """Helper to import factories with fallback."""
+    try:
+        module = __import__('tests.factories', fromlist=[factory_name])
+        return getattr(module, factory_name)
+    except (ImportError, AttributeError):
+        import factories
+        return getattr(factories, factory_name)
+
+@pytest.fixture
+def fb_user_factory(db):  # fb_ prefix to avoid conflict with old user_factory
+    """Factory-boy User factory. Returns class - call with fb_user_factory(username='test', role='student')."""
+    return _import_factory('UserFactory')
+
+@pytest.fixture
+def student_user_factory(db):
+    """Factory-boy StudentUser factory."""
+    return _import_factory('StudentUserFactory')
+
+@pytest.fixture
+def instructor_user_factory(db):
+    """Factory-boy InstructorUser factory."""
+    return _import_factory('InstructorUserFactory')
+
+@pytest.fixture
+def admin_user_factory(db):
+    """Factory-boy AdminUser factory."""
+    return _import_factory('AdminUserFactory')
+
+@pytest.fixture
+def fb_course_factory(db):  # fb_ prefix to avoid conflict
+    """Factory-boy Course factory."""
+    return _import_factory('CourseFactory')
+
+@pytest.fixture
+def course_with_data_factory(db):
+    """Factory-boy CourseWithData factory."""
+    return _import_factory('CourseWithDataFactory')
+
+@pytest.fixture
+def assessment_factory(db):
+    """Factory-boy Assessment factory."""
+    return _import_factory('AssessmentFactory')
+
+@pytest.fixture
+def learning_outcome_factory(db):
+    """Factory-boy LearningOutcome factory."""
+    return _import_factory('LearningOutcomeFactory')
+
+@pytest.fixture
+def program_outcome_factory(db):
+    """Factory-boy ProgramOutcome factory."""
+    return _import_factory('ProgramOutcomeFactory')
+
+@pytest.fixture
+def course_enrollment_factory(db):
+    """Factory-boy CourseEnrollment factory."""
+    return _import_factory('CourseEnrollmentFactory')
+
+@pytest.fixture
+def student_grade_factory(db):
+    """Factory-boy StudentGrade factory."""
+    return _import_factory('StudentGradeFactory')
+
+@pytest.fixture
+def term_factory(db):
+    """Factory-boy Term factory."""
+    return _import_factory('TermFactory')
+
+@pytest.fixture
+def program_factory(db):
+    """Factory-boy Program factory."""
+    return _import_factory('ProgramFactory')
+
 # Add this at the end of your conftest.py to ensure Django is setup
 def pytest_configure():
     """Configure Django for pytest."""

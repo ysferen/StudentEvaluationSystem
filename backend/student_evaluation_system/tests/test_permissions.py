@@ -153,7 +153,7 @@ class TestStudentScorePermissions:
         
         # Should see exactly 1 score (their own)
         assert len(results) == 1
-        assert results[0]['student'] == student_user.id
+        assert results[0]['student_id'] == student_user.id
 
 
 class TestPermissionClasses:
