@@ -44,12 +44,12 @@ class DummyImportSerializer(serializers.Serializer):
 
 class FileUploadRateThrottle(UserRateThrottle):
     """Custom throttle for file upload endpoints.
-    
+
     Prevents abuse of file upload functionality and protects
     against DoS attacks through large file uploads.
     """
     scope = 'file_upload'
-    
+
     def allow_request(self, request, view):
         # Skip throttle for GET requests (documentation)
         if request.method == 'GET':
@@ -67,7 +67,7 @@ class FileUploadRateThrottle(UserRateThrottle):
 class UniversityViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for universities.
-    
+
     Permissions:
     - Read: Any authenticated user
     - Write: Admin only
@@ -92,7 +92,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
 class DepartmentViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for departments.
-    
+
     Permissions:
     - Read: Any authenticated user
     - Write: Admin only
@@ -100,7 +100,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.select_related('university').all()
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         university_id = self.request.query_params.get('university', None)
@@ -112,7 +112,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 class DegreeLevelViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for degree levels.
-    
+
     Permissions:
     - Read: Any authenticated user
     - Write: Admin only
@@ -143,7 +143,7 @@ class DegreeLevelViewSet(viewsets.ModelViewSet):
 class ProgramViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for programs.
-    
+
     Permissions:
     - Read: Any authenticated user
     - Write: Admin only
@@ -151,24 +151,24 @@ class ProgramViewSet(viewsets.ModelViewSet):
     queryset = Program.objects.select_related('department', 'degree_level').all()
     serializer_class = ProgramSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         department_id = self.request.query_params.get('department', None)
         degree_level_id = self.request.query_params.get('degree_level', None)
-        
+
         if department_id:
             queryset = queryset.filter(department_id=department_id)
         if degree_level_id:
             queryset = queryset.filter(degree_level_id=degree_level_id)
-        
+
         return queryset
 
 
 class TermViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for terms.
-    
+
     Permissions:
     - Read: Any authenticated user
     - Write: Admin only
@@ -176,7 +176,7 @@ class TermViewSet(viewsets.ModelViewSet):
     queryset = Term.objects.all()
     serializer_class = TermSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
-    
+
     @action(detail=False, methods=['get'])
     def active(self, request):
         """Get currently active term."""
@@ -214,7 +214,7 @@ class TermViewSet(viewsets.ModelViewSet):
 class CourseViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for courses.
-    
+
     Permissions:
     - Read: Instructors and Admins
     - Write: Instructors (own courses) and Admins
@@ -222,7 +222,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.select_related('program', 'term').prefetch_related('instructors').all()
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
-    
+
     def get_queryset(self):
         """
         Filter courses based on user role:
@@ -231,38 +231,38 @@ class CourseViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
         queryset = super().get_queryset()
-        
+
         # Instructors only see their own courses
         if user.is_instructor and not user.is_admin_user:
             queryset = queryset.filter(instructors=user)
-        
+
         # Apply query filters
         department_id = self.request.query_params.get('department', None)
         term_id = self.request.query_params.get('term', None)
         instructor_id = self.request.query_params.get('instructor', None)
-        
+
         if department_id:
             queryset = queryset.filter(department_id=department_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
         if instructor_id:
             queryset = queryset.filter(instructors__id=instructor_id)
-        
+
         return queryset
         queryset = super().get_queryset()
         department_id = self.request.query_params.get('department', None)
         term_id = self.request.query_params.get('term', None)
         instructor_id = self.request.query_params.get('instructor', None)
-        
+
         if department_id:
             queryset = queryset.filter(department_id=department_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
         if instructor_id:
             queryset = queryset.filter(instructors__id=instructor_id)
-        
+
         return queryset
-    
+
     @action(detail=True, methods=['get'])
     def learning_outcomes(self, request, pk=None):
         """Get all learning outcomes for this course."""
@@ -299,17 +299,17 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for program outcomes."""
     queryset = ProgramOutcome.objects.select_related('program', 'term', 'created_by').all()
     serializer_class = ProgramOutcomeSerializer
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         program_id = self.request.query_params.get('program', None)
         term_id = self.request.query_params.get('term', None)
-        
+
         if program_id:
             queryset = queryset.filter(program_id=program_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
-        
+
         return queryset
 
 
@@ -329,14 +329,14 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for learning outcomes."""
     queryset = LearningOutcome.objects.select_related('course', 'created_by').all()
     serializer_class = CoreLearningOutcomeSerializer
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         course_id = self.request.query_params.get('course', None)
-        
+
         if course_id:
             queryset = queryset.filter(course_id=course_id)
-        
+
         return queryset
 
 
@@ -358,14 +358,14 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         'course', 'learning_outcome', 'program_outcome'
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         course_id = self.request.query_params.get('course', None)
-        
+
         if course_id:
             queryset = queryset.filter(course_id=course_id)
-        
+
         return queryset
 
 @extend_schema_view(
@@ -391,7 +391,7 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
 class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only access to calculated LO scores.
-    
+
     Permissions:
     - Students: can only see their own scores
     - Instructors: can see scores of students in their courses
@@ -402,7 +402,7 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     ).all()
     serializer_class = StudentLearningOutcomeScoreSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
-    
+
     def get_queryset(self):
         """
         Filter scores based on user role:
@@ -412,27 +412,27 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         """
         user = self.request.user
         queryset = super().get_queryset()
-        
+
         # Students only see their own scores
         if user.is_student:
             queryset = queryset.filter(student=user)
-        
+
         # Instructors see scores of students in their courses
         elif user.is_instructor and not user.is_admin_user:
             instructor_course_ids = user.taught_courses.values_list('id', flat=True)
             queryset = queryset.filter(learning_outcome__course_id__in=instructor_course_ids)
-        
+
         # Apply query filters (for instructors and admins)
         student_id = self.request.query_params.get('student', None)
         course_id = self.request.query_params.get('course', None)
-        
+
         if student_id:
             queryset = queryset.filter(student_id=student_id)
         if course_id:
             queryset = queryset.filter(learning_outcome__course_id=course_id)
-        
+
         return queryset
-    
+
     @extend_schema(
         tags=['Analytics'],
         responses={200: CourseAverageSerializer(many=True)},
@@ -455,17 +455,17 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     def course_averages(self, request):
         """
         Calculate average learning outcome scores per course.
-        
+
         Query Parameters:
         - student: Student ID (optional) - filter by specific student
         - course: Course ID (optional) - filter by specific course
-        
+
         At least one parameter must be provided.
-        
+
         Returns:
         - List of courses with calculated average LO scores
         {"course_id": int, "weighted_average": float}
-        
+
         Examples:
         - /api/core/student-lo-scores/course_averages/?student=1 (all courses for student)
         - /api/core/student-lo-scores/course_averages/?course=5 (all students in course)
@@ -473,15 +473,15 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         """
         student_id = request.query_params.get('student')
         course_id = request.query_params.get('course')
-        
+
         if not student_id and not course_id:
             return Response(
                 {'error': 'Either student or course query parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         from evaluation.models import CourseEnrollment
-        
+
         # Build query based on provided parameters
         if student_id and course_id:
             # Specific student in specific course
@@ -495,39 +495,39 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             # All students in a specific course
             course_ids = [int(course_id)]
-        
+
         # Calculate average LO score for each course
         course_averages = []
-        
+
         for cid in course_ids:
             # Build base query
             lo_scores_query = StudentLearningOutcomeScore.objects.filter(
                 learning_outcome__course_id=cid
             )
-            
+
             # Filter by student if provided
             if student_id:
                 lo_scores_query = lo_scores_query.filter(student_id=student_id)
-            
+
             if lo_scores_query.exists():
                 # Calculate average score (scores are already in 0-100 or 0-1 format)
                 avg_result = lo_scores_query.aggregate(avg_score=Avg('score'))
                 avg_score = avg_result['avg_score']
-                
+
                 # Check if scores are in decimal format (0-1) and convert to percentage
                 # Assuming scores > 1 are already percentages
                 if avg_score is not None and avg_score <= 1:
                     avg_score = avg_score * 100
             else:
                 avg_score = None
-            
+
             course_averages.append({
                 'course_id': cid,
                 'weighted_average': round(avg_score, 2) if avg_score is not None else None
             })
-        
+
         return Response(course_averages)
-    
+
     @extend_schema(
         tags=['Analytics'],
         responses={200: LearningOutcomeAverageSerializer(many=True)},
@@ -546,13 +546,13 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Calculate average scores grouped by learning outcome for a course.
         Used for instructor analytics (radar charts).
-        
+
         Query Parameters:
         - course: Course ID (required)
-        
+
         Returns:
         - List of learning outcomes with their average scores across all students
-        
+
         Example: /api/core/student-lo-scores/lo_averages/?course=5
         Response: [
             {"lo_code": "LO1", "lo_description": "...", "avg_score": 85.5},
@@ -560,13 +560,13 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         ]
         """
         course_id = request.query_params.get('course')
-        
+
         if not course_id:
             return Response(
                 {'error': 'course query parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Get all LO scores for this course grouped by learning outcome
         lo_averages = (
             StudentLearningOutcomeScore.objects
@@ -575,7 +575,7 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
             .annotate(avg_score=Avg('score'))
             .order_by('learning_outcome__code')
         )
-        
+
         # Format and convert scores if needed
         result = []
         for item in lo_averages:
@@ -583,13 +583,13 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
             # Convert to percentage if in decimal format
             if avg_score is not None and avg_score <= 1:
                 avg_score = avg_score * 100
-            
+
             result.append({
                 'lo_code': item['learning_outcome__code'],
                 'lo_description': item['learning_outcome__description'],
                 'avg_score': round(avg_score, 2) if avg_score is not None else 0
             })
-        
+
         return Response(result)
 
 
@@ -616,7 +616,7 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
 class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only access to calculated PO scores.
-    
+
     Permissions:
     - Students: can only see their own scores
     - Instructors: can see scores of students in their program/department
@@ -627,7 +627,7 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     ).all()
     serializer_class = StudentProgramOutcomeScoreSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
-    
+
     def get_queryset(self):
         """
         Filter scores based on user role:
@@ -637,11 +637,11 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         """
         user = self.request.user
         queryset = super().get_queryset()
-        
+
         # Students only see their own scores
         if user.is_student:
             queryset = queryset.filter(student=user)
-        
+
         # Instructors see scores of students in their courses
         elif user.is_instructor and not user.is_admin_user:
             from evaluation.models import CourseEnrollment
@@ -650,16 +650,16 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
                 course_id__in=instructor_course_ids
             ).values_list('student_id', flat=True)
             queryset = queryset.filter(student_id__in=student_ids)
-        
+
         # Apply query filters (for instructors and admins)
         student_id = self.request.query_params.get('student', None)
         course_id = self.request.query_params.get('course', None)
-        
+
         if student_id:
             queryset = queryset.filter(student_id=student_id)
         if course_id:
             queryset = queryset.filter(course_id=course_id)
-        
+
         return queryset
 
 
@@ -697,7 +697,7 @@ class ProgramOutcomeDetailView(generics.RetrieveAPIView):
 class BaseFileImportViewSet(viewsets.GenericViewSet):
     """
     Base ViewSet for handling file imports with common functionality.
-    
+
     Rate limiting:
     - 10 file uploads per minute per user
     - Protects against DoS via large file uploads
@@ -705,33 +705,33 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = DummyImportSerializer # Placeholder serializer
     throttle_classes = [FileUploadRateThrottle]
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.file_service = None
-    
+
     def _initialize_service(self, file_obj):
         """Initialize file import service with uploaded file."""
         self.file_service = FileImportService(file_obj)
         return self.file_service
-    
+
     def _validate_file(self, file_obj):
         """Validate uploaded file format."""
         self._initialize_service(file_obj)
         self.file_service.validate_file()
         return self.file_service
-    
+
     def _get_course_by_code_and_term(self, course_code: str, term_id: int):
         """
         Get course by code and term with proper error handling.
-        
+
         Args:
             course_code (str): Course code
             term_id (int): Term ID
-            
+
         Returns:
             Course: Course object
-            
+
         Raises:
             Response: HTTP 400 if course not found
         """
@@ -776,7 +776,7 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
                 required=True,
                 location=OpenApiParameter.QUERY,
                 description='Code of the course for which scores are being imported'
-            ),            
+            ),
             OpenApiParameter(
                 name='term_id',
                 type=OpenApiTypes.INT,
@@ -807,7 +807,7 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
                 required=True,
                 location=OpenApiParameter.QUERY,
                 description='Code of the course for which scores are being imported'
-            ),            
+            ),
             OpenApiParameter(
                 name='term_id',
                 type=OpenApiTypes.INT,
@@ -823,33 +823,33 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
 class AssignmentScoresImportViewSet(BaseFileImportViewSet):
     """
     ViewSet for handling assignment scores file imports (Excel format).
-    
+
     This endpoint allows bulk import of student assignment scores from Excel format
     with columns like 'öğrenci no', 'adı', 'soyadı', 'Midterm 1(%25)_0833AB', etc.
-    
+
     IMPORTANT: Requires course_code and term_id as query parameters to identify the specific course.
     """
-    
+
     @action(detail=False, methods=['get', 'post'])
     def upload(self, request):
         """
         Upload and process assignment scores file (Turkish format).
-        
+
         Expected request format:
         - GET/POST /api/core/file-import/assignment-scores/upload/?course_code=MATH101&term_id=3
         - file: File (.xlsx, .xls) in multipart/form-data
-        
+
         Query Parameters (Required):
         - course_code: Code of the course for which scores are being imported
         - term_id: ID of the academic term for which scores are being imported
-        
+
         Expected Excel Columns:
         - 'öğrenci no' or 'No_0833AB': Student ID
         - 'adı' or 'Adı_0833AB': Student first name
         - 'soyadı' or 'Soyadı_0833AB': Student last name
         - Assessment columns with pattern: 'AssessmentName(%weight)_0833AB'
           Examples: 'Midterm 1(%25)_0833AB', 'Project(%40)_0833AB'
-        
+
         Returns:
             dict: Import results with created/updated counts and any errors
         """
@@ -882,55 +882,55 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     '  -F "file=@assignment_scores_turkish.xlsx"'
                 ]
             })
-        
+
         try:
             # Validate file presence
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
-            
+
             # Get required query parameters
             course_code = request.query_params.get('course_code')
             term_id = request.query_params.get('term_id')
-            
+
             if not course_code:
                 return Response(
                     {
                         'error': 'course_code query parameter is required',
                         'example': 'Add ?course_code=MATH101&term_id=3 to your URL'
-                    }, 
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             if not term_id:
                 return Response(
                     {
-                        'error': 'term_id query parameter is required', 
+                        'error': 'term_id query parameter is required',
                         'example': 'Add ?course_code=MATH101&term_id=3 to your URL'
-                    }, 
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             try:
                 term_id = int(term_id)
             except ValueError:
                 return Response(
-                    {'error': 'term_id must be a valid integer'}, 
+                    {'error': 'term_id must be a valid integer'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Validate course and term exist
             course = self._get_course_by_code_and_term(course_code, term_id)
             if isinstance(course, Response):  # Error response
                 return course
-            
+
             # Run validation first
             validation_result = AssignmentScoreValidator.validate_complete(file_obj, course)
-            
+
             if not validation_result.is_valid:
                 return Response({
                     'error': 'Validation failed. Please fix the errors before uploading.',
@@ -940,19 +940,19 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     'suggestions': validation_result.suggestions,
                     'validation_details': validation_result.validation_details
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Reset file position after validation
             file_obj.seek(0)
-            
+
             # Initialize and validate file
             self._validate_file(file_obj)
-            
+
             # Import assignment scores with validated course and term
             results = self.file_service.import_assignment_scores(
-                course_code=course_code, 
+                course_code=course_code,
                 term_id=term_id
             )
-            
+
             return Response({
                 'message': f'Assignment scores imported successfully for course {course.code} ({course.term.name})',
                 'course_info': {
@@ -963,7 +963,7 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                 'results': results,
                 'validation_passed': True
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             error_type = 'FileImportError' if isinstance(e, FileImportError) else 'UnexpectedError'
             return Response({
@@ -971,21 +971,21 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                 'error_type': error_type,
                 'results': self.file_service.get_import_summary() if self.file_service else {}
             }, status=status.HTTP_400_BAD_REQUEST if isinstance(e, FileImportError) else status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get', 'post'])
     def validate(self, request):
         """
         Validate assignment scores file format (Turkish format) without importing data.
-        
+
         Validates:
         1. File structure: Excel format, max 10MB
         2. Assignment names: Parses and checks against database
         3. Students: Checks if students exist in database
-        
+
         Query Parameters (Required):
         - course_code: Code of the course for validation
         - term_id: ID of the academic term for validation
-        
+
         Returns:
             dict: Comprehensive validation results
         """
@@ -1018,54 +1018,54 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     '  -F "file=@assignment_scores_turkish.xlsx"'
                 ]
             })
-        
+
         try:
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
-            
+
             # Get required query parameters
             course_code = request.query_params.get('course_code')
             term_id = request.query_params.get('term_id')
-            
+
             if not course_code:
                 return Response(
                     {
                         'error': 'course_code query parameter is required for validation',
                         'example': 'Add ?course_code=MATH101&term_id=3 to your URL'
-                    }, 
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             if not term_id:
                 return Response(
                     {
-                        'error': 'term_id query parameter is required for validation', 
+                        'error': 'term_id query parameter is required for validation',
                         'example': 'Add ?course_code=MATH101&term_id=3 to your URL'
-                    }, 
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             try:
                 term_id = int(term_id)
             except ValueError:
                 return Response(
-                    {'error': 'term_id must be a valid integer'}, 
+                    {'error': 'term_id must be a valid integer'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Validate course and term exist
             course = self._get_course_by_code_and_term(course_code, term_id)
             if isinstance(course, Response):  # Error response
                 return course
-            
+
             # Run comprehensive validation
             validation_result = AssignmentScoreValidator.validate_complete(file_obj, course)
-            
+
             response_data = {
                 'is_valid': validation_result.is_valid,
                 'course_info': {
@@ -1076,19 +1076,19 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                 'file_info': validation_result.validation_details.get('file_info', {}),
                 'validation_details': validation_result.validation_details
             }
-            
+
             if validation_result.errors:
                 response_data['errors'] = validation_result.errors
-            
+
             if validation_result.warnings:
                 response_data['warnings'] = validation_result.warnings
-            
+
             if validation_result.suggestions:
                 response_data['suggestions'] = validation_result.suggestions
-            
+
             status_code = status.HTTP_200_OK if validation_result.is_valid else status.HTTP_400_BAD_REQUEST
             return Response(response_data, status=status_code)
-            
+
         except Exception as e:
             error_msg = str(e) if isinstance(e, FileImportError) else f'Validation error: {str(e)}'
             return Response({'error': error_msg, 'is_valid': False}, status=status.HTTP_400_BAD_REQUEST)
@@ -1129,20 +1129,20 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
 class LearningOutcomesImportViewSet(BaseFileImportViewSet):
     """
     ViewSet for handling learning outcomes file imports.
-    
+
     This endpoint allows bulk import of learning outcomes through various file formats.
     Uses modular parser system to support multiple file formats (Excel, CSV, etc.).
     """
-    
+
     @action(detail=False, methods=['get', 'post'])
     def upload(self, request):
         """
         Upload and process learning outcomes file.
-        
+
         Expected request format:
         - file: File (.xlsx, .xls, .csv, etc.)
         - sheet_name: Name of the sheet/section to import from (optional)
-        
+
         Returns:
             dict: Import results with created/updated counts and any errors
         """
@@ -1162,29 +1162,29 @@ class LearningOutcomesImportViewSet(BaseFileImportViewSet):
                     '  http://localhost:8000/api/core/file-import/learning-outcomes/upload/'
                 ]
             })
-        
+
         try:
             # Validate file presence
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
             sheet_name = request.data.get('sheet_name', 'learning_outcomes')
-            
+
             # Initialize and validate file
             self._validate_file(file_obj)
-            
+
             # Import learning outcomes
             results = self.file_service.import_learning_outcomes(sheet_name=sheet_name)
-            
+
             return Response({
                 'message': 'Learning outcomes import completed successfully',
                 'results': results
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             error_type = 'FileImportError' if isinstance(e, FileImportError) else 'UnexpectedError'
             return Response({
@@ -1192,12 +1192,12 @@ class LearningOutcomesImportViewSet(BaseFileImportViewSet):
                 'error_type': error_type,
                 'results': self.file_service.get_import_summary() if self.file_service else {}
             }, status=status.HTTP_400_BAD_REQUEST if isinstance(e, FileImportError) else status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get', 'post'])
     def validate(self, request):
         """
         Validate learning outcomes file format without importing data.
-        
+
         Returns:
             dict: Available sheets/sections and validation results
         """
@@ -1216,19 +1216,19 @@ class LearningOutcomesImportViewSet(BaseFileImportViewSet):
                     '  http://localhost:8000/api/core/file-import/learning-outcomes/validate/'
                 ]
             })
-        
+
         try:
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
             file_service = self._validate_file(file_obj)
-            
+
             available_sheets = file_service.get_available_sheets()
-            
+
             return Response({
                 'message': 'Learning outcomes file format is valid',
                 'available_sheets': available_sheets,
@@ -1239,7 +1239,7 @@ class LearningOutcomesImportViewSet(BaseFileImportViewSet):
                 },
                 'expected_columns': ['code', 'description', 'course_code']
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             from .services.file_import import FileImportError
             error_msg = str(e) if isinstance(e, FileImportError) else f'Validation error: {str(e)}'
@@ -1282,20 +1282,20 @@ class LearningOutcomesImportViewSet(BaseFileImportViewSet):
 class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
     """
     ViewSet for handling program outcomes file imports.
-    
+
     This endpoint allows bulk import of program outcomes through various file formats.
     Uses modular parser system to support multiple file formats (Excel, CSV, etc.).
     """
-    
+
     @action(detail=False, methods=['get', 'post'])
     def upload(self, request):
         """
         Upload and process program outcomes file.
-        
+
         Expected request format:
         - file: File (.xlsx, .xls, .csv, etc.)
         - sheet_name: Name of the sheet/section to import from (optional)
-        
+
         Returns:
             dict: Import results with created/updated counts and any errors
         """
@@ -1315,29 +1315,29 @@ class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
                     '  http://localhost:8000/api/core/file-import/program-outcomes/upload/'
                 ]
             })
-        
+
         try:
             # Validate file presence
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
             sheet_name = request.data.get('sheet_name', 'program_outcomes')
-            
+
             # Initialize and validate file
             self._validate_file(file_obj)
-            
+
             # Import program outcomes
             results = self.file_service.import_program_outcomes(sheet_name=sheet_name)
-            
+
             return Response({
                 'message': 'Program outcomes import completed successfully',
                 'results': results
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             error_type = 'FileImportError' if isinstance(e, FileImportError) else 'UnexpectedError'
             return Response({
@@ -1345,12 +1345,12 @@ class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
                 'error_type': error_type,
                 'results': self.file_service.get_import_summary() if self.file_service else {}
             }, status=status.HTTP_400_BAD_REQUEST if isinstance(e, FileImportError) else status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get', 'post'])
     def validate(self, request):
         """
         Validate program outcomes file format without importing data.
-        
+
         Returns:
             dict: Available sheets/sections and validation results
         """
@@ -1369,19 +1369,19 @@ class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
                     '  http://localhost:8000/api/core/file-import/program-outcomes/validate/'
                 ]
             })
-        
+
         try:
             if 'file' not in request.FILES:
                 return Response(
-                    {'error': 'No file provided'}, 
+                    {'error': 'No file provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             file_obj = request.FILES['file']
             file_service = self._validate_file(file_obj)
-            
+
             available_sheets = file_service.get_available_sheets()
-            
+
             return Response({
                 'message': 'Program outcomes file format is valid',
                 'available_sheets': available_sheets,
@@ -1392,7 +1392,7 @@ class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
                 },
                 'expected_columns': ['code', 'description', 'program_code', 'term_name']
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             from .services.file_import import FileImportError
             error_msg = str(e) if isinstance(e, FileImportError) else f'Validation error: {str(e)}'
