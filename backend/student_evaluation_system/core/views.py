@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
+from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, F
@@ -11,6 +12,10 @@ from django_ratelimit.decorators import ratelimit
 from .services.file_import import FileImportService
 from .services.file_import import FileImportError
 from .services.validation import AssignmentScoreValidator
+from .permissions import (
+    IsAdmin, IsInstructorOrAdmin, IsInstructorOfCourse,
+    IsOwnerOrInstructorOrAdmin, IsAdminOrReadOnly
+)
 from rest_framework import serializers
 
 from .models import (
@@ -60,9 +65,16 @@ class FileUploadRateThrottle(UserRateThrottle):
     destroy=extend_schema(tags=['Academic Structure']),
 )
 class UniversityViewSet(viewsets.ModelViewSet):
-    """CRUD operations for universities."""
+    """
+    CRUD operations for universities.
+    
+    Permissions:
+    - Read: Any authenticated user
+    - Write: Admin only
+    """
     queryset = University.objects.all()
     serializer_class = UniversitySerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
 
 @extend_schema_view(
@@ -78,9 +90,16 @@ class UniversityViewSet(viewsets.ModelViewSet):
     )
 )
 class DepartmentViewSet(viewsets.ModelViewSet):
-    """CRUD operations for departments."""
+    """
+    CRUD operations for departments.
+    
+    Permissions:
+    - Read: Any authenticated user
+    - Write: Admin only
+    """
     queryset = Department.objects.select_related('university').all()
     serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -91,9 +110,16 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
 
 class DegreeLevelViewSet(viewsets.ModelViewSet):
-    """CRUD operations for degree levels."""
+    """
+    CRUD operations for degree levels.
+    
+    Permissions:
+    - Read: Any authenticated user
+    - Write: Admin only
+    """
     queryset = DegreeLevel.objects.all()
     serializer_class = DegreeLevelSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
 
 @extend_schema_view(
@@ -115,9 +141,16 @@ class DegreeLevelViewSet(viewsets.ModelViewSet):
     )
 )
 class ProgramViewSet(viewsets.ModelViewSet):
-    """CRUD operations for programs."""
+    """
+    CRUD operations for programs.
+    
+    Permissions:
+    - Read: Any authenticated user
+    - Write: Admin only
+    """
     queryset = Program.objects.select_related('department', 'degree_level').all()
     serializer_class = ProgramSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -133,9 +166,16 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
 
 class TermViewSet(viewsets.ModelViewSet):
-    """CRUD operations for terms."""
+    """
+    CRUD operations for terms.
+    
+    Permissions:
+    - Read: Any authenticated user
+    - Write: Admin only
+    """
     queryset = Term.objects.all()
     serializer_class = TermSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     
     @action(detail=False, methods=['get'])
     def active(self, request):
@@ -172,11 +212,43 @@ class TermViewSet(viewsets.ModelViewSet):
     )
 )
 class CourseViewSet(viewsets.ModelViewSet):
-    """CRUD operations for courses."""
+    """
+    CRUD operations for courses.
+    
+    Permissions:
+    - Read: Instructors and Admins
+    - Write: Instructors (own courses) and Admins
+    """
     queryset = Course.objects.select_related('program', 'term').prefetch_related('instructors').all()
     serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
     
     def get_queryset(self):
+        """
+        Filter courses based on user role:
+        - Instructors: only courses they teach
+        - Admins: all courses
+        """
+        user = self.request.user
+        queryset = super().get_queryset()
+        
+        # Instructors only see their own courses
+        if user.is_instructor and not user.is_admin_user:
+            queryset = queryset.filter(instructors=user)
+        
+        # Apply query filters
+        department_id = self.request.query_params.get('department', None)
+        term_id = self.request.query_params.get('term', None)
+        instructor_id = self.request.query_params.get('instructor', None)
+        
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        if term_id:
+            queryset = queryset.filter(term_id=term_id)
+        if instructor_id:
+            queryset = queryset.filter(instructors__id=instructor_id)
+        
+        return queryset
         queryset = super().get_queryset()
         department_id = self.request.query_params.get('department', None)
         term_id = self.request.query_params.get('term', None)
@@ -317,14 +389,40 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
     retrieve=extend_schema(tags=['Scores']),
 )
 class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only access to calculated LO scores."""
+    """
+    Read-only access to calculated LO scores.
+    
+    Permissions:
+    - Students: can only see their own scores
+    - Instructors: can see scores of students in their courses
+    - Admins: can see all scores
+    """
     queryset = StudentLearningOutcomeScore.objects.select_related(
         'student', 'learning_outcome', 'learning_outcome__course'
     ).all()
     serializer_class = StudentLearningOutcomeScoreSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
     
     def get_queryset(self):
+        """
+        Filter scores based on user role:
+        - Students: only their own scores
+        - Instructors: scores of students in their courses
+        - Admins: all scores
+        """
+        user = self.request.user
         queryset = super().get_queryset()
+        
+        # Students only see their own scores
+        if user.is_student:
+            queryset = queryset.filter(student=user)
+        
+        # Instructors see scores of students in their courses
+        elif user.is_instructor and not user.is_admin_user:
+            instructor_course_ids = user.taught_courses.values_list('id', flat=True)
+            queryset = queryset.filter(learning_outcome__course_id__in=instructor_course_ids)
+        
+        # Apply query filters (for instructors and admins)
         student_id = self.request.query_params.get('student', None)
         course_id = self.request.query_params.get('course', None)
         
@@ -516,14 +614,44 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     retrieve=extend_schema(tags=['Scores']),
 )
 class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only access to calculated PO scores."""
+    """
+    Read-only access to calculated PO scores.
+    
+    Permissions:
+    - Students: can only see their own scores
+    - Instructors: can see scores of students in their program/department
+    - Admins: can see all scores
+    """
     queryset = StudentProgramOutcomeScore.objects.select_related(
         'student', 'program_outcome', 'term'
     ).all()
     serializer_class = StudentProgramOutcomeScoreSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
     
     def get_queryset(self):
+        """
+        Filter scores based on user role:
+        - Students: only their own scores
+        - Instructors: scores of students in their courses
+        - Admins: all scores
+        """
+        user = self.request.user
         queryset = super().get_queryset()
+        
+        # Students only see their own scores
+        if user.is_student:
+            queryset = queryset.filter(student=user)
+        
+        # Instructors see scores of students in their courses
+        elif user.is_instructor and not user.is_admin_user:
+            from evaluation.models import CourseEnrollment
+            instructor_course_ids = user.taught_courses.values_list('id', flat=True)
+            student_ids = CourseEnrollment.objects.filter(
+                course_id__in=instructor_course_ids
+            ).values_list('student_id', flat=True)
+            queryset = queryset.filter(student_id__in=student_ids)
+        
+        # Apply query filters (for instructors and admins)
         student_id = self.request.query_params.get('student', None)
         course_id = self.request.query_params.get('course', None)
         
