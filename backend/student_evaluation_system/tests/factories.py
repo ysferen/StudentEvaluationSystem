@@ -256,6 +256,29 @@ class StudentLearningOutcomeScoreFactory(DjangoModelFactory):
     score = factory.Faker('pyfloat', left_digits=2, right_digits=1, positive=True, max_value=100)
 
 
+class AssessmentLearningOutcomeMappingFactory(DjangoModelFactory):
+    """Factory for creating AssessmentLearningOutcomeMapping instances."""
+    
+    class Meta:
+        model = AssessmentLearningOutcomeMapping
+    
+    assessment = factory.SubFactory(AssessmentFactory)
+    learning_outcome = factory.SubFactory(LearningOutcomeFactory)
+    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, positive=True, max_value=1.0)
+
+
+class LearningOutcomeProgramOutcomeMappingFactory(DjangoModelFactory):
+    """Factory for creating LearningOutcomeProgramOutcomeMapping instances."""
+    
+    class Meta:
+        model = LearningOutcomeProgramOutcomeMapping
+    
+    course = factory.SubFactory(CourseFactory)
+    learning_outcome = factory.SubFactory(LearningOutcomeFactory)
+    program_outcome = factory.SubFactory(ProgramOutcomeFactory)
+    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, positive=True, max_value=1.0)
+
+
 # Pre-built scenarios for common test setups
 
 
