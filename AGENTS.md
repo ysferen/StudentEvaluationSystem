@@ -430,6 +430,33 @@ VITE_APP_VERSION=1.0.0
 VITE_ENABLE_DEBUG=true
 ```
 
+## Completed Major Improvements
+
+### Security & Configuration (Batch 1)
+- Environment variable configuration with `environs` library
+- Rate limiting: 5/min for login, 10/min for file uploads using `django-ratelimit`
+- Input validation and sanitization for XSS/SQL injection protection
+
+### Permissions & Performance (Batch 2)
+- Custom permission classes: `IsAdmin`, `IsInstructorOrAdmin`, `IsOwnerOrInstructorOrAdmin`
+- Role-based access control applied to all viewsets
+- N+1 query fixes in score calculation with `select_related`/`prefetch_related`
+- Database indexes on frequently queried fields
+- Global exception handler for consistent API error responses
+
+### Testing (Batch 3)
+- Factory-boy factories for all models (User, Course, Assessment, etc.)
+- Permission tests (6 test cases)
+- Service unit tests (12 test cases)
+- Pytest configuration with 70% coverage threshold
+- All 31 tests passing
+
+### Frontend Improvements (Batch 4)
+- Environment configuration: `.env.development`, `.env.production`, `.env.example`
+- Error Boundary component for graceful error handling
+- Loading skeleton components for consistent loading states
+- React Query optimization with retry and staleTime configuration
+
 ## Known Issues & Limitations
 
 1. **File Import**: Large Excel files (>10MB) may require increased timeout
@@ -454,6 +481,6 @@ VITE_ENABLE_DEBUG=true
 
 ---
 
-**Last Updated**: February 2026  
-**Project Version**: 1.0.0  
+**Last Updated**: February 20, 2026  
+**Project Version**: 1.1.0  
 **Maintainer**: AI Agents should update this file when making architectural changes
