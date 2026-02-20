@@ -420,6 +420,41 @@ def assessment_lo_mappings(sample_assessments, sample_course):
     }
 
 
+# Register factories as fixtures
+from tests.factories import (
+    UserFactory, StudentUserFactory, InstructorUserFactory, AdminUserFactory,
+    StudentProfileFactory, InstructorProfileFactory,
+    UniversityFactory, DepartmentFactory, DegreeLevelFactory, ProgramFactory, TermFactory,
+    CourseFactory, LearningOutcomeFactory, ProgramOutcomeFactory,
+    AssessmentFactory, CourseEnrollmentFactory, StudentGradeFactory,
+    StudentLearningOutcomeScoreFactory,
+    CourseWithDataFactory
+)
+
+# Create pytest fixtures from factories
+register = pytest.fixture
+
+user_factory_fixture = register(UserFactory)
+student_user_factory_fixture = register(StudentUserFactory)
+instructor_user_factory_fixture = register(InstructorUserFactory)
+admin_user_factory_fixture = register(AdminUserFactory)
+student_profile_factory_fixture = register(StudentProfileFactory)
+instructor_profile_factory_fixture = register(InstructorProfileFactory)
+university_factory_fixture = register(UniversityFactory)
+department_factory_fixture = register(DepartmentFactory)
+degree_level_factory_fixture = register(DegreeLevelFactory)
+program_factory_fixture = register(ProgramFactory)
+term_factory_fixture = register(TermFactory)
+course_factory_fixture = register(CourseFactory)
+learning_outcome_factory_fixture = register(LearningOutcomeFactory)
+program_outcome_factory_fixture = register(ProgramOutcomeFactory)
+assessment_factory_fixture = register(AssessmentFactory)
+course_enrollment_factory_fixture = register(CourseEnrollmentFactory)
+student_grade_factory_fixture = register(StudentGradeFactory)
+student_lo_score_factory_fixture = register(StudentLearningOutcomeScoreFactory)
+course_with_data_factory_fixture = register(CourseWithDataFactory)
+
+
 # Add this at the end of your conftest.py to ensure Django is setup
 def pytest_configure():
     """Configure Django for pytest."""
