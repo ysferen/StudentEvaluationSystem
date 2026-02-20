@@ -148,6 +148,46 @@ api.interceptors.response.use(
   }
 );
 
+// Handle 401 errors and refresh token
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+    
+    // If 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${API_URL}/api/users/auth/refresh/`, {
+            refresh: refreshToken
+          })
+          
+          const newAccessToken = response.data.access
+          localStorage.setItem('access_token', newAccessToken)
+          
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+          return api(originalRequest)
+        } catch (refreshError) {
+          // Refresh failed, clear tokens and redirect to login
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          window.location.href = '/login'
+          return Promise.reject(refreshError)
+        }
+      } else {
+        // No refresh token, redirect to login
+        window.location.href = '/login'
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
+
 // Auth services are now handled by Orval-generated hooks in useAuth.ts
 // authService is deprecated - use useAuth hook instead
 export const authService = {

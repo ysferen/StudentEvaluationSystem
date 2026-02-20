@@ -2,16 +2,7 @@
 
 A comprehensive academic evaluation platform built with Django REST Framework and React. This system allows educational institutions to track student performance through weighted assessments and measure achievement against course and program outcomes.
 
-## Features
-
-- **Role-Based Access Control**: Guest, Student, Lecturer, and Head roles with specific permissions
-- **Weighted Assessment System**: Calculate course scores from midterm, final, homework, project, and attendance
-- **Outcome Mapping**: Link assessments to Course Outcomes (CO) and Program Outcomes (PO)
-- **Analytics Dashboard**: Visual charts and insights for lecturers to monitor course performance
-- **Spreadsheet Upload**: Bulk import grades via Excel/CSV files
-- **Dynamic Weight Management**: Adjust assessment weights and see real-time impact
-
-## Setup Instructions for Team Members
+## Setup Instructions
 
 ### Prerequisites
 - Python 3.10 or higher
@@ -79,7 +70,7 @@ A comprehensive academic evaluation platform built with Django REST Framework an
    npm run dev
    ```
 
-   The frontend will be available at `http://localhost:5173/`
+   The frontend will be available at `http://localhost:3000/`
 
 ## Available Scripts
 
@@ -94,9 +85,3 @@ A comprehensive academic evaluation platform built with Django REST Framework an
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
-
-## API Documentation
-
-Once the backend is running, visit:
-- Swagger UI: `http://localhost:8000/swagger/`
-- ReDoc: `http://localhost:8000/redoc/`

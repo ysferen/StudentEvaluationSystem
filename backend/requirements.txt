@@ -6,6 +6,9 @@ pandas==2.3.3
 drf-spectacular==0.29.0
 django-cors-headers==4.9.0
 
+# Security and rate limiting
+django-ratelimit==4.1.0
+
 # Testing dependencies
 pytest==8.3.4
 pytest-django==4.9.0

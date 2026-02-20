@@ -22,7 +22,7 @@ Supported file formats:
 import pandas as pd
 import re
 from django.db import transaction
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError as DRFValidationError
 import logging
@@ -38,6 +38,7 @@ from evaluation.models import (
     StudentGrade, CourseEnrollment
 )
 from evaluation.services import calculate_course_scores
+from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -100,16 +101,20 @@ class FileParser(ABC):
 class ExcelParser(FileParser):
     """Parser for Excel files (.xlsx, .xls)."""
 
-    # Maximum file size: 10MB
-    MAX_FILE_SIZE = 10 * 1024 * 1024
-
     def validate_file(self, file_obj) -> bool:
         """Validate Excel file format."""
-        if not file_obj.name.endswith(('.xlsx', '.xls')):
-            raise FileImportError("File must be an Excel file (.xlsx or .xls)")
-
-        if file_obj.size > self.MAX_FILE_SIZE:
-            raise FileImportError(f"File size must be less than {self.MAX_FILE_SIZE // (1024*1024)}MB. Your file is {file_obj.size / (1024*1024):.2f}MB")
+        # Validate file extension
+        try:
+            InputValidator.validate_file_extension(file_obj.name)
+        except CustomValidationError as e:
+            raise FileImportError(str(e))
+        
+        # Validate file size
+        try:
+            FileValidator.validate_file_size(file_obj.size)
+        except CustomValidationError as e:
+            raise FileImportError(str(e))
+        
         if file_obj.size == 0:
             raise FileImportError("File is empty")
 
@@ -188,11 +193,17 @@ class CSVParser(FileParser):
 
     def validate_file(self, file_obj) -> bool:
         """Validate CSV file format."""
-        if not file_obj.name.endswith('.csv'):
-            raise FileImportError("File must be a CSV file (.csv)")
-
-        if file_obj.size > 10 * 1024 * 1024:  # 10MB limit
-            raise FileImportError("File size must be less than 10MB")
+        # Validate file extension
+        try:
+            InputValidator.validate_file_extension(file_obj.name)
+        except CustomValidationError as e:
+            raise FileImportError(str(e))
+        
+        # Validate file size
+        try:
+            FileValidator.validate_file_size(file_obj.size)
+        except CustomValidationError as e:
+            raise FileImportError(str(e))
 
         return True
 
@@ -305,6 +316,15 @@ class FileImportService:
             dict: Import results with created/updated counts
         """
         try:
+            # Validate and sanitize inputs
+            try:
+                course_code = InputValidator.validate_course_code(course_code)
+                term_id = int(term_id)
+                if term_id <= 0:
+                    raise ValueError("Term ID must be positive")
+            except (ValueError, CustomValidationError) as e:
+                raise FileImportError(f"Invalid input parameters: {str(e)}")
+            
             df = self.parser.parse_sheet(self.file_obj, import_type='assignment_scores')
             course = self._get_course_by_code_and_term(course_code, term_id)
             
@@ -349,12 +369,21 @@ class FileImportService:
             with transaction.atomic():
                 for idx, row in df.iterrows():
                     try:
-                        # Get student ID
-                        student_id = str(row[student_id_col]).strip()
+                        # Get student ID and validate
+                        raw_student_id = str(row[student_id_col]).strip()
                         
                         # Skip empty student IDs
-                        if not student_id or student_id.lower() == 'nan':
+                        if not raw_student_id or raw_student_id.lower() == 'nan':
                             skipped_count += 1
+                            continue
+                        
+                        # Validate and sanitize student ID
+                        try:
+                            student_id = InputValidator.validate_student_id(raw_student_id)
+                        except CustomValidationError as e:
+                            self.import_results['errors'].append(
+                                f"Row {idx + 2}: Invalid student ID '{raw_student_id}': {str(e)}"
+                            )
                             continue
                         
                         # Get student user
@@ -376,18 +405,15 @@ class FileImportService:
                                     clean_name = self._clean_assessment_name(assessment_name)
                                     assessment = assessment_lookup[clean_name.lower().strip()]
                                     
-                                    # Clean and validate score
-                                    score_float = float(score)
-                                    
-                                    if score_float < 0:
-                                        self.import_results['errors'].append(
-                                            f"Row {idx + 2}: Negative score {score_float} for {clean_name}"
+                                    # Validate score using InputValidator
+                                    try:
+                                        score_float = InputValidator.validate_score(
+                                            score, 
+                                            max_score=assessment.total_score
                                         )
-                                        continue
-                                    
-                                    if score_float > assessment.total_score:
+                                    except CustomValidationError as e:
                                         self.import_results['errors'].append(
-                                            f"Row {idx + 2}: Score {score_float} exceeds total {assessment.total_score} for {clean_name}"
+                                            f"Row {idx + 2}: {str(e)} for {clean_name}"
                                         )
                                         continue
                                     
@@ -577,7 +603,8 @@ class FileImportService:
         non_assessment_prefixes = ['no', 'öğrenci no', 'adı', 'soyadı', 'snf', 'girme durum', 'harf notu']
         
         for col in columns:
-            col_str = str(col).strip()
+            # Sanitize column name
+            col_str = InputValidator.sanitize_column_name(str(col))
             
             # Extract the first part before any suffix pattern (_XXXXXX)
             # Split by underscore and take everything before the last part if it looks like a suffix

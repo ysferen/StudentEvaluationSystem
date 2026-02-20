@@ -11,24 +11,44 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+from environs import Env
+import os
+
+# Initialize environs
+env = Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Read .env file if it exists (for local development)
+# In production, environment variables should be set directly
+env_path = BASE_DIR.parent / '.env'
+if env_path.exists():
+    env.read_env(str(env_path))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-5wpv77y+z24p^_^tu7cr816^6)&+ujgay6+m2qs=73s%l(*x2a"
+# Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(50))"
+SECRET_KEY = env(
+    "SECRET_KEY",
+    default="django-insecure-dev-key-only-for-local-development-change-in-production"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: don't allow all hosts in production!
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 
-# Application definition
+# =============================================================================
+# APPLICATION DEFINITION
+# =============================================================================
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -46,53 +66,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",  # Token blacklist for security
     "drf_spectacular",
 ]
-
-REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,
-    'MAX_PAGE_SIZE': 1000,
-}
-
-# JWT Settings
-from datetime import timedelta
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens after rotation
-    'UPDATE_LAST_LOGIN': False,  # Don't update last_login on token refresh
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JTI_CLAIM': 'jti',
-}
-
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'Student Evaluation System API',
-    'DESCRIPTION': 'Outcome-based assessment system for academic programs',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    # Custom tag grouping
-    'TAGS': [
-        {'name': 'Authentication', 'description': 'User authentication and profile management'},
-        {'name': 'Academic Structure', 'description': 'Universities, departments, programs, and courses'},
-        {'name': 'Outcomes', 'description': 'Program outcomes (POs) and learning outcomes (LOs)'},
-        {'name': 'Assessments', 'description': 'Assignments, exams, and grading'},
-        {'name': 'Enrollment', 'description': 'Course enrollment management'},
-        {'name': 'Analytics', 'description': 'Student scores and statistics'},
-    ],
-}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -125,20 +98,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "student_evaluation_system.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# =============================================================================
+# DATABASE
+# =============================================================================
 
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": env.dj_db_url(
+        "DATABASE_URL",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+# =============================================================================
+# PASSWORD VALIDATION
+# =============================================================================
 
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -155,37 +132,118 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
+# =============================================================================
+# INTERNATIONALIZATION
+# =============================================================================
+
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# =============================================================================
+# STATIC FILES
+# =============================================================================
 
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
 
-# CORS Settings (for React frontend)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite dev server
-    "http://localhost:3000",  # Alternative React port
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-]
+
+# =============================================================================
+# DJANGO REST FRAMEWORK
+# =============================================================================
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,
+    'MAX_PAGE_SIZE': 1000,
+    # Rate limiting/throttling
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': env("ANON_THROTTLE_RATE", default='100/day'),
+        'user': env("USER_THROTTLE_RATE", default='1000/day'),
+        'login': env("LOGIN_THROTTLE_RATE", default='5/minute'),
+        'file_upload': env("FILE_UPLOAD_THROTTLE_RATE", default='10/minute'),
+    },
+}
+
+
+# =============================================================================
+# JWT SETTINGS
+# =============================================================================
+
+ACCESS_TOKEN_LIFETIME_MINUTES = env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=60)
+REFRESH_TOKEN_LIFETIME_DAYS = env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens after rotation
+    'UPDATE_LAST_LOGIN': False,  # Don't update last_login on token refresh
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JTI_CLAIM': 'jti',
+}
+
+
+# =============================================================================
+# API DOCUMENTATION
+# =============================================================================
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Student Evaluation System API',
+    'DESCRIPTION': 'Outcome-based assessment system for academic programs',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Custom tag grouping
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and profile management'},
+        {'name': 'Academic Structure', 'description': 'Universities, departments, programs, and courses'},
+        {'name': 'Outcomes', 'description': 'Program outcomes (POs) and learning outcomes (LOs)'},
+        {'name': 'Assessments', 'description': 'Assignments, exams, and grading'},
+        {'name': 'Enrollment', 'description': 'Course enrollment management'},
+        {'name': 'Analytics', 'description': 'Student scores and statistics'},
+    ],
+}
+
+
+# =============================================================================
+# CORS SETTINGS
+# =============================================================================
+
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:3000",  # Alternative React port
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ]
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -200,3 +258,80 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+# =============================================================================
+# FILE UPLOAD SETTINGS
+# =============================================================================
+
+MAX_UPLOAD_SIZE_MB = env.int("MAX_UPLOAD_SIZE_MB", default=10)
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': LOG_LEVEL,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'evaluation': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
+
+
+# =============================================================================
+# SECURITY HEADERS (for production)
+# =============================================================================
+
+if not DEBUG:
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # HSTS
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000)  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookie security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # XSS protection
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True

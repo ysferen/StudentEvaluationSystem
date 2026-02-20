@@ -118,16 +118,19 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
     """CRUD operations for assessment-LO mappings."""
     queryset = AssessmentLearningOutcomeMapping.objects.select_related(
-        'assessment', 'learning_outcome'
+        'assessment', 'assessment__course', 'learning_outcome'
     ).all()
     serializer_class = AssessmentLearningOutcomeMappingSerializer
     
     def get_queryset(self):
         queryset = super().get_queryset()
         assessment_id = self.request.query_params.get('assessment', None)
+        course_id = self.request.query_params.get('course', None)
         
         if assessment_id:
             queryset = queryset.filter(assessment_id=assessment_id)
+        if course_id:
+            queryset = queryset.filter(assessment__course_id=course_id)
         
         return queryset
     

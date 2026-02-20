@@ -1,10 +1,13 @@
 from rest_framework import generics, viewsets, status, serializers
-from rest_framework.decorators import action
+from rest_framework.decorators import action, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from drf_spectacular.utils import extend_schema
 from .models import CustomUser, StudentProfile, InstructorProfile
 from .serializers import (
@@ -12,6 +15,11 @@ from .serializers import (
     StudentProfileSerializer, 
     InstructorProfileSerializer
 )
+
+
+class LoginRateThrottle(AnonRateThrottle):
+    """Custom throttle for login attempts - prevents brute force attacks."""
+    scope = 'login'
 
 
 @extend_schema(
@@ -98,26 +106,49 @@ class InstructorProfileViewSet(viewsets.ModelViewSet):
 # Authentication Views
 @extend_schema(
     summary="User login",
-    description="Authenticate user and return JWT tokens with user data",
+    description="Authenticate user and return JWT tokens with user data. "
+                "Rate limited to 5 attempts per minute per IP to prevent brute force attacks.",
     request=CustomUserSerializer,
     responses={
         200: TokenResponseSerializer,
         400: dict,
-        401: dict
+        401: dict,
+        429: dict  # Too Many Requests
     },
     tags=['Authentication']
 )
 class LoginView(APIView):
-    """Login endpoint that returns JWT tokens and user data."""
+    """Login endpoint that returns JWT tokens and user data.
+    
+    Rate limiting:
+    - 5 attempts per minute per IP address
+    - Prevents brute force password attacks
+    """
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
+        # Validate input
         username = request.data.get('username')
         password = request.data.get('password')
 
+        # Input sanitization - strip whitespace
+        if isinstance(username, str):
+            username = username.strip()
+        if isinstance(password, str):
+            password = password.strip()
+
+        # Validate required fields
         if not username or not password:
             return Response(
                 {'error': 'Please provide both username and password'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate username format (prevent injection attempts)
+        if len(username) > 150:
+            return Response(
+                {'error': 'Username is too long (max 150 characters)'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -127,6 +158,13 @@ class LoginView(APIView):
             return Response(
                 {'error': 'Invalid credentials'},
                 status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Check if user account is active
+        if not user.is_active:
+            return Response(
+                {'error': 'User account is disabled'},
+                status=status.HTTP_403_FORBIDDEN
             )
 
         # Generate JWT tokens

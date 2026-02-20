@@ -109,22 +109,24 @@ class LearningOutcomeProgramOutcomeMappingListSerializer(serializers.ListSeriali
 
 
 class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer):
-    learning_outcome_detail = CoreLearningOutcomeSerializer(source='learning_outcome', read_only=True)
-    program_outcome_detail = ProgramOutcomeSerializer(source='program_outcome', read_only=True)
-
+    learning_outcome = CoreLearningOutcomeSerializer(read_only=True)
+    learning_outcome_id = serializers.PrimaryKeyRelatedField(
+        queryset=LearningOutcome.objects.all(),
+        source='learning_outcome',
+        write_only=True,
+        required=False
+    )
+    program_outcome = ProgramOutcomeSerializer(read_only=True)
+    program_outcome_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProgramOutcome.objects.all(),
+        source='program_outcome',
+        write_only=True,
+        required=False
+    )
+    
     class Meta:
         model = LearningOutcomeProgramOutcomeMapping
-        fields = ['id', 'course', 'learning_outcome', 'program_outcome', 'learning_outcome_detail', 'program_outcome_detail', 'weight']
-        list_serializer_class = LearningOutcomeProgramOutcomeMappingListSerializer
-
-    def validate_weight(self, value):
-        """Validate individual weight is between 0 and 1"""
-        if not (0 <= value <= 1):
-            raise serializers.ValidationError(
-                "Weight must be between 0 and 1 (representing percentage as decimal)"
-            )
-        return value
-
+        fields = ['id', 'course', 'learning_outcome', 'learning_outcome_id', 'program_outcome', 'program_outcome_id', 'weight']
 
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()

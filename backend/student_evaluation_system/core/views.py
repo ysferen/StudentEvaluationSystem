@@ -2,9 +2,12 @@ from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, F
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from .services.file_import import FileImportService
 from .services.file_import import FileImportError
 from .services.validation import AssignmentScoreValidator
@@ -32,6 +35,21 @@ from users.serializers import StudentProfileSerializer
 class DummyImportSerializer(serializers.Serializer):
     """Dummy serializer for import ViewSets that only use custom actions."""
     pass
+
+
+class FileUploadRateThrottle(UserRateThrottle):
+    """Custom throttle for file upload endpoints.
+    
+    Prevents abuse of file upload functionality and protects
+    against DoS attacks through large file uploads.
+    """
+    scope = 'file_upload'
+    
+    def allow_request(self, request, view):
+        # Skip throttle for GET requests (documentation)
+        if request.method == 'GET':
+            return True
+        return super().allow_request(request, view)
 
 @extend_schema_view(
     list=extend_schema(tags=['Academic Structure']),
@@ -212,11 +230,11 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         queryset = super().get_queryset()
-        department_id = self.request.query_params.get('department', None)
+        program_id = self.request.query_params.get('program', None)
         term_id = self.request.query_params.get('term', None)
         
-        if department_id:
-            queryset = queryset.filter(department_id=department_id)
+        if program_id:
+            queryset = queryset.filter(program_id=program_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
         
@@ -551,9 +569,14 @@ class ProgramOutcomeDetailView(generics.RetrieveAPIView):
 class BaseFileImportViewSet(viewsets.GenericViewSet):
     """
     Base ViewSet for handling file imports with common functionality.
+    
+    Rate limiting:
+    - 10 file uploads per minute per user
+    - Protects against DoS via large file uploads
     """
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = DummyImportSerializer # Placeholder serializer
+    throttle_classes = [FileUploadRateThrottle]
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

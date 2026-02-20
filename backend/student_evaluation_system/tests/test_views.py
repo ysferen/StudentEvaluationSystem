@@ -334,12 +334,12 @@ class TestLearningOutcomeProgramOutcomeMappingViewSet:
         url = reverse('lo-po-mapping-list')
         data = {
             'course': course.pk,
-            'learning_outcome': lo.pk,
-            'program_outcome': po.pk,
+            'learning_outcome_id': lo.pk,
+            'program_outcome_id': po.pk,
             'weight': 0.8
         }
         response = client.post(url, data)
-
+        
         assert response.status_code == status.HTTP_201_CREATED
         assert LearningOutcomeProgramOutcomeMapping.objects.filter(
             course=course,

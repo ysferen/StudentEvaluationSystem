@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { coreCoursesRetrieve, coreLearningOutcomesList } from '../api/generated/core/core'
 import FileUploadModal from '../components/FileUploadModal'
+import MappingEditor from '../components/MappingEditor'
 import { coreStudentLoScoresList } from '../api/generated/scores/scores'
 
 interface BoxPlotData {
@@ -24,7 +26,20 @@ interface HeatmapData {
 const CourseDetail = () => {
 const { id: courseId } = useParams<{ id: string }>()
 const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
+const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
 const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  // Prevent body scroll when mapping editor is open
+  useEffect(() => {
+    if (isMappingEditorOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMappingEditorOpen])
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['course', courseId],
@@ -343,7 +358,18 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       {/* Learning Outcomes Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Learning Outcomes</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Learning Outcomes</h2>
+            <button
+              onClick={() => setIsMappingEditorOpen(true)}
+              className="bg-teal-600 text-white px-3 py-1.5 rounded-md hover:bg-teal-700 flex items-center space-x-1 text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <span>Outcome Mapping</span>
+            </button>
+          </div>
           <div className="space-y-3">
             {data.learningOutcomes?.map((lo: any) => (
               <div key={lo.id} className="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
@@ -567,6 +593,38 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
         onUploadComplete={handleUploadComplete}
         onError={handleUploadError}
       />
+
+      {/* Mapping Editor Modal */}
+      {isMappingEditorOpen && createPortal(
+        <div 
+          className="fixed bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ 
+            position: 'fixed',
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0,
+            zIndex: 9999 
+          }}
+          onWheel={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsMappingEditorOpen(false)
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl w-full max-w-7xl h-[95vh] overflow-hidden p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MappingEditor
+              courseId={Number(courseId)}
+              onClose={() => setIsMappingEditorOpen(false)}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
