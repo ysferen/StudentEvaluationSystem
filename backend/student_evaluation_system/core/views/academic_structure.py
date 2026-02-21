@@ -3,28 +3,28 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, F
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
-from .services.file_import import FileImportService
-from .services.file_import import FileImportError
-from .services.validation import AssignmentScoreValidator
-from .permissions import (
+from ..services.file_import import FileImportService
+from ..services.file_import import FileImportError
+from ..services.validation import AssignmentScoreValidator
+from ..permissions import (
     IsAdmin, IsInstructorOrAdmin, IsInstructorOfCourse,
     IsOwnerOrInstructorOrAdmin, IsAdminOrReadOnly
 )
 from rest_framework import serializers
 
-from .models import (
+from ..models import (
     University, Department, DegreeLevel, Program, Term,
     Course, ProgramOutcome, LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     StudentLearningOutcomeScore, StudentProgramOutcomeScore
 )
-from .serializers import (
+from ..serializers import (
     UniversitySerializer, DepartmentSerializer, DegreeLevelSerializer,
     ProgramSerializer, TermSerializer, CourseSerializer,
     ProgramOutcomeSerializer, CoreLearningOutcomeSerializer,
@@ -74,7 +74,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
     """
     queryset = University.objects.all()
     serializer_class = UniversitySerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
 
 @extend_schema_view(
@@ -99,7 +99,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     """
     queryset = Department.objects.select_related('university').all()
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -119,7 +119,7 @@ class DegreeLevelViewSet(viewsets.ModelViewSet):
     """
     queryset = DegreeLevel.objects.all()
     serializer_class = DegreeLevelSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
 
 @extend_schema_view(
@@ -150,7 +150,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
     """
     queryset = Program.objects.select_related('department', 'degree_level').all()
     serializer_class = ProgramSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -175,7 +175,7 @@ class TermViewSet(viewsets.ModelViewSet):
     """
     queryset = Term.objects.all()
     serializer_class = TermSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     @action(detail=False, methods=['get'])
     def active(self, request):
@@ -221,7 +221,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     """
     queryset = Course.objects.select_related('program', 'term').prefetch_related('instructors').all()
     serializer_class = CourseSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         """
@@ -299,6 +299,7 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for program outcomes."""
     queryset = ProgramOutcome.objects.select_related('program', 'term', 'created_by').all()
     serializer_class = ProgramOutcomeSerializer
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -329,6 +330,7 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for learning outcomes."""
     queryset = LearningOutcome.objects.select_related('course', 'created_by').all()
     serializer_class = CoreLearningOutcomeSerializer
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -358,6 +360,7 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         'course', 'learning_outcome', 'program_outcome'
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -401,7 +404,7 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         'student', 'learning_outcome', 'learning_outcome__course'
     ).all()
     serializer_class = StudentLearningOutcomeScoreSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         """
@@ -626,7 +629,7 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         'student', 'program_outcome', 'term'
     ).all()
     serializer_class = StudentProgramOutcomeScoreSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrInstructorOrAdmin]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         """

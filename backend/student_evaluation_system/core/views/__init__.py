@@ -17,6 +17,12 @@ from .academic_structure import (
     DegreeLevelViewSet,
     ProgramViewSet,
     TermViewSet,
+    StudentListView,
+    StudentDetailView,
+    CourseListView,
+    CourseDetailView,
+    ProgramOutcomeListView,
+    ProgramOutcomeDetailView,
 )
 
 # Course & Outcomes
@@ -48,6 +54,12 @@ __all__ = [
     'DegreeLevelViewSet',
     'ProgramViewSet',
     'TermViewSet',
+    'StudentListView',
+    'StudentDetailView',
+    'CourseListView',
+    'CourseDetailView',
+    'ProgramOutcomeListView',
+    'ProgramOutcomeDetailView',
     # Course & Outcomes
     'CourseViewSet',
     'ProgramOutcomeViewSet',

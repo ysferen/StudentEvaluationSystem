@@ -18,13 +18,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.db import IntegrityError
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
 class APIError(Exception):
     """Base class for API errors."""
-    
+
     def __init__(self, message, code=None, status_code=400, details=None):
         self.message = message
         self.code = code or 'error'
@@ -35,7 +36,7 @@ class APIError(Exception):
 
 class NotFoundError(APIError):
     """Resource not found error."""
-    
+
     def __init__(self, resource=None, identifier=None):
         message = f"{resource} not found" if resource else "Resource not found"
         if identifier:
@@ -45,14 +46,14 @@ class NotFoundError(APIError):
 
 class PermissionError(APIError):
     """Permission denied error."""
-    
+
     def __init__(self, message="You don't have permission to perform this action"):
         super().__init__(message, code='permission_denied', status_code=403)
 
 
 class ValidationAPIError(APIError):
     """Validation error."""
-    
+
     def __init__(self, message, details=None):
         super().__init__(message, code='validation_error', status_code=400, details=details)
 
@@ -60,17 +61,17 @@ class ValidationAPIError(APIError):
 def custom_exception_handler(exc, context):
     """
     Custom exception handler that standardizes error responses.
-    
+
     Args:
         exc: The exception that was raised
         context: Dictionary containing request and view information
-        
+
     Returns:
         Response object with standardized error format
     """
     # Get the standard DRF response first
     response = exception_handler(exc, context)
-    
+
     # If DRF handled it, standardize the format
     if response is not None:
         error_data = {
@@ -79,14 +80,14 @@ def custom_exception_handler(exc, context):
                 'message': get_error_message(exc),
             }
         }
-        
+
         # Add details for validation errors
         if isinstance(exc, ValidationError) and hasattr(exc, 'detail'):
             error_data['error']['details'] = exc.detail
-        
+
         response.data = error_data
         return response
-    
+
     # Handle Django exceptions that DRF doesn't handle
     if isinstance(exc, PermissionDenied):
         return Response(
@@ -98,7 +99,7 @@ def custom_exception_handler(exc, context):
             },
             status=status.HTTP_403_FORBIDDEN
         )
-    
+
     if isinstance(exc, ObjectDoesNotExist):
         return Response(
             {
@@ -109,7 +110,7 @@ def custom_exception_handler(exc, context):
             },
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
     if isinstance(exc, IntegrityError):
         logger.error(f"Database integrity error: {str(exc)}")
         return Response(
@@ -122,12 +123,11 @@ def custom_exception_handler(exc, context):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Log unhandled exceptions
     logger.exception(f"Unhandled exception: {str(exc)}")
-    
+
     # Return generic error for unhandled exceptions (don't expose details in production)
-    from django.conf import settings
     return Response(
         {
             'error': {
@@ -146,11 +146,11 @@ def get_error_code(exc):
         ValidationError: 'validation_error',
         PermissionDenied: 'permission_denied',
     }
-    
+
     for exc_type, code in error_codes.items():
         if isinstance(exc, exc_type):
             return code
-    
+
     # Map status codes to error codes
     status_codes = {
         400: 'bad_request',
@@ -161,10 +161,10 @@ def get_error_code(exc):
         429: 'rate_limited',
         500: 'internal_error',
     }
-    
+
     if hasattr(exc, 'status_code'):
         return status_codes.get(exc.status_code, 'error')
-    
+
     return 'error'
 
 
@@ -184,24 +184,24 @@ def get_error_message(exc):
             return '; '.join(str(e) for e in exc.detail)
         else:
             return str(exc.detail)
-    
+
     return str(exc)
 
 
 class ExceptionMiddleware:
     """
     Middleware to catch and log exceptions.
-    
+
     This ensures all exceptions are logged, even if they're handled
     by DRF's exception handler.
     """
-    
+
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
         return self.get_response(request)
-    
+
     def process_exception(self, request, exception):
         """Log all unhandled exceptions."""
         if not isinstance(exception, APIException):

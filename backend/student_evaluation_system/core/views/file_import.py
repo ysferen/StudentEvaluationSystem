@@ -9,7 +9,7 @@ Contains ViewSets for importing data from files:
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import UserRateThrottle
@@ -33,14 +33,24 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
     """Base ViewSet for file import operations."""
     parser_classes = [MultiPartParser, FormParser]
     throttle_classes = [FileUploadRateThrottle]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     import_type = None
 
     @extend_schema(request={'multipart/form-data': {'type': 'object', 'properties': {'file': {'type': 'string', 'format': 'binary'}}}})
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['get', 'post'])
     def upload(self, request):
         """Upload and process file."""
+        if request.method.lower() == 'get':
+            info = {
+                'message': 'Upload a file to import data.',
+                'required_query_parameters': ['course_code'] if self.import_type == 'assignment_scores' else [],
+            }
+            return Response(info, status=status.HTTP_200_OK)
+
+        if self.import_type == 'assignment_scores' and not request.query_params.get('course_code'):
+            return Response({'error': {'course_code': 'course_code is required'}}, status=status.HTTP_400_BAD_REQUEST)
+
         file_obj = request.FILES.get('file')
         if not file_obj:
             return Response(

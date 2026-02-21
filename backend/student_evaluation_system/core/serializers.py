@@ -10,16 +10,24 @@ from typing import List, Dict, Any
 from drf_spectacular.utils import extend_schema_field
 
 class DepartmentSerializer(serializers.ModelSerializer):
-    university = serializers.StringRelatedField()
+    university = serializers.PrimaryKeyRelatedField(queryset=University.objects.all())
 
     class Meta:
         model = Department
         fields = ['id', 'name', 'code', 'university']
 
 class UniversitySerializer(serializers.ModelSerializer):
+    code = serializers.CharField(max_length=10, required=False, allow_blank=True)
+
     class Meta:
         model = University
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'code']
+
+    def validate_code(self, value: str) -> str:
+        """Normalize whitespace-only input so model default/fallback can generate a code."""
+        if value is None:
+            return value
+        return value.strip()
 
 class TermSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,32 +37,35 @@ class TermSerializer(serializers.ModelSerializer):
 class DegreeLevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DegreeLevel
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'level']
 
 class ProgramSerializer(serializers.ModelSerializer):
-    department = DepartmentSerializer(read_only=True)
-    degree_level = DegreeLevelSerializer(read_only=True)
-
     class Meta:
         model = Program
         fields = ['id', 'name', 'code', 'department', 'degree_level']
 
 class ProgramOutcomeSerializer(serializers.ModelSerializer):
-    department = serializers.StringRelatedField()
-    term = serializers.StringRelatedField()
+    program = serializers.PrimaryKeyRelatedField(read_only=True)
+    term = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = ProgramOutcome
-        fields = ['id', 'code', 'description', 'department', 'term', 'created_at']
+        fields = ['id', 'code', 'description', 'program', 'term', 'weight', 'created_at']
 
 class CourseSerializer(serializers.ModelSerializer):
     program = ProgramSerializer(read_only=True)
     term = TermSerializer(read_only=True)
+    program_id = serializers.PrimaryKeyRelatedField(
+        queryset=Program.objects.all(), source='program', write_only=True
+    )
+    term_id = serializers.PrimaryKeyRelatedField(
+        queryset=Term.objects.all(), source='term', write_only=True
+    )
     instructors = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = ['id', 'code', 'name', 'credits', 'program', 'term', 'instructors', 'created_at']
+        fields = ['id', 'code', 'name', 'credits', 'program', 'term', 'program_id', 'term_id', 'instructors', 'created_at']
 
     @extend_schema_field(List[Dict[str, Any]])
     def get_instructors(self, obj: Course) -> List[Dict[str, Any]]:
@@ -123,7 +134,7 @@ class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer
         write_only=True,
         required=False
     )
-    
+
     class Meta:
         model = LearningOutcomeProgramOutcomeMapping
         fields = ['id', 'course', 'learning_outcome', 'learning_outcome_id', 'program_outcome', 'program_outcome_id', 'weight']

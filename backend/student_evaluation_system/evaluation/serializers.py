@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
 from core.models import Course, LearningOutcome
 from users.models import CustomUser
@@ -65,6 +66,9 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
 class AssessmentCreateSerializer(serializers.ModelSerializer):
     """For creating/updating assessments"""
+    # Provide a date default as a plain date to avoid datetime coercion errors
+    date = serializers.DateField(default=timezone.localdate)
+
     class Meta:
         model = Assessment
         fields = ['id', 'name', 'course', 'date', 'total_score', 'weight', 'assessment_type']

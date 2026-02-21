@@ -28,7 +28,7 @@ def db_setup(db):
     from core.models import (
         University, Department, DegreeLevel, Program, Term, Course
     )
-    
+
     # Create university
     university = University.objects.create(name="Test University")
 
@@ -83,7 +83,7 @@ def user_factory(db_setup):
     """
     from django.contrib.auth import get_user_model
     from users.models import StudentProfile, InstructorProfile
-    
+
     User = get_user_model()
 
     def _create_user(username, role='student', **kwargs):
@@ -127,7 +127,7 @@ def student_factory(db_setup, user_factory):
         student_with_program = student_factory('student2', program_id=1)
     """
     from users.models import StudentProfile
-    
+
     def _create_student(username, **kwargs):
         term = db_setup['term']
         program = db_setup['program']
@@ -162,7 +162,7 @@ def instructor_factory(db_setup, user_factory):
         instructor = instructor_factory('instructor1')
     """
     from users.models import InstructorProfile
-    
+
     def _create_instructor(username, title='Professor', **kwargs):
         # Create user with instructor role
         user = user_factory(username, role='instructor', **kwargs)
@@ -204,7 +204,7 @@ def sample_course(db_setup):
     from core.models import (
         ProgramOutcome, LearningOutcome, LearningOutcomeProgramOutcomeMapping
     )
-    
+
     course = db_setup['course']
     term = db_setup['term']
     program = db_setup['program']
@@ -278,7 +278,7 @@ def sample_assessments(sample_course):
     """
     from evaluation.models import Assessment
     from django.contrib.auth import get_user_model
-    
+
     User = get_user_model()
     course = sample_course['course']
 
@@ -342,7 +342,7 @@ def sample_enrollment(sample_course, student_factory):
     Returns a dictionary with course and enrolled students.
     """
     from evaluation.models import CourseEnrollment
-    
+
     course = sample_course['course']
 
     # Create students
@@ -370,7 +370,7 @@ def sample_grades(sample_assessments, sample_enrollment):
     Returns a dictionary with assessments, students, and grades.
     """
     from evaluation.models import StudentGrade
-    
+
     assessments = sample_assessments['assessments']
     students = sample_enrollment['students']
 
@@ -399,7 +399,7 @@ def assessment_lo_mappings(sample_assessments, sample_course):
     Returns a dictionary with mappings.
     """
     from evaluation.models import AssessmentLearningOutcomeMapping
-    
+
     assessments = sample_assessments['assessments']
     learning_outcomes = sample_course['learning_outcomes']
 
@@ -462,9 +462,59 @@ def fb_course_factory(db):  # fb_ prefix to avoid conflict
     return _import_factory('CourseFactory')
 
 @pytest.fixture
+def course_factory(db):
+    """Factory-boy Course factory."""
+    return _import_factory('CourseFactory')
+
+@pytest.fixture
 def course_with_data_factory(db):
     """Factory-boy CourseWithData factory."""
     return _import_factory('CourseWithDataFactory')
+
+@pytest.fixture
+def fb_student_factory(db):
+    """Factory-boy student user factory."""
+    return _import_factory('StudentUserFactory')
+
+@pytest.fixture
+def fb_instructor_factory(db):
+    """Factory-boy instructor user factory."""
+    return _import_factory('InstructorUserFactory')
+
+@pytest.fixture
+def fb_admin_factory(db):
+    """Factory-boy admin user factory."""
+    return _import_factory('AdminUserFactory')
+
+@pytest.fixture
+def fb_assessment_factory(db):
+    """Factory-boy Assessment factory."""
+    return _import_factory('AssessmentFactory')
+
+@pytest.fixture
+def fb_university_factory(db):
+    """Factory-boy University factory."""
+    return _import_factory('UniversityFactory')
+
+@pytest.fixture
+def fb_department_factory(db):
+    """Factory-boy Department factory."""
+    return _import_factory('DepartmentFactory')
+
+@pytest.fixture
+def fb_program_outcome_factory(db):
+    """Factory-boy ProgramOutcome factory."""
+    return _import_factory('ProgramOutcomeFactory')
+
+@pytest.fixture
+def fb_learning_outcome_factory(db):
+    """Factory-boy LearningOutcome factory."""
+    return _import_factory('LearningOutcomeFactory')
+
+@pytest.fixture
+def learning_outcome_program_outcome_mapping_factory(db):
+    """Factory-boy LearningOutcomeProgramOutcomeMapping factory."""
+    return _import_factory('LearningOutcomeProgramOutcomeMappingFactory')
 
 @pytest.fixture
 def assessment_factory(db):
@@ -510,7 +560,7 @@ def pytest_configure():
 
     # Set the Django settings module environment variable
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'student_evaluation_system.settings')
-    
+
     # Configure Django if not already configured
     if not settings.configured:
         django.setup()

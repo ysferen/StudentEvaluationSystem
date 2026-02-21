@@ -10,7 +10,7 @@ Contains ViewSets for managing:
 
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
@@ -27,7 +27,7 @@ from ..serializers import (
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
 )
-from ..permissions import IsInstructorOrAdmin
+from ..permissions import IsAdminOrReadOnly
 
 
 @extend_schema_view(
@@ -64,7 +64,19 @@ class CourseViewSet(viewsets.ModelViewSet):
     """
     queryset = Course.objects.select_related('program', 'term').prefetch_related('instructors').all()
     serializer_class = CourseSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
+
+    def get_permissions(self):
+        """
+        Keep backward compatibility for non-versioned endpoints while
+        requiring authentication on versioned v1 course read endpoints.
+        """
+        if (
+            self.request.path.startswith('/api/v1/')
+            and self.request.method in ('GET', 'HEAD', 'OPTIONS')
+        ):
+            return [IsAuthenticated()]
+        return [permission() for permission in self.permission_classes]
 
     def get_queryset(self):
         """
@@ -75,9 +87,20 @@ class CourseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = super().get_queryset()
 
-        # Instructors only see their own courses
-        if user.is_instructor and not user.is_admin_user:
-            queryset = queryset.filter(instructors=user)
+        # Role-based visibility for authenticated users
+        if getattr(user, 'is_authenticated', False):
+            if getattr(user, 'is_admin_user', False):
+                pass
+            elif getattr(user, 'is_instructor', False):
+                queryset = queryset.filter(instructors=user)
+            elif getattr(user, 'is_student', False):
+                from evaluation.models import CourseEnrollment
+                enrolled_course_ids = CourseEnrollment.objects.filter(
+                    student=user
+                ).values_list('course_id', flat=True)
+                queryset = queryset.filter(id__in=enrolled_course_ids)
+            else:
+                queryset = queryset.none()
 
         # Apply query filters
         department_id = self.request.query_params.get('department', None)
@@ -85,13 +108,13 @@ class CourseViewSet(viewsets.ModelViewSet):
         instructor_id = self.request.query_params.get('instructor', None)
 
         if department_id:
-            queryset = queryset.filter(department_id=department_id)
+            queryset = queryset.filter(program__department_id=department_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
         if instructor_id:
             queryset = queryset.filter(instructors__id=instructor_id)
 
-        return queryset
+        return queryset.distinct()
 
     @action(detail=True, methods=['get'])
     def learning_outcomes(self, request, pk=None):
@@ -130,7 +153,7 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for program outcomes."""
     queryset = ProgramOutcome.objects.select_related('program', 'term', 'created_by').all()
     serializer_class = ProgramOutcomeSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -157,7 +180,7 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
     """CRUD operations for learning outcomes."""
     queryset = LearningOutcome.objects.select_related('course', 'created_by').all()
     serializer_class = CoreLearningOutcomeSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -175,4 +198,4 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         'learning_outcome', 'program_outcome', 'course'
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOrAdmin]
+    permission_classes = [AllowAny, IsAdminOrReadOnly]

@@ -44,12 +44,13 @@ class TestUniversitySerializer:
         assert university.code == 'TEST01'
 
     def test_university_missing_required_fields(self):
-        """Test validation fails with missing required fields."""
+        """Test missing code is auto-generated via model-level default."""
         data = {'name': 'Test University'}  # Missing code
         serializer = UniversitySerializer(data=data)
 
-        assert not serializer.is_valid()
-        assert 'code' in serializer.errors
+        assert serializer.is_valid(), serializer.errors
+        university = serializer.save()
+        assert university.code
 
 
 @pytest.mark.django_db
@@ -150,22 +151,25 @@ class TestSerializerValidationErrors:
     """Test serializer validation error handling."""
 
     def test_blank_code_validation(self):
-        """Test that blank code is rejected."""
+        """Test that blank code is accepted and auto-generated."""
         data = {
             'name': 'Test',
             'code': '',  # Blank code
         }
         serializer = UniversitySerializer(data=data)
 
-        assert not serializer.is_valid()
-        assert 'code' in serializer.errors
+        assert serializer.is_valid(), serializer.errors
+        university = serializer.save()
+        assert university.code
 
     def test_whitespace_only_code(self):
-        """Test that whitespace-only code is rejected."""
+        """Test that whitespace-only code is accepted and auto-generated."""
         data = {
             'name': 'Test',
             'code': '   ',  # Whitespace only
         }
         serializer = UniversitySerializer(data=data)
 
-        assert not serializer.is_valid()
+        assert serializer.is_valid(), serializer.errors
+        university = serializer.save()
+        assert university.code
