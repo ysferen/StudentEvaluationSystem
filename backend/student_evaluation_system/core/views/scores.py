@@ -95,6 +95,38 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(results)
 
+    @action(detail=False, methods=['get'], url_path='lo_averages')
+    def lo_averages(self, request):
+        """Return average LO scores grouped by learning outcome."""
+        course_id = request.query_params.get('course')
+        student_id = request.query_params.get('student')
+
+        if not course_id and not student_id:
+            return Response({'error': 'course or student parameter is required'}, status=400)
+
+        qs = self.get_queryset()
+        if course_id:
+            qs = qs.filter(learning_outcome__course_id=course_id)
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+
+        data = (
+            qs.values('learning_outcome_id', 'learning_outcome__code', 'learning_outcome__description')
+            .annotate(avg_score=Avg('score'))
+            .values('learning_outcome__code', 'learning_outcome__description', 'avg_score')
+        )
+
+        results = [
+            {
+                'lo_code': item['learning_outcome__code'],
+                'lo_description': item['learning_outcome__description'],
+                'avg_score': item['avg_score'],
+            }
+            for item in data
+        ]
+
+        return Response(results)
+
 
 class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     """
