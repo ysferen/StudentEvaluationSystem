@@ -7,11 +7,11 @@ security issues like injection attacks, XSS, and malformed data.
 
 import re
 from typing import Optional, List, Tuple
-from django.core.exceptions import ValidationError
 
 
 class ValidationError(Exception):
     """Custom validation error with detailed messages."""
+
     pass
 
 
@@ -22,41 +22,74 @@ class InputValidator:
     MAX_STRING_LENGTH = 255
     MAX_TEXT_LENGTH = 10000
     MAX_FILE_SIZE_MB = 10
-    ALLOWED_FILE_EXTENSIONS = ['.xlsx', '.xls', '.csv']
+    ALLOWED_FILE_EXTENSIONS = [".xlsx", ".xls", ".csv"]
 
     # Regex patterns for sanitization
     # Allow alphanumeric, spaces, and common punctuation for names
-    SAFE_STRING_PATTERN = re.compile(r'^[\w\s\-\'\.(),:@/]+$')
+    SAFE_STRING_PATTERN = re.compile(r"^[\w\s\-\'\.(),:@/]+$")
 
     # Course code pattern: alphanumeric with optional hyphens
-    COURSE_CODE_PATTERN = re.compile(r'^[A-Z0-9\-]+$', re.IGNORECASE)
+    COURSE_CODE_PATTERN = re.compile(r"^[A-Z0-9\-]+$", re.IGNORECASE)
 
     # Student ID pattern: alphanumeric with optional leading zeros
-    STUDENT_ID_PATTERN = re.compile(r'^[A-Z0-9\-]+$', re.IGNORECASE)
+    STUDENT_ID_PATTERN = re.compile(r"^[A-Z0-9\-]+$", re.IGNORECASE)
 
     # Assessment name pattern
-    ASSESSMENT_NAME_PATTERN = re.compile(r'^[\w\s\-\'\.()%]+$')
+    ASSESSMENT_NAME_PATTERN = re.compile(r"^[\w\s\-\'\.()%]+$")
 
     # Dangerous patterns to detect SQL injection attempts
     SQL_INJECTION_PATTERNS = [
-        re.compile(r'(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)', re.IGNORECASE),
-        re.compile(r'(\b(UNION|JOIN|WHERE|FROM|TABLE|DATABASE)\b)', re.IGNORECASE),
-        re.compile(r'(--|#|/\*|\*/|;)', re.IGNORECASE),
+        re.compile(r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)", re.IGNORECASE),
+        re.compile(r"(\b(UNION|JOIN|WHERE|FROM|TABLE|DATABASE)\b)", re.IGNORECASE),
+        re.compile(r"(--|#|/\*|\*/|;)", re.IGNORECASE),
     ]
 
     # Dangerous patterns to detect XSS attempts
     XSS_PATTERNS = [
-        re.compile(r'<script[^>]*>.*?</script>', re.IGNORECASE | re.DOTALL),
-        re.compile(r'javascript:', re.IGNORECASE),
-        re.compile(r'on\w+\s*=', re.IGNORECASE),  # onclick, onerror, etc.
-        re.compile(r'<iframe', re.IGNORECASE),
-        re.compile(r'<object', re.IGNORECASE),
-        re.compile(r'<embed', re.IGNORECASE),
+        re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
+        re.compile(r"javascript:", re.IGNORECASE),
+        re.compile(r"on\w+\s*=", re.IGNORECASE),  # onclick, onerror, etc.
+        re.compile(r"<iframe", re.IGNORECASE),
+        re.compile(r"<object", re.IGNORECASE),
+        re.compile(r"<embed", re.IGNORECASE),
     ]
 
     @classmethod
-    def sanitize_string(cls, value: str, max_length: int = MAX_STRING_LENGTH,
-                       allow_unicode: bool = False) -> str:
+    def _validate_basic_string_constraints(cls, value: str, max_length: int) -> str:
+        if not isinstance(value, str):
+            raise ValidationError(f"Expected string, got {type(value).__name__}")
+
+        cleaned_value = value.strip()
+
+        if len(cleaned_value) > max_length:
+            raise ValidationError(f"Input exceeds maximum length of {max_length} characters")
+
+        return cleaned_value
+
+    @classmethod
+    def _validate_injection_patterns(cls, value: str) -> None:
+        for pattern in cls.SQL_INJECTION_PATTERNS:
+            if pattern.search(value):
+                raise ValidationError("Input contains potentially dangerous characters")
+
+        for pattern in cls.XSS_PATTERNS:
+            if pattern.search(value):
+                raise ValidationError("Input contains potentially dangerous HTML/JavaScript")
+
+    @classmethod
+    def _validate_unicode_policy(cls, value: str, allow_unicode: bool) -> None:
+        if allow_unicode:
+            return
+
+        try:
+            value.encode("ascii")
+        except UnicodeEncodeError:
+            allowed_unicode = set("çÇğĞıİöÖşŞüÜ")
+            if not all(char in allowed_unicode or ord(char) < 128 for char in value):
+                raise ValidationError("Input contains invalid characters")
+
+    @classmethod
+    def sanitize_string(cls, value: str, max_length: int = MAX_STRING_LENGTH, allow_unicode: bool = False) -> str:
         """
         Sanitize a string input by removing dangerous characters.
 
@@ -71,38 +104,13 @@ class InputValidator:
         Raises:
             ValidationError: If input is invalid
         """
-        if not isinstance(value, str):
-            raise ValidationError(f"Expected string, got {type(value).__name__}")
-
-        # Strip whitespace
-        value = value.strip()
-
-        # Check length
-        if len(value) > max_length:
-            raise ValidationError(f"Input exceeds maximum length of {max_length} characters")
+        value = cls._validate_basic_string_constraints(value, max_length)
 
         if not value:
             return value
 
-        # Check for SQL injection patterns
-        for pattern in cls.SQL_INJECTION_PATTERNS:
-            if pattern.search(value):
-                raise ValidationError("Input contains potentially dangerous characters")
-
-        # Check for XSS patterns
-        for pattern in cls.XSS_PATTERNS:
-            if pattern.search(value):
-                raise ValidationError("Input contains potentially dangerous HTML/JavaScript")
-
-        # If unicode not allowed, check for ASCII only
-        if not allow_unicode:
-            try:
-                value.encode('ascii')
-            except UnicodeEncodeError:
-                # Allow common Turkish characters used in the system
-                allowed_unicode = set('çÇğĞıİöÖşŞüÜ')
-                if not all(c in allowed_unicode or ord(c) < 128 for c in value):
-                    raise ValidationError("Input contains invalid characters")
+        cls._validate_injection_patterns(value)
+        cls._validate_unicode_policy(value, allow_unicode)
 
         return value
 
@@ -213,15 +221,13 @@ class InputValidator:
         filename = filename.lower().strip()
 
         # Check for path traversal attempts
-        if '..' in filename or '/' in filename or '\\' in filename:
+        if ".." in filename or "/" in filename or "\\" in filename:
             raise ValidationError("Invalid filename: path traversal detected")
 
         # Check extension
         has_valid_ext = any(filename.endswith(ext) for ext in cls.ALLOWED_FILE_EXTENSIONS)
         if not has_valid_ext:
-            raise ValidationError(
-                f"Invalid file extension. Allowed: {', '.join(cls.ALLOWED_FILE_EXTENSIONS)}"
-            )
+            raise ValidationError(f"Invalid file extension. Allowed: {', '.join(cls.ALLOWED_FILE_EXTENSIONS)}")
 
     @classmethod
     def validate_score(cls, score, max_score: Optional[float] = None) -> float:
@@ -290,7 +296,7 @@ class InputValidator:
             return str(column_name)
 
         # Remove null bytes and control characters
-        column_name = re.sub(r'[\x00-\x1f\x7f]', '', column_name)
+        column_name = re.sub(r"[\x00-\x1f\x7f]", "", column_name)
 
         # Strip whitespace
         column_name = column_name.strip()
@@ -307,9 +313,9 @@ class FileValidator:
 
     MAX_FILE_SIZE_MB = 10
     ALLOWED_MIME_TYPES = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  # .xlsx
-        'application/vnd.ms-excel',  # .xls
-        'text/csv',  # .csv
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # .xlsx
+        "application/vnd.ms-excel",  # .xls
+        "text/csv",  # .csv
     ]
 
     @classmethod
@@ -327,9 +333,7 @@ class FileValidator:
 
         if file_size > max_size:
             human_size = file_size / (1024 * 1024)
-            raise ValidationError(
-                f"File size must be less than {cls.MAX_FILE_SIZE_MB}MB (got {human_size:.2f}MB)"
-            )
+            raise ValidationError(f"File size must be less than {cls.MAX_FILE_SIZE_MB}MB (got {human_size:.2f}MB)")
 
     @classmethod
     def validate_file_type(cls, content_type: str, filename: str) -> None:
@@ -350,7 +354,7 @@ class FileValidator:
         if content_type and content_type not in cls.ALLOWED_MIME_TYPES:
             # Some browsers may send generic types, so we don't strictly enforce
             # but log a warning
-            logger = __import__('logging').getLogger(__name__)
+            logger = __import__("logging").getLogger(__name__)
             logger.warning(f"Unexpected MIME type '{content_type}' for file '{filename}'")
 
 

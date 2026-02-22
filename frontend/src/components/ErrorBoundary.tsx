@@ -14,7 +14,7 @@ interface State {
 
 /**
  * Error Boundary component to catch JavaScript errors anywhere in the child component tree.
- * 
+ *
  * Usage:
  * ```tsx
  * <ErrorBoundary fallback={<ErrorPage />}>

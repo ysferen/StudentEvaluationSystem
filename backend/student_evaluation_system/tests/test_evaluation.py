@@ -19,15 +19,15 @@ class TestAssessmentModel:
         """Test creating an assessment."""
         course = fb_course_factory()
         assessment = Assessment.objects.create(
-            name='Midterm Exam',
+            name="Midterm Exam",
             course=course,
-            assessment_type='midterm',
+            assessment_type="midterm",
             total_score=100,
             weight=0.3,
         )
 
-        assert assessment.name == 'Midterm Exam'
-        assert assessment.assessment_type == 'midterm'
+        assert assessment.name == "Midterm Exam"
+        assert assessment.assessment_type == "midterm"
         assert assessment.total_score == 100
 
     def test_assessment_weight_validation(self, fb_course_factory):
@@ -36,9 +36,9 @@ class TestAssessmentModel:
 
         # Valid weight
         assessment = Assessment.objects.create(
-            name='Valid Assessment',
+            name="Valid Assessment",
             course=course,
-            assessment_type='quiz',
+            assessment_type="quiz",
             total_score=100,
             weight=0.25,
         )
@@ -49,16 +49,16 @@ class TestAssessmentModel:
         course = fb_course_factory()
 
         assessment1 = Assessment.objects.create(
-            name='First',
+            name="First",
             course=course,
-            assessment_type='quiz',
-            date='2025-01-15',
+            assessment_type="quiz",
+            date="2025-01-15",
         )
         assessment2 = Assessment.objects.create(
-            name='Second',
+            name="Second",
             course=course,
-            assessment_type='quiz',
-            date='2025-01-20',
+            assessment_type="quiz",
+            date="2025-01-20",
         )
 
         assessments = list(Assessment.objects.filter(course=course))
@@ -130,12 +130,12 @@ class TestCourseEnrollment:
         enrollment = CourseEnrollment.objects.create(
             student=student,
             course=course,
-            status='active',
+            status="active",
         )
 
         assert enrollment.student == student
         assert enrollment.course == course
-        assert enrollment.status == 'active'
+        assert enrollment.status == "active"
 
     def test_unique_enrollment(self, fb_student_factory, fb_course_factory):
         """Test student can only be enrolled once per course."""

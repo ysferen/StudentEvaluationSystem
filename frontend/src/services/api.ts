@@ -153,21 +153,21 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
-    
+
     // If 401 and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      
+
       const refreshToken = localStorage.getItem('refresh_token')
       if (refreshToken) {
         try {
           const response = await axios.post(`${API_URL}/api/users/auth/refresh/`, {
             refresh: refreshToken
           })
-          
+
           const newAccessToken = response.data.access
           localStorage.setItem('access_token', newAccessToken)
-          
+
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
           return api(originalRequest)
@@ -183,7 +183,7 @@ api.interceptors.response.use(
         window.location.href = '/login'
       }
     }
-    
+
     return Promise.reject(error)
   }
 )

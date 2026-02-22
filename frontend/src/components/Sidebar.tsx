@@ -96,7 +96,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
         <>
             {/* Mobile sidebar backdrop */}
             {isOpen && (
-                <div                 
+                <div
                    className="fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-20 lg:hidden"
                     onClick={() => setIsOpen(false)}
                 />

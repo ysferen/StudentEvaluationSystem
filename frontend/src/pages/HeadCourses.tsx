@@ -172,7 +172,7 @@ const HeadCourses = () => {
                 {filteredCourses.map((course) => {
                   const program = programs.find(p => p.id === course.program?.id)
                   const studentCount = Math.floor(Math.random() * 60) + 15 // Mock data
-                  
+
                   return (
                     <tr key={course.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
                       <td className="py-3 px-4">
@@ -229,7 +229,7 @@ const HeadCourses = () => {
             <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses found</h3>
             <p className="text-secondary-500">
-              {selectedProgram === 'all' 
+              {selectedProgram === 'all'
                 ? 'No courses are available in the department.'
                 : 'No courses found for the selected program.'
               }

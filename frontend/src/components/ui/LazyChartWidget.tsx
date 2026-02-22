@@ -1,15 +1,15 @@
 import { lazy, Suspense } from 'react'
 
 // Lazy load the actual ChartWidget component (and ApexCharts with it)
-const ChartWidget = lazy(() => import('./ChartWidget').then(module => ({ 
-  default: module.ChartWidget 
+const ChartWidget = lazy(() => import('./ChartWidget').then(module => ({
+  default: module.ChartWidget
 })))
 
 // Skeleton/placeholder while chart loads
 function ChartLoadingSkeleton({ height = 350 }: { height?: number }) {
   return (
-    <div 
-      className="animate-pulse bg-gray-200 rounded-lg flex items-center justify-center" 
+    <div
+      className="animate-pulse bg-gray-200 rounded-lg flex items-center justify-center"
       style={{ height: `${height}px` }}
     >
       <div className="text-center">

@@ -117,11 +117,11 @@ const StudentCourses = () => {
                     {enrollment.course.credits} CR
                   </Badge>
                 </div>
-                
+
                 <h4 className="font-medium text-secondary-900 mb-3 line-clamp-2">
                   {enrollment.course.name}
                 </h4>
-                
+
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm text-secondary-600">
                     <UserIcon className="h-4 w-4 mr-2" />
@@ -135,7 +135,7 @@ const StudentCourses = () => {
                     {enrollment.course.credits} credits
                   </div>
                 </div>
-                
+
                 <div className="mt-4 pt-4 border-t border-secondary-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-secondary-600">Status</span>

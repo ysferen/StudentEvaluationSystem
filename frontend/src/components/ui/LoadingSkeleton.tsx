@@ -8,8 +8,8 @@ interface LoadingSkeletonProps {
 /**
  * Card skeleton loader for consistent loading states
  */
-export const CardSkeleton: React.FC<LoadingSkeletonProps> = ({ 
-  className = '' 
+export const CardSkeleton: React.FC<LoadingSkeletonProps> = ({
+  className = ''
 }) => (
   <div className={`bg-white rounded-lg shadow p-6 animate-pulse ${className}`}>
     <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -21,8 +21,8 @@ export const CardSkeleton: React.FC<LoadingSkeletonProps> = ({
 /**
  * Table row skeleton loader
  */
-export const TableRowSkeleton: React.FC<LoadingSkeletonProps> = ({ 
-  rows = 5 
+export const TableRowSkeleton: React.FC<LoadingSkeletonProps> = ({
+  rows = 5
 }) => (
   <>
     {Array.from({ length: rows }).map((_, i) => (
@@ -44,7 +44,7 @@ export const TableRowSkeleton: React.FC<LoadingSkeletonProps> = ({
 /**
  * List skeleton loader
  */
-export const ListSkeleton: React.FC<LoadingSkeletonProps> = ({ 
+export const ListSkeleton: React.FC<LoadingSkeletonProps> = ({
   rows = 5,
   className = ''
 }) => (
@@ -79,7 +79,7 @@ export const PageSkeleton: React.FC = () => (
         </div>
       </div>
     </div>
-    
+
     {/* Content */}
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="h-8 w-1/3 bg-gray-200 rounded mb-6"></div>
@@ -103,14 +103,14 @@ export const PageSkeleton: React.FC = () => (
 /**
  * Chart skeleton loader
  */
-export const ChartSkeleton: React.FC<{ className?: string }> = ({ 
-  className = '' 
+export const ChartSkeleton: React.FC<{ className?: string }> = ({
+  className = ''
 }) => (
   <div className={`bg-white rounded-lg shadow p-6 animate-pulse ${className}`}>
     <div className="h-6 bg-gray-200 rounded w-1/3 mb-6"></div>
     <div className="h-64 bg-gray-100 rounded flex items-end justify-around p-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div 
+        <div
           key={i}
           className="w-12 bg-gray-200 rounded-t"
           style={{ height: `${Math.random() * 60 + 20}%` }}

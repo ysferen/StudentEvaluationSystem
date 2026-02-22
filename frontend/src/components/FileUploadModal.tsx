@@ -375,7 +375,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         {validation_details && (
           <div className="mt-3 pt-3 border-t border-gray-200">
             <h4 className="text-sm font-semibold text-gray-700 mb-2">Details:</h4>
-            
+
             {/* File Info */}
             {validation_details.file_info && (
               <div className="text-sm text-gray-600 mb-2">
@@ -449,7 +449,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </svg>
           </button>
         </div>
-        
+
         <div className="p-6 max-h-[70vh] overflow-y-auto">
           {/* Upload Info for Assignment Scores */}
           {type === 'assignment_scores' && (
@@ -550,7 +550,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 ) : 'Upload & Import'}
               </button>
             </div>
-            
+
             <p className="text-xs text-gray-500 text-center">
               Tip: Click "Validate File" first to check for errors before uploading
             </p>

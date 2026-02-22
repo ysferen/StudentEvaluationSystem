@@ -154,9 +154,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="course",
             name="instructors",
-            field=models.ManyToManyField(
-                related_name="taught_courses", to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ManyToManyField(related_name="taught_courses", to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name="course",
@@ -176,9 +174,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="studentlearningoutcomescore",
-            constraint=models.UniqueConstraint(
-                fields=("student", "learning_outcome"), name="unique_student_lo_score"
-            ),
+            constraint=models.UniqueConstraint(fields=("student", "learning_outcome"), name="unique_student_lo_score"),
         ),
         migrations.AddConstraint(
             model_name="programoutcome",
@@ -196,9 +192,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="learningoutcome",
-            constraint=models.UniqueConstraint(
-                fields=("code", "course"), name="unique_lo_code_per_course"
-            ),
+            constraint=models.UniqueConstraint(fields=("code", "course"), name="unique_lo_code_per_course"),
         ),
         migrations.AddConstraint(
             model_name="course",

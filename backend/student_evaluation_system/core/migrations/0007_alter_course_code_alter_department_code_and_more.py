@@ -33,15 +33,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="course",
-            index=models.Index(
-                fields=["program", "term"], name="core_course_program_776f39_idx"
-            ),
+            index=models.Index(fields=["program", "term"], name="core_course_program_776f39_idx"),
         ),
         migrations.AddIndex(
             model_name="department",
-            index=models.Index(
-                fields=["university", "code"], name="core_depart_univers_d19d63_idx"
-            ),
+            index=models.Index(fields=["university", "code"], name="core_depart_univers_d19d63_idx"),
         ),
         migrations.AddIndex(
             model_name="program",
@@ -52,8 +48,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="term",
-            index=models.Index(
-                fields=["-is_active", "-name"], name="core_term_is_acti_71bfd0_idx"
-            ),
+            index=models.Index(fields=["-is_active", "-name"], name="core_term_is_acti_71bfd0_idx"),
         ),
     ]

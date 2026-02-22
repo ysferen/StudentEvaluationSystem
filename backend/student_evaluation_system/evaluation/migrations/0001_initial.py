@@ -97,9 +97,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "score",
-                    models.FloatField(
-                        validators=[django.core.validators.MinValueValidator(0.0)]
-                    ),
+                    models.FloatField(validators=[django.core.validators.MinValueValidator(0.0)]),
                 ),
                 (
                     "assessment",

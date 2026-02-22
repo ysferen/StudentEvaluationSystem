@@ -33,7 +33,7 @@ function App() {
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
         <Route path="/login" element={<Login />} />
-      
+
       {/* Student routes with shared layout */}
       <Route path="/student" element={<Layout showOnlyCoreItems={true} />}>
         <Route index element={<StudentDashboard />} />
@@ -42,7 +42,7 @@ function App() {
       <Route path="/student/courses/:id" element={<Layout showOnlyCoreItems={false} />}>
         <Route index element={<StudentCourseDetail />} />
       </Route>
-      
+
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
       </Route>

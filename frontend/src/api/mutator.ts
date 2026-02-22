@@ -5,8 +5,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || '';
 
 // Construct full base URL
-const baseURL = API_BASE_PATH 
-  ? `${API_URL}${API_BASE_PATH}` 
+const baseURL = API_BASE_PATH
+  ? `${API_URL}${API_BASE_PATH}`
   : API_URL;
 
 // Create axios instance with base configuration
@@ -26,12 +26,12 @@ axiosInstance.interceptors.request.use(
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Debug logging in development
     if (import.meta.env.VITE_ENABLE_DEBUG === 'true') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
-    
+
     return config;
   },
   (error) => {
@@ -73,7 +73,7 @@ axiosInstance.interceptors.response.use(
       // Request was made but no response received
       console.error('[API] Network error - no response received');
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -28,7 +28,7 @@ class APIError(Exception):
 
     def __init__(self, message, code=None, status_code=400, details=None):
         self.message = message
-        self.code = code or 'error'
+        self.code = code or "error"
         self.status_code = status_code
         self.details = details or {}
         super().__init__(self.message)
@@ -41,21 +41,21 @@ class NotFoundError(APIError):
         message = f"{resource} not found" if resource else "Resource not found"
         if identifier:
             message += f": {identifier}"
-        super().__init__(message, code='not_found', status_code=404)
+        super().__init__(message, code="not_found", status_code=404)
 
 
 class PermissionError(APIError):
     """Permission denied error."""
 
     def __init__(self, message="You don't have permission to perform this action"):
-        super().__init__(message, code='permission_denied', status_code=403)
+        super().__init__(message, code="permission_denied", status_code=403)
 
 
 class ValidationAPIError(APIError):
     """Validation error."""
 
     def __init__(self, message, details=None):
-        super().__init__(message, code='validation_error', status_code=400, details=details)
+        super().__init__(message, code="validation_error", status_code=400, details=details)
 
 
 def custom_exception_handler(exc, context):
@@ -75,15 +75,15 @@ def custom_exception_handler(exc, context):
     # If DRF handled it, standardize the format
     if response is not None:
         error_data = {
-            'error': {
-                'code': get_error_code(exc),
-                'message': get_error_message(exc),
+            "error": {
+                "code": get_error_code(exc),
+                "message": get_error_message(exc),
             }
         }
 
         # Add details for validation errors
-        if isinstance(exc, ValidationError) and hasattr(exc, 'detail'):
-            error_data['error']['details'] = exc.detail
+        if isinstance(exc, ValidationError) and hasattr(exc, "detail"):
+            error_data["error"]["details"] = exc.detail
 
         response.data = error_data
         return response
@@ -91,37 +91,27 @@ def custom_exception_handler(exc, context):
     # Handle Django exceptions that DRF doesn't handle
     if isinstance(exc, PermissionDenied):
         return Response(
-            {
-                'error': {
-                    'code': 'permission_denied',
-                    'message': 'You do not have permission to perform this action'
-                }
-            },
-            status=status.HTTP_403_FORBIDDEN
+            {"error": {"code": "permission_denied", "message": "You do not have permission to perform this action"}},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     if isinstance(exc, ObjectDoesNotExist):
         return Response(
-            {
-                'error': {
-                    'code': 'not_found',
-                    'message': 'The requested resource was not found'
-                }
-            },
-            status=status.HTTP_404_NOT_FOUND
+            {"error": {"code": "not_found", "message": "The requested resource was not found"}},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     if isinstance(exc, IntegrityError):
         logger.error(f"Database integrity error: {str(exc)}")
         return Response(
             {
-                'error': {
-                    'code': 'integrity_error',
-                    'message': 'Database integrity error. This might be due to duplicate data.',
-                    'details': {'detail': str(exc)} if settings.DEBUG else {}
+                "error": {
+                    "code": "integrity_error",
+                    "message": "Database integrity error. This might be due to duplicate data.",
+                    "details": {"detail": str(exc)} if settings.DEBUG else {},
                 }
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Log unhandled exceptions
@@ -130,21 +120,21 @@ def custom_exception_handler(exc, context):
     # Return generic error for unhandled exceptions (don't expose details in production)
     return Response(
         {
-            'error': {
-                'code': 'internal_error',
-                'message': 'An internal server error occurred',
-                'details': {'detail': str(exc)} if settings.DEBUG else {}
+            "error": {
+                "code": "internal_error",
+                "message": "An internal server error occurred",
+                "details": {"detail": str(exc)} if settings.DEBUG else {},
             }
         },
-        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
 
 def get_error_code(exc):
     """Get error code based on exception type."""
     error_codes = {
-        ValidationError: 'validation_error',
-        PermissionDenied: 'permission_denied',
+        ValidationError: "validation_error",
+        PermissionDenied: "permission_denied",
     }
 
     for exc_type, code in error_codes.items():
@@ -153,24 +143,24 @@ def get_error_code(exc):
 
     # Map status codes to error codes
     status_codes = {
-        400: 'bad_request',
-        401: 'unauthorized',
-        403: 'forbidden',
-        404: 'not_found',
-        405: 'method_not_allowed',
-        429: 'rate_limited',
-        500: 'internal_error',
+        400: "bad_request",
+        401: "unauthorized",
+        403: "forbidden",
+        404: "not_found",
+        405: "method_not_allowed",
+        429: "rate_limited",
+        500: "internal_error",
     }
 
-    if hasattr(exc, 'status_code'):
-        return status_codes.get(exc.status_code, 'error')
+    if hasattr(exc, "status_code"):
+        return status_codes.get(exc.status_code, "error")
 
-    return 'error'
+    return "error"
 
 
 def get_error_message(exc):
     """Get human-readable error message."""
-    if hasattr(exc, 'detail'):
+    if hasattr(exc, "detail"):
         if isinstance(exc.detail, dict):
             # Format validation errors
             messages = []
@@ -179,9 +169,9 @@ def get_error_message(exc):
                     messages.append(f"{field}: {', '.join(str(e) for e in errors)}")
                 else:
                     messages.append(f"{field}: {errors}")
-            return '; '.join(messages)
+            return "; ".join(messages)
         elif isinstance(exc.detail, list):
-            return '; '.join(str(e) for e in exc.detail)
+            return "; ".join(str(e) for e in exc.detail)
         else:
             return str(exc.detail)
 
@@ -205,7 +195,5 @@ class ExceptionMiddleware:
     def process_exception(self, request, exception):
         """Log all unhandled exceptions."""
         if not isinstance(exception, APIException):
-            logger.exception(
-                f"Unhandled exception in {request.method} {request.path}: {str(exception)}"
-            )
+            logger.exception(f"Unhandled exception in {request.method} {request.path}: {str(exception)}")
         return None  # Let DRF handle it

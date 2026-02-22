@@ -4,10 +4,8 @@ Tests for the global exception handler.
 These tests verify standardized error responses and custom exception classes.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from rest_framework.exceptions import ValidationError, APIException, NotFound
-from rest_framework import status
+from unittest.mock import Mock, patch
+from rest_framework.exceptions import ValidationError, APIException
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.db import IntegrityError
 from django.conf import settings
@@ -37,12 +35,7 @@ class TestAPIErrorClasses:
 
     def test_api_error_with_all_params(self):
         """Test APIError with all parameters."""
-        error = APIError(
-            message="Custom error",
-            code="custom_code",
-            status_code=500,
-            details={"field": "value"}
-        )
+        error = APIError(message="Custom error", code="custom_code", status_code=500, details={"field": "value"})
         assert error.message == "Custom error"
         assert error.code == "custom_code"
         assert error.status_code == 500

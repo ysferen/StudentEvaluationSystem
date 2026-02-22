@@ -5,15 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0008_degreelevel_level_programoutcome_weight_and_more'),
+        ("core", "0008_degreelevel_level_programoutcome_weight_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='university',
-            name='code',
+            model_name="university",
+            name="code",
             field=models.CharField(db_index=True, default=core.models.generate_unique_code, max_length=10, unique=True),
         ),
     ]

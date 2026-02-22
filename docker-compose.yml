@@ -1,17 +1,57 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: ses-postgres
+    environment:
+      POSTGRES_DB: student_evaluation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   backend:
     build: ./backend
+    container_name: ses-backend
     volumes:
-      - ./backend:/app
+      - /app/.venv
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/student_evaluation
     env_file:
       - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - venv/
+            - .venv/
+            - __pycache__/
+            - .pytest_cache/
+        - action: rebuild
+          path: ./backend/pyproject.toml
+        - action: rebuild
+          path: ./backend/uv.lock
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
+    container_name: ses-frontend
     command: npm run dev -- --host
     volumes:
-      - ./frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"
@@ -19,3 +59,21 @@ services:
       - backend
     env_file:
       - ./frontend/.env.development
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+            - coverage/
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

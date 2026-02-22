@@ -12,7 +12,6 @@ has_permission() for view-level checks and has_object_permission()
 for object-level checks.
 """
 
-from rest_framework import permissions
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -41,11 +40,7 @@ class IsAdmin(BasePermission):
         Returns:
             True if user is authenticated and has admin role
         """
-        return (
-            request.user and
-            request.user.is_authenticated and
-            request.user.is_admin_user
-        )
+        return request.user and request.user.is_authenticated and request.user.is_admin_user
 
 
 class IsInstructor(BasePermission):
@@ -66,11 +61,7 @@ class IsInstructor(BasePermission):
         Returns:
             True if user is authenticated and has instructor role
         """
-        return (
-            request.user and
-            request.user.is_authenticated and
-            request.user.is_instructor
-        )
+        return request.user and request.user.is_authenticated and request.user.is_instructor
 
 
 class IsStudent(BasePermission):
@@ -91,11 +82,7 @@ class IsStudent(BasePermission):
         Returns:
             True if user is authenticated and has student role
         """
-        return (
-            request.user and
-            request.user.is_authenticated and
-            request.user.is_student
-        )
+        return request.user and request.user.is_authenticated and request.user.is_student
 
 
 class IsOwner(BasePermission):
@@ -118,7 +105,7 @@ class IsOwner(BasePermission):
             True if the object's user/student matches the requesting user
         """
         # Check for various owner field names
-        owner = getattr(obj, 'user', None) or getattr(obj, 'student', None)
+        owner = getattr(obj, "user", None) or getattr(obj, "student", None)
         return owner == request.user
 
 
@@ -161,10 +148,10 @@ class IsInstructorOfCourse(BasePermission):
             return True
 
         # Get the course from the object
-        course = getattr(obj, 'course', None) or obj
+        course = getattr(obj, "course", None) or obj
 
         # Check if user is an instructor of this course
-        if hasattr(course, 'instructors'):
+        if hasattr(course, "instructors"):
             return course.instructors.filter(id=request.user.id).exists()
 
         return False
@@ -209,17 +196,15 @@ class IsInstructorOfStudent(BasePermission):
             return True
 
         # Get the student from the object
-        student = getattr(obj, 'student', None) or getattr(obj, 'user', None)
+        student = getattr(obj, "student", None) or getattr(obj, "user", None)
         if not student:
             return False
 
         # Check if student is enrolled in any of the instructor's courses
         from evaluation.models import CourseEnrollment
-        instructor_course_ids = request.user.taught_courses.values_list('id', flat=True)
-        return CourseEnrollment.objects.filter(
-            student=student,
-            course_id__in=instructor_course_ids
-        ).exists()
+
+        instructor_course_ids = request.user.taught_courses.values_list("id", flat=True)
+        return CourseEnrollment.objects.filter(student=student, course_id__in=instructor_course_ids).exists()
 
 
 class ReadOnly(BasePermission):
@@ -264,11 +249,7 @@ class IsAdminOrReadOnly(BasePermission):
         """
         if request.method in SAFE_METHODS:
             return True
-        return (
-            request.user and
-            request.user.is_authenticated and
-            request.user.is_admin_user
-        )
+        return request.user and request.user.is_authenticated and request.user.is_admin_user
 
 
 class IsOwnerOrInstructorOrAdmin(BasePermission):
@@ -314,7 +295,7 @@ class IsOwnerOrInstructorOrAdmin(BasePermission):
             return True
 
         # Check if user owns this data
-        owner = getattr(obj, 'user', None) or getattr(obj, 'student', None)
+        owner = getattr(obj, "user", None) or getattr(obj, "student", None)
         if owner == user:
             return True
 
@@ -323,11 +304,9 @@ class IsOwnerOrInstructorOrAdmin(BasePermission):
             student = owner
             if student:
                 from evaluation.models import CourseEnrollment
-                instructor_course_ids = user.taught_courses.values_list('id', flat=True)
-                return CourseEnrollment.objects.filter(
-                    student=student,
-                    course_id__in=instructor_course_ids
-                ).exists()
+
+                instructor_course_ids = user.taught_courses.values_list("id", flat=True)
+                return CourseEnrollment.objects.filter(student=student, course_id__in=instructor_course_ids).exists()
 
         return False
 
@@ -427,8 +406,8 @@ class CanAccessStudentData(BasePermission):
             return True
 
         # Get student from object
-        student = getattr(obj, 'student', None)
-        if not student and hasattr(obj, 'user'):
+        student = getattr(obj, "student", None)
+        if not student and hasattr(obj, "user"):
             # Object might be the student profile itself
             student = obj
 
@@ -436,7 +415,7 @@ class CanAccessStudentData(BasePermission):
             return False
 
         # Own data
-        if hasattr(student, 'user'):
+        if hasattr(student, "user"):
             if student.user == user:
                 return True
         elif student == user:
@@ -445,11 +424,9 @@ class CanAccessStudentData(BasePermission):
         # Instructor access to their students
         if user.is_instructor:
             from evaluation.models import CourseEnrollment
-            instructor_course_ids = user.taught_courses.values_list('id', flat=True)
-            student_user = getattr(student, 'user', student)
-            return CourseEnrollment.objects.filter(
-                student=student_user,
-                course_id__in=instructor_course_ids
-            ).exists()
+
+            instructor_course_ids = user.taught_courses.values_list("id", flat=True)
+            student_user = getattr(student, "user", student)
+            return CourseEnrollment.objects.filter(student=student_user, course_id__in=instructor_course_ids).exists()
 
         return False

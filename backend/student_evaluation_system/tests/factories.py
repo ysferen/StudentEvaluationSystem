@@ -13,15 +13,18 @@ import factory
 from factory.django import DjangoModelFactory
 from django.contrib.auth import get_user_model
 from core.models import (
-    University, Department, DegreeLevel, Program, Term,
-    Course, LearningOutcome, ProgramOutcome,
+    University,
+    Department,
+    DegreeLevel,
+    Program,
+    Term,
+    Course,
+    LearningOutcome,
+    ProgramOutcome,
     LearningOutcomeProgramOutcomeMapping,
-    StudentLearningOutcomeScore, StudentProgramOutcomeScore
+    StudentLearningOutcomeScore,
 )
-from evaluation.models import (
-    Assessment, AssessmentLearningOutcomeMapping,
-    StudentGrade, CourseEnrollment
-)
+from evaluation.models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
 from users.models import StudentProfile, InstructorProfile
 
 User = get_user_model()
@@ -35,9 +38,9 @@ class UserFactory(DjangoModelFactory):
 
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
-    role = 'student'  # Default role
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    role = "student"  # Default role
     is_active = True
 
     @factory.post_generation
@@ -45,7 +48,7 @@ class UserFactory(DjangoModelFactory):
         """Set password after creation."""
         if not create:
             return
-        password = extracted or 'testpass123'
+        password = extracted or "testpass123"
         self.set_password(password)
         if create:
             self.save()
@@ -54,7 +57,7 @@ class UserFactory(DjangoModelFactory):
 class StudentUserFactory(UserFactory):
     """Factory for creating student users with profiles."""
 
-    role = 'student'
+    role = "student"
 
     @factory.post_generation
     def create_profile(self, create, extracted, **kwargs):
@@ -67,7 +70,7 @@ class StudentUserFactory(UserFactory):
 class InstructorUserFactory(UserFactory):
     """Factory for creating instructor users with profiles."""
 
-    role = 'instructor'
+    role = "instructor"
 
     @factory.post_generation
     def create_profile(self, create, extracted, **kwargs):
@@ -80,7 +83,7 @@ class InstructorUserFactory(UserFactory):
 class AdminUserFactory(UserFactory):
     """Factory for creating admin users."""
 
-    role = 'admin'
+    role = "admin"
 
 
 class StudentProfileFactory(DjangoModelFactory):
@@ -89,10 +92,10 @@ class StudentProfileFactory(DjangoModelFactory):
     class Meta:
         model = StudentProfile
 
-    user = factory.SubFactory(UserFactory, role='student')
+    user = factory.SubFactory(UserFactory, role="student")
     student_id = factory.Sequence(lambda n: f"STU{n:06d}")
-    enrollment_term = factory.SubFactory('tests.factories.TermFactory')
-    program = factory.SubFactory('tests.factories.ProgramFactory')
+    enrollment_term = factory.SubFactory("tests.factories.TermFactory")
+    program = factory.SubFactory("tests.factories.ProgramFactory")
 
 
 class InstructorProfileFactory(DjangoModelFactory):
@@ -101,8 +104,8 @@ class InstructorProfileFactory(DjangoModelFactory):
     class Meta:
         model = InstructorProfile
 
-    user = factory.SubFactory(UserFactory, role='instructor')
-    title = factory.Faker('job')
+    user = factory.SubFactory(UserFactory, role="instructor")
+    title = factory.Faker("job")
 
 
 class UniversityFactory(DjangoModelFactory):
@@ -110,9 +113,9 @@ class UniversityFactory(DjangoModelFactory):
 
     class Meta:
         model = University
-        django_get_or_create = ('name', 'code')
+        django_get_or_create = ("name", "code")
 
-    name = factory.Faker('company')
+    name = factory.Faker("company")
     code = factory.Sequence(lambda n: f"UNI{n:02d}")
 
 
@@ -122,7 +125,7 @@ class DepartmentFactory(DjangoModelFactory):
     class Meta:
         model = Department
 
-    name = factory.Faker('job')
+    name = factory.Faker("job")
     code = factory.Sequence(lambda n: f"DEPT{n:02d}")
     university = factory.SubFactory(UniversityFactory)
 
@@ -132,9 +135,9 @@ class DegreeLevelFactory(DjangoModelFactory):
 
     class Meta:
         model = DegreeLevel
-        django_get_or_create = ('name',)
+        django_get_or_create = ("name",)
 
-    name = factory.Iterator(['Bachelor', 'Master', 'PhD'])
+    name = factory.Iterator(["Bachelor", "Master", "PhD"])
     level = factory.Sequence(lambda n: n + 1)
 
 
@@ -144,7 +147,7 @@ class ProgramFactory(DjangoModelFactory):
     class Meta:
         model = Program
 
-    name = factory.Faker('job')
+    name = factory.Faker("job")
     code = factory.Sequence(lambda n: f"PROG{n:02d}")
     degree_level = factory.SubFactory(DegreeLevelFactory)
     department = factory.SubFactory(DepartmentFactory)
@@ -172,7 +175,7 @@ class CourseFactory(DjangoModelFactory):
     class Meta:
         model = Course
 
-    name = factory.Faker('catch_phrase')
+    name = factory.Faker("catch_phrase")
     code = factory.Sequence(lambda n: f"CS{n:03d}")
     credits = factory.Iterator([3, 4, 5])
     program = factory.SubFactory(ProgramFactory)
@@ -201,7 +204,7 @@ class LearningOutcomeFactory(DjangoModelFactory):
     class Meta:
         model = LearningOutcome
 
-    description = factory.Faker('sentence')
+    description = factory.Faker("sentence")
     code = factory.Sequence(lambda n: f"LO{n}")
     course = factory.SubFactory(CourseFactory)
     created_by = factory.SubFactory(UserFactory)
@@ -213,10 +216,10 @@ class ProgramOutcomeFactory(DjangoModelFactory):
     class Meta:
         model = ProgramOutcome
 
-    description = factory.Faker('sentence')
+    description = factory.Faker("sentence")
     code = factory.Sequence(lambda n: f"PO{n}")
-        # Keep weights non-negative without enforcing positive flag
-    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
+    # Keep weights non-negative without enforcing positive flag
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
     program = factory.SubFactory(ProgramFactory)
     term = factory.SubFactory(TermFactory)
     created_by = factory.SubFactory(UserFactory)
@@ -228,12 +231,12 @@ class AssessmentFactory(DjangoModelFactory):
     class Meta:
         model = Assessment
 
-    name = factory.Iterator(['Midterm', 'Final', 'Quiz 1', 'Quiz 2', 'Project'])
-    assessment_type = factory.Iterator(['midterm', 'final', 'quiz', 'quiz', 'project'])
+    name = factory.Iterator(["Midterm", "Final", "Quiz 1", "Quiz 2", "Project"])
+    assessment_type = factory.Iterator(["midterm", "final", "quiz", "quiz", "project"])
     course = factory.SubFactory(CourseFactory)
-    date = factory.Faker('date_this_year')
+    date = factory.Faker("date_this_year")
     total_score = factory.Iterator([100, 100, 20, 20, 50])
-    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, min_value=0.0, max_value=0.5)
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=0.5)
     created_by = factory.SubFactory(UserFactory)
 
 
@@ -243,7 +246,7 @@ class CourseEnrollmentFactory(DjangoModelFactory):
     class Meta:
         model = CourseEnrollment
 
-    student = factory.SubFactory(UserFactory, role='student')
+    student = factory.SubFactory(UserFactory, role="student")
     course = factory.SubFactory(CourseFactory)
 
 
@@ -253,9 +256,9 @@ class StudentGradeFactory(DjangoModelFactory):
     class Meta:
         model = StudentGrade
 
-    student = factory.SubFactory(UserFactory, role='student')
+    student = factory.SubFactory(UserFactory, role="student")
     assessment = factory.SubFactory(AssessmentFactory)
-    score = factory.Faker('pyfloat', left_digits=2, right_digits=1, positive=True, max_value=100)
+    score = factory.Faker("pyfloat", left_digits=2, right_digits=1, positive=True, max_value=100)
 
 
 class StudentLearningOutcomeScoreFactory(DjangoModelFactory):
@@ -264,9 +267,9 @@ class StudentLearningOutcomeScoreFactory(DjangoModelFactory):
     class Meta:
         model = StudentLearningOutcomeScore
 
-    student = factory.SubFactory(UserFactory, role='student')
+    student = factory.SubFactory(UserFactory, role="student")
     learning_outcome = factory.SubFactory(LearningOutcomeFactory)
-    score = factory.Faker('pyfloat', left_digits=2, right_digits=1, positive=True, max_value=100)
+    score = factory.Faker("pyfloat", left_digits=2, right_digits=1, positive=True, max_value=100)
 
 
 class AssessmentLearningOutcomeMappingFactory(DjangoModelFactory):
@@ -277,7 +280,7 @@ class AssessmentLearningOutcomeMappingFactory(DjangoModelFactory):
 
     assessment = factory.SubFactory(AssessmentFactory)
     learning_outcome = factory.SubFactory(LearningOutcomeFactory)
-    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
 
 
 class LearningOutcomeProgramOutcomeMappingFactory(DjangoModelFactory):
@@ -289,7 +292,7 @@ class LearningOutcomeProgramOutcomeMappingFactory(DjangoModelFactory):
     course = factory.SubFactory(CourseFactory)
     learning_outcome = factory.SubFactory(LearningOutcomeFactory)
     program_outcome = factory.SubFactory(ProgramOutcomeFactory)
-    weight = factory.Faker('pyfloat', left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
 
 
 # Pre-built scenarios for common test setups
@@ -319,13 +322,9 @@ class CourseWithAssessmentsFactory(CourseFactory):
         if not create:
             return
 
-        assessment_types = ['midterm', 'final', 'homework', 'project']
+        assessment_types = ["midterm", "final", "homework", "project"]
         for i, assessment_type in enumerate(assessment_types):
-            AssessmentFactory(
-                course=self,
-                name=f"{assessment_type.capitalize()} {i+1}",
-                assessment_type=assessment_type
-            )
+            AssessmentFactory(course=self, name=f"{assessment_type.capitalize()} {i + 1}", assessment_type=assessment_type)
 
 
 class CourseWithDataFactory(CourseFactory):
@@ -348,7 +347,8 @@ class CourseWithDataFactory(CourseFactory):
         self.instructors.add(instructor)
 
         # Create learning outcomes
-        los = [LearningOutcomeFactory(course=self, code=f"LO{i+1}") for i in range(3)]
+        for i in range(3):
+            LearningOutcomeFactory(course=self, code=f"LO{i + 1}")
 
         # Create assessments
         assessments = [

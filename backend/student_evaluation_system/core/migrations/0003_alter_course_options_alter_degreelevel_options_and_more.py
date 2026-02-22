@@ -102,9 +102,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="course",
             name="instructors",
-            field=models.ManyToManyField(
-                blank=True, related_name="taught_courses", to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ManyToManyField(blank=True, related_name="taught_courses", to=settings.AUTH_USER_MODEL),
         ),
         migrations.AlterField(
             model_name="degreelevel",

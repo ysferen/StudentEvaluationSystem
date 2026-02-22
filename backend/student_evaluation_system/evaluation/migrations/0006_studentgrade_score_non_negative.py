@@ -13,8 +13,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddConstraint(
             model_name="studentgrade",
-            constraint=models.CheckConstraint(
-                condition=models.Q(("score__gte", 0)), name="score_non_negative"
-            ),
+            constraint=models.CheckConstraint(condition=models.Q(("score__gte", 0)), name="score_non_negative"),
         ),
     ]

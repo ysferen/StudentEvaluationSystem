@@ -8,12 +8,12 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
-const Modal: React.FC<ModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  title, 
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
   children,
-  size = 'md' 
+  size = 'md'
 }) => {
   if (!isOpen) return null
 
@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({
             </svg>
           </button>
         </div>
-        
+
         <div className="p-6">
           {children}
         </div>

@@ -1,0 +1,38 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Student Evaluation System Backend"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django==5.2.8",
+    "djangorestframework==3.16.1",
+    "djangorestframework-simplejwt==5.5.1",
+    "environs==14.5.0",
+    "pandas==2.3.3",
+    "drf-spectacular==0.29.0",
+    "django-cors-headers==4.9.0",
+    "django-ratelimit==4.1.0",
+    "dj-database-url==2.3.0",
+    "psycopg2-binary==2.9.11",
+    "openpyxl>=3.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "pytest-django==4.9.0",
+    "pytest-cov==6.0.0",
+    "factory-boy==3.3.1",
+    "ruff==0.15.2",
+]
+
+[tool.ruff]
+line-length = 127
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

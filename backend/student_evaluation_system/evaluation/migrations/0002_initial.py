@@ -81,20 +81,14 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="studentgrade",
-            constraint=models.UniqueConstraint(
-                fields=("student", "assessment"), name="unique_student_grade"
-            ),
+            constraint=models.UniqueConstraint(fields=("student", "assessment"), name="unique_student_grade"),
         ),
         migrations.AddConstraint(
             model_name="courseenrollment",
-            constraint=models.UniqueConstraint(
-                fields=("student", "course"), name="unique_enrollment"
-            ),
+            constraint=models.UniqueConstraint(fields=("student", "course"), name="unique_enrollment"),
         ),
         migrations.AddConstraint(
             model_name="assessmentlearningoutcomemapping",
-            constraint=models.UniqueConstraint(
-                fields=("assessment", "learning_outcome"), name="unique_assessment_lo"
-            ),
+            constraint=models.UniqueConstraint(fields=("assessment", "learning_outcome"), name="unique_assessment_lo"),
         ),
     ]

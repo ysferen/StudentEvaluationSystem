@@ -79,8 +79,8 @@ export const usersAuthLoginCreate = (
     customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<TokenResponse>(
       {url: `/api/users/auth/login/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -88,7 +88,7 @@ export const usersAuthLoginCreate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersAuthLoginCreateMutationOptions = <TError = UsersAuthLoginCreate400 | UsersAuthLoginCreate401,
@@ -102,7 +102,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthLoginCreate>>, {data: NonReadonly<CustomUser>}> = (props) => {
@@ -111,7 +111,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersAuthLoginCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -141,17 +141,17 @@ export const useUsersAuthLoginCreate = <TError = UsersAuthLoginCreate400 | Users
  * @summary Get current user
  */
 export const usersAuthMeRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/auth/me/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -167,7 +167,7 @@ export const getUsersAuthMeRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getUsersAuthMeRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersAuthMeRetrieve>>>, TError = UsersAuthMeRetrieve401>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -175,13 +175,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersAuthMeRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthMeRetrieve>>> = ({ signal }) => usersAuthMeRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -220,7 +220,7 @@ export function useUsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<Retu
 
 export function useUsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthMeRetrieve>>>, TError = UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersAuthMeRetrieveInfiniteQueryOptions(options)
@@ -241,13 +241,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersAuthMeRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthMeRetrieve>>> = ({ signal }) => usersAuthMeRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -286,7 +286,7 @@ export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAu
 
 export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError = UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersAuthMeRetrieveQueryOptions(options)
@@ -297,6 +297,3 @@ export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAu
 
   return query;
 }
-
-
-

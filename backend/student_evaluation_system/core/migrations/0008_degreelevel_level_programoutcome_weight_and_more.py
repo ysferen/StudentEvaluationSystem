@@ -30,8 +30,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="university",
             name="code",
-            field=models.CharField(
-                db_index=True, default="TMP", max_length=10, unique=True
-            ),
+            field=models.CharField(db_index=True, default="TMP", max_length=10, unique=True),
         ),
     ]

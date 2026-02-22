@@ -6,12 +6,12 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg'
 }
 
-export const Card = ({ 
-  children, 
-  className, 
+export const Card = ({
+  children,
+  className,
   variant = 'default',
   padding = 'md',
-  ...props 
+  ...props
 }: CardProps) => {
   const variants = {
     default: 'bg-white shadow-card border border-secondary-200',
@@ -28,7 +28,7 @@ export const Card = ({
   }
 
   return (
-    <div 
+    <div
       className={clsx(
         'rounded-xl',
         variants[variant],

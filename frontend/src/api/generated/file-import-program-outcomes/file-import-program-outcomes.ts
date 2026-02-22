@@ -47,17 +47,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Upload and import program outcomes
  */
 export const coreFileImportProgramOutcomesUploadRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -67,7 +67,7 @@ export const getCoreFileImportProgramOutcomesUploadRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreFileImportProgramOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError = CoreFileImportProgramOutcomesUploadRetrieve400>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -75,13 +75,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportProgramOutcomesUploadRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>> = ({ signal }) => coreFileImportProgramOutcomesUploadRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -120,7 +120,7 @@ export function useCoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<R
 
 export function useCoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError = CoreFileImportProgramOutcomesUploadRetrieve400>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreFileImportProgramOutcomesUploadRetrieveQueryOptions(options)
@@ -142,7 +142,7 @@ export const coreFileImportProgramOutcomesUploadCreate = (
     coreFileImportProgramOutcomesUploadCreateBody: CoreFileImportProgramOutcomesUploadCreateBody,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`file`, coreFileImportProgramOutcomesUploadCreateBody.file)
 if(coreFileImportProgramOutcomesUploadCreateBody.sheet_name !== undefined) {
@@ -156,7 +156,7 @@ if(coreFileImportProgramOutcomesUploadCreateBody.sheet_name !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportProgramOutcomesUploadCreateMutationOptions = <TError = CoreFileImportProgramOutcomesUploadCreate400,
@@ -170,7 +170,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadCreate>>, {data: CoreFileImportProgramOutcomesUploadCreateBody}> = (props) => {
@@ -179,7 +179,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportProgramOutcomesUploadCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -209,17 +209,17 @@ export const useCoreFileImportProgramOutcomesUploadCreate = <TError = CoreFileIm
  * @summary Validate program outcomes file
  */
 export const coreFileImportProgramOutcomesValidateRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<FileValidationResponse>(
       {url: `/api/core/file-import/program-outcomes/validate/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -229,7 +229,7 @@ export const getCoreFileImportProgramOutcomesValidateRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreFileImportProgramOutcomesValidateRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>, TError = CoreFileImportProgramOutcomesValidateRetrieve400>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -237,13 +237,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportProgramOutcomesValidateRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>> = ({ signal }) => coreFileImportProgramOutcomesValidateRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -282,7 +282,7 @@ export function useCoreFileImportProgramOutcomesValidateRetrieve<TData = Awaited
 
 export function useCoreFileImportProgramOutcomesValidateRetrieve<TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>, TError = CoreFileImportProgramOutcomesValidateRetrieve400>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreFileImportProgramOutcomesValidateRetrieveQueryOptions(options)
@@ -304,7 +304,7 @@ export const coreFileImportProgramOutcomesValidateCreate = (
     coreFileImportProgramOutcomesValidateCreateBody: CoreFileImportProgramOutcomesValidateCreateBody,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`file`, coreFileImportProgramOutcomesValidateCreateBody.file)
 
@@ -315,7 +315,7 @@ formData.append(`file`, coreFileImportProgramOutcomesValidateCreateBody.file)
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportProgramOutcomesValidateCreateMutationOptions = <TError = CoreFileImportProgramOutcomesValidateCreate400,
@@ -329,7 +329,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, {data: CoreFileImportProgramOutcomesValidateCreateBody}> = (props) => {
@@ -338,7 +338,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportProgramOutcomesValidateCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -363,4 +363,3 @@ export const useCoreFileImportProgramOutcomesValidateCreate = <TError = CoreFile
 
       return useMutation(mutationOptions, queryClient);
     }
-    

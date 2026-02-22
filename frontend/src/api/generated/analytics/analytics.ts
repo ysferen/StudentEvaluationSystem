@@ -56,15 +56,15 @@ export const coreStudentLoScoresCourseAveragesRetrieve = (
     params?: CoreStudentLoScoresCourseAveragesRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CoreStudentLoScoresCourseAveragesRetrieve200>(
       {url: `/api/core/student-lo-scores/course_averages/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -74,7 +74,7 @@ export const getCoreStudentLoScoresCourseAveragesRetrieveQueryKey = (params?: Co
     ] as const;
     }
 
-    
+
 export const getCoreStudentLoScoresCourseAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError = unknown>(params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -82,13 +82,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresCourseAveragesRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>> = ({ signal }) => coreStudentLoScoresCourseAveragesRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -124,7 +124,7 @@ export function useCoreStudentLoScoresCourseAveragesRetrieve<TData = Awaited<Ret
 
 export function useCoreStudentLoScoresCourseAveragesRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError = unknown>(
  params?: CoreStudentLoScoresCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresCourseAveragesRetrieveQueryOptions(params,options)
@@ -158,15 +158,15 @@ export const coreStudentLoScoresLoAveragesRetrieve = (
     params: CoreStudentLoScoresLoAveragesRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CoreStudentLoScoresLoAveragesRetrieve200>(
       {url: `/api/core/student-lo-scores/lo_averages/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -176,7 +176,7 @@ export const getCoreStudentLoScoresLoAveragesRetrieveQueryKey = (params?: CoreSt
     ] as const;
     }
 
-    
+
 export const getCoreStudentLoScoresLoAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError = unknown>(params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -184,13 +184,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresLoAveragesRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>> = ({ signal }) => coreStudentLoScoresLoAveragesRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -226,7 +226,7 @@ export function useCoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<ReturnT
 
 export function useCoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError = unknown>(
  params: CoreStudentLoScoresLoAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresLoAveragesRetrieveQueryOptions(params,options)
@@ -237,6 +237,3 @@ export function useCoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<ReturnT
 
   return query;
 }
-
-
-

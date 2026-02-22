@@ -77,15 +77,15 @@ export const coreUniversitiesList = (
     params?: CoreUniversitiesListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedUniversityList>(
       {url: `/api/core/universities/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -101,7 +101,7 @@ export const getCoreUniversitiesListQueryKey = (params?: CoreUniversitiesListPar
     ] as const;
     }
 
-    
+
 export const getCoreUniversitiesListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreUniversitiesList>>, CoreUniversitiesListParams['page']>, TError = unknown>(params?: CoreUniversitiesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesList>>, TError, TData, QueryKey, CoreUniversitiesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -109,13 +109,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreUniversitiesListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreUniversitiesList>>, QueryKey, CoreUniversitiesListParams['page']> = ({ signal, pageParam }) => coreUniversitiesList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesList>>, TError, TData, QueryKey, CoreUniversitiesListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -151,7 +151,7 @@ export function useCoreUniversitiesListInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useCoreUniversitiesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreUniversitiesList>>, CoreUniversitiesListParams['page']>, TError = unknown>(
  params?: CoreUniversitiesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesList>>, TError, TData, QueryKey, CoreUniversitiesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreUniversitiesListInfiniteQueryOptions(params,options)
@@ -172,13 +172,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreUniversitiesListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreUniversitiesList>>> = ({ signal }) => coreUniversitiesList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreUniversitiesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -214,7 +214,7 @@ export function useCoreUniversitiesList<TData = Awaited<ReturnType<typeof coreUn
 
 export function useCoreUniversitiesList<TData = Awaited<ReturnType<typeof coreUniversitiesList>>, TError = unknown>(
  params?: CoreUniversitiesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreUniversitiesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreUniversitiesListQueryOptions(params,options)
@@ -235,8 +235,8 @@ export const coreUniversitiesCreate = (
     university: NonReadonly<University>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<University>(
       {url: `/api/core/universities/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -244,7 +244,7 @@ export const coreUniversitiesCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreUniversitiesCreateMutationOptions = <TError = unknown,
@@ -258,7 +258,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreUniversitiesCreate>>, {data: NonReadonly<University>}> = (props) => {
@@ -267,7 +267,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreUniversitiesCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -296,14 +296,14 @@ export const coreUniversitiesRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<University>(
       {url: `/api/core/universities/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -319,7 +319,7 @@ export const getCoreUniversitiesRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreUniversitiesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -327,13 +327,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreUniversitiesRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>> = ({ signal }) => coreUniversitiesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -369,7 +369,7 @@ export function useCoreUniversitiesRetrieveInfinite<TData = InfiniteData<Awaited
 
 export function useCoreUniversitiesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreUniversitiesRetrieveInfiniteQueryOptions(id,options)
@@ -390,13 +390,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreUniversitiesRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>> = ({ signal }) => coreUniversitiesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -432,7 +432,7 @@ export function useCoreUniversitiesRetrieve<TData = Awaited<ReturnType<typeof co
 
 export function useCoreUniversitiesRetrieve<TData = Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreUniversitiesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreUniversitiesRetrieveQueryOptions(id,options)
@@ -453,8 +453,8 @@ export const coreUniversitiesUpdate = (
     id: number,
     university: NonReadonly<University>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<University>(
       {url: `/api/core/universities/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -462,7 +462,7 @@ export const coreUniversitiesUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreUniversitiesUpdateMutationOptions = <TError = unknown,
@@ -476,7 +476,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreUniversitiesUpdate>>, {id: number;data: NonReadonly<University>}> = (props) => {
@@ -485,7 +485,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreUniversitiesUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -514,8 +514,8 @@ export const coreUniversitiesPartialUpdate = (
     id: number,
     patchedUniversity: NonReadonly<PatchedUniversity>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<University>(
       {url: `/api/core/universities/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -523,7 +523,7 @@ export const coreUniversitiesPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreUniversitiesPartialUpdateMutationOptions = <TError = unknown,
@@ -537,7 +537,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreUniversitiesPartialUpdate>>, {id: number;data: NonReadonly<PatchedUniversity>}> = (props) => {
@@ -546,7 +546,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreUniversitiesPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -574,14 +574,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const coreUniversitiesDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/universities/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreUniversitiesDestroyMutationOptions = <TError = unknown,
@@ -595,7 +595,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreUniversitiesDestroy>>, {id: number}> = (props) => {
@@ -604,13 +604,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreUniversitiesDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreUniversitiesDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreUniversitiesDestroy>>>
-    
+
     export type CoreUniversitiesDestroyMutationError = unknown
 
     export const useCoreUniversitiesDestroy = <TError = unknown,
@@ -626,4 +626,3 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    

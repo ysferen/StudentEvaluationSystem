@@ -93,15 +93,15 @@ export const evaluationAssessmentLoMappingsList = (
     params?: EvaluationAssessmentLoMappingsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedAssessmentLearningOutcomeMappingList>(
       {url: `/api/evaluation/assessment-lo-mappings/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -117,7 +117,7 @@ export const getEvaluationAssessmentLoMappingsListQueryKey = (params?: Evaluatio
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentLoMappingsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, EvaluationAssessmentLoMappingsListParams['page']>, TError = unknown>(params?: EvaluationAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError, TData, QueryKey, EvaluationAssessmentLoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -125,13 +125,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentLoMappingsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, QueryKey, EvaluationAssessmentLoMappingsListParams['page']> = ({ signal, pageParam }) => evaluationAssessmentLoMappingsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError, TData, QueryKey, EvaluationAssessmentLoMappingsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -167,7 +167,7 @@ export function useEvaluationAssessmentLoMappingsListInfinite<TData = InfiniteDa
 
 export function useEvaluationAssessmentLoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, EvaluationAssessmentLoMappingsListParams['page']>, TError = unknown>(
  params?: EvaluationAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError, TData, QueryKey, EvaluationAssessmentLoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentLoMappingsListInfiniteQueryOptions(params,options)
@@ -188,13 +188,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentLoMappingsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>> = ({ signal }) => evaluationAssessmentLoMappingsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -230,7 +230,7 @@ export function useEvaluationAssessmentLoMappingsList<TData = Awaited<ReturnType
 
 export function useEvaluationAssessmentLoMappingsList<TData = Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError = unknown>(
  params?: EvaluationAssessmentLoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentLoMappingsListQueryOptions(params,options)
@@ -251,8 +251,8 @@ export const evaluationAssessmentLoMappingsCreate = (
     assessmentLearningOutcomeMapping: NonReadonly<AssessmentLearningOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<AssessmentLearningOutcomeMapping>(
       {url: `/api/evaluation/assessment-lo-mappings/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -260,7 +260,7 @@ export const evaluationAssessmentLoMappingsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentLoMappingsCreateMutationOptions = <TError = unknown,
@@ -274,7 +274,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsCreate>>, {data: NonReadonly<AssessmentLearningOutcomeMapping>}> = (props) => {
@@ -283,7 +283,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentLoMappingsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -312,14 +312,14 @@ export const evaluationAssessmentLoMappingsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<AssessmentLearningOutcomeMapping>(
       {url: `/api/evaluation/assessment-lo-mappings/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -335,7 +335,7 @@ export const getEvaluationAssessmentLoMappingsRetrieveQueryKey = (id?: number,) 
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentLoMappingsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -343,13 +343,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentLoMappingsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>> = ({ signal }) => evaluationAssessmentLoMappingsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -385,7 +385,7 @@ export function useEvaluationAssessmentLoMappingsRetrieveInfinite<TData = Infini
 
 export function useEvaluationAssessmentLoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentLoMappingsRetrieveInfiniteQueryOptions(id,options)
@@ -406,13 +406,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentLoMappingsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>> = ({ signal }) => evaluationAssessmentLoMappingsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -448,7 +448,7 @@ export function useEvaluationAssessmentLoMappingsRetrieve<TData = Awaited<Return
 
 export function useEvaluationAssessmentLoMappingsRetrieve<TData = Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentLoMappingsRetrieveQueryOptions(id,options)
@@ -469,8 +469,8 @@ export const evaluationAssessmentLoMappingsUpdate = (
     id: number,
     assessmentLearningOutcomeMapping: NonReadonly<AssessmentLearningOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<AssessmentLearningOutcomeMapping>(
       {url: `/api/evaluation/assessment-lo-mappings/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -478,7 +478,7 @@ export const evaluationAssessmentLoMappingsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentLoMappingsUpdateMutationOptions = <TError = unknown,
@@ -492,7 +492,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsUpdate>>, {id: number;data: NonReadonly<AssessmentLearningOutcomeMapping>}> = (props) => {
@@ -501,7 +501,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentLoMappingsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -530,8 +530,8 @@ export const evaluationAssessmentLoMappingsPartialUpdate = (
     id: number,
     patchedAssessmentLearningOutcomeMapping: NonReadonly<PatchedAssessmentLearningOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<AssessmentLearningOutcomeMapping>(
       {url: `/api/evaluation/assessment-lo-mappings/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -539,7 +539,7 @@ export const evaluationAssessmentLoMappingsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentLoMappingsPartialUpdateMutationOptions = <TError = unknown,
@@ -553,7 +553,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsPartialUpdate>>, {id: number;data: NonReadonly<PatchedAssessmentLearningOutcomeMapping>}> = (props) => {
@@ -562,7 +562,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentLoMappingsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -590,14 +590,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const evaluationAssessmentLoMappingsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/evaluation/assessment-lo-mappings/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentLoMappingsDestroyMutationOptions = <TError = unknown,
@@ -611,7 +611,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsDestroy>>, {id: number}> = (props) => {
@@ -620,13 +620,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentLoMappingsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type EvaluationAssessmentLoMappingsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof evaluationAssessmentLoMappingsDestroy>>>
-    
+
     export type EvaluationAssessmentLoMappingsDestroyMutationError = unknown
 
     export const useEvaluationAssessmentLoMappingsDestroy = <TError = unknown,
@@ -649,15 +649,15 @@ export const evaluationAssessmentsList = (
     params?: EvaluationAssessmentsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedAssessmentList>(
       {url: `/api/evaluation/assessments/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -673,7 +673,7 @@ export const getEvaluationAssessmentsListQueryKey = (params?: EvaluationAssessme
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsList>>, EvaluationAssessmentsListParams['page']>, TError = unknown>(params?: EvaluationAssessmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError, TData, QueryKey, EvaluationAssessmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -681,13 +681,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsList>>, QueryKey, EvaluationAssessmentsListParams['page']> = ({ signal, pageParam }) => evaluationAssessmentsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError, TData, QueryKey, EvaluationAssessmentsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -723,7 +723,7 @@ export function useEvaluationAssessmentsListInfinite<TData = InfiniteData<Awaite
 
 export function useEvaluationAssessmentsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsList>>, EvaluationAssessmentsListParams['page']>, TError = unknown>(
  params?: EvaluationAssessmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError, TData, QueryKey, EvaluationAssessmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsListInfiniteQueryOptions(params,options)
@@ -744,13 +744,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsList>>> = ({ signal }) => evaluationAssessmentsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -786,7 +786,7 @@ export function useEvaluationAssessmentsList<TData = Awaited<ReturnType<typeof e
 
 export function useEvaluationAssessmentsList<TData = Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError = unknown>(
  params?: EvaluationAssessmentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsListQueryOptions(params,options)
@@ -807,8 +807,8 @@ export const evaluationAssessmentsCreate = (
     assessmentCreate: NonReadonly<AssessmentCreate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<AssessmentCreate>(
       {url: `/api/evaluation/assessments/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -816,7 +816,7 @@ export const evaluationAssessmentsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentsCreateMutationOptions = <TError = unknown,
@@ -830,7 +830,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentsCreate>>, {data: NonReadonly<AssessmentCreate>}> = (props) => {
@@ -839,7 +839,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -868,14 +868,14 @@ export const evaluationAssessmentsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Assessment>(
       {url: `/api/evaluation/assessments/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -891,7 +891,7 @@ export const getEvaluationAssessmentsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -899,13 +899,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>> = ({ signal }) => evaluationAssessmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -941,7 +941,7 @@ export function useEvaluationAssessmentsRetrieveInfinite<TData = InfiniteData<Aw
 
 export function useEvaluationAssessmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsRetrieveInfiniteQueryOptions(id,options)
@@ -962,13 +962,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>> = ({ signal }) => evaluationAssessmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1004,7 +1004,7 @@ export function useEvaluationAssessmentsRetrieve<TData = Awaited<ReturnType<type
 
 export function useEvaluationAssessmentsRetrieve<TData = Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsRetrieveQueryOptions(id,options)
@@ -1025,8 +1025,8 @@ export const evaluationAssessmentsUpdate = (
     id: number,
     assessmentCreate: NonReadonly<AssessmentCreate>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<AssessmentCreate>(
       {url: `/api/evaluation/assessments/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1034,7 +1034,7 @@ export const evaluationAssessmentsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentsUpdateMutationOptions = <TError = unknown,
@@ -1048,7 +1048,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentsUpdate>>, {id: number;data: NonReadonly<AssessmentCreate>}> = (props) => {
@@ -1057,7 +1057,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1086,8 +1086,8 @@ export const evaluationAssessmentsPartialUpdate = (
     id: number,
     patchedAssessmentCreate: NonReadonly<PatchedAssessmentCreate>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<AssessmentCreate>(
       {url: `/api/evaluation/assessments/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1095,7 +1095,7 @@ export const evaluationAssessmentsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentsPartialUpdateMutationOptions = <TError = unknown,
@@ -1109,7 +1109,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentsPartialUpdate>>, {id: number;data: NonReadonly<PatchedAssessmentCreate>}> = (props) => {
@@ -1118,7 +1118,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1146,14 +1146,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const evaluationAssessmentsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/evaluation/assessments/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getEvaluationAssessmentsDestroyMutationOptions = <TError = unknown,
@@ -1167,7 +1167,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentsDestroy>>, {id: number}> = (props) => {
@@ -1176,13 +1176,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationAssessmentsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type EvaluationAssessmentsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof evaluationAssessmentsDestroy>>>
-    
+
     export type EvaluationAssessmentsDestroyMutationError = unknown
 
     export const useEvaluationAssessmentsDestroy = <TError = unknown,
@@ -1205,14 +1205,14 @@ export const evaluationAssessmentsGradesRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Assessment>(
       {url: `/api/evaluation/assessments/${id}/grades/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1228,7 +1228,7 @@ export const getEvaluationAssessmentsGradesRetrieveQueryKey = (id?: number,) => 
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentsGradesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1236,13 +1236,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsGradesRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>> = ({ signal }) => evaluationAssessmentsGradesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1278,7 +1278,7 @@ export function useEvaluationAssessmentsGradesRetrieveInfinite<TData = InfiniteD
 
 export function useEvaluationAssessmentsGradesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsGradesRetrieveInfiniteQueryOptions(id,options)
@@ -1299,13 +1299,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsGradesRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>> = ({ signal }) => evaluationAssessmentsGradesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1341,7 +1341,7 @@ export function useEvaluationAssessmentsGradesRetrieve<TData = Awaited<ReturnTyp
 
 export function useEvaluationAssessmentsGradesRetrieve<TData = Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsGradesRetrieveQueryOptions(id,options)
@@ -1362,14 +1362,14 @@ export const evaluationAssessmentsStatisticsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Assessment>(
       {url: `/api/evaluation/assessments/${id}/statistics/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1385,7 +1385,7 @@ export const getEvaluationAssessmentsStatisticsRetrieveQueryKey = (id?: number,)
     ] as const;
     }
 
-    
+
 export const getEvaluationAssessmentsStatisticsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1393,13 +1393,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsStatisticsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>> = ({ signal }) => evaluationAssessmentsStatisticsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1435,7 +1435,7 @@ export function useEvaluationAssessmentsStatisticsRetrieveInfinite<TData = Infin
 
 export function useEvaluationAssessmentsStatisticsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsStatisticsRetrieveInfiniteQueryOptions(id,options)
@@ -1456,13 +1456,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationAssessmentsStatisticsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>> = ({ signal }) => evaluationAssessmentsStatisticsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1498,7 +1498,7 @@ export function useEvaluationAssessmentsStatisticsRetrieve<TData = Awaited<Retur
 
 export function useEvaluationAssessmentsStatisticsRetrieve<TData = Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationAssessmentsStatisticsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationAssessmentsStatisticsRetrieveQueryOptions(id,options)
@@ -1519,15 +1519,15 @@ export const evaluationEnrollmentsList = (
     params?: EvaluationEnrollmentsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedCourseEnrollmentList>(
       {url: `/api/evaluation/enrollments/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -1543,7 +1543,7 @@ export const getEvaluationEnrollmentsListQueryKey = (params?: EvaluationEnrollme
     ] as const;
     }
 
-    
+
 export const getEvaluationEnrollmentsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, EvaluationEnrollmentsListParams['page']>, TError = unknown>(params?: EvaluationEnrollmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError, TData, QueryKey, EvaluationEnrollmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1551,13 +1551,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEnrollmentsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, QueryKey, EvaluationEnrollmentsListParams['page']> = ({ signal, pageParam }) => evaluationEnrollmentsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError, TData, QueryKey, EvaluationEnrollmentsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1593,7 +1593,7 @@ export function useEvaluationEnrollmentsListInfinite<TData = InfiniteData<Awaite
 
 export function useEvaluationEnrollmentsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, EvaluationEnrollmentsListParams['page']>, TError = unknown>(
  params?: EvaluationEnrollmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError, TData, QueryKey, EvaluationEnrollmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEnrollmentsListInfiniteQueryOptions(params,options)
@@ -1614,13 +1614,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEnrollmentsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEnrollmentsList>>> = ({ signal }) => evaluationEnrollmentsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1656,7 +1656,7 @@ export function useEvaluationEnrollmentsList<TData = Awaited<ReturnType<typeof e
 
 export function useEvaluationEnrollmentsList<TData = Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError = unknown>(
  params?: EvaluationEnrollmentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEnrollmentsListQueryOptions(params,options)
@@ -1677,8 +1677,8 @@ export const evaluationEnrollmentsCreate = (
     courseEnrollment: NonReadonly<CourseEnrollment>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CourseEnrollment>(
       {url: `/api/evaluation/enrollments/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -1686,7 +1686,7 @@ export const evaluationEnrollmentsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEnrollmentsCreateMutationOptions = <TError = unknown,
@@ -1700,7 +1700,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEnrollmentsCreate>>, {data: NonReadonly<CourseEnrollment>}> = (props) => {
@@ -1709,7 +1709,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEnrollmentsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1738,14 +1738,14 @@ export const evaluationEnrollmentsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CourseEnrollment>(
       {url: `/api/evaluation/enrollments/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1761,7 +1761,7 @@ export const getEvaluationEnrollmentsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getEvaluationEnrollmentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1769,13 +1769,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEnrollmentsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>> = ({ signal }) => evaluationEnrollmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1811,7 +1811,7 @@ export function useEvaluationEnrollmentsRetrieveInfinite<TData = InfiniteData<Aw
 
 export function useEvaluationEnrollmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEnrollmentsRetrieveInfiniteQueryOptions(id,options)
@@ -1832,13 +1832,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEnrollmentsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>> = ({ signal }) => evaluationEnrollmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1874,7 +1874,7 @@ export function useEvaluationEnrollmentsRetrieve<TData = Awaited<ReturnType<type
 
 export function useEvaluationEnrollmentsRetrieve<TData = Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationEnrollmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEnrollmentsRetrieveQueryOptions(id,options)
@@ -1895,8 +1895,8 @@ export const evaluationEnrollmentsUpdate = (
     id: number,
     courseEnrollment: NonReadonly<CourseEnrollment>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<CourseEnrollment>(
       {url: `/api/evaluation/enrollments/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1904,7 +1904,7 @@ export const evaluationEnrollmentsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEnrollmentsUpdateMutationOptions = <TError = unknown,
@@ -1918,7 +1918,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEnrollmentsUpdate>>, {id: number;data: NonReadonly<CourseEnrollment>}> = (props) => {
@@ -1927,7 +1927,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEnrollmentsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1956,8 +1956,8 @@ export const evaluationEnrollmentsPartialUpdate = (
     id: number,
     patchedCourseEnrollment: NonReadonly<PatchedCourseEnrollment>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<CourseEnrollment>(
       {url: `/api/evaluation/enrollments/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1965,7 +1965,7 @@ export const evaluationEnrollmentsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEnrollmentsPartialUpdateMutationOptions = <TError = unknown,
@@ -1979,7 +1979,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEnrollmentsPartialUpdate>>, {id: number;data: NonReadonly<PatchedCourseEnrollment>}> = (props) => {
@@ -1988,7 +1988,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEnrollmentsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2016,14 +2016,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const evaluationEnrollmentsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/evaluation/enrollments/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEnrollmentsDestroyMutationOptions = <TError = unknown,
@@ -2037,7 +2037,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEnrollmentsDestroy>>, {id: number}> = (props) => {
@@ -2046,13 +2046,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEnrollmentsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type EvaluationEnrollmentsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof evaluationEnrollmentsDestroy>>>
-    
+
     export type EvaluationEnrollmentsDestroyMutationError = unknown
 
     export const useEvaluationEnrollmentsDestroy = <TError = unknown,
@@ -2075,8 +2075,8 @@ export const evaluationEnrollmentsBulkEnrollCreate = (
     courseEnrollment: NonReadonly<CourseEnrollment>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CourseEnrollment>(
       {url: `/api/evaluation/enrollments/bulk_enroll/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -2084,7 +2084,7 @@ export const evaluationEnrollmentsBulkEnrollCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEnrollmentsBulkEnrollCreateMutationOptions = <TError = unknown,
@@ -2098,7 +2098,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEnrollmentsBulkEnrollCreate>>, {data: NonReadonly<CourseEnrollment>}> = (props) => {
@@ -2107,7 +2107,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEnrollmentsBulkEnrollCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2136,15 +2136,15 @@ export const evaluationEvaluationList = (
     params?: EvaluationEvaluationListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedStudentGradeList>(
       {url: `/api/evaluation/evaluation/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2160,7 +2160,7 @@ export const getEvaluationEvaluationListQueryKey = (params?: EvaluationEvaluatio
     ] as const;
     }
 
-    
+
 export const getEvaluationEvaluationListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationEvaluationList>>, EvaluationEvaluationListParams['page']>, TError = unknown>(params?: EvaluationEvaluationListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationList>>, TError, TData, QueryKey, EvaluationEvaluationListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2168,13 +2168,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEvaluationListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEvaluationList>>, QueryKey, EvaluationEvaluationListParams['page']> = ({ signal, pageParam }) => evaluationEvaluationList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationList>>, TError, TData, QueryKey, EvaluationEvaluationListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2210,7 +2210,7 @@ export function useEvaluationEvaluationListInfinite<TData = InfiniteData<Awaited
 
 export function useEvaluationEvaluationListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationEvaluationList>>, EvaluationEvaluationListParams['page']>, TError = unknown>(
  params?: EvaluationEvaluationListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationList>>, TError, TData, QueryKey, EvaluationEvaluationListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEvaluationListInfiniteQueryOptions(params,options)
@@ -2231,13 +2231,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEvaluationListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEvaluationList>>> = ({ signal }) => evaluationEvaluationList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2273,7 +2273,7 @@ export function useEvaluationEvaluationList<TData = Awaited<ReturnType<typeof ev
 
 export function useEvaluationEvaluationList<TData = Awaited<ReturnType<typeof evaluationEvaluationList>>, TError = unknown>(
  params?: EvaluationEvaluationListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEvaluationListQueryOptions(params,options)
@@ -2294,14 +2294,14 @@ export const evaluationEvaluationRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentGrade>(
       {url: `/api/evaluation/evaluation/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -2317,7 +2317,7 @@ export const getEvaluationEvaluationRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getEvaluationEvaluationRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2325,13 +2325,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEvaluationRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>> = ({ signal }) => evaluationEvaluationRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2367,7 +2367,7 @@ export function useEvaluationEvaluationRetrieveInfinite<TData = InfiniteData<Awa
 
 export function useEvaluationEvaluationRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEvaluationRetrieveInfiniteQueryOptions(id,options)
@@ -2388,13 +2388,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationEvaluationRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>> = ({ signal }) => evaluationEvaluationRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2430,7 +2430,7 @@ export function useEvaluationEvaluationRetrieve<TData = Awaited<ReturnType<typeo
 
 export function useEvaluationEvaluationRetrieve<TData = Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationEvaluationRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationEvaluationRetrieveQueryOptions(id,options)
@@ -2451,8 +2451,8 @@ export const evaluationEvaluationCreateCreate = (
     studentGradeCreate: NonReadonly<StudentGradeCreate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentGradeCreate>(
       {url: `/api/evaluation/evaluation/create/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -2460,7 +2460,7 @@ export const evaluationEvaluationCreateCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationEvaluationCreateCreateMutationOptions = <TError = unknown,
@@ -2474,7 +2474,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationEvaluationCreateCreate>>, {data: NonReadonly<StudentGradeCreate>}> = (props) => {
@@ -2483,7 +2483,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationEvaluationCreateCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2512,15 +2512,15 @@ export const evaluationGradesList = (
     params?: EvaluationGradesListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedStudentGradeList>(
       {url: `/api/evaluation/grades/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2536,7 +2536,7 @@ export const getEvaluationGradesListQueryKey = (params?: EvaluationGradesListPar
     ] as const;
     }
 
-    
+
 export const getEvaluationGradesListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesList>>, EvaluationGradesListParams['page']>, TError = unknown>(params?: EvaluationGradesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesList>>, TError, TData, QueryKey, EvaluationGradesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2544,13 +2544,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesList>>, QueryKey, EvaluationGradesListParams['page']> = ({ signal, pageParam }) => evaluationGradesList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesList>>, TError, TData, QueryKey, EvaluationGradesListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2586,7 +2586,7 @@ export function useEvaluationGradesListInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useEvaluationGradesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesList>>, EvaluationGradesListParams['page']>, TError = unknown>(
  params?: EvaluationGradesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesList>>, TError, TData, QueryKey, EvaluationGradesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationGradesListInfiniteQueryOptions(params,options)
@@ -2607,13 +2607,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesList>>> = ({ signal }) => evaluationGradesList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2649,7 +2649,7 @@ export function useEvaluationGradesList<TData = Awaited<ReturnType<typeof evalua
 
 export function useEvaluationGradesList<TData = Awaited<ReturnType<typeof evaluationGradesList>>, TError = unknown>(
  params?: EvaluationGradesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationGradesListQueryOptions(params,options)
@@ -2670,8 +2670,8 @@ export const evaluationGradesCreate = (
     studentGradeCreate: NonReadonly<StudentGradeCreate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentGradeCreate>(
       {url: `/api/evaluation/grades/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -2679,7 +2679,7 @@ export const evaluationGradesCreate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationGradesCreateMutationOptions = <TError = unknown,
@@ -2693,7 +2693,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationGradesCreate>>, {data: NonReadonly<StudentGradeCreate>}> = (props) => {
@@ -2702,7 +2702,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationGradesCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2731,14 +2731,14 @@ export const evaluationGradesRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentGrade>(
       {url: `/api/evaluation/grades/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -2754,7 +2754,7 @@ export const getEvaluationGradesRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getEvaluationGradesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2762,13 +2762,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesRetrieve>>> = ({ signal }) => evaluationGradesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2804,7 +2804,7 @@ export function useEvaluationGradesRetrieveInfinite<TData = InfiniteData<Awaited
 
 export function useEvaluationGradesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof evaluationGradesRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationGradesRetrieveInfiniteQueryOptions(id,options)
@@ -2825,13 +2825,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesRetrieve>>> = ({ signal }) => evaluationGradesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2867,7 +2867,7 @@ export function useEvaluationGradesRetrieve<TData = Awaited<ReturnType<typeof ev
 
 export function useEvaluationGradesRetrieve<TData = Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationGradesRetrieveQueryOptions(id,options)
@@ -2888,8 +2888,8 @@ export const evaluationGradesUpdate = (
     id: number,
     studentGradeCreate: NonReadonly<StudentGradeCreate>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<StudentGradeCreate>(
       {url: `/api/evaluation/grades/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -2897,7 +2897,7 @@ export const evaluationGradesUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationGradesUpdateMutationOptions = <TError = unknown,
@@ -2911,7 +2911,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationGradesUpdate>>, {id: number;data: NonReadonly<StudentGradeCreate>}> = (props) => {
@@ -2920,7 +2920,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationGradesUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2949,8 +2949,8 @@ export const evaluationGradesPartialUpdate = (
     id: number,
     patchedStudentGradeCreate: NonReadonly<PatchedStudentGradeCreate>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<StudentGradeCreate>(
       {url: `/api/evaluation/grades/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -2958,7 +2958,7 @@ export const evaluationGradesPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getEvaluationGradesPartialUpdateMutationOptions = <TError = unknown,
@@ -2972,7 +2972,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationGradesPartialUpdate>>, {id: number;data: NonReadonly<PatchedStudentGradeCreate>}> = (props) => {
@@ -2981,7 +2981,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationGradesPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3009,14 +3009,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const evaluationGradesDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/evaluation/grades/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getEvaluationGradesDestroyMutationOptions = <TError = unknown,
@@ -3030,7 +3030,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationGradesDestroy>>, {id: number}> = (props) => {
@@ -3039,13 +3039,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  evaluationGradesDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type EvaluationGradesDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof evaluationGradesDestroy>>>
-    
+
     export type EvaluationGradesDestroyMutationError = unknown
 
     export const useEvaluationGradesDestroy = <TError = unknown,
@@ -3068,15 +3068,15 @@ export const evaluationGradesCourseAveragesRetrieve = (
     params?: EvaluationGradesCourseAveragesRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentGrade>(
       {url: `/api/evaluation/grades/course_averages/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -3086,7 +3086,7 @@ export const getEvaluationGradesCourseAveragesRetrieveQueryKey = (params?: Evalu
     ] as const;
     }
 
-    
+
 export const getEvaluationGradesCourseAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError = unknown>(params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -3094,13 +3094,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getEvaluationGradesCourseAveragesRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>> = ({ signal }) => evaluationGradesCourseAveragesRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3136,7 +3136,7 @@ export function useEvaluationGradesCourseAveragesRetrieve<TData = Awaited<Return
 
 export function useEvaluationGradesCourseAveragesRetrieve<TData = Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError = unknown>(
  params?: EvaluationGradesCourseAveragesRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof evaluationGradesCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEvaluationGradesCourseAveragesRetrieveQueryOptions(params,options)
@@ -3147,6 +3147,3 @@ export function useEvaluationGradesCourseAveragesRetrieve<TData = Awaited<Return
 
   return query;
 }
-
-
-

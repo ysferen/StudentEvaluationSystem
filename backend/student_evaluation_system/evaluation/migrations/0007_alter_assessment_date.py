@@ -5,15 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('evaluation', '0006_studentgrade_score_non_negative'),
+        ("evaluation", "0006_studentgrade_score_non_negative"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='assessment',
-            name='date',
+            model_name="assessment",
+            name="date",
             field=models.DateField(default=django.utils.timezone.localdate),
         ),
     ]

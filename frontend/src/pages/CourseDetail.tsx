@@ -52,10 +52,10 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       const loScoresResponse = await coreStudentLoScoresList({
         course: Number(courseId)
     })
-      return { 
-        course: courseResponse, 
+      return {
+        course: courseResponse,
         learningOutcomes: loResponse.results || [],
-        loScores: loScoresResponse.results || [] 
+        loScores: loScoresResponse.results || []
       }
     }
   })
@@ -351,7 +351,7 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
             </div>
           </div>
 
-          
+
         </div>
       </div>
 
@@ -596,15 +596,15 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
 
       {/* Mapping Editor Modal */}
       {isMappingEditorOpen && createPortal(
-        <div 
+        <div
           className="fixed bg-black bg-opacity-50 flex items-center justify-center p-4"
-          style={{ 
+          style={{
             position: 'fixed',
-            top: 0, 
-            left: 0, 
-            right: 0, 
+            top: 0,
+            left: 0,
+            right: 0,
             bottom: 0,
-            zIndex: 9999 
+            zIndex: 9999
           }}
           onWheel={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -613,7 +613,7 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-xl w-full max-w-7xl h-[95vh] overflow-hidden p-6"
             onClick={(e) => e.stopPropagation()}
           >

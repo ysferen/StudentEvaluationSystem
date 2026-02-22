@@ -217,7 +217,7 @@ if (isLoadingData) {
                     <span className="font-medium text-secondary-900">{course.credits}</span>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 pt-4 border-t border-secondary-100">
                   <div className="flex items-center justify-between">
                     <Link

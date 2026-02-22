@@ -5,8 +5,8 @@ import FileUploadModal from '../components/FileUploadModal'
 import { ChartWidget } from '../components/ui/ChartWidget'
 import { ChevronLeft, ChevronRight, Upload } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { 
-  coreCoursesList 
+import {
+  coreCoursesList
 } from '../api/generated/core/core'
 
 import {
@@ -62,10 +62,10 @@ const InstructorDashboard = () => {
             coreStudentLoScoresLoAveragesRetrieve({ course: course.id }),
             evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
           ])
-          
+
           const loAverages = Array.isArray(loAveragesRes) ? loAveragesRes : []
           const gradeAverages = Array.isArray(gradeAveragesRes) ? gradeAveragesRes : []
-          
+
           return {
             courseId: course.id,
             loAverages,
@@ -117,7 +117,7 @@ const InstructorDashboard = () => {
     const validAverages = gradeAverages
       .map(g => g.weighted_average)
       .filter((avg): avg is number => avg !== null)
-    
+
     if (validAverages.length === 0) return 0
     const total = validAverages.reduce((sum, score) => sum + score, 0)
     return Math.round(total / validAverages.length)
@@ -142,7 +142,7 @@ const InstructorDashboard = () => {
 
   const coursesWithAnalytics: CourseWithAnalytics[] = courses.map((course: Course) => {
     const analytics = analyticsMap.get(course.id)
-    
+
     if (!analytics) {
       return {
         ...course,
@@ -160,19 +160,19 @@ const InstructorDashboard = () => {
       lo: lo.lo_code,
       score: Math.round(lo.avg_score)
     }))
-    
+
     // Grade distribution based on grade averages
     const gradeDistribution = calculateGradeDistribution(analytics.gradeAverages)
-    
+
     // Average score from grade averages
     const avgScore = calculateAverageScore(analytics.gradeAverages)
-    
+
     // Students at risk from grade averages
     const studentsAtRisk = identifyStudentsAtRisk(analytics.gradeAverages)
-    
+
     // Count unique students from grade averages
     const studentCount = analytics.gradeAverages.length
-    
+
     return {
       ...course,
       students: studentCount,
@@ -199,8 +199,8 @@ const InstructorDashboard = () => {
   }
 
   // Get loading state for current course analytics
-  const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length 
-    ? analyticsQueries[currentIndex]?.isLoading 
+  const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length
+    ? analyticsQueries[currentIndex]?.isLoading
     : false
 
   return (

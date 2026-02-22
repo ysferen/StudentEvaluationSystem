@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from environs import Env
-import os
 
 # Initialize environs
 env = Env()
@@ -23,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Read .env file if it exists (for local development)
 # In production, environment variables should be set directly
-env_path = BASE_DIR.parent / '.env'
+env_path = BASE_DIR.parent / ".env"
 if env_path.exists():
     env.read_env(str(env_path))
 
@@ -34,10 +33,7 @@ if env_path.exists():
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(50))"
-SECRET_KEY = env(
-    "SECRET_KEY",
-    default="django-insecure-dev-key-only-for-local-development-change-in-production"
-)
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-only-for-local-development-change-in-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
@@ -105,12 +101,7 @@ WSGI_APPLICATION = "student_evaluation_system.wsgi.application"
 # =============================================================================
 
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-DATABASES = {
-    "default": env.dj_db_url(
-        "DATABASE_URL",
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
-}
+DATABASES = {"default": env.dj_db_url("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
 
 
 # =============================================================================
@@ -164,29 +155,29 @@ AUTH_USER_MODEL = "users.CustomUser"
 # =============================================================================
 
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,
-    'MAX_PAGE_SIZE': 1000,
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 100,
+    "MAX_PAGE_SIZE": 1000,
     # Exception handling
-    'EXCEPTION_HANDLER': 'student_evaluation_system.exception_handler.custom_exception_handler',
+    "EXCEPTION_HANDLER": "student_evaluation_system.exception_handler.custom_exception_handler",
     # Rate limiting/throttling
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': env("ANON_THROTTLE_RATE", default='100/day'),
-        'user': env("USER_THROTTLE_RATE", default='1000/day'),
-        'login': env("LOGIN_THROTTLE_RATE", default='5/minute'),
-        'file_upload': env("FILE_UPLOAD_THROTTLE_RATE", default='10/minute'),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": env("ANON_THROTTLE_RATE", default="100/day"),
+        "user": env("USER_THROTTLE_RATE", default="1000/day"),
+        "login": env("LOGIN_THROTTLE_RATE", default="5/minute"),
+        "file_upload": env("FILE_UPLOAD_THROTTLE_RATE", default="10/minute"),
     },
     # API Versioning (currently using URL path versioning via explicit routes)
     # When adding v2, uncomment below and implement version switching logic
@@ -205,18 +196,18 @@ ACCESS_TOKEN_LIFETIME_MINUTES = env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default
 REFRESH_TOKEN_LIFETIME_DAYS = env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens after rotation
-    'UPDATE_LAST_LOGIN': False,  # Don't update last_login on token refresh
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JTI_CLAIM': 'jti',
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old refresh tokens after rotation
+    "UPDATE_LAST_LOGIN": False,  # Don't update last_login on token refresh
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JTI_CLAIM": "jti",
 }
 
 
@@ -225,18 +216,18 @@ SIMPLE_JWT = {
 # =============================================================================
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Student Evaluation System API',
-    'DESCRIPTION': 'Outcome-based assessment system for academic programs',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Student Evaluation System API",
+    "DESCRIPTION": "Outcome-based assessment system for academic programs",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
     # Custom tag grouping
-    'TAGS': [
-        {'name': 'Authentication', 'description': 'User authentication and profile management'},
-        {'name': 'Academic Structure', 'description': 'Universities, departments, programs, and courses'},
-        {'name': 'Outcomes', 'description': 'Program outcomes (POs) and learning outcomes (LOs)'},
-        {'name': 'Assessments', 'description': 'Assignments, exams, and grading'},
-        {'name': 'Enrollment', 'description': 'Course enrollment management'},
-        {'name': 'Analytics', 'description': 'Student scores and statistics'},
+    "TAGS": [
+        {"name": "Authentication", "description": "User authentication and profile management"},
+        {"name": "Academic Structure", "description": "Universities, departments, programs, and courses"},
+        {"name": "Outcomes", "description": "Program outcomes (POs) and learning outcomes (LOs)"},
+        {"name": "Assessments", "description": "Assignments, exams, and grading"},
+        {"name": "Enrollment", "description": "Course enrollment management"},
+        {"name": "Analytics", "description": "Student scores and statistics"},
     ],
 }
 
@@ -252,21 +243,21 @@ CORS_ALLOWED_ORIGINS = env.list(
         "http://localhost:3000",  # Alternative React port
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
-    ]
+    ],
 )
 
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 
@@ -286,39 +277,39 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': LOG_LEVEL,
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
         },
-        'core': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
+        "core": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
         },
-        'evaluation': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
+        "evaluation": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
         },
     },
 }
@@ -331,17 +322,17 @@ LOGGING = {
 if not DEBUG:
     # HTTPS settings
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
     # HSTS
     SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000)  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
+
     # Cookie security
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
+
     # XSS protection
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True

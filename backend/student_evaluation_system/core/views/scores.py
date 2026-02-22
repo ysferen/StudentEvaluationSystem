@@ -20,7 +20,6 @@ from ..serializers import (
     StudentLearningOutcomeScoreSerializer,
     StudentProgramOutcomeScoreSerializer,
 )
-from ..permissions import IsOwnerOrInstructorOrAdmin
 
 
 class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
@@ -32,8 +31,9 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     - Instructors: View scores for students in their courses
     - Admins: View all scores
     """
+
     queryset = StudentLearningOutcomeScore.objects.select_related(
-        'student', 'learning_outcome', 'learning_outcome__course'
+        "student", "learning_outcome", "learning_outcome__course"
     ).all()
     serializer_class = StudentLearningOutcomeScoreSerializer
     permission_classes = [AllowAny]
@@ -48,14 +48,14 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         queryset = super().get_queryset()
 
-        if hasattr(user, 'is_student') and user.is_student:
+        if hasattr(user, "is_student") and user.is_student:
             queryset = queryset.filter(student=user)
-        elif hasattr(user, 'is_instructor') and user.is_instructor and not getattr(user, 'is_admin_user', False):
+        elif hasattr(user, "is_instructor") and user.is_instructor and not getattr(user, "is_admin_user", False):
             queryset = queryset.filter(learning_outcome__course__instructors=user)
 
         # Apply filters
-        course_id = self.request.query_params.get('course', None)
-        student_id = self.request.query_params.get('student', None)
+        course_id = self.request.query_params.get("course", None)
+        student_id = self.request.query_params.get("student", None)
 
         if course_id:
             queryset = queryset.filter(learning_outcome__course_id=course_id)
@@ -64,14 +64,14 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
 
         return queryset
 
-    @action(detail=False, methods=['get'], url_path='course_averages')
+    @action(detail=False, methods=["get"], url_path="course_averages")
     def course_averages(self, request):
         """Return average LO scores grouped by course."""
-        course_id = request.query_params.get('course')
-        student_id = request.query_params.get('student')
+        course_id = request.query_params.get("course")
+        student_id = request.query_params.get("student")
 
         if not course_id and not student_id:
-            return Response({'error': 'course or student parameter is required'}, status=400)
+            return Response({"error": "course or student parameter is required"}, status=400)
 
         qs = self.get_queryset()
         if course_id:
@@ -80,29 +80,29 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(student_id=student_id)
 
         data = (
-            qs.values('learning_outcome__course_id')
-            .annotate(weighted_average=Avg('score'))
-            .values('learning_outcome__course_id', 'weighted_average')
+            qs.values("learning_outcome__course_id")
+            .annotate(weighted_average=Avg("score"))
+            .values("learning_outcome__course_id", "weighted_average")
         )
 
         results = [
             {
-                'course_id': item['learning_outcome__course_id'],
-                'weighted_average': item['weighted_average'],
+                "course_id": item["learning_outcome__course_id"],
+                "weighted_average": item["weighted_average"],
             }
             for item in data
         ]
 
         return Response(results)
 
-    @action(detail=False, methods=['get'], url_path='lo_averages')
+    @action(detail=False, methods=["get"], url_path="lo_averages")
     def lo_averages(self, request):
         """Return average LO scores grouped by learning outcome."""
-        course_id = request.query_params.get('course')
-        student_id = request.query_params.get('student')
+        course_id = request.query_params.get("course")
+        student_id = request.query_params.get("student")
 
         if not course_id and not student_id:
-            return Response({'error': 'course or student parameter is required'}, status=400)
+            return Response({"error": "course or student parameter is required"}, status=400)
 
         qs = self.get_queryset()
         if course_id:
@@ -111,16 +111,16 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(student_id=student_id)
 
         data = (
-            qs.values('learning_outcome_id', 'learning_outcome__code', 'learning_outcome__description')
-            .annotate(avg_score=Avg('score'))
-            .values('learning_outcome__code', 'learning_outcome__description', 'avg_score')
+            qs.values("learning_outcome_id", "learning_outcome__code", "learning_outcome__description")
+            .annotate(avg_score=Avg("score"))
+            .values("learning_outcome__code", "learning_outcome__description", "avg_score")
         )
 
         results = [
             {
-                'lo_code': item['learning_outcome__code'],
-                'lo_description': item['learning_outcome__description'],
-                'avg_score': item['avg_score'],
+                "lo_code": item["learning_outcome__code"],
+                "lo_description": item["learning_outcome__description"],
+                "avg_score": item["avg_score"],
             }
             for item in data
         ]
@@ -137,8 +137,9 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     - Instructors: View scores for students in their courses
     - Admins: View all scores
     """
+
     queryset = StudentProgramOutcomeScore.objects.select_related(
-        'student', 'program_outcome', 'program_outcome__program', 'term'
+        "student", "program_outcome", "program_outcome__program", "term"
     ).all()
     serializer_class = StudentProgramOutcomeScoreSerializer
     permission_classes = [AllowAny]
@@ -153,14 +154,14 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         queryset = super().get_queryset()
 
-        if hasattr(user, 'is_student') and user.is_student:
+        if hasattr(user, "is_student") and user.is_student:
             queryset = queryset.filter(student=user)
-        elif hasattr(user, 'is_instructor') and user.is_instructor and not getattr(user, 'is_admin_user', False):
+        elif hasattr(user, "is_instructor") and user.is_instructor and not getattr(user, "is_admin_user", False):
             queryset = queryset.filter(program_outcome__program__courses__instructors=user)
 
         # Apply filters
-        program_id = self.request.query_params.get('program', None)
-        student_id = self.request.query_params.get('student', None)
+        program_id = self.request.query_params.get("program", None)
+        student_id = self.request.query_params.get("student", None)
 
         if program_id:
             queryset = queryset.filter(program_outcome__program_id=program_id)

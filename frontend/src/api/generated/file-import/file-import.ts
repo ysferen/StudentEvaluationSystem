@@ -45,17 +45,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Upload and import data from file
  */
 export const coreFileImportUploadRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/upload/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -71,7 +71,7 @@ export const getCoreFileImportUploadRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreFileImportUploadRetrieveInfiniteQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError = CoreFileImportUploadRetrieve400>( options?: { query?:UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -79,13 +79,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportUploadRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>> = ({ signal }) => coreFileImportUploadRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError, TData> & { queryKey: QueryKey }
 }
@@ -100,7 +100,7 @@ export type CoreFileImportUploadRetrieveInfiniteQueryError = CoreFileImportUploa
 
 export function useCoreFileImportUploadRetrieveInfinite<TData = Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError = CoreFileImportUploadRetrieve400>(
   options?: { query?:UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
-  
+
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getCoreFileImportUploadRetrieveInfiniteQueryOptions(options)
@@ -121,13 +121,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportUploadRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>> = ({ signal }) => coreFileImportUploadRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError, TData> & { queryKey: QueryKey }
 }
@@ -142,7 +142,7 @@ export type CoreFileImportUploadRetrieveQueryError = CoreFileImportUploadRetriev
 
 export function useCoreFileImportUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError = CoreFileImportUploadRetrieve400>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof coreFileImportUploadRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
-  
+
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getCoreFileImportUploadRetrieveQueryOptions(options)
@@ -164,7 +164,7 @@ export const coreFileImportUploadCreate = (
     coreFileImportUploadCreateBody: CoreFileImportUploadCreateBody,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`file`, coreFileImportUploadCreateBody.file)
 formData.append(`import_type`, coreFileImportUploadCreateBody.import_type)
@@ -179,7 +179,7 @@ if(coreFileImportUploadCreateBody.sheet_name !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportUploadCreateMutationOptions = <TError = CoreFileImportUploadCreate400,
@@ -193,7 +193,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportUploadCreate>>, {data: CoreFileImportUploadCreateBody}> = (props) => {
@@ -202,7 +202,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportUploadCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -232,17 +232,17 @@ export const useCoreFileImportUploadCreate = <TError = CoreFileImportUploadCreat
  * @summary Validate file format
  */
 export const coreFileImportValidateRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<FileValidationResponse>(
       {url: `/api/core/file-import/validate/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -258,7 +258,7 @@ export const getCoreFileImportValidateRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreFileImportValidateRetrieveInfiniteQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError = CoreFileImportValidateRetrieve400>( options?: { query?:UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -266,13 +266,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportValidateRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>> = ({ signal }) => coreFileImportValidateRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError, TData> & { queryKey: QueryKey }
 }
@@ -287,7 +287,7 @@ export type CoreFileImportValidateRetrieveInfiniteQueryError = CoreFileImportVal
 
 export function useCoreFileImportValidateRetrieveInfinite<TData = Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError = CoreFileImportValidateRetrieve400>(
   options?: { query?:UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
-  
+
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getCoreFileImportValidateRetrieveInfiniteQueryOptions(options)
@@ -308,13 +308,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportValidateRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>> = ({ signal }) => coreFileImportValidateRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError, TData> & { queryKey: QueryKey }
 }
@@ -329,7 +329,7 @@ export type CoreFileImportValidateRetrieveQueryError = CoreFileImportValidateRet
 
 export function useCoreFileImportValidateRetrieve<TData = Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError = CoreFileImportValidateRetrieve400>(
   options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof coreFileImportValidateRetrieve>>, TError, TData>, request?: SecondParameter<typeof customInstance>}
-  
+
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getCoreFileImportValidateRetrieveQueryOptions(options)
@@ -351,7 +351,7 @@ export const coreFileImportValidateCreate = (
     coreFileImportValidateCreateBody: CoreFileImportValidateCreateBody,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`file`, coreFileImportValidateCreateBody.file)
 
@@ -362,7 +362,7 @@ formData.append(`file`, coreFileImportValidateCreateBody.file)
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportValidateCreateMutationOptions = <TError = CoreFileImportValidateCreate400,
@@ -376,7 +376,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportValidateCreate>>, {data: CoreFileImportValidateCreateBody}> = (props) => {
@@ -385,7 +385,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportValidateCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -410,4 +410,3 @@ export const useCoreFileImportValidateCreate = <TError = CoreFileImportValidateC
 
       return useMutation(mutationOptions);
     }
-    

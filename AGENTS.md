@@ -11,7 +11,7 @@ The Student Evaluation System is a comprehensive academic evaluation platform bu
 - **Program Outcomes (POs)**: High-level learning outcomes defined at the program level
 - **Learning Outcomes (LOs)**: Course-level outcomes that map to Program Outcomes
 - **Assessments**: Exams, homework, projects, etc. that evaluate Learning Outcomes
-- **Weight Mappings**: 
+- **Weight Mappings**:
   - Assessments → Learning Outcomes (how much each assessment contributes to an LO)
   - Learning Outcomes → Program Outcomes (how much each LO contributes to a PO)
 - **Score Calculation**: Automated calculation of student scores based on assessment grades and weight mappings
@@ -481,6 +481,6 @@ VITE_ENABLE_DEBUG=true
 
 ---
 
-**Last Updated**: February 20, 2026  
-**Project Version**: 1.1.0  
+**Last Updated**: February 20, 2026
+**Project Version**: 1.1.0
 **Maintainer**: AI Agents should update this file when making architectural changes

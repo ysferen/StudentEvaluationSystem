@@ -87,8 +87,8 @@ export const usersAuthRefreshCreate = (
     tokenRefresh: NonReadonly<TokenRefresh>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<TokenRefresh>(
       {url: `/api/users/auth/refresh/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -96,7 +96,7 @@ export const usersAuthRefreshCreate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersAuthRefreshCreateMutationOptions = <TError = unknown,
@@ -110,7 +110,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, {data: NonReadonly<TokenRefresh>}> = (props) => {
@@ -119,7 +119,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersAuthRefreshCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -148,15 +148,15 @@ export const usersInstructorsList = (
     params?: UsersInstructorsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedInstructorProfileList>(
       {url: `/api/users/instructors/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -172,7 +172,7 @@ export const getUsersInstructorsListQueryKey = (params?: UsersInstructorsListPar
     ] as const;
     }
 
-    
+
 export const getUsersInstructorsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersInstructorsList>>, UsersInstructorsListParams['page']>, TError = unknown>(params?: UsersInstructorsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsList>>, TError, TData, QueryKey, UsersInstructorsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -180,13 +180,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersInstructorsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersInstructorsList>>, QueryKey, UsersInstructorsListParams['page']> = ({ signal, pageParam }) => usersInstructorsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsList>>, TError, TData, QueryKey, UsersInstructorsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -222,7 +222,7 @@ export function useUsersInstructorsListInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useUsersInstructorsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersInstructorsList>>, UsersInstructorsListParams['page']>, TError = unknown>(
  params?: UsersInstructorsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsList>>, TError, TData, QueryKey, UsersInstructorsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersInstructorsListInfiniteQueryOptions(params,options)
@@ -243,13 +243,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersInstructorsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersInstructorsList>>> = ({ signal }) => usersInstructorsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersInstructorsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -285,7 +285,7 @@ export function useUsersInstructorsList<TData = Awaited<ReturnType<typeof usersI
 
 export function useUsersInstructorsList<TData = Awaited<ReturnType<typeof usersInstructorsList>>, TError = unknown>(
  params?: UsersInstructorsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersInstructorsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersInstructorsListQueryOptions(params,options)
@@ -306,8 +306,8 @@ export const usersInstructorsCreate = (
     instructorProfile: NonReadonly<InstructorProfile>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<InstructorProfile>(
       {url: `/api/users/instructors/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -315,7 +315,7 @@ export const usersInstructorsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersInstructorsCreateMutationOptions = <TError = unknown,
@@ -329,7 +329,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersInstructorsCreate>>, {data: NonReadonly<InstructorProfile>}> = (props) => {
@@ -338,7 +338,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersInstructorsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -367,14 +367,14 @@ export const usersInstructorsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<InstructorProfile>(
       {url: `/api/users/instructors/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -390,7 +390,7 @@ export const getUsersInstructorsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getUsersInstructorsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersInstructorsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -398,13 +398,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersInstructorsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersInstructorsRetrieve>>> = ({ signal }) => usersInstructorsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -440,7 +440,7 @@ export function useUsersInstructorsRetrieveInfinite<TData = InfiniteData<Awaited
 
 export function useUsersInstructorsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersInstructorsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersInstructorsRetrieveInfiniteQueryOptions(id,options)
@@ -461,13 +461,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersInstructorsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersInstructorsRetrieve>>> = ({ signal }) => usersInstructorsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -503,7 +503,7 @@ export function useUsersInstructorsRetrieve<TData = Awaited<ReturnType<typeof us
 
 export function useUsersInstructorsRetrieve<TData = Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersInstructorsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersInstructorsRetrieveQueryOptions(id,options)
@@ -524,8 +524,8 @@ export const usersInstructorsUpdate = (
     id: number,
     instructorProfile: NonReadonly<InstructorProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<InstructorProfile>(
       {url: `/api/users/instructors/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -533,7 +533,7 @@ export const usersInstructorsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersInstructorsUpdateMutationOptions = <TError = unknown,
@@ -547,7 +547,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersInstructorsUpdate>>, {id: number;data: NonReadonly<InstructorProfile>}> = (props) => {
@@ -556,7 +556,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersInstructorsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -585,8 +585,8 @@ export const usersInstructorsPartialUpdate = (
     id: number,
     patchedInstructorProfile: NonReadonly<PatchedInstructorProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<InstructorProfile>(
       {url: `/api/users/instructors/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -594,7 +594,7 @@ export const usersInstructorsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersInstructorsPartialUpdateMutationOptions = <TError = unknown,
@@ -608,7 +608,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersInstructorsPartialUpdate>>, {id: number;data: NonReadonly<PatchedInstructorProfile>}> = (props) => {
@@ -617,7 +617,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersInstructorsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -645,14 +645,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const usersInstructorsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/users/instructors/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getUsersInstructorsDestroyMutationOptions = <TError = unknown,
@@ -666,7 +666,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersInstructorsDestroy>>, {id: number}> = (props) => {
@@ -675,13 +675,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersInstructorsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersInstructorsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof usersInstructorsDestroy>>>
-    
+
     export type UsersInstructorsDestroyMutationError = unknown
 
     export const useUsersInstructorsDestroy = <TError = unknown,
@@ -704,15 +704,15 @@ export const usersStudentsList = (
     params?: UsersStudentsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedStudentProfileList>(
       {url: `/api/users/students/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -728,7 +728,7 @@ export const getUsersStudentsListQueryKey = (params?: UsersStudentsListParams,) 
     ] as const;
     }
 
-    
+
 export const getUsersStudentsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersStudentsList>>, UsersStudentsListParams['page']>, TError = unknown>(params?: UsersStudentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsList>>, TError, TData, QueryKey, UsersStudentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -736,13 +736,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersStudentsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersStudentsList>>, QueryKey, UsersStudentsListParams['page']> = ({ signal, pageParam }) => usersStudentsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsList>>, TError, TData, QueryKey, UsersStudentsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -778,7 +778,7 @@ export function useUsersStudentsListInfinite<TData = InfiniteData<Awaited<Return
 
 export function useUsersStudentsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersStudentsList>>, UsersStudentsListParams['page']>, TError = unknown>(
  params?: UsersStudentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsList>>, TError, TData, QueryKey, UsersStudentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersStudentsListInfiniteQueryOptions(params,options)
@@ -799,13 +799,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersStudentsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersStudentsList>>> = ({ signal }) => usersStudentsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersStudentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -841,7 +841,7 @@ export function useUsersStudentsList<TData = Awaited<ReturnType<typeof usersStud
 
 export function useUsersStudentsList<TData = Awaited<ReturnType<typeof usersStudentsList>>, TError = unknown>(
  params?: UsersStudentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersStudentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersStudentsListQueryOptions(params,options)
@@ -862,8 +862,8 @@ export const usersStudentsCreate = (
     studentProfile: NonReadonly<StudentProfile>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentProfile>(
       {url: `/api/users/students/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -871,7 +871,7 @@ export const usersStudentsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersStudentsCreateMutationOptions = <TError = unknown,
@@ -885,7 +885,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersStudentsCreate>>, {data: NonReadonly<StudentProfile>}> = (props) => {
@@ -894,7 +894,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersStudentsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -923,14 +923,14 @@ export const usersStudentsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentProfile>(
       {url: `/api/users/students/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -946,7 +946,7 @@ export const getUsersStudentsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getUsersStudentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersStudentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -954,13 +954,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersStudentsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersStudentsRetrieve>>> = ({ signal }) => usersStudentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -996,7 +996,7 @@ export function useUsersStudentsRetrieveInfinite<TData = InfiniteData<Awaited<Re
 
 export function useUsersStudentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersStudentsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersStudentsRetrieveInfiniteQueryOptions(id,options)
@@ -1017,13 +1017,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersStudentsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersStudentsRetrieve>>> = ({ signal }) => usersStudentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1059,7 +1059,7 @@ export function useUsersStudentsRetrieve<TData = Awaited<ReturnType<typeof users
 
 export function useUsersStudentsRetrieve<TData = Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersStudentsRetrieveQueryOptions(id,options)
@@ -1080,8 +1080,8 @@ export const usersStudentsUpdate = (
     id: number,
     studentProfile: NonReadonly<StudentProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<StudentProfile>(
       {url: `/api/users/students/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1089,7 +1089,7 @@ export const usersStudentsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersStudentsUpdateMutationOptions = <TError = unknown,
@@ -1103,7 +1103,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersStudentsUpdate>>, {id: number;data: NonReadonly<StudentProfile>}> = (props) => {
@@ -1112,7 +1112,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersStudentsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1141,8 +1141,8 @@ export const usersStudentsPartialUpdate = (
     id: number,
     patchedStudentProfile: NonReadonly<PatchedStudentProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<StudentProfile>(
       {url: `/api/users/students/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1150,7 +1150,7 @@ export const usersStudentsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersStudentsPartialUpdateMutationOptions = <TError = unknown,
@@ -1164,7 +1164,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersStudentsPartialUpdate>>, {id: number;data: NonReadonly<PatchedStudentProfile>}> = (props) => {
@@ -1173,7 +1173,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersStudentsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1201,14 +1201,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const usersStudentsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/users/students/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getUsersStudentsDestroyMutationOptions = <TError = unknown,
@@ -1222,7 +1222,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersStudentsDestroy>>, {id: number}> = (props) => {
@@ -1231,13 +1231,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersStudentsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersStudentsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof usersStudentsDestroy>>>
-    
+
     export type UsersStudentsDestroyMutationError = unknown
 
     export const useUsersStudentsDestroy = <TError = unknown,
@@ -1260,15 +1260,15 @@ export const usersUsersList = (
     params?: UsersUsersListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedCustomUserList>(
       {url: `/api/users/users/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -1284,7 +1284,7 @@ export const getUsersUsersListQueryKey = (params?: UsersUsersListParams,) => {
     ] as const;
     }
 
-    
+
 export const getUsersUsersListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersUsersList>>, UsersUsersListParams['page']>, TError = unknown>(params?: UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersList>>, TError, TData, QueryKey, UsersUsersListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1292,13 +1292,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersList>>, QueryKey, UsersUsersListParams['page']> = ({ signal, pageParam }) => usersUsersList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersList>>, TError, TData, QueryKey, UsersUsersListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1334,7 +1334,7 @@ export function useUsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnTyp
 
 export function useUsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersUsersList>>, UsersUsersListParams['page']>, TError = unknown>(
  params?: UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersList>>, TError, TData, QueryKey, UsersUsersListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersListInfiniteQueryOptions(params,options)
@@ -1355,13 +1355,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersList>>> = ({ signal }) => usersUsersList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersUsersList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1397,7 +1397,7 @@ export function useUsersUsersList<TData = Awaited<ReturnType<typeof usersUsersLi
 
 export function useUsersUsersList<TData = Awaited<ReturnType<typeof usersUsersList>>, TError = unknown>(
  params?: UsersUsersListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersUsersList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersListQueryOptions(params,options)
@@ -1418,8 +1418,8 @@ export const usersUsersCreate = (
     customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/users/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -1427,7 +1427,7 @@ export const usersUsersCreate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersUsersCreateMutationOptions = <TError = unknown,
@@ -1441,7 +1441,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersUsersCreate>>, {data: NonReadonly<CustomUser>}> = (props) => {
@@ -1450,7 +1450,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersUsersCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1479,14 +1479,14 @@ export const usersUsersRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/users/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1502,7 +1502,7 @@ export const getUsersUsersRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getUsersUsersRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersUsersRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1510,13 +1510,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersRetrieve>>> = ({ signal }) => usersUsersRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1552,7 +1552,7 @@ export function useUsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<Retur
 
 export function useUsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersUsersRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersRetrieveInfiniteQueryOptions(id,options)
@@ -1573,13 +1573,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersRetrieve>>> = ({ signal }) => usersUsersRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1615,7 +1615,7 @@ export function useUsersUsersRetrieve<TData = Awaited<ReturnType<typeof usersUse
 
 export function useUsersUsersRetrieve<TData = Awaited<ReturnType<typeof usersUsersRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersRetrieveQueryOptions(id,options)
@@ -1636,8 +1636,8 @@ export const usersUsersUpdate = (
     id: number,
     customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/users/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1645,7 +1645,7 @@ export const usersUsersUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersUsersUpdateMutationOptions = <TError = unknown,
@@ -1659,7 +1659,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersUsersUpdate>>, {id: number;data: NonReadonly<CustomUser>}> = (props) => {
@@ -1668,7 +1668,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersUsersUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1697,8 +1697,8 @@ export const usersUsersPartialUpdate = (
     id: number,
     patchedCustomUser: NonReadonly<PatchedCustomUser>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/users/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1706,7 +1706,7 @@ export const usersUsersPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getUsersUsersPartialUpdateMutationOptions = <TError = unknown,
@@ -1720,7 +1720,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersUsersPartialUpdate>>, {id: number;data: NonReadonly<PatchedCustomUser>}> = (props) => {
@@ -1729,7 +1729,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersUsersPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1757,14 +1757,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const usersUsersDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/users/users/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getUsersUsersDestroyMutationOptions = <TError = unknown,
@@ -1778,7 +1778,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersUsersDestroy>>, {id: number}> = (props) => {
@@ -1787,13 +1787,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersUsersDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersUsersDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof usersUsersDestroy>>>
-    
+
     export type UsersUsersDestroyMutationError = unknown
 
     export const useUsersUsersDestroy = <TError = unknown,
@@ -1813,17 +1813,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Get current user info.
  */
 export const usersUsersMeRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CustomUser>(
       {url: `/api/users/users/me/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1839,7 +1839,7 @@ export const getUsersUsersMeRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getUsersUsersMeRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersUsersMeRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1847,13 +1847,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersMeRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersMeRetrieve>>> = ({ signal }) => usersUsersMeRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1889,7 +1889,7 @@ export function useUsersUsersMeRetrieveInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useUsersUsersMeRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersUsersMeRetrieve>>>, TError = unknown>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersMeRetrieveInfiniteQueryOptions(options)
@@ -1910,13 +1910,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersUsersMeRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersUsersMeRetrieve>>> = ({ signal }) => usersUsersMeRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1952,7 +1952,7 @@ export function useUsersUsersMeRetrieve<TData = Awaited<ReturnType<typeof usersU
 
 export function useUsersUsersMeRetrieve<TData = Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersUsersMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersUsersMeRetrieveQueryOptions(options)
@@ -1963,6 +1963,3 @@ export function useUsersUsersMeRetrieve<TData = Awaited<ReturnType<typeof usersU
 
   return query;
 }
-
-
-

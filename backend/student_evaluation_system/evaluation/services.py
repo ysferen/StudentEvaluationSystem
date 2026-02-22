@@ -8,15 +8,17 @@ aggregate assessment grades using weighted mappings.
 """
 
 from django.db import transaction
-from django.db.models import Prefetch, QuerySet
 from django.contrib.auth import get_user_model
-from typing import Dict, List, Set, Any, Optional
+from typing import Dict, Any
 
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
 from core.models import (
-    Course, LearningOutcome,
-    StudentLearningOutcomeScore, StudentProgramOutcomeScore,
-    LearningOutcomeProgramOutcomeMapping, ProgramOutcome, Term
+    Course,
+    LearningOutcome,
+    StudentLearningOutcomeScore,
+    StudentProgramOutcomeScore,
+    LearningOutcomeProgramOutcomeMapping,
+    ProgramOutcome,
 )
 
 User = get_user_model()
@@ -56,12 +58,10 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     """
 
     # 1. Setup: Fetch necessary data efficiently with minimal queries
-    course = Course.objects.select_related('program', 'term').get(id=course_id)
+    course = Course.objects.select_related("program", "term").get(id=course_id)
 
     # Fetch enrollments with student data in one query
-    enrollments = CourseEnrollment.objects.filter(
-        course=course
-    ).select_related('student')
+    enrollments = CourseEnrollment.objects.filter(course=course).select_related("student")
 
     # Fetch all learning outcomes for this course
     learning_outcomes = list(LearningOutcome.objects.filter(course=course))
@@ -72,17 +72,15 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     # Get all weights for this course in one go
     # Dict format: {(assessment_id, lo_id): weight}
     matrix_map = {}
-    for item in AssessmentLearningOutcomeMapping.objects.filter(
-        assessment__course=course
-    ).select_related('assessment', 'learning_outcome'):
+    for item in AssessmentLearningOutcomeMapping.objects.filter(assessment__course=course).select_related(
+        "assessment", "learning_outcome"
+    ):
         matrix_map[(item.assessment_id, item.learning_outcome_id)] = item.weight
 
     # Get all grades for this course in one query
     # Dict format: {(student_id, assessment_id): score}
     grade_map = {}
-    for grade in StudentGrade.objects.filter(
-        assessment__course=course
-    ).select_related('assessment'):
+    for grade in StudentGrade.objects.filter(assessment__course=course).select_related("assessment"):
         grade_map[(grade.student_id, grade.assessment_id)] = grade.score
 
     # Prepare list for bulk creation
@@ -91,9 +89,7 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
 
     with transaction.atomic():
         # Step 2: Delete old LO calculations for this course
-        StudentLearningOutcomeScore.objects.filter(
-            learning_outcome__course=course
-        ).delete()
+        StudentLearningOutcomeScore.objects.filter(learning_outcome__course=course).delete()
 
         # Step 3: Loop through Students and Learning Outcomes
         for enrollment in enrollments:
@@ -119,11 +115,9 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
                 final_lo_score = (total_score / total_weight) if total_weight > 0 else 0
 
                 # Prepare object
-                lo_score_objects.append(StudentLearningOutcomeScore(
-                    student=student,
-                    learning_outcome=lo,
-                    score=final_lo_score
-                ))
+                lo_score_objects.append(
+                    StudentLearningOutcomeScore(student=student, learning_outcome=lo, score=final_lo_score)
+                )
 
         # Step 4: Bulk Save LO Scores (single query)
         if lo_score_objects:
@@ -135,8 +129,8 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
 
     # Return a simple summary so callers/tests have a non-None result
     return {
-        'students_processed': len(affected_students),
-        'lo_scores_created': len(lo_score_objects),
+        "students_processed": len(affected_students),
+        "lo_scores_created": len(lo_score_objects),
     }
 
 
@@ -173,32 +167,21 @@ def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) 
     from users.models import CustomUser
 
     # Fetch student with related data
-    student = CustomUser.objects.select_related(
-        'student_profile'
-    ).get(id=student_id)
+    student = CustomUser.objects.select_related("student_profile").get(id=student_id)
 
     # Get all courses in this program for this term that the student is enrolled in
-    enrolled_courses = Course.objects.filter(
-        program_id=program_id,
-        term_id=term_id,
-        enrollments__student=student
-    )
+    enrolled_courses = Course.objects.filter(program_id=program_id, term_id=term_id, enrollments__student=student)
 
     # Get all program outcomes for this program and term
-    from core.models import ProgramOutcome
-    program_outcomes = list(ProgramOutcome.objects.filter(
-        program_id=program_id,
-        term_id=term_id
-    ))
+    program_outcomes = list(ProgramOutcome.objects.filter(program_id=program_id, term_id=term_id))
 
     # Pre-fetch all LO scores for this student in one query
     # Dict format: {learning_outcome_id: score}
     lo_scores_map = {
         score.learning_outcome_id: score.score
         for score in StudentLearningOutcomeScore.objects.filter(
-            student=student,
-            learning_outcome__course__in=enrolled_courses
-        ).select_related('learning_outcome')
+            student=student, learning_outcome__course__in=enrolled_courses
+        ).select_related("learning_outcome")
     }
 
     po_score_objects = []
@@ -206,9 +189,7 @@ def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) 
     with transaction.atomic():
         # Delete old PO scores for this student in this program/term
         StudentProgramOutcomeScore.objects.filter(
-            student=student,
-            program_outcome__program_id=program_id,
-            term_id=term_id
+            student=student, program_outcome__program_id=program_id, term_id=term_id
         ).delete()
 
         # For each PO, aggregate across all courses
@@ -218,9 +199,8 @@ def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) 
 
             # Find all LO->PO mappings for this PO across all enrolled courses
             mappings = LearningOutcomeProgramOutcomeMapping.objects.filter(
-                program_outcome=po,
-                course__in=enrolled_courses
-            ).select_related('learning_outcome')
+                program_outcome=po, course__in=enrolled_courses
+            ).select_related("learning_outcome")
 
             for mapping in mappings:
                 # Get the student's LO score from pre-fetched map (no query)
@@ -234,12 +214,9 @@ def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) 
             # Calculate final PO score
             final_po_score = (total_weighted_score / total_weight) if total_weight > 0 else 0
 
-            po_score_objects.append(StudentProgramOutcomeScore(
-                student=student,
-                program_outcome=po,
-                term_id=term_id,
-                score=final_po_score
-            ))
+            po_score_objects.append(
+                StudentProgramOutcomeScore(student=student, program_outcome=po, term_id=term_id, score=final_po_score)
+            )
 
         # Bulk save PO scores (single query)
         if po_score_objects:

@@ -199,7 +199,7 @@ const WeightModal = ({
             <LinkIcon className="h-4 w-4" />
             <span className="font-medium">{toLabel}</span>
           </div>
-          
+
           {/* Weight budget info */}
           <div className="p-3 bg-gray-50 rounded-lg text-sm">
             <div className="flex justify-between text-gray-600">
@@ -369,9 +369,9 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
 
       // Check if mapping already exists (learning_outcome can be object or id)
       const existingMapping = assessmentLOMappings.find(
-        (m) => m.assessment === assessmentId && 
-          (typeof m.learning_outcome === 'object' 
-            ? m.learning_outcome?.id === loId 
+        (m) => m.assessment === assessmentId &&
+          (typeof m.learning_outcome === 'object'
+            ? m.learning_outcome?.id === loId
             : m.learning_outcome === loId)
       )
 
@@ -420,19 +420,19 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
 
       // Check if mapping already exists (learning_outcome and program_outcome can be object or id)
       const existingMapping = loPOMappings.find(
-        (m) => (typeof m.learning_outcome === 'object' 
-                  ? m.learning_outcome?.id === loId 
-                  : m.learning_outcome === loId) && 
-               (typeof m.program_outcome === 'object' 
-                  ? m.program_outcome?.id === poId 
+        (m) => (typeof m.learning_outcome === 'object'
+                  ? m.learning_outcome?.id === loId
+                  : m.learning_outcome === loId) &&
+               (typeof m.program_outcome === 'object'
+                  ? m.program_outcome?.id === poId
                   : m.program_outcome === poId)
       )
 
       // Calculate already used weight for this PO (sum of all LO mappings for this PO)
       const usedWeight = loPOMappings
-        .filter((m) => 
-          typeof m.program_outcome === 'object' 
-            ? m.program_outcome?.id === poId 
+        .filter((m) =>
+          typeof m.program_outcome === 'object'
+            ? m.program_outcome?.id === poId
             : m.program_outcome === poId
         )
         .reduce((sum, m) => sum + m.weight, 0)
@@ -477,7 +477,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
         if (weightModal.type === 'assessment-lo') {
           // Optimistic update
           const previousMappings = assessmentLOMappings
-          setAssessmentLOMappings(assessmentLOMappings.map((m) => 
+          setAssessmentLOMappings(assessmentLOMappings.map((m) =>
             m.id === weightModal.mappingId ? { ...m, weight } : m
           ))
           setWeightModal(null)
@@ -495,7 +495,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
           const response = await api.patch(`/api/core/lo-po-mappings/${weightModal.mappingId}/`, {
             weight,
           })
-          setLoPOMappings(loPOMappings.map((m) => 
+          setLoPOMappings(loPOMappings.map((m) =>
             m.id === weightModal.mappingId ? { ...m, weight: response.data.weight } : m
           ))
           setWeightModal(null)
@@ -522,7 +522,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
               weight,
             })
             // Replace temp mapping with real one
-            setAssessmentLOMappings(prev => 
+            setAssessmentLOMappings(prev =>
               prev.map(m => m.id === tempId ? response.data : m)
             )
           } catch (error) {
@@ -544,10 +544,10 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
     } catch (error: any) {
       console.error('Error creating/updating mapping:', error)
       console.error('Error response data:', error.response?.data)
-      
+
       // Show user-friendly error
-      const errorMsg = error.response?.data?.non_field_errors?.[0] 
-        || error.response?.data?.detail 
+      const errorMsg = error.response?.data?.non_field_errors?.[0]
+        || error.response?.data?.detail
         || 'Failed to save mapping'
       alert(errorMsg)
     }
@@ -579,26 +579,26 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
 
   // Get mappings for a specific LO
   const getAssessmentMappingsForLO = (loId: number) => {
-    return assessmentLOMappings.filter((m) => 
-      typeof m.learning_outcome === 'object' 
-        ? m.learning_outcome?.id === loId 
+    return assessmentLOMappings.filter((m) =>
+      typeof m.learning_outcome === 'object'
+        ? m.learning_outcome?.id === loId
         : m.learning_outcome === loId
     )
   }
 
   const getPOMappingsForLO = (loId: number) => {
-    return loPOMappings.filter((m) => 
-      typeof m.learning_outcome === 'object' 
-        ? m.learning_outcome?.id === loId 
+    return loPOMappings.filter((m) =>
+      typeof m.learning_outcome === 'object'
+        ? m.learning_outcome?.id === loId
         : m.learning_outcome === loId
     )
   }
 
   // Get LO mappings for a specific PO
   const getLOMappingsForPO = (poId: number) => {
-    return loPOMappings.filter((m) => 
-      typeof m.program_outcome === 'object' 
-        ? m.program_outcome?.id === poId 
+    return loPOMappings.filter((m) =>
+      typeof m.program_outcome === 'object'
+        ? m.program_outcome?.id === poId
         : m.program_outcome === poId
     )
   }
@@ -661,7 +661,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                 <h3 className="font-semibold text-gray-900">Assessments</h3>
               </div>
               {(() => {
-                const unmappedCount = assessments.filter(a => 
+                const unmappedCount = assessments.filter(a =>
                   !assessmentLOMappings.some(m => m.assessment === a.id)
                 ).length
                 if (unmappedCount > 0) {
@@ -763,8 +763,8 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                             const percentage = Math.round(totalWeight * 100)
                             return (
                               <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                                percentage >= 100 ? 'bg-green-100 text-green-700' : 
-                                percentage > 0 ? 'bg-amber-100 text-amber-700' : 
+                                percentage >= 100 ? 'bg-green-100 text-green-700' :
+                                percentage > 0 ? 'bg-amber-100 text-amber-700' :
                                 'bg-gray-100 text-gray-500'
                               }`}>
                                 {percentage}%/100%
@@ -838,14 +838,14 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                             <p className="text-xs text-teal-600 mb-1">→ Program Outcomes:</p>
                             <div className="flex flex-wrap gap-1">
                               {getPOMappingsForLO(lo.id).map((mapping) => {
-                                const poId = typeof mapping.program_outcome === 'object' 
-                                  ? mapping.program_outcome?.id 
+                                const poId = typeof mapping.program_outcome === 'object'
+                                  ? mapping.program_outcome?.id
                                   : mapping.program_outcome
                                 const po = programOutcomes.find((p) => p.id === poId)
                                 const usedWeight = loPOMappings
-                                  .filter((m) => 
-                                    typeof m.program_outcome === 'object' 
-                                      ? m.program_outcome?.id === poId 
+                                  .filter((m) =>
+                                    typeof m.program_outcome === 'object'
+                                      ? m.program_outcome?.id === poId
                                       : m.program_outcome === poId
                                   )
                                   .reduce((sum, m) => sum + m.weight, 0)
@@ -943,8 +943,8 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                           const percentage = Math.round(totalWeight * 100)
                           return (
                             <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              percentage >= 100 ? 'bg-green-100 text-green-700' : 
-                              percentage > 0 ? 'bg-amber-100 text-amber-700' : 
+                              percentage >= 100 ? 'bg-green-100 text-green-700' :
+                              percentage > 0 ? 'bg-amber-100 text-amber-700' :
                               'bg-gray-100 text-gray-500'
                             }`}>
                               {percentage}%/100%
@@ -965,9 +965,9 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
                                 : mapping.learning_outcome
                               const lo = learningOutcomes.find((l) => l.id === loId)
                               const usedWeight = loPOMappings
-                                .filter((m) => 
-                                  typeof m.program_outcome === 'object' 
-                                    ? m.program_outcome?.id === po.id 
+                                .filter((m) =>
+                                  typeof m.program_outcome === 'object'
+                                    ? m.program_outcome?.id === po.id
                                     : m.program_outcome === po.id
                                 )
                                 .reduce((sum, m) => sum + m.weight, 0)

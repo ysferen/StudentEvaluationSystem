@@ -8,14 +8,21 @@ to a specific model and defines how it is serialized/deserialized.
 
 from rest_framework import serializers
 from core.models import (
-    Course, ProgramOutcome, Department, University, Term, Program, DegreeLevel,
-    LearningOutcome, LearningOutcomeProgramOutcomeMapping,
-    StudentLearningOutcomeScore, StudentProgramOutcomeScore
+    Course,
+    ProgramOutcome,
+    Department,
+    University,
+    Term,
+    Program,
+    DegreeLevel,
+    LearningOutcome,
+    LearningOutcomeProgramOutcomeMapping,
+    StudentLearningOutcomeScore,
+    StudentProgramOutcomeScore,
 )
-from evaluation.models import Assessment, StudentGrade, CourseEnrollment
-from users.models import CustomUser
 from typing import List, Dict, Any, Optional
 from drf_spectacular.utils import extend_schema_field
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     """
@@ -29,11 +36,13 @@ class DepartmentSerializer(serializers.ModelSerializer):
         code: Department code
         university: Related university ID
     """
+
     university = serializers.PrimaryKeyRelatedField(queryset=University.objects.all())
 
     class Meta:
         model = Department
-        fields = ['id', 'name', 'code', 'university']
+        fields = ["id", "name", "code", "university"]
+
 
 class UniversitySerializer(serializers.ModelSerializer):
     """
@@ -46,11 +55,12 @@ class UniversitySerializer(serializers.ModelSerializer):
         name: University name
         code: University code (auto-generated if blank)
     """
+
     code = serializers.CharField(max_length=10, required=False, allow_blank=True)
 
     class Meta:
         model = University
-        fields = ['id', 'name', 'code']
+        fields = ["id", "name", "code"]
 
     def validate_code(self, value: Optional[str]) -> Optional[str]:
         """
@@ -66,6 +76,7 @@ class UniversitySerializer(serializers.ModelSerializer):
             return value
         return value.strip()
 
+
 class TermSerializer(serializers.ModelSerializer):
     """
     Serializer for Term (academic semester) model.
@@ -75,9 +86,11 @@ class TermSerializer(serializers.ModelSerializer):
         name: Term name (e.g., "Fall 2025")
         is_active: Whether this is the currently active term
     """
+
     class Meta:
         model = Term
-        fields = ['id', 'name', 'is_active']
+        fields = ["id", "name", "is_active"]
+
 
 class DegreeLevelSerializer(serializers.ModelSerializer):
     """
@@ -88,9 +101,11 @@ class DegreeLevelSerializer(serializers.ModelSerializer):
         name: Degree name (e.g., "Bachelor of Science")
         level: Numeric level for ordering
     """
+
     class Meta:
         model = DegreeLevel
-        fields = ['id', 'name', 'level']
+        fields = ["id", "name", "level"]
+
 
 class ProgramSerializer(serializers.ModelSerializer):
     """
@@ -103,9 +118,11 @@ class ProgramSerializer(serializers.ModelSerializer):
         department: Department ID
         degree_level: Degree level ID
     """
+
     class Meta:
         model = Program
-        fields = ['id', 'name', 'code', 'department', 'degree_level']
+        fields = ["id", "name", "code", "department", "degree_level"]
+
 
 class ProgramOutcomeSerializer(serializers.ModelSerializer):
     """
@@ -123,12 +140,14 @@ class ProgramOutcomeSerializer(serializers.ModelSerializer):
         weight: Relative weight (0.0 to 1.0)
         created_at: Creation timestamp
     """
+
     program = serializers.PrimaryKeyRelatedField(read_only=True)
     term = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = ProgramOutcome
-        fields = ['id', 'code', 'description', 'program', 'term', 'weight', 'created_at']
+        fields = ["id", "code", "description", "program", "term", "weight", "created_at"]
+
 
 class CourseSerializer(serializers.ModelSerializer):
     """
@@ -149,19 +168,16 @@ class CourseSerializer(serializers.ModelSerializer):
         instructors: List of instructor details (read-only)
         created_at: Creation timestamp
     """
+
     program = ProgramSerializer(read_only=True)
     term = TermSerializer(read_only=True)
-    program_id = serializers.PrimaryKeyRelatedField(
-        queryset=Program.objects.all(), source='program', write_only=True
-    )
-    term_id = serializers.PrimaryKeyRelatedField(
-        queryset=Term.objects.all(), source='term', write_only=True
-    )
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
+    term_id = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all(), source="term", write_only=True)
     instructors = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = ['id', 'code', 'name', 'credits', 'program', 'term', 'program_id', 'term_id', 'instructors', 'created_at']
+        fields = ["id", "code", "name", "credits", "program", "term", "program_id", "term_id", "instructors", "created_at"]
 
     @extend_schema_field(List[Dict[str, Any]])
     def get_instructors(self, obj: Course) -> List[Dict[str, Any]]:
@@ -182,21 +198,21 @@ class CourseSerializer(serializers.ModelSerializer):
         for user in obj.instructors.all():
             try:
                 instructor_profile = user.instructor_profile
-                instructors_data.append({
-                    'id': user.id,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'title': instructor_profile.title if instructor_profile else ''
-                })
+                instructors_data.append(
+                    {
+                        "id": user.id,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "title": instructor_profile.title if instructor_profile else "",
+                    }
+                )
             except AttributeError:
                 # Handle case where user might not have instructor profile
-                instructors_data.append({
-                    'id': user.id,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'title': ''
-                })
+                instructors_data.append(
+                    {"id": user.id, "first_name": user.first_name, "last_name": user.last_name, "title": ""}
+                )
         return instructors_data
+
 
 class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
     """
@@ -212,11 +228,12 @@ class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
         course: Nested course object (read-only)
         created_at: Creation timestamp
     """
+
     course = CourseSerializer(read_only=True)
 
     class Meta:
         model = LearningOutcome
-        fields = ['id', 'code', 'description', 'course', 'created_at']
+        fields = ["id", "code", "description", "course", "created_at"]
 
 
 class LearningOutcomeProgramOutcomeMappingListSerializer(serializers.ListSerializer):
@@ -228,6 +245,7 @@ class LearningOutcomeProgramOutcomeMappingListSerializer(serializers.ListSeriali
 
     This serializer is used when many=True is passed to the parent serializer.
     """
+
     def validate(self, attrs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Validate that total weights sum to 1.0.
@@ -242,14 +260,14 @@ class LearningOutcomeProgramOutcomeMappingListSerializer(serializers.ListSeriali
             ValidationError: If weights don't sum to approximately 1.0
         """
         # Calculate total weight
-        total_weight = sum(item.get('weight', 0) for item in attrs)
+        total_weight = sum(item.get("weight", 0) for item in attrs)
 
         # Allow 1% tolerance for floating point arithmetic
         if not (0.99 <= total_weight <= 1.01):
             raise serializers.ValidationError(
                 {
-                    'weights': f"Program Outcome weights must sum to 1.0, but got {total_weight:.4f}. "
-                              f"Please adjust the weights so they total exactly 1.0."
+                    "weights": f"Program Outcome weights must sum to 1.0, but got {total_weight:.4f}. "
+                    f"Please adjust the weights so they total exactly 1.0."
                 }
             )
         return attrs
@@ -274,25 +292,21 @@ class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer
         program_outcome_id: PO ID for writes (write-only)
         weight: Mapping weight (0.0 to 1.0)
     """
+
     learning_outcome = CoreLearningOutcomeSerializer(read_only=True)
     learning_outcome_id = serializers.PrimaryKeyRelatedField(
-        queryset=LearningOutcome.objects.all(),
-        source='learning_outcome',
-        write_only=True,
-        required=False
+        queryset=LearningOutcome.objects.all(), source="learning_outcome", write_only=True, required=False
     )
     program_outcome = ProgramOutcomeSerializer(read_only=True)
     program_outcome_id = serializers.PrimaryKeyRelatedField(
-        queryset=ProgramOutcome.objects.all(),
-        source='program_outcome',
-        write_only=True,
-        required=False
+        queryset=ProgramOutcome.objects.all(), source="program_outcome", write_only=True, required=False
     )
 
     class Meta:
         model = LearningOutcomeProgramOutcomeMapping
-        fields = ['id', 'course', 'learning_outcome', 'learning_outcome_id', 'program_outcome', 'program_outcome_id', 'weight']
+        fields = ["id", "course", "learning_outcome", "learning_outcome_id", "program_outcome", "program_outcome_id", "weight"]
         list_serializer_class = LearningOutcomeProgramOutcomeMappingListSerializer
+
 
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
     """
@@ -307,13 +321,15 @@ class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
         learning_outcome: Nested LO object
         score: Calculated score (0-100)
     """
+
     student = serializers.StringRelatedField()
-    student_id = serializers.IntegerField(source='student.id', read_only=True)
+    student_id = serializers.IntegerField(source="student.id", read_only=True)
     learning_outcome = CoreLearningOutcomeSerializer(read_only=True)
 
     class Meta:
         model = StudentLearningOutcomeScore
-        fields = ['id', 'student', 'student_id', 'learning_outcome', 'score']
+        fields = ["id", "student", "student_id", "learning_outcome", "score"]
+
 
 class StudentProgramOutcomeScoreSerializer(serializers.ModelSerializer):
     """
@@ -328,13 +344,15 @@ class StudentProgramOutcomeScoreSerializer(serializers.ModelSerializer):
         program_outcome: Nested PO object
         score: Calculated aggregate score (0-100)
     """
+
     student = serializers.StringRelatedField()
     term = serializers.StringRelatedField()
     program_outcome = ProgramOutcomeSerializer(read_only=True)
 
     class Meta:
         model = StudentProgramOutcomeScore
-        fields = ['id', 'student', 'term', 'program_outcome', 'score']
+        fields = ["id", "student", "term", "program_outcome", "score"]
+
 
 # Response serializers for file operations
 class FileImportResponseSerializer(serializers.Serializer):
@@ -345,8 +363,10 @@ class FileImportResponseSerializer(serializers.Serializer):
         message: Human-readable status message
         results: Dictionary containing import statistics (created, updated, errors)
     """
+
     message = serializers.CharField()
     results = serializers.DictField()
+
 
 class FileValidationResponseSerializer(serializers.Serializer):
     """
@@ -357,9 +377,11 @@ class FileValidationResponseSerializer(serializers.Serializer):
         available_sheets: List of sheet names found in the file
         file_info: Dictionary containing file metadata (size, type, etc.)
     """
+
     message = serializers.CharField()
     available_sheets = serializers.ListField(child=serializers.CharField())
     file_info = serializers.DictField()
+
 
 # Analytics response serializers
 class CourseAverageSerializer(serializers.Serializer):
@@ -373,8 +395,10 @@ class CourseAverageSerializer(serializers.Serializer):
         course_id: ID of the course
         weighted_average: Average score across all LOs (null if no data)
     """
+
     course_id = serializers.IntegerField()
     weighted_average = serializers.FloatField(allow_null=True)
+
 
 class LearningOutcomeAverageSerializer(serializers.Serializer):
     """
@@ -389,6 +413,7 @@ class LearningOutcomeAverageSerializer(serializers.Serializer):
         lo_description: Learning outcome description
         avg_score: Average score across all students
     """
+
     lo_id = serializers.IntegerField()
     lo_code = serializers.CharField()
     lo_description = serializers.CharField()
