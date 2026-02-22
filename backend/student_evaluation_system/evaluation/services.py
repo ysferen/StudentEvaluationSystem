@@ -1,26 +1,58 @@
 # evaluation/services.py
+"""
+Score calculation services for the Student Evaluation System.
+
+This module contains business logic for calculating student scores at both
+the Learning Outcome (LO) and Program Outcome (PO) levels. Calculations
+aggregate assessment grades using weighted mappings.
+"""
+
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, QuerySet
+from django.contrib.auth import get_user_model
+from typing import Dict, List, Set, Any, Optional
+
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
 from core.models import (
     Course, LearningOutcome,
     StudentLearningOutcomeScore, StudentProgramOutcomeScore,
-    LearningOutcomeProgramOutcomeMapping
+    LearningOutcomeProgramOutcomeMapping, ProgramOutcome, Term
 )
 
+User = get_user_model()
 
-def calculate_course_scores(course_id):
+
+def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     """
-    1. Fetches all grades for the course.
-    2. Calculates LO scores for every student enrolled in the course.
-    3. Triggers program-level PO score calculation for affected students.
-    4. Stores them in the database (wiping old LO values for this course).
+    Calculate Learning Outcome scores for all students in a course.
 
-    Optimized to minimize database queries using:
-    - select_related for foreign keys
-    - prefetch_related for reverse relationships
-    - Bulk operations instead of individual queries
-    - Query result caching in dictionaries
+    This function performs the following steps:
+    1. Fetches all grades for the course with optimized queries
+    2. Calculates LO scores for every student enrolled in the course
+    3. Triggers program-level PO score calculation for affected students
+    4. Stores scores in the database (replacing old LO values for this course)
+
+    The calculation uses weighted aggregation where:
+    - Each assessment has a weight (e.g., Midterm 30%, Final 40%)
+    - Each assessment-LO mapping has a weight (contribution to that LO)
+    - Final LO score = Σ(assessment_score × assessment_weight × mapping_weight) / Σ(weights)
+
+    Args:
+        course_id (int): ID of the course to calculate scores for.
+
+    Returns:
+        Dict[str, Any]: Summary containing:
+            - students_processed (int): Number of students whose scores were calculated
+            - lo_scores_created (int): Number of LO score records created
+
+    Raises:
+        Course.DoesNotExist: If the specified course does not exist.
+
+    Optimization Notes:
+        - Uses select_related for foreign keys (course, program, term, student)
+        - Uses prefetch_related for reverse relationships
+        - Caches query results in dictionaries to avoid N+1 queries
+        - Uses bulk_create for efficient database writes
     """
 
     # 1. Setup: Fetch necessary data efficiently with minimal queries
@@ -108,16 +140,35 @@ def calculate_course_scores(course_id):
     }
 
 
-def calculate_student_po_scores(student_id, program_id, term_id):
+def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) -> None:
     """
-    Calculate Program Outcome scores for a student across ALL courses in their program for a given term.
-    This aggregates LO scores from all courses the student is enrolled in.
+    Calculate Program Outcome scores for a student across all courses in their program.
 
-    Optimized to minimize database queries using:
-    - select_related for foreign keys
-    - prefetch_related for reverse relationships
-    - in_bulk() for efficient lookups
-    - Bulk operations
+    This aggregates Learning Outcome scores from all courses the student is enrolled
+    in for the specified term, weighted by LO-PO mappings.
+
+    The calculation uses weighted aggregation where:
+    - Each LO score contributes to POs based on LO-PO mapping weights
+    - Final PO score = Σ(lo_score × lo_po_weight) / Σ(lo_po_weights)
+
+    Args:
+        student_id (int): ID of the student to calculate scores for.
+        program_id (int): ID of the program (defines which POs to calculate).
+        term_id (int): ID of the academic term.
+
+    Returns:
+        None: Scores are saved directly to the database.
+
+    Raises:
+        User.DoesNotExist: If the specified student does not exist.
+        ProgramOutcome.DoesNotExist: If no program outcomes exist for the program/term.
+
+    Optimization Notes:
+        - Uses select_related for student profile data
+        - Pre-fetches all LO scores in a single query
+        - Uses dictionary mapping for O(1) LO score lookups
+        - Uses bulk_create for efficient database writes
+        - Deletes old scores in a single query before creating new ones
     """
     from users.models import CustomUser
 
