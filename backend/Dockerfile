@@ -15,11 +15,7 @@ ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
 	uv sync --frozen --no-install-project
 
-# Copy application code
-COPY . .
-
-# Install project after source is copied
-RUN --mount=type=cache,target=/root/.cache/uv \
-	uv sync --frozen
+# Copy only Django application code
+COPY student_evaluation_system ./student_evaluation_system
 
 CMD ["uv", "run", "--no-sync", "python", "student_evaluation_system/manage.py", "runserver", "0.0.0.0:8000"]

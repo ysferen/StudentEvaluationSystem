@@ -1,10 +1,16 @@
-.venv/
-venv/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
+#Whitelist necessary files for Docker build, ignore everything else
+*
+!pyproject.toml
+!uv.lock
+!student_evaluation_system/
+!student_evaluation_system/**
+
+student_evaluation_system/**/__pycache__/
+student_evaluation_system/**/*.pyc
+student_evaluation_system/**/*.pyo
+student_evaluation_system/**/*.pyd
+student_evaluation_system/**/*.sqlite3
+student_evaluation_system/**/.ruff_cache/
+student_evaluation_system/**/htmlcov/
+student_evaluation_system/**/.coverage
+student_evaluation_system/**/.pytest_cache/

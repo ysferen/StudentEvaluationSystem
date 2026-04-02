@@ -1,20 +1,20 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import Layout from './components/Layout'
+import { Layout } from './shared/components'
 
 // Lazy load all page components for code splitting
-const Login = lazy(() => import('./pages/Login'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const CourseDetail = lazy(() => import('./pages/CourseDetail'))
-const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
-const StudentCourseDetail = lazy(() => import('./pages/StudentCourseDetail'))
-const InstructorDashboard = lazy(() => import('./pages/InstructorDashboard'))
-const HeadDashboard = lazy(() => import('./pages/HeadDashboard'))
-const StudentCourses = lazy(() => import('./pages/StudentCourses'))
-const InstructorCourses = lazy(() => import('./pages/InstructorCourses'))
-const HeadCourses = lazy(() => import('./pages/HeadCourses'))
-const Settings = lazy(() => import('./pages/Settings'))
-const Safety = lazy(() => import('./pages/Safety'))
+const LoginPage = lazy(() => import('./features/auth/pages/Login'))
+const DashboardPage = lazy(() => import('./features/dashboard/pages/Dashboard'))
+const CourseDetailPage = lazy(() => import('./features/courses/pages/CourseDetail'))
+const StudentDashboardPage = lazy(() => import('./features/dashboard/pages/StudentDashboard'))
+const StudentCourseDetailPage = lazy(() => import('./features/courses/pages/StudentCourseDetail'))
+const InstructorDashboardPage = lazy(() => import('./features/dashboard/pages/InstructorDashboard'))
+const HeadDashboardPage = lazy(() => import('./features/dashboard/pages/HeadDashboard'))
+const StudentCoursesPage = lazy(() => import('./features/courses/pages/StudentCourses'))
+const InstructorCoursesPage = lazy(() => import('./features/courses/pages/InstructorCourses'))
+const HeadCoursesPage = lazy(() => import('./features/courses/pages/HeadCourses'))
+const SettingsPage = lazy(() => import('./features/settings/pages/Settings'))
+const SafetyPage = lazy(() => import('./features/settings/pages/Safety'))
 
 // Loading fallback component for route transitions
 function RouteLoadingFallback() {
@@ -32,45 +32,45 @@ function App() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} />
 
       {/* Student routes with shared layout */}
       <Route path="/student" element={<Layout showOnlyCoreItems={true} />}>
-        <Route index element={<StudentDashboard />} />
-        <Route path="courses" element={<StudentCourses />} />
+        <Route index element={<StudentDashboardPage />} />
+        <Route path="courses" element={<StudentCoursesPage />} />
       </Route>
       <Route path="/student/courses/:id" element={<Layout showOnlyCoreItems={false} />}>
-        <Route index element={<StudentCourseDetail />} />
+        <Route index element={<StudentCourseDetailPage />} />
       </Route>
 
       <Route path="/" element={<Layout />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<DashboardPage />} />
       </Route>
 
       {/* Instructor routes - consistent nested structure */}
       <Route path="/instructor" element={<Layout showOnlyCoreItems={true} />}>
-        <Route index element={<InstructorDashboard />} />
-        <Route path="courses" element={<InstructorCourses />} />
+        <Route index element={<InstructorDashboardPage />} />
+        <Route path="courses" element={<InstructorCoursesPage />} />
       </Route>
       <Route path="/instructor/course/:id" element={<Layout showOnlyCoreItems={false} />}>
-        <Route index element={<CourseDetail />} />
+        <Route index element={<CourseDetailPage />} />
       </Route>
 
       {/* Head routes - consistent nested structure */}
       <Route path="/head" element={<Layout showOnlyCoreItems={true} />}>
-        <Route index element={<HeadDashboard />} />
-        <Route path="courses" element={<HeadCourses />} />
+        <Route index element={<HeadDashboardPage />} />
+        <Route path="courses" element={<HeadCoursesPage />} />
       </Route>
       <Route path="/head/course/:id" element={<Layout showOnlyCoreItems={false} />}>
-        <Route index element={<CourseDetail />} />
+        <Route index element={<CourseDetailPage />} />
       </Route>
 
       {/* Legacy routes - redirect to role-specific routes */}
       <Route path="/settings" element={<Layout />}>
-        <Route index element={<Settings />} />
+        <Route index element={<SettingsPage />} />
       </Route>
       <Route path="/security" element={<Layout />}>
-        <Route index element={<Safety />} />
+        <Route index element={<SafetyPage />} />
       </Route>
       <Route path="/lecturer" element={<Navigate to="/instructor" replace />} />
       <Route path="/course/:id" element={<Navigate to="/" replace />} />
