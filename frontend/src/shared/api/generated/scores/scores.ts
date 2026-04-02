@@ -34,7 +34,7 @@ import type {
   StudentProgramOutcomeScore
 } from '../../model';
 
-import { customInstance } from '../../mutator.orval';
+import { customInstance } from '../../mutator';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];

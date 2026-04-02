@@ -11,7 +11,7 @@ module.exports = {
       mock: false,
       override: {
         mutator: {
-          path: './src/shared/api/mutator.orval.ts',
+          path: './src/shared/api/mutator.ts',
           name: 'customInstance',
         },
         query: {

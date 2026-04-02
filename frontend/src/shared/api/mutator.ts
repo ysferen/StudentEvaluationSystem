@@ -1,8 +1,18 @@
 import Axios, { AxiosRequestConfig } from 'axios';
 
-// API Configuration from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || '';
+type RuntimeEnv = {
+  VITE_API_URL?: string;
+  VITE_API_BASE_PATH?: string;
+  VITE_ENABLE_DEBUG?: string;
+};
+
+const runtimeEnv =
+  typeof globalThis !== 'undefined' && (globalThis as { __SES_ENV__?: RuntimeEnv }).__SES_ENV__
+    ? (globalThis as { __SES_ENV__?: RuntimeEnv }).__SES_ENV__
+    : {};
+
+const API_URL = runtimeEnv?.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_PATH = runtimeEnv?.VITE_API_BASE_PATH || '';
 
 // Construct full base URL
 const baseURL = API_BASE_PATH
@@ -28,7 +38,7 @@ axiosInstance.interceptors.request.use(
     }
 
     // Debug logging in development
-    if (import.meta.env.VITE_ENABLE_DEBUG === 'true') {
+    if (runtimeEnv?.VITE_ENABLE_DEBUG === 'true') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
 

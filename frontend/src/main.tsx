@@ -7,6 +7,8 @@ import { AuthProvider } from './features/auth/hooks/useAuth'
 import { ErrorBoundary } from './shared/components'
 import './index.css'
 
+(globalThis as { __SES_ENV__?: Record<string, string | boolean | undefined> }).__SES_ENV__ = import.meta.env
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

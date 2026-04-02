@@ -23,7 +23,8 @@
   "ignorePatterns": [
     "dist",
     "node_modules",
-    "src/shared/api/generated"
+    "src/shared/api/generated",
+    "src/shared/api/model"
   ],
   "overrides": [
     {
