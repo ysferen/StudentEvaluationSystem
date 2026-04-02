@@ -1,5 +1,24 @@
 # Student Evaluation System - AI Agent Guide
 
+> DEPRECATION NOTICE
+>
+> This file is now legacy documentation.
+>
+> Active agent context is maintained in `.github/copilot-instructions.md` and loaded automatically for agent sessions.
+>
+> Planned cleanup: this file is intended to be removed after migration is complete.
+
+## AGENTS.md Removal Checklist
+
+Before deleting this file, verify all items below:
+
+1. `.github/copilot-instructions.md` fully covers architecture, workflows, quality gates, and roadmap guidance.
+2. No CI workflow, script, or tool in the repository references `AGENTS.md`.
+3. Human-facing docs (`README.md`, `backend/README.md`) remain sufficient for developer onboarding.
+4. Team confirms no external process depends on this file.
+
+If all items pass, remove `AGENTS.md` in a dedicated cleanup change.
+
 This document provides comprehensive information about the Student Evaluation System project for AI coding agents.
 
 ## Project Overview

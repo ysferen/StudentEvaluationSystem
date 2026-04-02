@@ -27,7 +27,7 @@ import type {
   CoreStudentLoScoresLoAveragesRetrieveParams
 } from '../../model';
 
-import { customInstance } from '../../mutator';
+import { customInstance } from '../../mutator.orval';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];

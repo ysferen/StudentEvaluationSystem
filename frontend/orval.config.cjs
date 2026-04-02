@@ -5,13 +5,13 @@ module.exports = {
     },
     output: {
       mode: 'tags-split',
-      target: './src/api/generated',
-      schemas: './src/api/model',
+      target: './src/shared/api/generated',
+      schemas: './src/shared/api/model',
       client: 'react-query',
       mock: false,
       override: {
         mutator: {
-          path: './src/api/mutator.ts',
+          path: './src/shared/api/mutator.orval.ts',
           name: 'customInstance',
         },
         query: {

@@ -1,87 +1,79 @@
 # Student Evaluation System
 
-A comprehensive academic evaluation platform built with Django REST Framework and React. This system allows educational institutions to track student performance through weighted assessments and measure achievement against course and program outcomes.
+Student Evaluation System (SES) is an outcome-based assessment platform for higher education.
 
-## Setup Instructions
+It tracks student achievement from Assessment -> Learning Outcome (LO) -> Program Outcome (PO).
 
-### Prerequisites
-- Python 3.10 or higher
-- Node.js 18 or higher
-- Git
+## Quick Start
 
-### Backend Setup (Django)
+## Prerequisites
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Erenimo3442/StudentEvaluationSystem.git
-   cd StudentEvaluationSystem
-   ```
+- Python 3.12+
+- Node.js 18+
+- uv (recommended for local backend workflow)
 
-2. **Create and activate a virtual environment:**
-   ```bash
-   # Windows
-   cd backend
-   python -m venv venv
-   venv\Scripts\activate
+## Backend (recommended local workflow)
 
-   # macOS/Linux
-   cd backend
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
+```bash
+cd backend
+uv sync
+cd student_evaluation_system
+uv run python manage.py migrate
+uv run python manage.py runserver
+```
 
-3. **Install Python dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Backend runs on <http://localhost:8000>
 
-4. **Run migrations:**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+## Frontend
 
-5. **Create a superuser (optional):**
-   ```bash
-   python manage.py createsuperuser
-   ```
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-6. **Run the development server:**
-   ```bash
-   python manage.py runserver
-   ```
+Frontend runs on <http://localhost:5173>
 
-   The API will be available at `http://localhost:8000/`
+## Common Commands
 
-### Frontend Setup (React + Vite)
+## Backend
 
-1. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   ```
+```bash
+cd backend/student_evaluation_system
+uv run python manage.py check
+uv run python manage.py makemigrations
+uv run python manage.py migrate
+uv run pytest
+uv run pytest --cov=student_evaluation_system
+uv run ruff check .
+uv run ruff format --check .
+```
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+## Frontend Commands
 
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+```bash
+cd frontend
+npm run lint
+npm run test -- --run
+npm run test:coverage
+npm run build
+```
 
-   The frontend will be available at `http://localhost:3000/`
+## API Docs
 
-## Available Scripts
+- Schema: /api/schema/
+- Swagger UI: /api/docs/
 
-**Backend:**
-- `python manage.py runserver` - Start Django development server
-- `python manage.py test` - Run backend tests
-- `python manage.py makemigrations` - Create database migrations
-- `python manage.py migrate` - Apply database migrations
+## API Client Generation (Frontend)
 
-**Frontend:**
-- `npm run dev` - Start Vite development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+Regenerate frontend API clients after backend serializer/view schema changes:
+
+```bash
+cd frontend
+npm run generate:api
+```
+
+## Notes
+
+- Local backend workflow prefers uv, but CI currently installs backend dependencies with pip and backend/requirements.txt.
+- Agent-facing project context now lives in .github/copilot-instructions.md.

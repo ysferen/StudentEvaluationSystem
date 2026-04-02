@@ -15,6 +15,7 @@
 export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
 
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleEnum = {
   guest: 'guest',
   student: 'student',

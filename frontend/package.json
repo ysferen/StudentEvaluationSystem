@@ -9,7 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "preview": "vite preview",
     "generate:api": "orval --config ./orval.config.cjs",
-    "generate:api:watch": "orval --config ./orval.config.js --watch",
+    "generate:api:watch": "orval --config ./orval.config.cjs --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"

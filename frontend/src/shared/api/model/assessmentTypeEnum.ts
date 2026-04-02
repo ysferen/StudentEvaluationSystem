@@ -18,6 +18,7 @@
 export type AssessmentTypeEnum = typeof AssessmentTypeEnum[keyof typeof AssessmentTypeEnum];
 
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AssessmentTypeEnum = {
   midterm: 'midterm',
   final: 'final',
