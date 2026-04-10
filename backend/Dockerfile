@@ -16,4 +16,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy only Django application code
 COPY student_evaluation_system ./student_evaluation_system
 
-CMD ["sh", "-c", "uv run --no-sync python student_evaluation_system/manage.py spectacular --file app/docs/api/contracts/schema.yml --format openapi --validate && uv run --no-sync python student_evaluation_system/manage.py runserver 0.0.0.0:8000"]
+CMD ["uv", "run", "--no-sync", "python", "student_evaluation_system/manage.py", "runserver", "0.0.0.0:8000"]

@@ -82,9 +82,3 @@ Thumbs.db
 .cache/
 .temp/
 *.tsbuildinfo
-
-# =============================================================================
-# Orval Generated (regenerated in Docker)
-# =============================================================================
-frontend/src/shared/api/generated
-frontend/src/shared/api/model

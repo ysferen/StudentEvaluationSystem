@@ -34,7 +34,10 @@ services:
     container_name: ses-backend
     volumes:
       - /app/.venv
-      - ./docs/api:/contracts
+      - shared_schema:/app/shared
+    command: sh -c "mkdir -p /app/shared && \
+              uv run --no-sync python student_evaluation_system/manage.py spectacular --file /app/shared/schema.yml --format openapi && \
+              uv run --no-sync python student_evaluation_system/manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     environment:
@@ -99,16 +102,21 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      additional_contexts:
-        schema_ctx: ./docs/api/contracts
-    container_name: ses-frontend
-    command: npm run dev -- --host
     volumes:
       - /app/node_modules
+      - shared_schema:/app/shared
+      - ./docs/api/contracts:/output
+    container_name: ses-frontend
+    command: sh -c "while [ ! -f /app/shared/schema.yml ]; do sleep 1; done && \
+            cp /app/shared/schema.yml ./src/shared/api/schema.yml && \
+            cp /app/shared/schema.yml /output/schema.yml && \
+            npm run generate:api && \
+            npm run dev --host"
     ports:
       - "5173:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     env_file:
       - ./frontend/.env.development
     develop:
@@ -131,3 +139,4 @@ services:
 volumes:
   postgres_data:
     driver: local
+  shared_schema:
