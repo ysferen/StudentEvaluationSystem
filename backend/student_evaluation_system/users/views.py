@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from .models import CustomUser, StudentProfile, InstructorProfile
 from .serializers import CustomUserSerializer, StudentProfileSerializer, InstructorProfileSerializer
@@ -57,10 +58,9 @@ class UserViewSet(viewsets.ModelViewSet):
     """CRUD operations for users."""
 
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
 
     def get_queryset(self):
-        queryset = CustomUser.objects.select_related("department", "university")
+        queryset = super().get_queryset().select_related("department", "university")
         role = self.request.query_params.get("role", None)
         if role:
             queryset = queryset.filter(role=role)
@@ -125,40 +125,87 @@ class LoginView(APIView):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
-        # Validate input
+        """
+        Authenticate user and return JWT tokens via HTTP-only cookies.
+
+        Security measures:
+        - Rate limiting (5 attempts/minute) prevents brute force
+        - Input sanitization strips whitespace
+        - Username length validation prevents injection
+        - Tokens stored in HTTP-only cookies (XSS resistant)
+        - Secure/SameSite cookies for production security
+        """
+        # Extract and sanitize username/password from request body
         username = request.data.get("username")
         password = request.data.get("password")
 
-        # Input sanitization - strip whitespace
+        # Strip whitespace from input fields
         if isinstance(username, str):
             username = username.strip()
         if isinstance(password, str):
             password = password.strip()
 
-        # Validate required fields
+        # Validate required fields are provided
         if not username or not password:
             return Response({"error": "Please provide both username and password"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate username format (prevent injection attempts)
+        # Validate username length to prevent injection attempts
         if len(username) > 150:
             return Response({"error": "Username is too long (max 150 characters)"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Authenticate user with Django's authentication backend
         user = authenticate(username=username, password=password)
 
+        # Check if authentication failed
         if user is None:
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Check if user account is active
+        # Verify user account is active (not disabled)
         if not user.is_active:
             return Response({"error": "User account is disabled"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Generate JWT tokens
+        # Generate JWT tokens using SimpleJWT
+        # refresh.access_token = short-lived access token (1 hour)
+        # refresh = long-lived refresh token (7 days) for token rotation
         refresh = RefreshToken.for_user(user)
 
-        # Serialize user data
+        # Serialize user data to include in response
         user_serializer = CustomUserSerializer(user)
 
-        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "user": user_serializer.data})
+        # Build response with user data
+        response = Response({"user": user_serializer.data})
+
+        # Configure cookie security based on DEBUG mode
+        # production: Secure=True, SameSite=Strict (prevents CSRF)
+        # development: Secure=False, SameSite=Lax (allows localhost)
+        secure = not settings.DEBUG
+        same_site = "Strict" if not settings.DEBUG else "Lax"
+
+        # Set access token cookie (1 hour = 3600 seconds)
+        # HttpOnly=True prevents JavaScript access (XSS protection)
+        response.set_cookie(
+            key="access_token",
+            value=str(refresh.access_token),
+            httponly=True,
+            secure=secure,
+            samesite=same_site,
+            max_age=60 * 60,
+            path="/",
+        )
+
+        # Set refresh token cookie (7 days = 604800 seconds)
+        # Used to obtain new access tokens without re-login
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            httponly=True,
+            secure=secure,
+            samesite=same_site,
+            max_age=60 * 60 * 24 * 7,
+            path="/",
+        )
+
+        return response
 
 
 @extend_schema(

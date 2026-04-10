@@ -7,7 +7,7 @@ from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, Count, F, Sum, FloatField
 from django.db import transaction
 
-from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
+from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from .serializers import (
     AssessmentSerializer,
     AssessmentCreateSerializer,
@@ -15,6 +15,7 @@ from .serializers import (
     StudentGradeSerializer,
     StudentGradeCreateSerializer,
     CourseEnrollmentSerializer,
+    ScoreRecomputeJobSerializer,
 )
 from .services import calculate_course_scores, calculate_student_po_scores
 from core.models import StudentLearningOutcomeScore
@@ -512,3 +513,41 @@ class EvaluationCreateView(generics.CreateAPIView):
 
     queryset = StudentGrade.objects.all()
     serializer_class = StudentGradeCreateSerializer
+
+
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="course",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter jobs by course ID",
+            ),
+            OpenApiParameter(
+                name="status",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter jobs by status (pending, running, success, failed)",
+            ),
+        ]
+    )
+)
+class ScoreRecomputeJobViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only endpoint for score recompute job status tracking."""
+
+    queryset = ScoreRecomputeJob.objects.select_related("course", "triggered_by").all()
+    serializer_class = ScoreRecomputeJobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        course_id = self.request.query_params.get("course")
+        status_value = self.request.query_params.get("status")
+
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+        if status_value:
+            queryset = queryset.filter(status=status_value)
+
+        return queryset

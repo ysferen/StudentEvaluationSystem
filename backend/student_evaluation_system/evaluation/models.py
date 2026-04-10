@@ -115,3 +115,44 @@ class CourseEnrollment(models.Model):
 
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.code}"
+
+
+class ScoreRecomputeJob(TimeStampedModel):
+    STATUS_PENDING = "pending"
+    STATUS_RUNNING = "running"
+    STATUS_SUCCESS = "success"
+    STATUS_FAILED = "failed"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_RUNNING, "Running"),
+        (STATUS_SUCCESS, "Success"),
+        (STATUS_FAILED, "Failed"),
+    )
+
+    TASK_TYPE_COURSE_RECOMPUTE = "course_recompute"
+    TASK_TYPE_CHOICES = ((TASK_TYPE_COURSE_RECOMPUTE, "Course Recompute"),)
+
+    task_type = models.CharField(max_length=64, choices=TASK_TYPE_CHOICES, default=TASK_TYPE_COURSE_RECOMPUTE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    course = models.ForeignKey("core.Course", on_delete=models.SET_NULL, null=True, blank=True, related_name="recompute_jobs")
+    triggered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="triggered_recompute_jobs",
+    )
+    celery_task_id = models.CharField(max_length=255, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Score Recompute Job"
+        verbose_name_plural = "Score Recompute Jobs"
+
+    def __str__(self):
+        course_id = self.course_id if self.course_id is not None else "-"
+        return f"Job {self.id}: {self.task_type} course={course_id} status={self.status}"

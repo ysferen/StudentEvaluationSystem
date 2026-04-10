@@ -14,6 +14,7 @@ docker-compose up -d
 ```
 
 This starts:
+
 - PostgreSQL database (port 5432)
 - Django backend (port 8000)
 - React frontend (port 5173)
@@ -34,9 +35,9 @@ docker-compose exec backend python manage.py createsuperuser
 
 ### 4. Access the Application
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000/api/
-- API Docs: http://localhost:8000/api/docs/
+- Frontend: <http://localhost:5173>
+- Backend API: <http://localhost:8000/api/>
+- API Docs: <http://localhost:8000/api/docs/>
 
 ---
 
@@ -106,7 +107,6 @@ docker-compose up -d db
 python manage.py runserver
 ```
 
-
 ---
 
 ## Troubleshooting
@@ -162,6 +162,7 @@ python manage.py dumpdata --exclude auth.permission --exclude contenttypes --exc
 ```
 
 Or import in order:
+
 ```bash
 python manage.py loaddata users.json
 python manage.py loaddata core.json

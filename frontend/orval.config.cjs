@@ -1,7 +1,8 @@
 module.exports = {
   'student-evaluation-api': {
     input: {
-      target: '../backend/student_evaluation_system/schema.yml',
+      // Both Docker and local dev use this path - volume mount handles the rest
+      target: './src/shared/api/schema.yml',
     },
     output: {
       mode: 'tags-split',

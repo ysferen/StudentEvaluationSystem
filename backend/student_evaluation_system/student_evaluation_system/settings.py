@@ -198,16 +198,21 @@ REFRESH_TOKEN_LIFETIME_DAYS = env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old refresh tokens after rotation
+    "ROTATE_REFRESH_TOKENS": True,  # Issue new refresh token on each use
+    "BLACKLIST_AFTER_ROTATION": True,  # Invalidate old token after rotation
     "UPDATE_LAST_LOGIN": False,  # Don't update last_login on token refresh
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "JTI_CLAIM": "jti",
+    "AUTH_HEADER_TYPES": ("Bearer",),  # Authorization header format
+    "ALGORITHM": "HS256",  # HMAC-SHA256 signing algorithm
+    "SIGNING_KEY": SECRET_KEY,  # Key derived from Django SECRET_KEY
+    "VERIFYING_KEY": None,  # Uses SIGNING_KEY for verification
+    "AUDIENCE": None,  # Optional token audience claim
+    "ISSUER": None,  # Optional token issuer claim
+    "JTI_CLAIM": "jti",  # Unique token identifier for blacklisting
+    # Cookie-based authentication settings
+    "AUTH_COOKIE": "access_token",  # Cookie name for access token
+    "AUTH_COOKIE_SECURE": not DEBUG,  # HTTPS-only in production
+    "AUTH_COOKIE_HTTP_ONLY": True,  # Prevent JavaScript access (XSS protection)
+    "AUTH_COOKIE_SAMESITE": "Strict",  # CSRF protection (Lax in debug)
 }
 
 
@@ -313,6 +318,23 @@ LOGGING = {
         },
     },
 }
+
+
+# =============================================================================
+# CELERY SETTINGS
+# =============================================================================
+
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = env.int("CELERY_TASK_TIME_LIMIT", default=900)
+CELERY_TASK_SOFT_TIME_LIMIT = env.int("CELERY_TASK_SOFT_TIME_LIMIT", default=840)
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+CELERY_TASK_EAGER_PROPAGATES = env.bool("CELERY_TASK_EAGER_PROPAGATES", default=True)
 
 
 # =============================================================================

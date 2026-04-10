@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
+from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from core.models import LearningOutcome
 
 
@@ -115,3 +115,21 @@ class MyGradesSerializer(serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         return (obj.score / obj.assessment.total_score) * 100 if obj.assessment.total_score > 0 else 0
+
+
+class ScoreRecomputeJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScoreRecomputeJob
+        fields = [
+            "id",
+            "task_type",
+            "status",
+            "course",
+            "triggered_by",
+            "celery_task_id",
+            "created_at",
+            "updated_at",
+            "started_at",
+            "finished_at",
+            "error",
+        ]

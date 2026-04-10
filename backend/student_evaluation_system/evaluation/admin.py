@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment
+from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 
 
 @admin.register(StudentGrade)
@@ -27,3 +27,10 @@ class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ["course", "date"]
     search_fields = ["name", "course__code", "course__name"]
     inlines = [AssessmentLearningOutcomeMappingInline]
+
+
+@admin.register(ScoreRecomputeJob)
+class ScoreRecomputeJobAdmin(admin.ModelAdmin):
+    list_display = ["id", "task_type", "status", "course", "triggered_by", "created_at", "started_at", "finished_at"]
+    list_filter = ["task_type", "status", "created_at"]
+    search_fields = ["celery_task_id", "course__code", "course__name", "triggered_by__username"]
