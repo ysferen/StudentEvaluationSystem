@@ -1,9 +1,6 @@
 import React from 'react'
-import { useAuth } from '../../auth/hooks/useAuth'
 
 const Settings: React.FC = () => {
-  const { isAuthenticated } = useAuth()
-
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold text-secondary-900">Settings</h1>

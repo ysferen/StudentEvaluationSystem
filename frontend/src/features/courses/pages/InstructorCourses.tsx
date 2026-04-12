@@ -27,6 +27,18 @@ interface CourseStatsData {
   average: number | null
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const getStudentId = (value: unknown): number | null => {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const maybeId = value.student_id
+  return typeof maybeId === 'number' ? maybeId : null
+}
+
 const InstructorCourses = () => {
   const { user } = useAuth()
 
@@ -56,7 +68,7 @@ const InstructorCourses = () => {
             : null
           // Extract student IDs from the response (each entry has student_id)
           const studentIds = response
-            .map(r => (r as any).student_id)
+            .map((r) => getStudentId(r))
             .filter((id): id is number => id != null)
 
           return {

@@ -11,9 +11,59 @@ import {
 
 import {
   coreStudentLoScoresLoAveragesRetrieve
-} from '../../../shared/api/generated/analytics/analytics'
+} from '../../../shared/api/generated/core/core'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
 import type { Course } from '../../../shared/api/model/course'
+
+interface LoAverageItem {
+  lo_code: string
+  avg_score: number
+}
+
+interface UploadResultPayload {
+  message?: string
+  results?: {
+    created?: Record<string, number>
+    updated?: Record<string, number>
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const toLoAverages = (value: unknown): LoAverageItem[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter((item): item is LoAverageItem => (
+      isRecord(item)
+      && typeof item.lo_code === 'string'
+      && typeof item.avg_score === 'number'
+    ))
+}
+
+const toUploadResultPayload = (value: unknown): UploadResultPayload => {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  const created = isRecord(value.results) && isRecord(value.results.created)
+    ? Object.fromEntries(Object.entries(value.results.created)
+      .filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
+    : undefined
+
+  const updated = isRecord(value.results) && isRecord(value.results.updated)
+    ? Object.fromEntries(Object.entries(value.results.updated)
+      .filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
+    : undefined
+
+  return {
+    message: typeof value.message === 'string' ? value.message : undefined,
+    results: created || updated ? { created, updated } : undefined,
+  }
+}
 
 interface CourseWithAnalytics extends Course {
   students?: number
@@ -26,7 +76,7 @@ interface CourseWithAnalytics extends Course {
 
 interface CourseAnalytics {
   courseId: number
-  loAverages: any[]
+  loAverages: LoAverageItem[]
   gradeAverages: Array<{ weighted_average: number | null }>
 }
 
@@ -35,7 +85,7 @@ const InstructorDashboard = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [activeChart, setActiveChart] = useState('radar')
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
-  const [uploadResult, setUploadResult] = useState<any>(null)
+  const [uploadResult, setUploadResult] = useState<UploadResultPayload | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   // Fetch courses for the instructor using orval
@@ -59,11 +109,11 @@ const InstructorDashboard = () => {
         try {
           // Use orval's raw functions (not hooks) inside queryFn
           const [loAveragesRes, gradeAveragesRes] = await Promise.all([
-            coreStudentLoScoresLoAveragesRetrieve({ course: course.id }),
+            coreStudentLoScoresLoAveragesRetrieve(),
             evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
           ])
 
-          const loAverages = Array.isArray(loAveragesRes) ? loAveragesRes : []
+          const loAverages = toLoAverages(loAveragesRes)
           const gradeAverages = Array.isArray(gradeAveragesRes) ? gradeAveragesRes : []
 
           return {
@@ -156,7 +206,7 @@ const InstructorDashboard = () => {
     }
 
     // Format LO averages for radar chart
-    const aggregatedLOScores = analytics.loAverages.map((lo: any) => ({
+    const aggregatedLOScores = analytics.loAverages.map((lo) => ({
       lo: lo.lo_code,
       score: Math.round(lo.avg_score)
     }))
@@ -197,6 +247,12 @@ const InstructorDashboard = () => {
     loScores: [],
     gradeDistribution: []
   }
+  const riskCount = course.studentsAtRisk ?? 0
+  const riskColorClass = riskCount > 10
+    ? 'text-red-500'
+    : riskCount > 5
+      ? 'text-amber-500'
+      : 'text-emerald-500'
 
   // Get loading state for current course analytics
   const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length
@@ -409,11 +465,9 @@ const InstructorDashboard = () => {
                 <div>
                   <p className="text-secondary-500 text-sm mb-1">Students at Risk</p>
                   <p className={`text-3xl font-bold ${
-                    course.studentsAtRisk! > 10 ? 'text-red-500' :
-                    course.studentsAtRisk! > 5 ? 'text-amber-500' :
-                    'text-emerald-500'
+                    riskColorClass
                   }`}>
-                    {course.studentsAtRisk}
+                    {riskCount}
                   </p>
                 </div>
                 <div>
@@ -454,12 +508,12 @@ const InstructorDashboard = () => {
                 <div>
                   <span className="font-medium text-emerald-700">Results:</span>
                   <div className="mt-2 space-y-1">
-                    {Object.entries(uploadResult.results.created || {}).map(([entity, count]: [string, any]) => (
+                    {Object.entries(uploadResult.results?.created || {}).map(([entity, count]) => (
                       <div key={entity} className="text-sm text-emerald-600">
                         • Created {count} {entity}
                       </div>
                     ))}
-                    {Object.entries(uploadResult.results.updated || {}).map(([entity, count]: [string, any]) => (
+                    {Object.entries(uploadResult.results?.updated || {}).map(([entity, count]) => (
                       <div key={entity} className="text-sm text-emerald-600">
                         • Updated {count} {entity}
                       </div>
@@ -500,13 +554,13 @@ const InstructorDashboard = () => {
             isOpen={isFileUploadModalOpen}
             type="assignment_scores"
             onClose={() => setIsFileUploadModalOpen(false)}
-            onUploadComplete={(result: any) => {
-              setUploadResult(result)
+            onUploadComplete={(result: unknown) => {
+              setUploadResult(toUploadResultPayload(result))
               setIsFileUploadModalOpen(false)
               // Refetch data to update the dashboard
               window.location.reload()
             }}
-            onError={(error: any) => {
+            onError={(error: string) => {
               setUploadError(error)
               setIsFileUploadModalOpen(false)
             }}

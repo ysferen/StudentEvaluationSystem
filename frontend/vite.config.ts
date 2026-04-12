@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [react()],
+    plugins: react(),
 
     // Path resolution
     resolve: {
@@ -40,9 +40,11 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path,
           // Log proxied requests in debug mode
           configure: (proxy, options) => {
-            proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxy.on('proxyReq', (_proxyReq, req, _res) => {
               if (env.VITE_ENABLE_DEBUG === 'true') {
-                console.log('[Proxy]', req.method, req.url, '→', options.target + req.url)
+                const target = options.target?.toString() ?? ''
+                const requestUrl = req.url ?? ''
+                console.log('[Proxy]', req.method, requestUrl, '→', target + requestUrl)
               }
             })
           },
@@ -70,21 +72,26 @@ export default defineConfig(({ mode }) => {
       // Code splitting for better caching
       rollupOptions: {
         output: {
-          manualChunks: {
-            // React core libraries
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          manualChunks: (id: string) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'react-vendor'
+              }
+              if (id.includes('@tanstack/react-query')) {
+                return 'query-vendor'
+              }
+              if (id.includes('react-apexcharts') || id.includes('apexcharts')) {
+                return 'charts'
+              }
+              if (id.includes('@heroicons/react')) {
+                return 'icons'
+              }
+              if (id.includes('axios')) {
+                return 'vendor'
+              }
+            }
 
-            // React Query for API state management
-            'query-vendor': ['@tanstack/react-query'],
-
-            // Chart library
-            'charts': ['react-apexcharts', 'apexcharts'],
-
-            // Icon libraries
-            'icons': ['@heroicons/react'],
-
-            // Additional vendor chunk
-            'vendor': ['axios'],
+            return undefined
           },
         },
       },

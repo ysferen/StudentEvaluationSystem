@@ -11,6 +11,7 @@ import {
   DocumentIcon
 } from '@heroicons/react/24/outline'
 import { coreProgramsList } from '../../../shared/api/generated/core/core'
+import type { Program } from '../../../shared/api/model'
 
 const HeadDashboard = () => {
   const { data, isLoading } = useQuery({
@@ -29,7 +30,7 @@ const HeadDashboard = () => {
     }],
     options: {
       xaxis: {
-        categories: programs.map((p: any) => p.code) // Use real program codes
+        categories: programs.map((p: Program) => p.code) // Use real program codes
       },
       colors: ['#0ea5e9']
     }

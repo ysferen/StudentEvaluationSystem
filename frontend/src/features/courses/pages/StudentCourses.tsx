@@ -12,19 +12,26 @@ import {
   UserIcon,
 } from '@heroicons/react/24/outline'
 import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
+import type { CourseEnrollment } from '../../../shared/api/model'
 
 const StudentCourses = () => {
   const { user } = useAuth()
+  const userId = user?.id
 
   const { data, isLoading } = useQuery({
     queryKey: ['studentEnrollments', user?.id],
-    queryFn: () => evaluationEnrollmentsList({ student: user!.id }),
-    enabled: !!user,
+    queryFn: () => {
+      if (!userId) {
+        throw new Error('User is required')
+      }
+      return evaluationEnrollmentsList({ student: userId })
+    },
+    enabled: !!userId,
   })
 
-  const enrollments = useMemo(() => data?.results || [], [data])
+  const enrollments = useMemo(() => data?.results || [] as CourseEnrollment[], [data])
   const totalCredits = useMemo(
-    () => enrollments.reduce((sum, e: any) => sum + (e.course.credits || 0), 0),
+    () => enrollments.reduce((sum, e) => sum + (e.course.credits || 0), 0),
     [enrollments]
   )
 

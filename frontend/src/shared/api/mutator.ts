@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig } from 'axios';
+import Axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 
 type RuntimeEnv = {
   VITE_API_URL?: string;
@@ -19,6 +19,40 @@ const baseURL = API_BASE_PATH
   ? `${API_URL}${API_BASE_PATH}`
   : API_URL;
 
+// Token refresh state
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+const refreshAccessToken = async (): Promise<string> => {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+  const response = await Axios.post(`${API_URL}/api/users/auth/refresh/`, {
+    refresh: refreshToken,
+  });
+  const { access, refresh: newRefresh } = response.data;
+  localStorage.setItem('access_token', access);
+  if (newRefresh) {
+    localStorage.setItem('refresh_token', newRefresh);
+  }
+  return access;
+};
+
 // Create axios instance with base configuration
 const axiosInstance = Axios.create({
   baseURL,
@@ -30,7 +64,7 @@ const axiosInstance = Axios.create({
 
 // Request interceptor - Add JWT token to all requests
 axiosInstance.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers = config.headers || {};
@@ -44,26 +78,54 @@ axiosInstance.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle auth errors
+// Response interceptor - Handle token refresh with request queuing
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Handle specific error statuses
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const newToken = await refreshAccessToken();
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        processQueue(null, newToken);
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    // Handle other error statuses with logging
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          // Token expired or invalid - clear storage and redirect to login
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          window.location.href = '/login';
-          break;
         case 403:
           console.error('[API] Permission denied:', error.response.data);
           break;
@@ -80,7 +142,6 @@ axiosInstance.interceptors.response.use(
           console.error('[API] Error:', error.response.data);
       }
     } else if (error.request) {
-      // Request was made but no response received
       console.error('[API] Network error - no response received');
     }
 

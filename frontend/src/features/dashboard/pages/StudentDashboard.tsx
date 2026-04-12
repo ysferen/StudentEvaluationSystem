@@ -6,27 +6,39 @@ import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { useQueries } from '@tanstack/react-query'
 import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
-import { coreStudentPoScoresList } from '../../../shared/api/generated/scores/scores'
+import { coreStudentPoScoresList } from '../../../shared/api/generated/core/core'
+import type { CourseEnrollment, StudentProgramOutcomeScore } from '../../../shared/api/model'
 
 const StudentDashboard = () => {
   const { user } = useAuth()
+  const userId = user?.id
 
   const results = useQueries({
     queries: [
       {
         queryKey: ['enrollments', user?.id],
-        queryFn: () => evaluationEnrollmentsList({ student: user!.id }),
-        enabled: !!user,
+        queryFn: () => {
+          if (!userId) {
+            throw new Error('User is required')
+          }
+          return evaluationEnrollmentsList({ student: userId })
+        },
+        enabled: !!userId,
       },
       {
         queryKey: ['poScores', user?.id],
-        queryFn: () => coreStudentPoScoresList({ student: user!.id }),
-        enabled: !!user,
+        queryFn: () => coreStudentPoScoresList(),
+        enabled: !!userId,
       },
       {
         queryKey: ['courseAverages', user?.id],
-        queryFn: () => evaluationGradesCourseAveragesRetrieve({ student: user!.id }),
-        enabled: !!user
+        queryFn: () => {
+          if (!userId) {
+            throw new Error('User is required')
+          }
+          return evaluationGradesCourseAveragesRetrieve({ student: userId })
+        },
+        enabled: !!userId
       },
     ],
   })
@@ -34,8 +46,8 @@ const StudentDashboard = () => {
   const [enrollmentsQuery, poScoresQuery, courseAveragesQuery] = results
   const loading = results.some(q => q.isLoading)
 
-  const enrollments = useMemo(() => enrollmentsQuery.data?.results || [], [enrollmentsQuery.data])
-  const poScores = useMemo(() => poScoresQuery.data?.results || [], [poScoresQuery.data])
+  const enrollments = useMemo(() => enrollmentsQuery.data?.results || [] as CourseEnrollment[], [enrollmentsQuery.data])
+  const poScores = useMemo(() => poScoresQuery.data?.results || [] as StudentProgramOutcomeScore[], [poScoresQuery.data])
   const courseScores = useMemo(
     () => (courseAveragesQuery.data || []) as Array<{ course_id: number; weighted_average: number | null }>,
     [courseAveragesQuery.data]
@@ -58,7 +70,7 @@ const StudentDashboard = () => {
     series: [
       {
         name: 'Achievement',
-        data: poScores.map((s: any) => Math.round(s.score * scoreMultiplier)),
+        data: poScores.map((s) => Math.round((s.score ?? 0) * scoreMultiplier)),
       },
     ],
     options: {
@@ -76,7 +88,7 @@ const StudentDashboard = () => {
       fill: { opacity: 0.3 },
       markers: { size: 4 },
       xaxis: {
-        categories: poScores.map((s: any) => s.program_outcome.code),
+        categories: poScores.map((s) => s.program_outcome.code),
         labels: {
           style: {
             fontSize: '12px',
@@ -131,7 +143,7 @@ const StudentDashboard = () => {
 
         {enrollments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enrollments.map((enrollment: any) => (
+            {enrollments.map((enrollment) => (
               <Card
                 key={enrollment.id}
                 className="h-full"

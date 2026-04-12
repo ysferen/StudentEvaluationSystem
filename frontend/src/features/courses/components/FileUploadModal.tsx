@@ -1,10 +1,15 @@
 import React, { useState, useRef } from 'react'
-import { fileImportService } from '../../../shared/api/legacy'
 import {
   useCoreFileImportAssignmentScoresUploadCreate,
-  useCoreFileImportAssignmentScoresValidateCreate
-} from '../../../shared/api/generated/file-import-assessment-scores/file-import-assessment-scores'
-import { FileValidationResponse } from '../../../shared/api/model/fileValidationResponse'
+  useCoreFileImportAssignmentScoresValidateCreate,
+  useCoreFileImportAssignmentScoresUploadRetrieve,
+  useCoreFileImportLearningOutcomesUploadRetrieve,
+  useCoreFileImportLearningOutcomesUploadCreate,
+  useCoreFileImportLearningOutcomesValidateCreate,
+  useCoreFileImportProgramOutcomesUploadRetrieve,
+  useCoreFileImportProgramOutcomesUploadCreate,
+  useCoreFileImportProgramOutcomesValidateCreate,
+} from '../../../shared/api/generated/core/core'
 
 // Validation result types
 interface ValidationError {
@@ -63,6 +68,57 @@ interface ValidationResult {
   }
 }
 
+interface UploadInfoResponse {
+  expected_columns?: string[]
+  description?: string
+}
+
+type UploadErrorPayload = Partial<ValidationResult> & {
+  message?: string
+  error?: string
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const toValidationResult = (value: unknown, defaultIsValid: boolean): ValidationResult => {
+  if (!isRecord(value)) {
+    return { is_valid: defaultIsValid }
+  }
+
+  return {
+    is_valid: typeof value.is_valid === 'boolean' ? value.is_valid : defaultIsValid,
+    errors: Array.isArray(value.errors) ? value.errors as ValidationError[] : undefined,
+    warnings: Array.isArray(value.warnings) ? value.warnings as ValidationError[] : undefined,
+    suggestions: Array.isArray(value.suggestions) ? value.suggestions as ValidationError[] : undefined,
+    validation_details: isRecord(value.validation_details) ? value.validation_details as ValidationDetails : undefined,
+    course_info: isRecord(value.course_info) ? value.course_info as ValidationResult['course_info'] : undefined,
+    file_info: isRecord(value.file_info) ? value.file_info as ValidationResult['file_info'] : undefined,
+  }
+}
+
+const getErrorData = (error: unknown): UploadErrorPayload | undefined => {
+  if (!isRecord(error) || !isRecord(error.response)) {
+    return undefined
+  }
+
+  return isRecord(error.response.data) ? error.response.data as UploadErrorPayload : undefined
+}
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  const errorData = getErrorData(error)
+  if (typeof errorData?.error === 'string') {
+    return errorData.error
+  }
+  if (typeof errorData?.message === 'string') {
+    return errorData.message
+  }
+  if (isRecord(error) && typeof error.message === 'string') {
+    return error.message
+  }
+  return fallback
+}
+
 interface FileUploadModalProps {
   course: string
   courseCode: string
@@ -70,7 +126,7 @@ interface FileUploadModalProps {
   isOpen: boolean
   type: 'assignment_scores' | 'learning_outcomes' | 'program_outcomes'
   onClose: () => void
-  onUploadComplete?: (result: any) => void
+  onUploadComplete?: (result: unknown) => void
   onError?: (error: string) => void
 }
 
@@ -86,106 +142,96 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
-  const [uploadInfo, setUploadInfo] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Create mutations for file operations
+  // Upload info queries
+  const { data: assignmentUploadInfo } = useCoreFileImportAssignmentScoresUploadRetrieve<UploadInfoResponse>({
+    query: { enabled: type === 'assignment_scores' && isOpen }
+  })
+  const { data: loUploadInfo } = useCoreFileImportLearningOutcomesUploadRetrieve<UploadInfoResponse>({
+    query: { enabled: type === 'learning_outcomes' && isOpen }
+  })
+  const { data: poUploadInfo } = useCoreFileImportProgramOutcomesUploadRetrieve<UploadInfoResponse>({
+    query: { enabled: type === 'program_outcomes' && isOpen }
+  })
+
+  const uploadInfo = type === 'assignment_scores' ? assignmentUploadInfo
+    : type === 'learning_outcomes' ? loUploadInfo
+    : poUploadInfo
+
+  // LO mutation hooks
+  const loValidateMutation = useCoreFileImportLearningOutcomesValidateCreate({
+    request: {
+      data: file ? { file } : undefined,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
+  })
+  const loUploadMutation = useCoreFileImportLearningOutcomesUploadCreate()
+
+  // PO mutation hooks
+  const poValidateMutation = useCoreFileImportProgramOutcomesValidateCreate({
+    request: {
+      data: file ? { file } : undefined,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
+  })
+  const poUploadMutation = useCoreFileImportProgramOutcomesUploadCreate()
+
+  // Create mutations for assignment scores (already existed)
   const validationMutation = useCoreFileImportAssignmentScoresValidateCreate({
-    mutation: {
-      onSuccess: (data: FileValidationResponse) => {
-        // The data already comes in the correct ValidationResult format
-        const validationResult: ValidationResult = {
-          is_valid: (data as any).is_valid ?? true,
-          errors: (data as any).errors,
-          warnings: (data as any).warnings,
-          suggestions: (data as any).suggestions,
-          validation_details: (data as any).validation_details,
-          course_info: (data as any).course_info,
-          file_info: (data as any).file_info
-        }
-        setValidationResult(validationResult)
+    request: {
+      params: {
+        course_code: courseCode,
+        term_id: termId
       },
-      onError: (error: any) => {
-        const errorData = error.response?.data
+      data: file ? { file } : undefined,
+      headers: { 'Content-Type': 'multipart/form-data' }
+    },
+    mutation: {
+      onSuccess: (data) => {
+        setValidationResult(toValidationResult(data, true))
+      },
+      onError: (error) => {
+        const errorData = getErrorData(error)
         if (errorData) {
-          const validationResult: ValidationResult = {
-            is_valid: false,
-            errors: [{
-              message: errorData.message || 'Validation failed',
-              category: 'validation',
-              severity: 'error'
-            }]
-          }
-          setValidationResult(validationResult)
+          setValidationResult(toValidationResult(errorData, false))
         } else {
-          onError?.(error.message || 'Validation failed')
+          onError?.(getErrorMessage(error, 'Validation failed'))
         }
       }
     }
   })
 
   const uploadMutation = useCoreFileImportAssignmentScoresUploadCreate({
+    request: {
+      params: {
+        course_code: courseCode,
+        term_id: termId
+      }
+    },
     mutation: {
       onSuccess: (data) => {
         onUploadComplete?.(data)
-        onClose() // Close modal after successful upload
+        onClose()
       },
-      onError: (error: any) => {
-        const errorData = error.response?.data
+      onError: (error) => {
+        const errorData = getErrorData(error)
         if (errorData?.errors) {
-          // Show validation errors
-          setValidationResult(errorData)
+          setValidationResult(toValidationResult(errorData, false))
         } else {
-          onError?.(errorData?.error || error.message || 'Upload failed')
+          onError?.(getErrorMessage(error, 'Upload failed'))
         }
       }
     }
   })
 
-  React.useEffect(() => {
-    if (isOpen) {
-      // Reset file input value
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-
-      // Load upload info based on type when modal opens
-      const getUploadInfo = async () => {
-        try {
-          switch (type) {
-            case 'assignment_scores': {
-              const info = await fileImportService.getAssignmentScoresUploadInfo()
-              setUploadInfo(info)
-              break
-            }
-            case 'learning_outcomes': {
-              const loInfo = await fileImportService.getLearningOutcomesUploadInfo()
-              setUploadInfo(loInfo)
-              break
-            }
-            case 'program_outcomes': {
-              const poInfo = await fileImportService.getProgramOutcomesUploadInfo()
-              setUploadInfo(poInfo)
-              break
-            }
-            default:
-              setUploadInfo(null)
-          }
-        } catch (error) {
-          console.error('Failed to load upload info:', error)
-        }
-      }
-
-      getUploadInfo()
-      // Reset state
-      setFile(null)
-      setValidationResult(null)
-    }
-  }, [isOpen, type, onError, onClose, onUploadComplete])
+  // Computed loading states for the various mutation types
+  const isAnyValidatePending = validationMutation.isPending || loValidateMutation.isPending || poValidateMutation.isPending
+  const isAnyUploadPending = uploadMutation.isPending || loUploadMutation.isPending || poUploadMutation.isPending
 
   const getTypeDisplayName = (type: string) => {
     switch (type) {
-      case 'assessment_scores':
+      case 'assignment_scores':
         return 'Assessment Scores'
       case 'learning_outcomes':
         return 'Learning Outcomes'
@@ -214,39 +260,31 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     switch (type) {
       case 'assignment_scores':
-        validationMutation.mutate(
-          {
-            data: { file: file },
-            params: {
-              course_code: courseCode,
-              term_id: termId
-            }
-          }
-        )
+        validationMutation.mutate()
         break
       case 'learning_outcomes':
         try {
-          const result = await fileImportService.validateLearningOutcomes(file)
-          setValidationResult(result)
-        } catch (error: any) {
-          const errorData = error.response?.data
+          const result = await loValidateMutation.mutateAsync()
+          setValidationResult(toValidationResult(result, true))
+        } catch (error) {
+          const errorData = getErrorData(error)
           if (errorData) {
-            setValidationResult(errorData)
+            setValidationResult(toValidationResult(errorData, false))
           } else {
-            onError?.(error.message || 'Validation failed')
+            onError?.(getErrorMessage(error, 'Validation failed'))
           }
         }
         break
       case 'program_outcomes':
         try {
-          const result = await fileImportService.validateProgramOutcomes(file)
-          setValidationResult(result)
-        } catch (error: any) {
-          const errorData = error.response?.data
+          const result = await poValidateMutation.mutateAsync()
+          setValidationResult(toValidationResult(result, true))
+        } catch (error) {
+          const errorData = getErrorData(error)
           if (errorData) {
-            setValidationResult(errorData)
+            setValidationResult(toValidationResult(errorData, false))
           } else {
-            onError?.(error.message || 'Validation failed')
+            onError?.(getErrorMessage(error, 'Validation failed'))
           }
         }
         break
@@ -263,41 +301,33 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     switch (type) {
       case 'assignment_scores':
-        uploadMutation.mutate(
-          {
-            data: { file: file },
-            params: {
-              course_code: courseCode,
-              term_id: termId
-            }
-          }
-        )
+        uploadMutation.mutate({ data: { file } })
         break
       case 'learning_outcomes':
         try {
-          const result = await fileImportService.uploadLearningOutcomes(file)
+          const result = await loUploadMutation.mutateAsync({ data: { file } })
           onUploadComplete?.(result)
           onClose()
-        } catch (error: any) {
-          const errorData = error.response?.data
+        } catch (error) {
+          const errorData = getErrorData(error)
           if (errorData?.errors) {
-            setValidationResult(errorData)
+            setValidationResult(toValidationResult(errorData, false))
           } else {
-            onError?.(errorData?.error || error.message || 'Upload failed')
+            onError?.(getErrorMessage(error, 'Upload failed'))
           }
         }
         break
       case 'program_outcomes':
         try {
-          const result = await fileImportService.uploadProgramOutcomes(file)
+          const result = await poUploadMutation.mutateAsync({ data: { file } })
           onUploadComplete?.(result)
           onClose()
-        } catch (error: any) {
-          const errorData = error.response?.data
+        } catch (error) {
+          const errorData = getErrorData(error)
           if (errorData?.errors) {
-            setValidationResult(errorData)
+            setValidationResult(toValidationResult(errorData, false))
           } else {
-            onError?.(errorData?.error || error.message || 'Upload failed')
+            onError?.(getErrorMessage(error, 'Upload failed'))
           }
         }
         break
@@ -495,7 +525,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={handleFileChange}
-                disabled={uploadMutation.isPending || validationMutation.isPending}
+                disabled={isAnyUploadPending || isAnyValidatePending}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
               />
             </div>
@@ -520,10 +550,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             <div className="flex space-x-3">
               <button
                 onClick={handleValidate}
-                disabled={!file || validationMutation.isPending || (file && file.size > 10 * 1024 * 1024)}
+                disabled={!file || isAnyValidatePending || (file && file.size > 10 * 1024 * 1024)}
                 className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {validationMutation.isPending ? (
+                {isAnyValidatePending ? (
                   <span className="flex items-center justify-center">
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -536,10 +566,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
               <button
                 onClick={handleUpload}
-                disabled={!file || uploadMutation.isPending || validationMutation.isPending || (file && file.size > 10 * 1024 * 1024)}
+                disabled={!file || isAnyUploadPending || isAnyValidatePending || (file && file.size > 10 * 1024 * 1024)}
                 className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploadMutation.isPending ? (
+                {isAnyUploadPending ? (
                   <span className="flex items-center justify-center">
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

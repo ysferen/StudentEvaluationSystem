@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { useAuth } from '../../auth/hooks/useAuth'
 
 const Safety: React.FC = () => {
-  const { isAuthenticated } = useAuth()
   const [twoFAEnabled, setTwoFAEnabled] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -19,7 +17,7 @@ const Safety: React.FC = () => {
       await new Promise((res) => setTimeout(res, 600))
       setTwoFAEnabled((s) => !s)
       setMessage('Security settings updated')
-    } catch (err: any) {
+    } catch {
       setMessage('Failed to update settings')
     }
   }
@@ -60,8 +58,9 @@ const Safety: React.FC = () => {
         const errMsg = data?.detail || data?.error || JSON.stringify(data) || `Request failed (${res.status})`
         setError(String(errMsg))
       }
-    } catch (err: any) {
-      setError(err?.message || 'Network error')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

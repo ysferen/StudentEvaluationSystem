@@ -10,40 +10,74 @@ import {
   ChartPieIcon,
 } from '@heroicons/react/24/outline'
 import { coreCoursesRetrieve, coreCoursesLearningOutcomesRetrieve } from '../../../shared/api/generated/core/core'
-import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
+import { coreStudentLoScoresList } from '../../../shared/api/generated/core/core'
 import { evaluationGradesList, evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
+import type { CoreLearningOutcome } from '../../../shared/api/model'
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const getAssessmentType = (assessment: unknown): string => {
+  if (!isRecord(assessment)) {
+    return 'Assessment'
+  }
+
+  const value = assessment.assessment_type
+  return typeof value === 'string' ? value : 'Assessment'
+}
 
 const StudentCourseDetail = () => {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const courseId = id ? parseInt(id, 10) : null
+  const userId = user?.id
 
   const results = useQueries({
     queries: [
       {
         queryKey: ['course', id],
-        queryFn: () => coreCoursesRetrieve(parseInt(id!)),
-        enabled: !!id,
+        queryFn: () => {
+          if (courseId === null) {
+            throw new Error('Course ID is required')
+          }
+          return coreCoursesRetrieve(courseId)
+        },
+        enabled: courseId !== null,
       },
       {
         queryKey: ['loScores', user?.id, id],
-        queryFn: () => coreStudentLoScoresList({ student: user!.id, course: parseInt(id!) }),
+        queryFn: () => coreStudentLoScoresList(),
         enabled: !!user && !!id,
       },
       {
         queryKey: ['studentGrades', user?.id, id],
-        queryFn: () => evaluationGradesList({ student: user!.id, course: parseInt(id!) }),
-        enabled: !!user && !!id,
+        queryFn: () => {
+          if (!userId || courseId === null) {
+            throw new Error('User and course are required')
+          }
+          return evaluationGradesList({ student: userId, course: courseId })
+        },
+        enabled: !!userId && courseId !== null,
       },
       {
         queryKey: ['learningOutcomes', id],
-        queryFn: () => coreCoursesLearningOutcomesRetrieve(parseInt(id!)),
-        enabled: !!id,
+        queryFn: () => {
+          if (courseId === null) {
+            throw new Error('Course ID is required')
+          }
+          return coreCoursesLearningOutcomesRetrieve(courseId)
+        },
+        enabled: courseId !== null,
       },
       {
         queryKey: ['courseAverages', user?.id, id],
-        queryFn: () => evaluationGradesCourseAveragesRetrieve({ student: user!.id, course: parseInt(id!) }),
-        enabled: !!user && !!id,
+        queryFn: () => {
+          if (!userId || courseId === null) {
+            throw new Error('User and course are required')
+          }
+          return evaluationGradesCourseAveragesRetrieve({ student: userId, course: courseId })
+        },
+        enabled: !!userId && courseId !== null,
       },
     ],
   })
@@ -56,7 +90,7 @@ const StudentCourseDetail = () => {
   const studentGrades = useMemo(() => gradesQuery.data?.results || [], [gradesQuery.data])
   const learningOutcomes = useMemo(() => {
     const data = learningOutcomesQuery.data
-    return Array.isArray(data) ? data : []
+    return Array.isArray(data) ? data : [] as CoreLearningOutcome[]
   }, [learningOutcomesQuery.data])
   const weightedAverage = useMemo(() => {
     const avgData = courseAvgQuery.data
@@ -256,7 +290,7 @@ const StudentCourseDetail = () => {
                         type="radar"
                         series={[{
                           name: 'Score',
-                          data: learningOutcomes.map((lo: any) => {
+                          data: learningOutcomes.map((lo) => {
                             const scoreData = loScores.find((s) => s.learning_outcome?.id === lo.id)
                             return scoreData ? Math.round((scoreData.score || 0) * scoreMultiplier) : 0
                           }),
@@ -281,7 +315,7 @@ const StudentCourseDetail = () => {
                             },
                           },
                           xaxis: {
-                            categories: learningOutcomes.map((lo: any) => lo.code),
+                            categories: learningOutcomes.map((lo) => lo.code),
                             labels: {
                               style: { fontSize: '11px', fontWeight: 600 },
                               offsetY: 0,
@@ -320,7 +354,7 @@ const StudentCourseDetail = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-lg text-sm font-semibold capitalize">
-                            {(grade.assessment as any)?.assessment_type || 'Assessment'}
+                            {getAssessmentType(grade.assessment)}
                           </span>
                           <div>
                             <p className="font-medium text-gray-900">{grade.assessment?.name}</p>
@@ -357,7 +391,7 @@ const StudentCourseDetail = () => {
           <h2 className="text-xl font-semibold text-gray-900">Learning Outcomes</h2>
           {learningOutcomes.length > 0 ? (
             <div className="space-y-4">
-              {learningOutcomes.map((lo: any) => {
+              {learningOutcomes.map((lo) => {
                 // Find matching score if available
                 const scoreData = loScores.find(
                   (s) => s.learning_outcome?.id === lo.id

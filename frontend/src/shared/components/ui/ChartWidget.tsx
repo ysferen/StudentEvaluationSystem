@@ -1,12 +1,13 @@
 import Chart from 'react-apexcharts'
+import type { ApexOptions, ApexAxisChartSeries, ApexNonAxisChartSeries } from 'apexcharts'
 import { Card } from './Card'
 
-interface ChartWidgetProps {
+export interface ChartWidgetProps {
     title: string
     subtitle?: string
     type: 'line' | 'area' | 'bar' | 'radar' | 'donut' | 'pie'
-    series: any[]
-    options?: any
+    series: ApexAxisChartSeries | ApexNonAxisChartSeries
+    options?: ApexOptions
     height?: number
     className?: string
 }

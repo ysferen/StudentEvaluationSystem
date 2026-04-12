@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import type { ChartWidgetProps } from './ChartWidget'
 
 // Lazy load the actual ChartWidget component (and ApexCharts with it)
 const ChartWidget = lazy(() => import('./ChartWidget').then(module => ({
@@ -21,7 +22,7 @@ function ChartLoadingSkeleton({ height = 350 }: { height?: number }) {
 }
 
 // Export wrapper that adds Suspense
-export function LazyChartWidget(props: any) {
+export function LazyChartWidget(props: ChartWidgetProps) {
   return (
     <Suspense fallback={<ChartLoadingSkeleton height={props.height} />}>
       <ChartWidget {...props} />

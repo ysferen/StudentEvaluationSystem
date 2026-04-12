@@ -2,10 +2,17 @@ import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { coreCoursesRetrieve, coreLearningOutcomesList } from '../../../shared/api/generated/core/core'
+import { coreCoursesRetrieve } from '../../../shared/api/generated/core/core'
+import { coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
 import FileUploadModal from '../components/FileUploadModal'
 import MappingEditor from '../components/MappingEditor'
-import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
+import { coreStudentLoScoresList } from '../../../shared/api/generated/core/core'
+import type {
+  Course,
+  CourseInstructorsItem,
+  CoreLearningOutcome,
+  StudentLearningOutcomeScore,
+} from '../../../shared/api/model'
 
 interface BoxPlotData {
   code: string
@@ -21,6 +28,31 @@ interface HeatmapData {
   studentName: string
   studentId: number
   loScores: Record<string, number>
+}
+
+interface CourseDetailQueryData {
+  course: Course
+  learningOutcomes: CoreLearningOutcome[]
+  loScores: StudentLearningOutcomeScore[]
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const getInstructorName = (instructor: CourseInstructorsItem): string => {
+  const firstName = typeof instructor.first_name === 'string' ? instructor.first_name : ''
+  const lastName = typeof instructor.last_name === 'string' ? instructor.last_name : ''
+  const fullName = `${firstName} ${lastName}`.trim()
+
+  if (fullName) {
+    return fullName
+  }
+
+  if (typeof instructor.username === 'string') {
+    return instructor.username
+  }
+
+  return 'Unknown Instructor'
 }
 
 const CourseDetail = () => {
@@ -41,17 +73,13 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   }, [isMappingEditorOpen])
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<CourseDetailQueryData>({
     queryKey: ['course', courseId],
     queryFn: async () => {
       if (!courseId) throw new Error('Course ID is required')
       const courseResponse = await coreCoursesRetrieve(Number(courseId))
-      const loResponse = await coreLearningOutcomesList({
-        course: Number(courseId)
-      })
-      const loScoresResponse = await coreStudentLoScoresList({
-        course: Number(courseId)
-    })
+      const loResponse = await coreLearningOutcomesList()
+      const loScoresResponse = await coreStudentLoScoresList()
       return {
         course: courseResponse,
         learningOutcomes: loResponse.results || [],
@@ -60,10 +88,10 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   })
 
-  const handleUploadComplete = (result: any) => {
+  const handleUploadComplete = (_result: unknown) => {
     setNotification({
       type: 'success',
-      message: `Successfully imported ${result.results?.created?.grades || 0 + result.results?.updated?.grades || 0} grades`
+      message: 'Import completed successfully'
     })
 
     // Refresh data without page reload
@@ -78,27 +106,25 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
   }
 
   const getInstructorNames = () => {
-    if (!data?.course?.instructors|| data.course.instructors.length === 0) {
+    if (!data?.course?.instructors || data.course.instructors.length === 0) {
       return 'Not assigned'
     }
-    return data.course.instructors.map((instructor: any) =>
-      `${instructor.first_name} ${instructor.last_name}`
-    ).join(', ')
+    return data.course.instructors.map(getInstructorName).join(', ')
   }
 
   const getAverageScore = () => {
     if (!data?.loScores || data.loScores.length === 0) return 0
-    const total = data.loScores.reduce((sum: any, score: any) => sum + score.score, 0)
+    const total = data.loScores.reduce((sum, score) => sum + (score.score ?? 0), 0)
     return Math.round((total / data.loScores.length) * 100) / 100
   }
 
   const getLOPerformance = (loCode: string) => {
     if (!data?.loScores) return 0
-    const loScoresFiltered = data.loScores.filter((score: any) =>
+    const loScoresFiltered = data.loScores.filter((score) =>
       score.learning_outcome.code === loCode
     )
     if (loScoresFiltered.length === 0) return 0
-    const total = loScoresFiltered.reduce((sum: any, score: any) => sum + score.score, 0)
+    const total = loScoresFiltered.reduce((sum, score) => sum + (score.score ?? 0), 0)
     return Math.round((total / loScoresFiltered.length) * 100) / 100
   }
 
@@ -106,10 +132,10 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
   const boxPlotData = useMemo((): BoxPlotData[] => {
     if (!data?.learningOutcomes || !data?.loScores) return []
 
-    return data.learningOutcomes.map((lo: any) => {
+    return data.learningOutcomes.map((lo) => {
       const loScoresFiltered = data.loScores
-        .filter((score: any) => score.learning_outcome.code === lo.code)
-        .map((score: any) => score.score)
+        .filter((score) => score.learning_outcome.code === lo.code)
+        .map((score) => score.score ?? 0)
         .sort((a: number, b: number) => a - b)
 
       if (loScoresFiltered.length === 0) {
@@ -160,43 +186,50 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
   const heatmapData = useMemo((): { loCodes: string[]; students: HeatmapData[] } => {
     if (!data?.learningOutcomes || !data?.loScores) return { loCodes: [], students: [] }
 
-    const loCodes = data.learningOutcomes.map((lo: any) => lo.code)
+    const loCodes = data.learningOutcomes.map((lo) => lo.code)
 
     // Group scores by student
     const studentMap = new Map<number, HeatmapData>()
 
-    data.loScores.forEach((score: any) => {
-      const studentId = score.student
-      // Handle student_detail being an array of user objects or similar structure
+    data.loScores.forEach((score) => {
+      const studentId = score.student_id
       let studentName = `Student ${studentId}`
 
-      // First, check if student_detail is available and has proper data
-      if (score.student_detail && score.student_detail.length > 0) {
-        const detail = score.student_detail[0]
-        // Check if detail is a string (username) or an object with first_name/last_name
-        if (typeof detail === 'string') {
-          studentName = detail
-        } else if (detail.first_name || detail.last_name) {
-          studentName = `${detail.first_name || ''} ${detail.last_name || ''}`.trim()
-        } else if (detail.username) {
-          studentName = detail.username
-        }
-      } else if (typeof score.student === 'string') {
-        // Handle case where student is a string like "Yusuf Eren Arı (student)"
-        // Remove the " (role)" suffix
+      if (typeof score.student === 'string') {
         studentName = score.student.replace(/ \([^)]+\)$/, '')
+      }
+
+      const maybeScore = isRecord(score) ? score as Record<string, unknown> : null
+      const detail = maybeScore?.student_detail
+      if (Array.isArray(detail) && detail.length > 0) {
+        const first = detail[0]
+        if (typeof first === 'string') {
+          studentName = first
+        } else if (isRecord(first)) {
+          const firstName = typeof first.first_name === 'string' ? first.first_name : ''
+          const lastName = typeof first.last_name === 'string' ? first.last_name : ''
+          const fullName = `${firstName} ${lastName}`.trim()
+          if (fullName) {
+            studentName = fullName
+          } else if (typeof first.username === 'string') {
+            studentName = first.username
+          }
+        }
       }
       const loCode = score.learning_outcome.code
 
-      if (!studentMap.has(studentId)) {
+      const existing = studentMap.get(studentId)
+      if (existing) {
+        existing.loScores[loCode] = Math.round((score.score ?? 0) * 100) / 100
+      } else {
         studentMap.set(studentId, {
           studentId,
           studentName,
-          loScores: {}
+          loScores: {
+            [loCode]: Math.round((score.score ?? 0) * 100) / 100,
+          }
         })
       }
-
-      studentMap.get(studentId)!.loScores[loCode] = Math.round(score.score * 100) / 100
     })
 
     // Fill missing scores with 0 for all LOs
@@ -371,7 +404,7 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
             </button>
           </div>
           <div className="space-y-3">
-            {data.learningOutcomes?.map((lo: any) => (
+            {data.learningOutcomes?.map((lo) => (
               <div key={lo.id} className="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
