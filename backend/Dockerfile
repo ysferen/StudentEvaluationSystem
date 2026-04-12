@@ -1,6 +1,8 @@
 # Use UV's official Python image
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+LABEL project="ses" service="backend"
+
 # Set working directory
 WORKDIR /app
 

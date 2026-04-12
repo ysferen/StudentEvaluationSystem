@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -35,85 +39,81 @@ const Login = () => {
 
     try {
       await login(username, password)
-      // Navigation will be handled by the useEffect/redirect above after user state updates
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
+    } catch (err: unknown) {
+      const errObj = err as { response?: { data?: { message?: string } } }
+      setError(errObj.response?.data?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-secondary-900">
-            Sign in to SES
-          </h2>
-          <p className="mt-2 text-center text-sm text-secondary-600">
-            Student Evaluation System
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="username" className="sr-only">
-                Username
-              </label>
-              <input
+    <div className="min-h-screen flex items-center justify-center bg-secondary-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-bold">Sign in to SES</CardTitle>
+          <CardDescription>Student Evaluation System</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
                 id="username"
-                name="username"
                 type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
+                placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
+                required
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
-                name="password"
                 type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
+                required
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {error}
+              </div>
+            )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+            </Button>
+          </form>
 
-          <div className="text-sm text-secondary-600">
-            <p className="font-medium">Demo Accounts:</p>
-            <p>Admin: admin / admin</p>
-            <p>Lecturer: lecturer / lecturer</p>
-            <p>Student: student / student</p>
+          <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
+            <p className="font-medium mb-2">Demo Accounts:</p>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <span className="font-semibold">Admin:</span>
+                <br />
+                admin / admin
+              </div>
+              <div>
+                <span className="font-semibold">Lecturer:</span>
+                <br />
+                lecturer / lecturer
+              </div>
+              <div>
+                <span className="font-semibold">Student:</span>
+                <br />
+                student / student
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

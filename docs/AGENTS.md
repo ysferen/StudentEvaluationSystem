@@ -29,6 +29,7 @@ When documents conflict, use this priority order:
 
 ## Documentation Locations
 
+- **Frontend Architecture Guide**: docs/architecture/FRONTEND.md (how to add pages, component conventions)
 - **API Contract**: docs/api/API_CONTRACT_V1.md (human-readable API specification)
 - **Auto-generated OpenAPI Schema**: backend/student_evaluation_system/schema.yml (used by Orval for API client generation)
 - **Architecture Info**: This file and backend/README.md
