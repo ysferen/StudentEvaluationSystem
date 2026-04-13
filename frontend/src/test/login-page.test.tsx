@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Login from '../features/auth/pages/Login';
+import Login from '../features/landing/pages/LoginPage';
 
 const mockUseAuth = vi.fn();
 const mockLogin = vi.fn();
@@ -35,8 +35,8 @@ describe('Login page', () => {
     );
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText('Username'), 'student');
-    await user.type(screen.getByPlaceholderText('Password'), 'secret');
+    await user.type(screen.getByPlaceholderText('Enter your username'), 'student');
+    await user.type(screen.getByPlaceholderText('Enter your password'), 'secret');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {

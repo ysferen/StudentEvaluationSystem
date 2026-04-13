@@ -13,8 +13,11 @@ vi.mock('../shared/components', () => ({
   ),
 }));
 
-vi.mock('../features/auth/pages/Login', () => ({
+vi.mock('../features/landing/pages/LoginPage', () => ({
   default: () => <div>Login Page</div>,
+}));
+vi.mock('../features/landing/pages/LandingPage', () => ({
+  default: () => <div>Landing Page</div>,
 }));
 vi.mock('../features/dashboard/pages/Dashboard', () => ({
   default: () => <div>Root Dashboard</div>,
@@ -51,6 +54,16 @@ vi.mock('../features/settings/pages/Safety', () => ({
 }));
 
 describe('App routes', () => {
+  it('renders landing page at root route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Landing Page')).toBeInTheDocument();
+  });
+
   it('renders login route', async () => {
     render(
       <MemoryRouter initialEntries={['/login']}>
@@ -81,13 +94,13 @@ describe('App routes', () => {
     expect(await screen.findByText('Instructor Dashboard')).toBeInTheDocument();
   });
 
-  it('redirects legacy /course/:id route to root dashboard', async () => {
+  it('redirects legacy /course/:id route to landing page', async () => {
     render(
       <MemoryRouter initialEntries={['/course/10']}>
         <App />
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Root Dashboard')).toBeInTheDocument();
+    expect(await screen.findByText('Landing Page')).toBeInTheDocument();
   });
 });

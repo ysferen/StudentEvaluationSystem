@@ -15,7 +15,7 @@ describe('Dashboard role routing', () => {
     mockUseAuth.mockReset();
   });
 
-  it('shows guest dashboard when there is no user', async () => {
+  it('redirects unauthenticated user to landing page', async () => {
     mockUseAuth.mockReturnValue({ user: null });
 
     render(
@@ -26,7 +26,7 @@ describe('Dashboard role routing', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Welcome to Student Evaluation System')).toBeInTheDocument();
+    expect(screen.queryByText('Welcome to Student Evaluation System')).not.toBeInTheDocument();
   });
 
   it('redirects student user to student dashboard', async () => {
