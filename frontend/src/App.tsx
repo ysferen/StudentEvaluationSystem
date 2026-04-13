@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './shared/components'
 
-// Lazy load all page components for code splitting
-const LoginPage = lazy(() => import('./features/auth/pages/Login'))
+const LandingPage = lazy(() => import('./features/landing/pages/LandingPage'))
+const LoginPage = lazy(() => import('./features/landing/pages/LoginPage'))
 const DashboardPage = lazy(() => import('./features/dashboard/pages/Dashboard'))
 const CourseDetailPage = lazy(() => import('./features/courses/pages/CourseDetail'))
 const StudentDashboardPage = lazy(() => import('./features/dashboard/pages/StudentDashboard'))
@@ -32,6 +32,7 @@ function App() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
       {/* Student routes with shared layout */}
@@ -41,10 +42,6 @@ function App() {
       </Route>
       <Route path="/student/courses/:id" element={<Layout showOnlyCoreItems={false} />}>
         <Route index element={<StudentCourseDetailPage />} />
-      </Route>
-
-      <Route path="/" element={<Layout />}>
-        <Route index element={<DashboardPage />} />
       </Route>
 
       {/* Instructor routes - consistent nested structure */}

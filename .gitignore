@@ -77,6 +77,7 @@ Thumbs.db
 .claude/
 .opencode/
 openspec/
+.superpowers/
 
 # =============================================================================
 # Build / Cache (Frontend)
