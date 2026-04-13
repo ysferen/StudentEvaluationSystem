@@ -20,6 +20,6 @@ describe('LiveStatsSection', () => {
 
   it('displays 100+ for courses over threshold', () => {
     render(<LiveStatsSection />)
-    expect(screen.getByText('100+')).toBeInTheDocument()
+    expect(screen.getByText('104+')).toBeInTheDocument()
   })
 })

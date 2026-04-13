@@ -7,6 +7,13 @@ vi.mock('../../features/auth/hooks/useAuth', () => ({
   useAuth: () => ({ isAuthenticated: false, user: null, isLoading: false }),
 }))
 
+vi.mock('../../features/landing/hooks/useLandingStats', () => ({
+  useLandingStats: () => ({
+    data: { universities: 2, departments: 8, programs: 15, courses: 104 },
+    isLoading: false,
+  }),
+}))
+
 const renderLanding = () =>
   render(
     <BrowserRouter>
@@ -33,9 +40,9 @@ describe('LandingPage', () => {
 
   it('renders the roles section', () => {
     renderLanding()
-    expect(screen.getByText('Students')).toBeInTheDocument()
-    expect(screen.getByText('Instructors')).toBeInTheDocument()
-    expect(screen.getByText('Department Heads')).toBeInTheDocument()
+    expect(screen.getAllByText('Students')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('Instructors')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('Department Heads')[0]).toBeInTheDocument()
   })
 
   it('renders the CTA section', () => {

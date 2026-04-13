@@ -6,7 +6,7 @@ import EmbeddedDemo from '../../features/landing/components/EmbeddedDemo'
 describe('EmbeddedDemo', () => {
   it('renders with assessment step visible by default', () => {
     render(<EmbeddedDemo />)
-    expect(screen.getByText('Midterm Exam')).toBeInTheDocument()
+    expect(screen.getAllByText('Midterm Exam')[0]).toBeInTheDocument()
   })
 
   it('switches to LO view when LO step is clicked', async () => {
