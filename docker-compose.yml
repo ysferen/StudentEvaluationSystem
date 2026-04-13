@@ -35,6 +35,9 @@ services:
     build: ./backend
     container_name: ses-celery-worker
     command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/student_evaluation
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -46,25 +49,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./backend
-          target: /app
-          ignore:
-            - venv/
-            - .venv/
-            - __pycache__/
-            - .pytest_cache/
-        - action: rebuild
-          path: ./backend/pyproject.toml
-        - action: rebuild
-          path: ./backend/uv.lock
     restart: unless-stopped
   backend:
     build: ./backend
     container_name: ses-backend
     volumes:
+      - ./backend:/app
       - backend_venv:/app/.venv
       - shared_schema:/app/shared
     command: sh -c "mkdir -p /app/shared && \
@@ -83,20 +73,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./backend
-          target: /app
-          ignore:
-            - venv/
-            - .venv/
-            - __pycache__/
-            - .pytest_cache/
-        - action: rebuild
-          path: ./backend/pyproject.toml
-        - action: rebuild
-          path: ./backend/uv.lock
     restart: unless-stopped
 
   frontend:
@@ -104,6 +80,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     volumes:
+      - ./frontend:/app
       - frontend_node_modules:/app/node_modules
       - shared_schema:/app/shared
       - ./docs/api/contracts:/output
@@ -120,21 +97,6 @@ services:
         condition: service_started
     env_file:
       - ./frontend/.env.development
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend
-          target: /app
-          ignore:
-            - node_modules/
-            - dist/
-            - coverage/
-        - action: rebuild
-          path: ./frontend/package.json
-        - action: rebuild
-          path: ./frontend/package-lock.json
-        - action: rebuild
-          path: ./docs/api/contracts/schema.yml
     restart: unless-stopped
 
 volumes:
