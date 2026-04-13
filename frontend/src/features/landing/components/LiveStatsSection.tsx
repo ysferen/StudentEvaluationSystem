@@ -14,7 +14,7 @@ const LiveStatsSection = () => {
     return (
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center gap-8 sm:gap-16">
+        <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
             {stats.map(({ label }) => (
               <div key={label} className="text-center">
                 <div className="h-10 w-16 bg-secondary-200 rounded animate-pulse mx-auto mb-2" />
