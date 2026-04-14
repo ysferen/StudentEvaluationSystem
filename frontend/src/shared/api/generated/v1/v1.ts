@@ -35,14 +35,17 @@ import type {
   AssessmentLearningOutcomeMapping,
   Course,
   CourseEnrollment,
+  CustomUser,
   DegreeLevel,
   Department,
+  FileImportResponse,
   InstructorProfile,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedAssessmentLearningOutcomeMappingList,
   PaginatedAssessmentList,
   PaginatedCourseEnrollmentList,
   PaginatedCourseList,
+  PaginatedCustomUserList,
   PaginatedDegreeLevelList,
   PaginatedDepartmentList,
   PaginatedInstructorProfileList,
@@ -58,6 +61,7 @@ import type {
   PatchedAssessmentLearningOutcomeMapping,
   PatchedCourse,
   PatchedCourseEnrollment,
+  PatchedCustomUser,
   PatchedDegreeLevel,
   PatchedDepartment,
   PatchedInstructorProfile,
@@ -74,7 +78,6 @@ import type {
   StudentProfile,
   StudentProgramOutcomeScore,
   Term,
-  TokenRefresh,
   V1CoreCoursesListParams,
   V1CoreDegreeLevelsListParams,
   V1CoreDepartmentsListParams,
@@ -95,7 +98,8 @@ import type {
   V1EvaluationGradesListParams,
   V1EvaluationScoreRecomputeJobsListParams,
   V1UsersInstructorsListParams,
-  V1UsersStudentsListParams
+  V1UsersStudentsListParams,
+  V1UsersUsersListParams
 } from '../../model';
 
 import { customInstance } from '../../mutator';
@@ -2052,7 +2056,7 @@ export const v1CoreFileImportAssignmentScoresUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/assignment-scores/upload/`, method: 'GET', signal
     },
       options);
@@ -2215,7 +2219,7 @@ if(v1CoreFileImportAssignmentScoresUploadCreateBody.file !== undefined) {
  formData.append(`file`, v1CoreFileImportAssignmentScoresUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/assignment-scores/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2271,13 +2275,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const v1CoreFileImportAssignmentScoresValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/v1/core/file-import/assignment-scores/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/v1/core/file-import/assignment-scores/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2285,8 +2294,8 @@ export const v1CoreFileImportAssignmentScoresValidateCreate = (
 
 
 export const getV1CoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportAssignmentScoresValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2298,10 +2307,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  v1CoreFileImportAssignmentScoresValidateCreate(requestOptions)
+          return  v1CoreFileImportAssignmentScoresValidateCreate(data,requestOptions)
         }
 
 
@@ -2310,15 +2319,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CoreFileImportAssignmentScoresValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>>
-
+    export type V1CoreFileImportAssignmentScoresValidateCreateMutationBody = FileImportResponse
     export type V1CoreFileImportAssignmentScoresValidateCreateMutationError = unknown
 
     export const useV1CoreFileImportAssignmentScoresValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2335,7 +2344,7 @@ export const v1CoreFileImportLearningOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/learning-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2498,7 +2507,7 @@ if(v1CoreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, v1CoreFileImportLearningOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/learning-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2554,13 +2563,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const v1CoreFileImportLearningOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/v1/core/file-import/learning-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/v1/core/file-import/learning-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2568,8 +2582,8 @@ export const v1CoreFileImportLearningOutcomesValidateCreate = (
 
 
 export const getV1CoreFileImportLearningOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportLearningOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2581,10 +2595,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  v1CoreFileImportLearningOutcomesValidateCreate(requestOptions)
+          return  v1CoreFileImportLearningOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2593,15 +2607,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CoreFileImportLearningOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>>
-
+    export type V1CoreFileImportLearningOutcomesValidateCreateMutationBody = FileImportResponse
     export type V1CoreFileImportLearningOutcomesValidateCreateMutationError = unknown
 
     export const useV1CoreFileImportLearningOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2618,7 +2632,7 @@ export const v1CoreFileImportProgramOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/program-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2781,7 +2795,7 @@ if(v1CoreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, v1CoreFileImportProgramOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/v1/core/file-import/program-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2837,13 +2851,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const v1CoreFileImportProgramOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/v1/core/file-import/program-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/v1/core/file-import/program-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2851,8 +2870,8 @@ export const v1CoreFileImportProgramOutcomesValidateCreate = (
 
 
 export const getV1CoreFileImportProgramOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportProgramOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2864,10 +2883,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  v1CoreFileImportProgramOutcomesValidateCreate(requestOptions)
+          return  v1CoreFileImportProgramOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2876,15 +2895,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CoreFileImportProgramOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>>
-
+    export type V1CoreFileImportProgramOutcomesValidateCreateMutationBody = FileImportResponse
     export type V1CoreFileImportProgramOutcomesValidateCreateMutationError = unknown
 
     export const useV1CoreFileImportProgramOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -9643,19 +9662,19 @@ export function useV1EvaluationScoreRecomputeJobsRetrieve<TData = Awaited<Return
 
 
 /**
- * Takes a refresh type JSON web token and returns an access type JSON web
-token if the refresh token is valid.
+ * Token refresh view that reads the refresh token from an HTTP-only cookie.
+
+This enables cookie-based authentication for browser clients without
+exposing tokens to JavaScript (XSS protection).
  */
 export const v1UsersAuthRefreshCreate = (
-    tokenRefresh: NonReadonly<TokenRefresh>,
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<TokenRefresh>(
-      {url: `/api/v1/users/auth/refresh/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: tokenRefresh, signal
+      return customInstance<void>(
+      {url: `/api/v1/users/auth/refresh/`, method: 'POST', signal
     },
       options);
     }
@@ -9663,8 +9682,8 @@ export const v1UsersAuthRefreshCreate = (
 
 
 export const getV1UsersAuthRefreshCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,{data: NonReadonly<TokenRefresh>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,{data: NonReadonly<TokenRefresh>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext> => {
 
 const mutationKey = ['v1UsersAuthRefreshCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -9676,10 +9695,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, {data: NonReadonly<TokenRefresh>}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, void> = () => {
 
-          return  v1UsersAuthRefreshCreate(data,requestOptions)
+
+          return  v1UsersAuthRefreshCreate(requestOptions)
         }
 
 
@@ -9688,15 +9707,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>>
-    export type V1UsersAuthRefreshCreateMutationBody = NonReadonly<TokenRefresh>
+
     export type V1UsersAuthRefreshCreateMutationError = unknown
 
     export const useV1UsersAuthRefreshCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,{data: NonReadonly<TokenRefresh>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>,
         TError,
-        {data: NonReadonly<TokenRefresh>},
+        void,
         TContext
       > => {
 
@@ -10827,14 +10846,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     /**
  * CRUD operations for users.
  */
-export const v1UsersUsersRetrieve = (
-
+export const v1UsersUsersList = (
+    params?: V1UsersUsersListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<void>(
-      {url: `/api/v1/users/users/`, method: 'GET', signal
+      return customInstance<PaginatedCustomUserList>(
+      {url: `/api/v1/users/users/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -10842,72 +10862,72 @@ export const v1UsersUsersRetrieve = (
 
 
 
-export const getV1UsersUsersRetrieveInfiniteQueryKey = () => {
+export const getV1UsersUsersListInfiniteQueryKey = (params?: V1UsersUsersListParams,) => {
     return [
-    'infinite', `/api/v1/users/users/`
+    'infinite', `/api/v1/users/users/`, ...(params ? [params]: [])
     ] as const;
     }
 
-export const getV1UsersUsersRetrieveQueryKey = () => {
+export const getV1UsersUsersListQueryKey = (params?: V1UsersUsersListParams,) => {
     return [
-    `/api/v1/users/users/`
+    `/api/v1/users/users/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getV1UsersUsersRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1UsersUsersListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersList>>, V1UsersUsersListParams['page']>, TError = unknown>(params?: V1UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieveInfiniteQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersListInfiniteQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>> = ({ signal }) => v1UsersUsersRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersList>>, QueryKey, V1UsersUsersListParams['page']> = ({ signal, pageParam }) => v1UsersUsersList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type V1UsersUsersRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>
-export type V1UsersUsersRetrieveInfiniteQueryError = unknown
+export type V1UsersUsersListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersList>>>
+export type V1UsersUsersListInfiniteQueryError = unknown
 
 
-export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
-  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
+export function useV1UsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersList>>, V1UsersUsersListParams['page']>, TError = unknown>(
+ params: undefined |  V1UsersUsersListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
+          Awaited<ReturnType<typeof v1UsersUsersList>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
+          Awaited<ReturnType<typeof v1UsersUsersList>>, QueryKey
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
+export function useV1UsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersList>>, V1UsersUsersListParams['page']>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
+          Awaited<ReturnType<typeof v1UsersUsersList>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
+          Awaited<ReturnType<typeof v1UsersUsersList>>, QueryKey
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersList>>, V1UsersUsersListParams['page']>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersList>>, V1UsersUsersListParams['page']>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData, QueryKey, V1UsersUsersListParams['page']>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1UsersUsersRetrieveInfiniteQueryOptions(options)
+  const queryOptions = getV1UsersUsersListInfiniteQueryOptions(params,options)
 
   const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -10919,59 +10939,59 @@ export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<Ret
 
 
 
-export const getV1UsersUsersRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1UsersUsersListQueryOptions = <TData = Awaited<ReturnType<typeof v1UsersUsersList>>, TError = unknown>(params?: V1UsersUsersListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieveQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersListQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>> = ({ signal }) => v1UsersUsersRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersList>>> = ({ signal }) => v1UsersUsersList(params, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type V1UsersUsersRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>
-export type V1UsersUsersRetrieveQueryError = unknown
+export type V1UsersUsersListQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersList>>>
+export type V1UsersUsersListQueryError = unknown
 
 
-export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
+export function useV1UsersUsersList<TData = Awaited<ReturnType<typeof v1UsersUsersList>>, TError = unknown>(
+ params: undefined |  V1UsersUsersListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
+          Awaited<ReturnType<typeof v1UsersUsersList>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
+          Awaited<ReturnType<typeof v1UsersUsersList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
+export function useV1UsersUsersList<TData = Awaited<ReturnType<typeof v1UsersUsersList>>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
+          Awaited<ReturnType<typeof v1UsersUsersList>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
+          Awaited<ReturnType<typeof v1UsersUsersList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersList<TData = Awaited<ReturnType<typeof v1UsersUsersList>>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersList<TData = Awaited<ReturnType<typeof v1UsersUsersList>>, TError = unknown>(
+ params?: V1UsersUsersListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1UsersUsersRetrieveQueryOptions(options)
+  const queryOptions = getV1UsersUsersListQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -10987,13 +11007,15 @@ export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1User
  * CRUD operations for users.
  */
 export const v1UsersUsersCreate = (
-
+    customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<void>(
-      {url: `/api/v1/users/users/`, method: 'POST', signal
+      return customInstance<CustomUser>(
+      {url: `/api/v1/users/users/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: customUser, signal
     },
       options);
     }
@@ -11001,8 +11023,8 @@ export const v1UsersUsersCreate = (
 
 
 export const getV1UsersUsersCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,{data: NonReadonly<CustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,{data: NonReadonly<CustomUser>}, TContext> => {
 
 const mutationKey = ['v1UsersUsersCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -11014,10 +11036,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersCreate>>, {data: NonReadonly<CustomUser>}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  v1UsersUsersCreate(requestOptions)
+          return  v1UsersUsersCreate(data,requestOptions)
         }
 
 
@@ -11026,15 +11048,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersUsersCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersCreate>>>
-
+    export type V1UsersUsersCreateMutationBody = NonReadonly<CustomUser>
     export type V1UsersUsersCreateMutationError = unknown
 
     export const useV1UsersUsersCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersCreate>>, TError,{data: NonReadonly<CustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersUsersCreate>>,
         TError,
-        void,
+        {data: NonReadonly<CustomUser>},
         TContext
       > => {
 
@@ -11045,13 +11067,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     /**
  * CRUD operations for users.
  */
-export const v1UsersUsersRetrieve2 = (
+export const v1UsersUsersRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<CustomUser>(
       {url: `/api/v1/users/users/${id}/`, method: 'GET', signal
     },
       options);
@@ -11060,72 +11082,72 @@ export const v1UsersUsersRetrieve2 = (
 
 
 
-export const getV1UsersUsersRetrieve2InfiniteQueryKey = (id?: number,) => {
+export const getV1UsersUsersRetrieveInfiniteQueryKey = (id?: number,) => {
     return [
     'infinite', `/api/v1/users/users/${id}/`
     ] as const;
     }
 
-export const getV1UsersUsersRetrieve2QueryKey = (id?: number,) => {
+export const getV1UsersUsersRetrieveQueryKey = (id?: number,) => {
     return [
     `/api/v1/users/users/${id}/`
     ] as const;
     }
 
 
-export const getV1UsersUsersRetrieve2InfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1UsersUsersRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieve2InfiniteQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieveInfiniteQueryKey(id);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>> = ({ signal }) => v1UsersUsersRetrieve2(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>> = ({ signal }) => v1UsersUsersRetrieve(id, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type V1UsersUsersRetrieve2InfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>
-export type V1UsersUsersRetrieve2InfiniteQueryError = unknown
+export type V1UsersUsersRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>
+export type V1UsersUsersRetrieveInfiniteQueryError = unknown
 
 
-export function useV1UsersUsersRetrieve2Infinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>, TError = unknown>(
- id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>> & Pick<
+export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>,
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve2Infinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>> & Pick<
+export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>,
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve2Infinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1UsersUsersRetrieve2Infinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1UsersUsersRetrieve2InfiniteQueryOptions(id,options)
+  const queryOptions = getV1UsersUsersRetrieveInfiniteQueryOptions(id,options)
 
   const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -11137,59 +11159,59 @@ export function useV1UsersUsersRetrieve2Infinite<TData = InfiniteData<Awaited<Re
 
 
 
-export const getV1UsersUsersRetrieve2QueryOptions = <TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1UsersUsersRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieve2QueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersUsersRetrieveQueryKey(id);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>> = ({ signal }) => v1UsersUsersRetrieve2(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>> = ({ signal }) => v1UsersUsersRetrieve(id, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type V1UsersUsersRetrieve2QueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>>
-export type V1UsersUsersRetrieve2QueryError = unknown
+export type V1UsersUsersRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>>
+export type V1UsersUsersRetrieveQueryError = unknown
 
 
-export function useV1UsersUsersRetrieve2<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>> & Pick<
+export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>,
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve2<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>> & Pick<
+export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>,
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>
+          Awaited<ReturnType<typeof v1UsersUsersRetrieve>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1UsersUsersRetrieve2<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1UsersUsersRetrieve2<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve2>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1UsersUsersRetrieve<TData = Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersUsersRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1UsersUsersRetrieve2QueryOptions(id,options)
+  const queryOptions = getV1UsersUsersRetrieveQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -11206,11 +11228,14 @@ export function useV1UsersUsersRetrieve2<TData = Awaited<ReturnType<typeof v1Use
  */
 export const v1UsersUsersUpdate = (
     id: number,
+    customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,) => {
 
 
-      return customInstance<void>(
-      {url: `/api/v1/users/users/${id}/`, method: 'PUT'
+      return customInstance<CustomUser>(
+      {url: `/api/v1/users/users/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: customUser
     },
       options);
     }
@@ -11218,8 +11243,8 @@ export const v1UsersUsersUpdate = (
 
 
 export const getV1UsersUsersUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number;data: NonReadonly<CustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number;data: NonReadonly<CustomUser>}, TContext> => {
 
 const mutationKey = ['v1UsersUsersUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -11231,10 +11256,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, {id: number;data: NonReadonly<CustomUser>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  v1UsersUsersUpdate(id,requestOptions)
+          return  v1UsersUsersUpdate(id,data,requestOptions)
         }
 
 
@@ -11243,15 +11268,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersUsersUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersUpdate>>>
-
+    export type V1UsersUsersUpdateMutationBody = NonReadonly<CustomUser>
     export type V1UsersUsersUpdateMutationError = unknown
 
     export const useV1UsersUsersUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersUpdate>>, TError,{id: number;data: NonReadonly<CustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersUsersUpdate>>,
         TError,
-        {id: number},
+        {id: number;data: NonReadonly<CustomUser>},
         TContext
       > => {
 
@@ -11264,11 +11289,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const v1UsersUsersPartialUpdate = (
     id: number,
+    patchedCustomUser: NonReadonly<PatchedCustomUser>,
  options?: SecondParameter<typeof customInstance>,) => {
 
 
-      return customInstance<void>(
-      {url: `/api/v1/users/users/${id}/`, method: 'PATCH'
+      return customInstance<CustomUser>(
+      {url: `/api/v1/users/users/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedCustomUser
     },
       options);
     }
@@ -11276,8 +11304,8 @@ export const v1UsersUsersPartialUpdate = (
 
 
 export const getV1UsersUsersPartialUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCustomUser>}, TContext> => {
 
 const mutationKey = ['v1UsersUsersPartialUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -11289,10 +11317,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, {id: number;data: NonReadonly<PatchedCustomUser>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  v1UsersUsersPartialUpdate(id,requestOptions)
+          return  v1UsersUsersPartialUpdate(id,data,requestOptions)
         }
 
 
@@ -11301,15 +11329,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersUsersPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>>
-
+    export type V1UsersUsersPartialUpdateMutationBody = NonReadonly<PatchedCustomUser>
     export type V1UsersUsersPartialUpdateMutationError = unknown
 
     export const useV1UsersUsersPartialUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCustomUser>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersUsersPartialUpdate>>,
         TError,
-        {id: number},
+        {id: number;data: NonReadonly<PatchedCustomUser>},
         TContext
       > => {
 
@@ -11384,7 +11412,7 @@ export const v1UsersUsersMeRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<CustomUser>(
       {url: `/api/v1/users/users/me/`, method: 'GET', signal
     },
       options);

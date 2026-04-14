@@ -1,8 +1,7 @@
 import React, { useContext, createContext, useEffect, useState, useCallback, ReactNode } from 'react'
-import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
+import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
-import { TokenResponse } from '../../../shared/api/model/tokenResponse'
 
 /**
  * Authentication context type definition.
@@ -98,21 +97,28 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     error: userError
   } = useUsersAuthMeRetrieve({
     query: {
-      enabled: !!localStorage.getItem('access_token'),
-      retry: false
+      retry: false,
+      // Don't run this query on the login page to avoid unnecessary 401s
+      enabled: typeof window !== 'undefined' && window.location.pathname !== '/login'
     }
   })
 
   // Create a custom login mutation that handles token storage
   const loginMutation = useUsersAuthLoginCreate({
     mutation: {
-      onSuccess: (data: TokenResponse): void => {
-        // Store tokens in localStorage
-        localStorage.setItem('access_token', data.access)
-        localStorage.setItem('refresh_token', data.refresh)
-
-        // Invalidate and refetch user data
-        queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
+      onSuccess: async (): Promise<void> => {
+        // Tokens are stored in HTTP-only cookies by the server
+        // Fetch user data directly since the query may be disabled on /login
+        try {
+          const userData = await queryClient.fetchQuery({
+            queryKey: ['/api/users/auth/me/'],
+            queryFn: () => usersAuthMeRetrieve(),
+          })
+          setUser(userData)
+        } catch {
+          // If fetch fails, invalidate and let the query handle it
+          queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
+        }
       },
       onError: (error: Error): void => {
         // Re-throw error for component-level handling
@@ -124,14 +130,15 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   /**
    * Logs out the current user.
    *
-   * Clears stored tokens, resets user state, clears query cache,
+   * Clears stored tokens (cookies), resets user state, clears query cache,
    * and redirects to the login page.
    *
    * @callback logout
    */
   const logout = useCallback((): void => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    // Clear HTTP-only cookies by setting them to expire
+    document.cookie = 'access_token=; path=/; max-age=0'
+    document.cookie = 'refresh_token=; path=/; max-age=0'
     setUser(null)
 
     // Clear all cached queries to prevent data leakage
@@ -148,7 +155,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     }
 
     // Handle authentication errors by logging out
-    if (userError instanceof Error) {
+    // Only logout if user was previously authenticated (user !== null)
+    // This prevents redirect loops on public pages like /login
+    if (userError instanceof Error && user !== null) {
       logout()
     }
 

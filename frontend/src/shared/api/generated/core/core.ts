@@ -45,6 +45,7 @@ import type {
   Course,
   DegreeLevel,
   Department,
+  FileImportResponse,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedCourseList,
   PaginatedDegreeLevelList,
@@ -2022,7 +2023,7 @@ export const coreFileImportAssignmentScoresUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'GET', signal
     },
       options);
@@ -2115,7 +2116,7 @@ if(coreFileImportAssignmentScoresUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportAssignmentScoresUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2171,13 +2172,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportAssignmentScoresValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/assignment-scores/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/assignment-scores/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2185,8 +2191,8 @@ export const coreFileImportAssignmentScoresValidateCreate = (
 
 
 export const getCoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportAssignmentScoresValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2198,10 +2204,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportAssignmentScoresValidateCreate(requestOptions)
+          return  coreFileImportAssignmentScoresValidateCreate(data,requestOptions)
         }
 
 
@@ -2210,15 +2216,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportAssignmentScoresValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>>
-
+    export type CoreFileImportAssignmentScoresValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportAssignmentScoresValidateCreateMutationError = unknown
 
     export const useCoreFileImportAssignmentScoresValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2235,7 +2241,7 @@ export const coreFileImportLearningOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/learning-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2328,7 +2334,7 @@ if(coreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportLearningOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/learning-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2384,13 +2390,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportLearningOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/learning-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/learning-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2398,8 +2409,8 @@ export const coreFileImportLearningOutcomesValidateCreate = (
 
 
 export const getCoreFileImportLearningOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportLearningOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2411,10 +2422,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportLearningOutcomesValidateCreate(requestOptions)
+          return  coreFileImportLearningOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2423,15 +2434,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportLearningOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>>
-
+    export type CoreFileImportLearningOutcomesValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportLearningOutcomesValidateCreateMutationError = unknown
 
     export const useCoreFileImportLearningOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2448,7 +2459,7 @@ export const coreFileImportProgramOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2541,7 +2552,7 @@ if(coreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportProgramOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2597,13 +2608,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportProgramOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/program-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/program-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2611,8 +2627,8 @@ export const coreFileImportProgramOutcomesValidateCreate = (
 
 
 export const getCoreFileImportProgramOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportProgramOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2624,10 +2640,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportProgramOutcomesValidateCreate(requestOptions)
+          return  coreFileImportProgramOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2636,15 +2652,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportProgramOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>>
-
+    export type CoreFileImportProgramOutcomesValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportProgramOutcomesValidateCreateMutationError = unknown
 
     export const useCoreFileImportProgramOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 

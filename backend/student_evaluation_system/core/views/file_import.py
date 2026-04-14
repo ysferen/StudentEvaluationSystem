@@ -15,6 +15,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import UserRateThrottle
 from drf_spectacular.utils import extend_schema
 
+from ..serializers import FileImportResponseSerializer
 from ..services.file_import import FileImportService, FileImportError
 
 
@@ -32,6 +33,7 @@ class FileUploadRateThrottle(UserRateThrottle):
 class BaseFileImportViewSet(viewsets.GenericViewSet):
     """Base ViewSet for file import operations."""
 
+    serializer_class = FileImportResponseSerializer
     parser_classes = [MultiPartParser, FormParser]
     throttle_classes = [FileUploadRateThrottle]
     permission_classes = [AllowAny]
@@ -45,22 +47,41 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
     def upload(self, request):
         """Upload and process file."""
         if request.method.lower() == "get":
+            required_query_parameters = []
+            if self.import_type == "assignment_scores":
+                required_query_parameters = "course_code and term_id"
+
             info = {
                 "message": "Upload a file to import data.",
-                "required_query_parameters": ["course_code"] if self.import_type == "assignment_scores" else [],
+                "required_query_parameters": required_query_parameters,
             }
             return Response(info, status=status.HTTP_200_OK)
 
-        if self.import_type == "assignment_scores" and not request.query_params.get("course_code"):
-            return Response({"error": {"course_code": "course_code is required"}}, status=status.HTTP_400_BAD_REQUEST)
+        course_code = request.query_params.get("course_code")
+        term_id = request.query_params.get("term_id")
+        if self.import_type == "assignment_scores" and (not course_code or not term_id):
+            return Response(
+                {"error": {"course_code": "course_code is required", "term_id": "term_id is required"}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         file_obj = request.FILES.get("file")
         if not file_obj:
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            service = FileImportService(file_obj, self.import_type)
-            result = service.process()
+            service = FileImportService(file_obj)
+            service.validate_file()
+
+            if self.import_type == "assignment_scores":
+                result = service.import_assignment_scores(course_code=course_code, term_id=term_id)
+            elif self.import_type == "learning_outcomes":
+                result = service.import_learning_outcomes()
+            elif self.import_type == "program_outcomes":
+                result = service.import_program_outcomes()
+            else:
+                return Response({"error": f"Unsupported import type: {self.import_type}"}, status=status.HTTP_400_BAD_REQUEST)
+
             return Response(result, status=status.HTTP_200_OK)
         except FileImportError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -73,9 +94,9 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
             return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            service = FileImportService(file_obj, self.import_type)
-            result = service.validate()
-            return Response(result, status=status.HTTP_200_OK)
+            service = FileImportService(file_obj)
+            service.validate_file()
+            return Response({"valid": True}, status=status.HTTP_200_OK)
         except FileImportError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -25,7 +25,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any
+from typing import Any, Dict, Iterable, List, Optional
 
 from ..models import Program, Term, Course, LearningOutcome, ProgramOutcome
 from evaluation.models import Assessment, StudentGrade, CourseEnrollment
@@ -77,7 +77,7 @@ class FileParser(ABC):
         pass
 
     @abstractmethod
-    def parse_sheet(self, file_obj, sheet_name: str) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
         """
         Parse a specific sheet/section from the file.
 
@@ -117,7 +117,7 @@ class ExcelParser(FileParser):
         """Get Excel sheet names."""
         try:
             workbook = pd.ExcelFile(file_obj)
-            return workbook.sheet_names
+            return [str(sheet_name) for sheet_name in workbook.sheet_names]
         except Exception as e:
             raise FileImportError(f"Error reading Excel file: {str(e)}")
 
@@ -142,7 +142,7 @@ class ExcelParser(FileParser):
 
         return dtype_mappings.get(import_type, {})
 
-    def parse_sheet(self, file_obj, import_type: str = None) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
         """
         Parse Excel sheet with proper dtype specifications.
 
@@ -195,7 +195,7 @@ class CSVParser(FileParser):
         """CSV files have single sheet."""
         return ["data"]
 
-    def parse_sheet(self, file_obj, sheet_name: str = None, import_type: str = None) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
         """Parse CSV into DataFrame with proper dtypes."""
         try:
             return pd.read_csv(file_obj, dtype_backend="numpy_nullable", na_values=["", "NA", "N/A", "null", "NULL", "-"])
@@ -232,6 +232,19 @@ class FileImportService:
         self.parser = None
         self.import_results = {"created": {}, "updated": {}, "errors": []}
 
+    def _get_parser(self) -> FileParser:
+        """Get or initialize the parser for the current file."""
+        if self.parser is not None:
+            return self.parser
+
+        parser_name = self.detect_file_format()
+        parser_class = self.PARSERS.get(parser_name)
+        if not parser_class:
+            raise FileImportError(f"No parser available for format: {parser_name}")
+
+        self.parser = parser_class()
+        return self.parser
+
     def detect_file_format(self) -> str:
         """
         Detect the file format and return appropriate parser name.
@@ -260,17 +273,8 @@ class FileImportService:
         """
         try:
             # Detect file format
-            parser_name = self.detect_file_format()
-
-            # Get appropriate parser
-            parser_class = self.PARSERS.get(parser_name)
-            if not parser_class:
-                raise FileImportError(f"No parser available for format: {parser_name}")
-
-            self.parser = parser_class()
-
-            # Validate file with parser
-            return self.parser.validate_file(self.file_obj)
+            parser = self._get_parser()
+            return parser.validate_file(self.file_obj)
 
         except Exception as e:
             if isinstance(e, FileImportError):
@@ -305,11 +309,13 @@ class FileImportService:
             affected_courses = set()
 
             with transaction.atomic():
-                for idx, row in df.iterrows():
+                for row_offset in range(len(df)):
+                    row_number = row_offset + 2
+                    row = df.iloc[row_offset]
                     try:
                         row_created, row_updated, row_skipped = self._process_assignment_row(
                             row=row,
-                            row_number=idx + 2,
+                            row_number=row_number,
                             student_id_col=student_id_col,
                             assessment_columns=assessment_columns,
                             assessment_lookup=assessment_lookup,
@@ -319,7 +325,7 @@ class FileImportService:
                         updated_count += row_updated
                         skipped_count += row_skipped
                     except Exception as e:
-                        self.import_results["errors"].append(f"Row {idx + 2}: Error processing row - {str(e)}")
+                        self.import_results["errors"].append(f"Row {row_number}: Error processing row - {str(e)}")
                         continue
 
             self.import_results["created"]["grades"] = created_count
@@ -354,7 +360,7 @@ class FileImportService:
         return missing_assessments
 
     def _prepare_assignment_import_context(self, course_code: str, term_id: int):
-        df = self.parser.parse_sheet(self.file_obj, import_type="assignment_scores")
+        df = self._get_parser().parse_sheet(self.file_obj, import_type="assignment_scores")
         course = self._get_course_by_code_and_term(course_code, term_id)
 
         course_assessments = Assessment.objects.filter(course=course)
@@ -460,7 +466,7 @@ class FileImportService:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj, import_type="learning_outcomes")
+            df = self._get_parser().parse_sheet(self.file_obj, import_type="learning_outcomes")
 
             # Validate required columns
             self._validate_required_columns(df, "learning_outcomes")
@@ -516,7 +522,7 @@ class FileImportService:
             dict: Import results with created/updated counts
         """
         try:
-            df = self.parser.parse_sheet(self.file_obj, import_type="program_outcomes")
+            df = self._get_parser().parse_sheet(self.file_obj, import_type="program_outcomes")
 
             # Validate required columns
             self._validate_required_columns(df, "program_outcomes")
@@ -645,7 +651,9 @@ class FileImportService:
         except Exception as e:
             raise FileImportError(f"Validation error: {str(e)}")
 
-    def _validate_required_columns(self, dataframe: pd.DataFrame, sheet_type: str, assessments: List[Assessment] = None):
+    def _validate_required_columns(
+        self, dataframe: pd.DataFrame, sheet_type: str, assessments: Optional[Iterable[Assessment]] = None
+    ):
         """
         Validate that all required columns are present in dataframe.
 
@@ -671,12 +679,13 @@ class FileImportService:
 
         # Check for assessment names if applicable
         if assessments:
+            assessment_list = list(assessments)
             # Use _extract_assessment_columns to get cleaned assessment names from columns
             assessment_columns = self._extract_assessment_columns(dataframe.columns)
             found_assessment_names = [name for _, name in assessment_columns]
 
             assessment_col_found = []
-            for assessment in assessments:
+            for assessment in assessment_list:
                 # Check if assessment name is in the found assessment columns
                 if assessment.name.lower().strip() in [name.lower().strip() for name in found_assessment_names]:
                     assessment_col_found.append(True)
@@ -684,7 +693,7 @@ class FileImportService:
                     assessment_col_found.append(False)
 
             if not all(assessment_col_found):
-                missing_columns.extend([assessments[i].name for i, found in enumerate(assessment_col_found) if not found])
+                missing_columns.extend([assessment_list[i].name for i, found in enumerate(assessment_col_found) if not found])
 
         if missing_columns:
             raise FileImportError(
@@ -793,9 +802,9 @@ class FileImportService:
 
     def _get_student_by_id(self, student_id: str):
         """Get student user by student_id, raise error if not found."""
-        try:
-            from users.models import StudentProfile
+        from users.models import StudentProfile
 
+        try:
             student_profile = StudentProfile.objects.select_related("user").get(student_id=student_id)
             return student_profile.user
         except StudentProfile.DoesNotExist:

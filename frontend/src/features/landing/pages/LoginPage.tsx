@@ -15,7 +15,7 @@ const LoginPage = () => {
   const { login, isAuthenticated, user } = useAuth()
 
   if (isAuthenticated && user) {
-    const rolePath = user.role === 'instructor' ? '/instructor' : user.role === 'admin' ? '/head' : user.role === 'student' ? '/student' : '/'
+    const rolePath = user.role === 'instructor' ? '/instructor' : user.role === 'admin' ? '/head' : user.role === 'student' ? '/student' : '/login'
     return <Navigate to={rolePath} replace />
   }
 
