@@ -52,11 +52,26 @@ const axiosInstance = Axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
+
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
 
 // Request interceptor - No Authorization header needed, cookies are sent automatically
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (config.method && config.method.toUpperCase() !== 'GET') {
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+      }
+    }
     if (runtimeEnv?.VITE_ENABLE_DEBUG === 'true') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
@@ -72,8 +87,13 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+    const requestPath = originalRequest?.url || '';
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (requestPath.includes('/auth/login') || requestPath.includes('/auth/refresh') || requestPath.includes('/auth/logout')) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -96,12 +116,9 @@ axiosInstance.interceptors.response.use(
         document.cookie = `access_token=${newToken}; path=/; max-age=3600; samesite=lax`;
         processQueue(null, newToken);
         return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        document.cookie = 'access_token=; path=/; max-age=0';
-        document.cookie = 'refresh_token=; path=/; max-age=0';
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+      } catch {
+        processQueue(null, null);
+        return Promise.reject(error);
       } finally {
         isRefreshing = false;
       }

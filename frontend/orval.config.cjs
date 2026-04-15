@@ -2,7 +2,7 @@ module.exports = {
   'student-evaluation-api': {
     input: {
       // Both Docker and local dev use this path - volume mount handles the rest
-      target: './src/shared/api/schema.yml',
+      target: './schema.yml',
     },
     output: {
       mode: 'tags-split',
@@ -65,7 +65,7 @@ module.exports = {
             },
           },
           // Disable infinite queries for evaluation endpoints
-          evaluation_grades_course_averages_retrieve: {
+          v1_evaluation_grades_course_averages_retrieve: {
             query: {
               useInfinite: false,
             },

@@ -35,14 +35,20 @@ import type {
   UsersAuthLoginCreate400,
   UsersAuthLoginCreate401,
   UsersAuthLoginCreate429,
+  UsersAuthLogoutCreate200,
   UsersAuthMeRetrieve401,
+  UsersAuthRefreshCreate200,
+  UsersAuthRefreshCreate401,
   UsersChangePasswordCreate200,
   UsersChangePasswordCreate400,
   UsersChangePasswordCreate401,
   V1UsersAuthLoginCreate400,
   V1UsersAuthLoginCreate401,
   V1UsersAuthLoginCreate429,
+  V1UsersAuthLogoutCreate200,
   V1UsersAuthMeRetrieve401,
+  V1UsersAuthRefreshCreate200,
+  V1UsersAuthRefreshCreate401,
   V1UsersChangePasswordCreate200,
   V1UsersChangePasswordCreate400,
   V1UsersChangePasswordCreate401
@@ -144,6 +150,69 @@ export const useUsersAuthLoginCreate = <TError = UsersAuthLoginCreate400 | Users
       > => {
 
       const mutationOptions = getUsersAuthLoginCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Invalidate refresh token (when present) and clear authentication cookies.
+ * @summary User logout
+ */
+export const usersAuthLogoutCreate = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UsersAuthLogoutCreate200>(
+      {url: `/api/users/auth/logout/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getUsersAuthLogoutCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthLogoutCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersAuthLogoutCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['usersAuthLogoutCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthLogoutCreate>>, void> = () => {
+
+
+          return  usersAuthLogoutCreate(requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersAuthLogoutCreateMutationResult = NonNullable<Awaited<ReturnType<typeof usersAuthLogoutCreate>>>
+
+    export type UsersAuthLogoutCreateMutationError = unknown
+
+    /**
+ * @summary User logout
+ */
+export const useUsersAuthLogoutCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthLogoutCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersAuthLogoutCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getUsersAuthLogoutCreateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -314,6 +383,69 @@ export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAu
 
 
 /**
+ * Exchange a valid refresh token (from HTTP-only cookie) for a new access token.
+ * @summary Refresh access token
+ */
+export const usersAuthRefreshCreate = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UsersAuthRefreshCreate200>(
+      {url: `/api/users/auth/refresh/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getUsersAuthRefreshCreateMutationOptions = <TError = UsersAuthRefreshCreate401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['usersAuthRefreshCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, void> = () => {
+
+
+          return  usersAuthRefreshCreate(requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof usersAuthRefreshCreate>>>
+
+    export type UsersAuthRefreshCreateMutationError = UsersAuthRefreshCreate401
+
+    /**
+ * @summary Refresh access token
+ */
+export const useUsersAuthRefreshCreate = <TError = UsersAuthRefreshCreate401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersAuthRefreshCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getUsersAuthRefreshCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Allow authenticated users to change their password by providing the current and new password.
  * @summary Change password
  */
@@ -440,6 +572,69 @@ export const useV1UsersAuthLoginCreate = <TError = V1UsersAuthLoginCreate400 | V
       > => {
 
       const mutationOptions = getV1UsersAuthLoginCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Invalidate refresh token (when present) and clear authentication cookies.
+ * @summary User logout
+ */
+export const v1UsersAuthLogoutCreate = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<V1UsersAuthLogoutCreate200>(
+      {url: `/api/v1/users/auth/logout/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getV1UsersAuthLogoutCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['v1UsersAuthLogoutCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>, void> = () => {
+
+
+          return  v1UsersAuthLogoutCreate(requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1UsersAuthLogoutCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>>
+
+    export type V1UsersAuthLogoutCreateMutationError = unknown
+
+    /**
+ * @summary User logout
+ */
+export const useV1UsersAuthLogoutCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getV1UsersAuthLogoutCreateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -610,6 +805,69 @@ export function useV1UsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof v1Use
 
 
 /**
+ * Exchange a valid refresh token (from HTTP-only cookie) for a new access token.
+ * @summary Refresh access token
+ */
+export const v1UsersAuthRefreshCreate = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<V1UsersAuthRefreshCreate200>(
+      {url: `/api/v1/users/auth/refresh/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getV1UsersAuthRefreshCreateMutationOptions = <TError = V1UsersAuthRefreshCreate401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext> => {
+
+const mutationKey = ['v1UsersAuthRefreshCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, void> = () => {
+
+
+          return  v1UsersAuthRefreshCreate(requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>>
+
+    export type V1UsersAuthRefreshCreateMutationError = V1UsersAuthRefreshCreate401
+
+    /**
+ * @summary Refresh access token
+ */
+export const useV1UsersAuthRefreshCreate = <TError = V1UsersAuthRefreshCreate401,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getV1UsersAuthRefreshCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Allow authenticated users to change their password by providing the current and new password.
  * @summary Change password
  */

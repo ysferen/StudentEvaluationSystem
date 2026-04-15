@@ -1,5 +1,5 @@
 import React, { useContext, createContext, useEffect, useState, useCallback, ReactNode } from 'react'
-import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
+import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthLogoutCreate, usersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
 
@@ -9,14 +9,14 @@ import { CustomUser } from '../../../shared/api/model/customUser'
  * @interface AuthContextType
  * @property {CustomUser | null} user - Current authenticated user or null if not logged in
  * @property {(username: string, password: string) => Promise<void>} login - Login function
- * @property {() => void} logout - Logout function that clears tokens and cache
+ * @property {() => Promise<void>} logout - Logout function that clears tokens and cache
  * @property {boolean} isLoading - Whether auth state is being initialized
  * @property {boolean} isAuthenticated - Whether user is currently authenticated
  */
 interface AuthContextType {
   user: CustomUser | null
   login: (username: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   isLoading: boolean
   isAuthenticated: boolean
 }
@@ -120,9 +120,8 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
           queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
         }
       },
-      onError: (error: Error): void => {
-        // Re-throw error for component-level handling
-        throw error
+      onError: (): void => {
+        // Error is thrown by mutateAsync and handled by the caller
       }
     }
   })
@@ -135,17 +134,17 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
    *
    * @callback logout
    */
-  const logout = useCallback((): void => {
-    // Clear HTTP-only cookies by setting them to expire
-    document.cookie = 'access_token=; path=/; max-age=0'
-    document.cookie = 'refresh_token=; path=/; max-age=0'
-    setUser(null)
-
-    // Clear all cached queries to prevent data leakage
-    queryClient.clear()
-
-    // Redirect to login page
-    window.location.href = '/login'
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      // Ask backend to clear HTTP-only cookies and invalidate refresh token.
+      await usersAuthLogoutCreate()
+    } catch {
+      // Even if logout request fails, continue with local state cleanup.
+    } finally {
+      setUser(null)
+      queryClient.clear()
+      window.location.href = '/login'
+    }
   }, [queryClient])
 
   useEffect(() => {
@@ -158,7 +157,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     // Only logout if user was previously authenticated (user !== null)
     // This prevents redirect loops on public pages like /login
     if (userError instanceof Error && user !== null) {
-      logout()
+      void logout()
     }
 
     // Mark loading as complete when user fetch finishes

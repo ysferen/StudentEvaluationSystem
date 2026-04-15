@@ -6,7 +6,7 @@ import { coreCoursesRetrieve } from '../../../shared/api/generated/core/core'
 import { coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
 import FileUploadModal from '../components/FileUploadModal'
 import MappingEditor from '../components/MappingEditor'
-import { coreStudentLoScoresList } from '../../../shared/api/generated/core/core'
+import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import type {
   Course,
   CourseInstructorsItem,
@@ -78,8 +78,8 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     queryFn: async () => {
       if (!courseId) throw new Error('Course ID is required')
       const courseResponse = await coreCoursesRetrieve(Number(courseId))
-      const loResponse = await coreLearningOutcomesList()
-      const loScoresResponse = await coreStudentLoScoresList()
+      const loResponse = await coreLearningOutcomesList({ course: Number(courseId) })
+      const loScoresResponse = await coreStudentLoScoresList({ course: Number(courseId) })
       return {
         course: courseResponse,
         learningOutcomes: loResponse.results || [],
@@ -96,13 +96,6 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
 
     // Refresh data without page reload
     refetch()
-  }
-
-  const handleUploadError = (error: string) => {
-    setNotification({
-      type: 'error',
-      message: error
-    })
   }
 
   const getInstructorNames = () => {
@@ -624,7 +617,6 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
         onClose={() => setIsFileUploadModalOpen(false)}
         type="assignment_scores"
         onUploadComplete={handleUploadComplete}
-        onError={handleUploadError}
       />
 
       {/* Mapping Editor Modal */}

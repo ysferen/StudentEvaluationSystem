@@ -38,6 +38,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -70,6 +71,7 @@ paths:
               $ref: '#/components/schemas/Course'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -98,6 +100,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -137,6 +140,7 @@ paths:
               $ref: '#/components/schemas/Course'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -175,6 +179,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCourse'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -202,6 +207,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -221,6 +227,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -249,6 +256,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -281,6 +289,7 @@ paths:
               $ref: '#/components/schemas/DegreeLevel'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -309,6 +318,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -348,6 +358,7 @@ paths:
               $ref: '#/components/schemas/DegreeLevel'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -386,6 +397,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedDegreeLevel'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -413,6 +425,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -442,6 +455,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -474,6 +488,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -502,6 +517,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -541,6 +557,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -579,6 +596,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedDepartment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -606,6 +624,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -618,6 +637,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -642,6 +662,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -667,6 +688,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -683,6 +705,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -707,6 +730,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -732,6 +756,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -748,6 +773,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -772,6 +798,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -797,6 +824,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -811,6 +839,11 @@ paths:
       operationId: core_learning_outcomes_list
       description: CRUD operations for learning outcomes.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter by course ID
       - name: page
         required: false
         in: query
@@ -820,6 +853,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -847,6 +881,7 @@ paths:
               $ref: '#/components/schemas/CoreLearningOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -870,6 +905,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -904,6 +940,7 @@ paths:
               $ref: '#/components/schemas/CoreLearningOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -937,6 +974,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCoreLearningOutcome'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -959,6 +997,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -978,6 +1017,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1005,6 +1045,7 @@ paths:
               $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1029,6 +1070,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1064,6 +1106,7 @@ paths:
               $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1098,6 +1141,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedLearningOutcomeProgramOutcomeMapping'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1121,6 +1165,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1150,6 +1195,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1177,6 +1223,7 @@ paths:
               $ref: '#/components/schemas/ProgramOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1200,6 +1247,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1234,6 +1282,7 @@ paths:
               $ref: '#/components/schemas/ProgramOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1267,6 +1316,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProgramOutcome'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1289,6 +1339,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1323,6 +1374,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1355,6 +1407,7 @@ paths:
               $ref: '#/components/schemas/Program'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1383,6 +1436,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1422,6 +1476,7 @@ paths:
               $ref: '#/components/schemas/Program'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1460,6 +1515,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProgram'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1487,6 +1543,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1503,15 +1560,26 @@ paths:
         - Instructors: View scores for students in their courses
         - Admins: View all scores
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter by course ID
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: student
+        schema:
+          type: integer
+        description: Filter by student ID
       tags:
-      - core
+      - Scores
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1540,8 +1608,9 @@ paths:
           Score.
         required: true
       tags:
-      - core
+      - Scores
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1558,6 +1627,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1574,6 +1644,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1603,6 +1674,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1633,6 +1705,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1655,6 +1728,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1676,6 +1750,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1704,6 +1779,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1736,6 +1812,7 @@ paths:
               $ref: '#/components/schemas/Term'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1764,6 +1841,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1803,6 +1881,7 @@ paths:
               $ref: '#/components/schemas/Term'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1841,6 +1920,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedTerm'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1868,6 +1948,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1880,6 +1961,7 @@ paths:
       tags:
       - core
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1908,6 +1990,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1940,6 +2023,7 @@ paths:
               $ref: '#/components/schemas/University'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -1968,6 +2052,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2007,6 +2092,7 @@ paths:
               $ref: '#/components/schemas/University'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2045,6 +2131,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUniversity'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2072,6 +2159,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2101,6 +2189,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2132,6 +2221,7 @@ paths:
               $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -2160,6 +2250,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2199,6 +2290,7 @@ paths:
               $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2237,6 +2329,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAssessmentLearningOutcomeMapping'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2264,6 +2357,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -2298,6 +2392,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2329,6 +2424,7 @@ paths:
               $ref: '#/components/schemas/AssessmentCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -2356,6 +2452,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2394,6 +2491,7 @@ paths:
               $ref: '#/components/schemas/AssessmentCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2431,6 +2529,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAssessmentCreate'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2457,6 +2556,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -2475,6 +2575,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2497,6 +2598,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2534,6 +2636,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2564,6 +2667,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -2591,6 +2695,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2628,6 +2733,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2665,6 +2771,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2691,6 +2798,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -2713,6 +2821,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2735,6 +2844,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2757,6 +2867,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -2785,6 +2896,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -2827,6 +2939,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2858,6 +2971,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -2885,6 +2999,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2923,6 +3038,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2960,6 +3076,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStudentGradeCreate'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -2986,6 +3103,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -3015,6 +3133,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3047,6 +3166,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3069,6 +3189,7 @@ paths:
       tags:
       - evaluation
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3098,6 +3219,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3128,6 +3250,28 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/users/auth/logout/:
+    post:
+      operationId: users_auth_logout_create
+      description: Invalidate refresh token (when present) and clear authentication
+        cookies.
+      summary: User logout
+      tags:
+      - Authentication
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
   /api/users/auth/me/:
     get:
       operationId: users_auth_me_retrieve
@@ -3136,6 +3280,7 @@ paths:
       tags:
       - Authentication
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3154,19 +3299,34 @@ paths:
   /api/users/auth/refresh/:
     post:
       operationId: users_auth_refresh_create
-      description: |-
-        Token refresh view that reads the refresh token from an HTTP-only cookie.
-
-        This enables cookie-based authentication for browser clients without
-        exposing tokens to JavaScript (XSS protection).
+      description: Exchange a valid refresh token (from HTTP-only cookie) for a new
+        access token.
+      summary: Refresh access token
       tags:
-      - users
+      - Authentication
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
   /api/users/change_password/:
     post:
       operationId: users_change_password_create
@@ -3184,6 +3344,7 @@ paths:
             schema:
               type: string
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3221,6 +3382,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3248,6 +3410,7 @@ paths:
               $ref: '#/components/schemas/InstructorProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -3270,6 +3433,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3304,6 +3468,7 @@ paths:
               $ref: '#/components/schemas/InstructorProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3336,6 +3501,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedInstructorProfile'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3357,6 +3523,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -3375,6 +3542,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3402,6 +3570,7 @@ paths:
               $ref: '#/components/schemas/StudentProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -3424,6 +3593,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3458,6 +3628,7 @@ paths:
               $ref: '#/components/schemas/StudentProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3490,6 +3661,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStudentProfile'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3511,6 +3683,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -3529,6 +3702,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3556,6 +3730,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -3578,6 +3753,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3612,6 +3788,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3644,6 +3821,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCustomUser'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3665,6 +3843,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -3676,6 +3855,7 @@ paths:
       tags:
       - users
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3719,6 +3899,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3750,6 +3931,7 @@ paths:
               $ref: '#/components/schemas/Course'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3778,6 +3960,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3816,6 +3999,7 @@ paths:
               $ref: '#/components/schemas/Course'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3854,6 +4038,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCourse'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3881,6 +4066,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3900,6 +4086,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -3927,6 +4114,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3959,6 +4147,7 @@ paths:
               $ref: '#/components/schemas/DegreeLevel'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -3987,6 +4176,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4026,6 +4216,7 @@ paths:
               $ref: '#/components/schemas/DegreeLevel'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4064,6 +4255,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedDegreeLevel'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4091,6 +4283,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4120,6 +4313,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4152,6 +4346,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4180,6 +4375,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4219,6 +4415,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4257,6 +4454,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedDepartment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4284,6 +4482,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4296,6 +4495,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4320,6 +4520,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4345,6 +4546,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4361,6 +4563,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4385,6 +4588,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4410,6 +4614,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4426,6 +4631,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4450,6 +4656,7 @@ paths:
                   type: string
                   format: binary
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4475,6 +4682,7 @@ paths:
               $ref: '#/components/schemas/FileImportResponse'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4489,6 +4697,11 @@ paths:
       operationId: v1_core_learning_outcomes_list
       description: CRUD operations for learning outcomes.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter by course ID
       - name: page
         required: false
         in: query
@@ -4498,6 +4711,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4525,6 +4739,7 @@ paths:
               $ref: '#/components/schemas/CoreLearningOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4548,6 +4763,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4582,6 +4798,7 @@ paths:
               $ref: '#/components/schemas/CoreLearningOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4615,6 +4832,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCoreLearningOutcome'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4637,6 +4855,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4656,6 +4875,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4683,6 +4903,7 @@ paths:
               $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4707,6 +4928,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4742,6 +4964,7 @@ paths:
               $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4776,6 +4999,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedLearningOutcomeProgramOutcomeMapping'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4799,6 +5023,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4828,6 +5053,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4855,6 +5081,7 @@ paths:
               $ref: '#/components/schemas/ProgramOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4878,6 +5105,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4912,6 +5140,7 @@ paths:
               $ref: '#/components/schemas/ProgramOutcome'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4945,6 +5174,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProgramOutcome'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -4967,6 +5197,7 @@ paths:
       tags:
       - Outcomes
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5001,6 +5232,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5033,6 +5265,7 @@ paths:
               $ref: '#/components/schemas/Program'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5061,6 +5294,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5100,6 +5334,7 @@ paths:
               $ref: '#/components/schemas/Program'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5138,6 +5373,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProgram'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5165,6 +5401,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5181,15 +5418,26 @@ paths:
         - Instructors: View scores for students in their courses
         - Admins: View all scores
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter by course ID
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: student
+        schema:
+          type: integer
+        description: Filter by student ID
       tags:
-      - v1
+      - Scores
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5218,8 +5466,9 @@ paths:
           Score.
         required: true
       tags:
-      - v1
+      - Scores
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5236,6 +5485,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5252,6 +5502,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5281,6 +5532,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5311,6 +5563,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5333,6 +5586,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5354,6 +5608,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5382,6 +5637,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5414,6 +5670,7 @@ paths:
               $ref: '#/components/schemas/Term'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5442,6 +5699,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5481,6 +5739,7 @@ paths:
               $ref: '#/components/schemas/Term'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5519,6 +5778,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedTerm'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5546,6 +5806,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5558,6 +5819,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5586,6 +5848,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5618,6 +5881,7 @@ paths:
               $ref: '#/components/schemas/University'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5646,6 +5910,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5685,6 +5950,7 @@ paths:
               $ref: '#/components/schemas/University'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5723,6 +5989,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUniversity'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5750,6 +6017,7 @@ paths:
       tags:
       - Academic Structure
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -5779,6 +6047,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -5810,6 +6079,7 @@ paths:
               $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -5838,6 +6108,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -5877,6 +6148,7 @@ paths:
               $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -5915,6 +6187,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAssessmentLearningOutcomeMapping'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -5942,6 +6215,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -5976,6 +6250,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6007,6 +6282,7 @@ paths:
               $ref: '#/components/schemas/AssessmentCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -6034,6 +6310,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6072,6 +6349,7 @@ paths:
               $ref: '#/components/schemas/AssessmentCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6109,6 +6387,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAssessmentCreate'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6135,6 +6414,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -6153,6 +6433,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6175,6 +6456,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6212,6 +6494,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6242,6 +6525,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -6269,6 +6553,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6306,6 +6591,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6343,6 +6629,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6369,6 +6656,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -6391,6 +6679,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6413,6 +6702,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -6435,6 +6725,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -6463,6 +6754,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -6505,6 +6797,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6536,6 +6829,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -6563,6 +6857,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6601,6 +6896,7 @@ paths:
               $ref: '#/components/schemas/StudentGradeCreate'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6638,6 +6934,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStudentGradeCreate'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6664,6 +6961,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -6693,6 +6991,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6725,6 +7024,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6747,6 +7047,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6776,6 +7077,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -6806,6 +7108,28 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/v1/users/auth/logout/:
+    post:
+      operationId: v1_users_auth_logout_create
+      description: Invalidate refresh token (when present) and clear authentication
+        cookies.
+      summary: User logout
+      tags:
+      - Authentication
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+          description: ''
   /api/v1/users/auth/me/:
     get:
       operationId: v1_users_auth_me_retrieve
@@ -6814,6 +7138,7 @@ paths:
       tags:
       - Authentication
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6832,19 +7157,34 @@ paths:
   /api/v1/users/auth/refresh/:
     post:
       operationId: v1_users_auth_refresh_create
-      description: |-
-        Token refresh view that reads the refresh token from an HTTP-only cookie.
-
-        This enables cookie-based authentication for browser clients without
-        exposing tokens to JavaScript (XSS protection).
+      description: Exchange a valid refresh token (from HTTP-only cookie) for a new
+        access token.
+      summary: Refresh access token
       tags:
-      - v1
+      - Authentication
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
   /api/v1/users/change_password/:
     post:
       operationId: v1_users_change_password_create
@@ -6862,6 +7202,7 @@ paths:
             schema:
               type: string
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -6899,6 +7240,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -6926,6 +7268,7 @@ paths:
               $ref: '#/components/schemas/InstructorProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -6948,6 +7291,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -6982,6 +7326,7 @@ paths:
               $ref: '#/components/schemas/InstructorProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7014,6 +7359,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedInstructorProfile'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7035,6 +7381,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -7053,6 +7400,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -7080,6 +7428,7 @@ paths:
               $ref: '#/components/schemas/StudentProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -7102,6 +7451,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -7136,6 +7486,7 @@ paths:
               $ref: '#/components/schemas/StudentProfile'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7168,6 +7519,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStudentProfile'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7189,6 +7541,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -7207,6 +7560,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -7234,6 +7588,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '201':
@@ -7256,6 +7611,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -7290,6 +7646,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7322,6 +7679,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCustomUser'
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '200':
@@ -7343,6 +7701,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       responses:
         '204':
@@ -7354,6 +7713,7 @@ paths:
       tags:
       - v1
       security:
+      - jwtCookie: []
       - cookieAuth: []
       - {}
       responses:
@@ -9155,6 +9515,11 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+    jwtCookie:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: JWT access token stored in HTTP-only cookie
 tags:
 - name: Authentication
   description: User authentication and profile management

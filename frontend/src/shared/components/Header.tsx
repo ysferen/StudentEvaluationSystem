@@ -132,7 +132,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                                             <button
                                                 onClick={() => {
                                                     setMenuOpen(false)
-                                                    logout()
+                                                    void logout()
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 flex items-center"
                                             >

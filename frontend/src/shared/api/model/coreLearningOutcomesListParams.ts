@@ -8,6 +8,10 @@
 
 export type CoreLearningOutcomesListParams = {
 /**
+ * Filter by course ID
+ */
+course?: number;
+/**
  * A page number within the paginated result set.
  */
 page?: number;

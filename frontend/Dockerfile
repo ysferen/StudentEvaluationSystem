@@ -3,17 +3,17 @@ FROM node:22-alpine
 
 LABEL project="ses" service="frontend"
 
+RUN mkdir -p /app && chown node:node /app
 WORKDIR /app
 
-# Copy frontend files
-COPY package*.json ./
-COPY orval.config.cjs ./
+USER node
 
-# Install dependencies
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node orval.config.cjs ./
+
 RUN npm ci
 
-# Copy all frontend files
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 5173
 

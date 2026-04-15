@@ -41,6 +41,7 @@ Object.defineProperty(window, 'matchMedia', {
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null
   readonly rootMargin = ''
+  readonly scrollMargin = ''
   readonly thresholds: ReadonlyArray<number> = []
 
   constructor(_callback: IntersectionObserverCallback) {}
@@ -66,9 +67,4 @@ globalThis.ResizeObserver = MockResizeObserver
 
 // Mock getBBox for SVG elements (for ApexCharts)
 const svgPrototype = SVGElement.prototype as unknown as { getBBox?: () => DOMRect }
-svgPrototype.getBBox = vi.fn(() => ({
-  x: 0,
-  y: 0,
-  width: 100,
-  height: 100,
-})) as () => DOMRect
+svgPrototype.getBBox = vi.fn<() => DOMRect>(() => new DOMRect(0, 0, 100, 100))

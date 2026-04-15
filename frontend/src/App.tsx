@@ -4,7 +4,6 @@ import { Layout } from './shared/components'
 
 const LandingPage = lazy(() => import('./features/landing/pages/LandingPage'))
 const LoginPage = lazy(() => import('./features/landing/pages/LoginPage'))
-const DashboardPage = lazy(() => import('./features/dashboard/pages/Dashboard'))
 const CourseDetailPage = lazy(() => import('./features/courses/pages/CourseDetail'))
 const StudentDashboardPage = lazy(() => import('./features/dashboard/pages/StudentDashboard'))
 const StudentCourseDetailPage = lazy(() => import('./features/courses/pages/StudentCourseDetail'))

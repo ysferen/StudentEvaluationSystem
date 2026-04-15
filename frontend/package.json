@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "generate:api": "orval --config ./orval.config.cjs",
     "generate:api:watch": "orval --config ./orval.config.cjs --watch",
+    "api:sync": "docker exec ses-backend uv run python student_evaluation_system/manage.py spectacular --file /tmp/schema.yml && docker cp ses-backend:/tmp/schema.yml ./schema.yml && orval --config ./orval.config.cjs",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"

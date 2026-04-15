@@ -6,13 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type V1CoreLearningOutcomesListParams = {
-/**
- * Filter by course ID
- */
-course?: number;
-/**
- * A page number within the paginated result set.
- */
-page?: number;
+export type UsersAuthLogoutCreate200 = {
+  detail?: string;
 };

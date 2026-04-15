@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,8 +26,24 @@ const LoginPage = () => {
     try {
       await login(username, password)
     } catch (err: unknown) {
-      const errObj = err as { response?: { data?: { message?: string } } }
-      setError(errObj.response?.data?.message || 'Login failed. Please try again.')
+      let message = 'Login failed. Please try again.'
+      try {
+        const errObj = err as Record<string, unknown>
+        const response = errObj?.response as Record<string, unknown> | undefined
+        const data = response?.data as Record<string, unknown> | undefined
+        if (data) {
+          const raw = data?.error ?? data?.message ?? data?.detail
+          if (typeof raw === 'string') {
+            message = raw
+          } else if (typeof raw === 'object' && raw !== null) {
+            const rawObj = raw as Record<string, unknown>
+            message = (typeof rawObj?.message === 'string' ? rawObj.message : null) ?? (typeof rawObj?.code === 'string' ? rawObj.code : null) ?? message
+          }
+        }
+      } catch {
+        // ignore extraction errors
+      }
+      setError(message)
     } finally {
       setIsLoading(false)
     }

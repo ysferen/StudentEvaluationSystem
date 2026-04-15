@@ -79,68 +79,6 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Token refresh view that reads the refresh token from an HTTP-only cookie.
-
-This enables cookie-based authentication for browser clients without
-exposing tokens to JavaScript (XSS protection).
- */
-export const usersAuthRefreshCreate = (
-
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<void>(
-      {url: `/api/users/auth/refresh/`, method: 'POST', signal
-    },
-      options);
-    }
-
-
-
-export const getUsersAuthRefreshCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext> => {
-
-const mutationKey = ['usersAuthRefreshCreate'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, void> = () => {
-
-
-          return  usersAuthRefreshCreate(requestOptions)
-        }
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof usersAuthRefreshCreate>>>
-
-    export type UsersAuthRefreshCreateMutationError = unknown
-
-    export const useUsersAuthRefreshCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof usersAuthRefreshCreate>>,
-        TError,
-        void,
-        TContext
-      > => {
-
-      const mutationOptions = getUsersAuthRefreshCreateMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * CRUD operations for instructor profiles.
  */
 export const usersInstructorsList = (

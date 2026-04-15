@@ -19,7 +19,7 @@ from .serializers import (
 )
 from .services import calculate_course_scores, calculate_student_po_scores
 from core.models import StudentLearningOutcomeScore
-from core.permissions import IsInstructorOfCourse, IsOwnerOrInstructorOrAdmin
+from core.permissions import IsInstructorOfCourse, IsOwnerOrInstructorOrAdmin, IsEnrolledStudentOrInstructorOrAdmin
 
 
 @extend_schema_view(
@@ -430,7 +430,10 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
 
     queryset = CourseEnrollment.objects.select_related("student", "course").all()
     serializer_class = CourseEnrollmentSerializer
-    permission_classes = [IsAuthenticated, IsInstructorOfCourse]
+    permission_classes = [
+        IsAuthenticated,
+        IsEnrolledStudentOrInstructorOrAdmin,
+    ]
 
     def get_queryset(self):
         queryset = super().get_queryset()

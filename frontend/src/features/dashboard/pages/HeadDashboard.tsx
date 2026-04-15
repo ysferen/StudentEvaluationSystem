@@ -46,7 +46,7 @@ const HeadDashboard = () => {
       xaxis: {
         categories: ['2021', '2022', '2023', '2024', '2025']
       },
-      stroke: { curve: 'smooth' },
+      stroke: { curve: 'smooth' as const },
       colors: ['#8b5cf6']
     }
   }

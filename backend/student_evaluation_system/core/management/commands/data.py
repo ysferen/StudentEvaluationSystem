@@ -104,6 +104,24 @@ SURNAMES = [
     "Doğan",
 ]
 
+COURSES_2025 = [
+    "Artificial Intelligence",
+    "Algorithms I",
+    "Data Systems",
+    "Operating Systems",
+    "Computer Networks",
+    "Microcontrollers",
+]
+
+COURSES_2026 = [
+    "Machine Learning",
+    "Algorithms II",
+    "Cloud Computing",
+    "Distributed Systems",
+    "Computer Security",
+    "Embedded Systems",
+]
+
 PROGRAM_OUTCOME_DESCRIPTIONS = [
     (
         "Matematik, fen bilimleri ve ilgili mühendislik disiplinine özgü konularda yeterli bilgi birikimi; bu alanlardaki "

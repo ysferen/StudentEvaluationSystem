@@ -134,6 +134,44 @@ class CookieTokenRefreshView(APIView):
             return Response({"error": "Token is invalid or expired"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+@extend_schema(
+    summary="User logout",
+    description="Invalidate refresh token (when present) and clear authentication cookies.",
+    request=None,
+    responses={200: {"type": "object", "properties": {"detail": {"type": "string"}}}},
+    tags=["Authentication"],
+)
+class LogoutView(APIView):
+    """Logout endpoint for cookie-based authentication."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if refresh_token:
+            try:
+                # Blacklist current refresh token so it cannot be reused.
+                RefreshToken(refresh_token).blacklist()
+            except TokenError:
+                # Token may already be expired/invalid; still clear cookies.
+                pass
+
+        response = Response({"detail": "Logged out successfully"}, status=status.HTTP_200_OK)
+
+        response.delete_cookie(
+            key="access_token",
+            path="/",
+            domain=settings.SESSION_COOKIE_DOMAIN if hasattr(settings, "SESSION_COOKIE_DOMAIN") else None,
+        )
+
+        response.delete_cookie(
+            key="refresh_token",
+            path="/",
+            domain=settings.SESSION_COOKIE_DOMAIN if hasattr(settings, "SESSION_COOKIE_DOMAIN") else None,
+        )
+        return response
+
+
 # Authentication Views
 @extend_schema(
     summary="User login",

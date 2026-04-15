@@ -1,14 +1,12 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import { UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 
 const StudentLayout = () => {
   const { user, logout, isLoading } = useAuth()
-  const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
+    void logout()
   }
 
   if (isLoading) {

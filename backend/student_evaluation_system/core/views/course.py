@@ -164,7 +164,14 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema_view(
-    list=extend_schema(tags=["Outcomes"]),
+    list=extend_schema(
+        tags=["Outcomes"],
+        parameters=[
+            OpenApiParameter(
+                name="course", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, description="Filter by course ID"
+            ),
+        ],
+    ),
     retrieve=extend_schema(tags=["Outcomes"]),
     create=extend_schema(tags=["Outcomes"]),
     update=extend_schema(tags=["Outcomes"]),

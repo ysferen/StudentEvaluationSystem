@@ -8,7 +8,15 @@
 
 export type V1CoreStudentLoScoresListParams = {
 /**
+ * Filter by course ID
+ */
+course?: number;
+/**
  * A page number within the paginated result set.
  */
 page?: number;
+/**
+ * Filter by student ID
+ */
+student?: number;
 };
