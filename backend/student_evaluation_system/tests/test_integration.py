@@ -144,11 +144,12 @@ class TestAuthenticationWorkflows:
         }
         response = api_client.post("/api/v1/users/auth/login/", login_data)
         assert response.status_code == status.HTTP_200_OK
-        assert "access" in response.data
-        assert "refresh" in response.data
+        assert "user" in response.data
+        assert response.cookies["access_token"].value
+        assert response.cookies["refresh_token"].value
 
-        # Use token to access protected endpoint
-        token = response.data["access"]
+        # Use the access token cookie value to access protected endpoint
+        token = response.cookies["access_token"].value
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
 
         response = api_client.get("/api/v1/users/auth/me/")

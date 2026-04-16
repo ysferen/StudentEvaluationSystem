@@ -180,8 +180,7 @@ npm run build
 
 ## CI Difference
 
-CI currently installs backend dependencies using pip and backend/requirements.txt, while local docs recommend uv.
-Do not assume CI uses uv yet.
+CI now installs backend dependencies with uv and backend/uv.lock.
 
 ## Environment Variables
 

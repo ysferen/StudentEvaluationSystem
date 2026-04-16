@@ -75,5 +75,5 @@ npm run generate:api
 
 ## Notes
 
-- Local backend workflow prefers uv, but CI currently installs backend dependencies with pip and backend/requirements.txt.
+- Local backend workflow and CI both use uv.
 - Agent-facing project context now lives in .github/copilot-instructions.md.

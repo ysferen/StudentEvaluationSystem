@@ -20,6 +20,7 @@ coverage/
 .coverage
 htmlcov/
 .pytest_cache/
+coverage.xml
 
 # =============================================================================
 # Frontend / Node
