@@ -2,14 +2,10 @@
 *
 !pyproject.toml
 !uv.lock
+!.python-version
+!pytest.ini
 !student_evaluation_system/
 !student_evaluation_system/**
-
-*/.pytest_cache
-*/.ruff_cache
-*/.venv
-*/venv
-*/htmlcov
 
 student_evaluation_system/**/__pycache__/
 student_evaluation_system/**/*.pyc

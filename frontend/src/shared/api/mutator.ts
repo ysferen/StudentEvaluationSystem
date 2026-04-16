@@ -14,10 +14,7 @@ const runtimeEnv =
 const API_URL = runtimeEnv?.VITE_API_URL || 'http://localhost:8000';
 const API_BASE_PATH = runtimeEnv?.VITE_API_BASE_PATH || '';
 
-// Construct full base URL
-const baseURL = API_BASE_PATH
-  ? `${API_URL}${API_BASE_PATH}`
-  : API_URL;
+const baseURL = API_BASE_PATH ? `${API_URL}${API_BASE_PATH}` : API_URL;
 
 // Token refresh state
 let isRefreshing = false;
@@ -38,44 +35,46 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 const refreshAccessToken = async (): Promise<string> => {
-  const refreshToken = localStorage.getItem('refresh_token');
-  if (!refreshToken) {
-    throw new Error('No refresh token available');
-  }
-  const response = await Axios.post(`${API_URL}/api/users/auth/refresh/`, {
-    refresh: refreshToken,
-  });
-  const { access, refresh: newRefresh } = response.data;
-  localStorage.setItem('access_token', access);
-  if (newRefresh) {
-    localStorage.setItem('refresh_token', newRefresh);
-  }
+  const response = await Axios.post(
+    `${API_URL}/api/users/auth/refresh/`,
+    {},
+    { withCredentials: true }
+  );
+  const { access } = response.data;
   return access;
 };
 
 // Create axios instance with base configuration
 const axiosInstance = Axios.create({
   baseURL,
-  timeout: 30000, // 30 second timeout
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
 
-// Request interceptor - Add JWT token to all requests
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
+// Request interceptor - No Authorization header needed, cookies are sent automatically
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
+    if (config.method && config.method.toUpperCase() !== 'GET') {
+      const csrfToken = getCookie('csrftoken');
+      if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+      }
     }
-
-    // Debug logging in development
     if (runtimeEnv?.VITE_ENABLE_DEBUG === 'true') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
-
     return config;
   },
   (error) => Promise.reject(error)
@@ -88,15 +87,22 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+    const requestPath = originalRequest?.url || '';
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (requestPath.includes('/auth/login') || requestPath.includes('/auth/refresh') || requestPath.includes('/auth/logout')) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            originalRequest.headers = originalRequest.headers || {};
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+            if (token) {
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
             return axiosInstance(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -107,23 +113,17 @@ axiosInstance.interceptors.response.use(
 
       try {
         const newToken = await refreshAccessToken();
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        document.cookie = `access_token=${newToken}; path=/; max-age=3600; samesite=lax`;
         processQueue(null, newToken);
         return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+      } catch {
+        processQueue(null, null);
+        return Promise.reject(error);
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Handle other error statuses with logging
     if (error.response) {
       switch (error.response.status) {
         case 403:

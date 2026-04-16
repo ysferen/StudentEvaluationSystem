@@ -364,6 +364,35 @@ class IsDepartmentHead(BasePermission):
         return request.user.is_admin_user
 
 
+class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):
+    """
+    Allow students to read their own enrollments, instructors to manage their courses' enrollments, and admins full access.
+
+    Access hierarchy:
+    1. Admin: Full access
+    2. Instructor: Full access to enrollments in their courses
+    3. Student: Read-only access to their own enrollments
+    """
+
+    def has_permission(self, request: Request, _view: ViewType) -> bool:
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.is_admin_user or request.user.is_instructor:
+            return True
+        return request.user.is_student and request.method in SAFE_METHODS
+
+    def has_object_permission(self, request: Request, _view: ViewType, obj: Any) -> bool:
+        if request.user.is_admin_user:
+            return True
+
+        if request.user.is_instructor:
+            course = getattr(obj, "course", None)
+            if course and course.instructors.filter(id=request.user.id).exists():
+                return True
+
+        return getattr(obj, "student", None) == request.user
+
+
 class CanAccessStudentData(BasePermission):
     """
     Permission to access a specific student's data.

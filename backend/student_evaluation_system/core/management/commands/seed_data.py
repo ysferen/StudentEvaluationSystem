@@ -40,6 +40,9 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.WARNING('\n=== Starting Data Seeding ==="\n'))
 
+        # Create superuser first (outside transaction for idempotency)
+        self.create_superuser()
+
         with transaction.atomic():
             # Create basic structure
             step_start = time.time()
@@ -57,36 +60,37 @@ class Command(BaseCommand):
             instructors = self.create_instructors(departments[0], universities[0])
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
-            # Create 6 courses
+            # Create 12 courses
             step_start = time.time()
             self.stdout.write("\n[3/8] Creating courses...")
-            courses = self.create_courses(programs[0], terms[0], instructors[0], count=6)
+            courses = self.create_courses(programs[0], terms, instructors[0], count=6)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 10 program outcomes
             step_start = time.time()
             self.stdout.write("\n[4/8] Creating program outcomes...")
-            program_outcomes = self.create_program_outcomes(programs[0], terms[0], count=10)
+            program_outcomes = self.create_program_outcomes(programs[0], terms[0], count=11)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
-            # For each course: 5 LOs, 4 assessments
+            # For each course: 4 assessments
             step_start = time.time()
             self.stdout.write("\n[5/8] Creating learning outcomes and assessments...")
             all_assessments = []
-            for i, course in enumerate(courses, 1):
-                self.stdout.write(f"  → Course {i}/{len(courses)}: {course.code}")
-                learning_outcomes = self.create_learning_outcomes(course)
+            for course_list in courses.values():
+                for i, course in enumerate(course_list, 1):
+                    self.stdout.write(f"  → Course {i}/{len(course_list)}: {course.code}")
+                    learning_outcomes = self.create_learning_outcomes(course)
 
-                # Map LOs to POs with random weights (sum=1.0)
-                self.create_lo_po_mappings(learning_outcomes, program_outcomes)
+                    # Map LOs to POs with random weights (sum=1.0)
+                    self.create_lo_po_mappings(learning_outcomes, program_outcomes)
 
-                # Create 4 assessments
-                assessments = self.create_assessments(course, count=4)
-                all_assessments.extend(assessments)
+                    # Create 4 assessments
+                    assessments = self.create_assessments(course, count=4)
+                    all_assessments.extend(assessments)
 
-                # Map assessments to LOs with random weights (sum=1.0)
-                for assessment in assessments:
-                    self.create_assessment_lo_mappings(assessment, learning_outcomes)
+                    # Map assessments to LOs with random weights (sum=1.0)
+                    for assessment in assessments:
+                        self.create_assessment_lo_mappings(assessment, learning_outcomes)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 50 students and enroll them
@@ -127,6 +131,26 @@ class Command(BaseCommand):
         Course.objects.all().delete()
         ProgramOutcome.objects.all().delete()
         LearningOutcome.objects.all().delete()
+
+    def create_superuser(self):
+        """Create or get admin superuser account."""
+        admin, created = CustomUser.objects.get_or_create(
+            username="admin",
+            defaults={
+                "email": "admin@example.com",
+                "first_name": "Admin",
+                "last_name": "User",
+                "is_staff": True,
+                "is_superuser": True,
+                "is_active": True,
+            },
+        )
+        if created:
+            admin.set_password("admin")
+            admin.save()
+            self.stdout.write(self.style.SUCCESS("✓ Superuser created: admin / admin"))
+        else:
+            self.stdout.write("✓ Superuser already exists: admin")
 
     def create_universities(self):
         universities = []
@@ -175,11 +199,15 @@ class Command(BaseCommand):
         return programs
 
     def create_terms(self):
-        term1, _ = Term.objects.get_or_create(name="Fall 2025", defaults={"is_active": False})
-        term2, _ = Term.objects.get_or_create(name="Spring 2026", defaults={"is_active": True})
+        term1, _ = Term.objects.get_or_create(name="Spring 2026", defaults={"is_active": True})
+        term2, _ = Term.objects.get_or_create(name="Fall 2025", defaults={"is_active": False})
+        term3, _ = Term.objects.get_or_create(name="Spring 2025", defaults={"is_active": False})
+        term4, _ = Term.objects.get_or_create(name="Fall 2024", defaults={"is_active": False})
         self.stdout.write(f"  ✓ Term: {term1.name}")
         self.stdout.write(f"  ✓ Term: {term2.name}")
-        return term1, term2
+        self.stdout.write(f"  ✓ Term: {term3.name}")
+        self.stdout.write(f"  ✓ Term: {term4.name}")
+        return term1, term2, term3, term4
 
     def create_instructors(self, department, university):
         instructors = []
@@ -223,56 +251,39 @@ class Command(BaseCommand):
 
         return instructors
 
-    def create_courses(self, program, term, instructor, count=6):
-        fall_courses = [
-            "Artificial Intelligence",
-            "Algorithms I",
-            "Data Systems",
-            "Operating Systems",
-            "Computer Networks",
-            "Microcontrollers",
-        ]
-
-        spring_courses = [
-            "Machine Learning",
-            "Algorithms II",
-            "Cloud Computing",
-            "Distributed Systems",
-            "Computer Security",
-            "Embedded Systems",
-        ]
-        courses = []
+    def create_courses(self, program, terms, instructor, count=6):
+        courses = {"2025": [], "2026": []}
 
         for i in range(count):
             course, _ = Course.objects.get_or_create(
                 code=f"CS{300 + i}",
                 defaults={
-                    "name": fall_courses[i] if i < len(fall_courses) else f"Course {i + 1}",
+                    "name": data.COURSES_2025[i] if i < len(data.COURSES_2025) else f"Course {i + 1}",
                     "credits": 3,
                     "program": program,
-                    "term": term,
+                    "term": terms[2],  # Spring 2025
                 },
             )
             course.instructors.add(instructor)
-            courses.append(course)
+            courses["2025"].append(course)
 
         for i in range(count):
             course, _ = Course.objects.get_or_create(
                 code=f"CS{400 + i}",
                 defaults={
-                    "name": spring_courses[i] if i < len(spring_courses) else f"Course {i + 1}",
+                    "name": data.COURSES_2026[i] if i < len(data.COURSES_2026) else f"Course {i + 1}",
                     "credits": 3,
                     "program": program,
-                    "term": term,
+                    "term": terms[0],  # Spring 2026
                 },
             )
             course.instructors.add(instructor)
-            courses.append(course)
+            courses["2026"].append(course)
 
-        self.stdout.write(f"  ✓ Courses: {len(courses)} created")
+        self.stdout.write(f"  ✓ Courses: {len(courses['2025']) + len(courses['2026'])} created")
         return courses
 
-    def create_program_outcomes(self, program, term, count=11):
+    def create_program_outcomes(self, program, term, count=10):
         outcomes = []
         for i in range(0, count):
             po, _ = ProgramOutcome.objects.get_or_create(
@@ -409,9 +420,10 @@ class Command(BaseCommand):
         enrollments_count = 0
         for i, student_data in enumerate(students):
             # Select a random subset of courses for each student
-            student_courses = random.sample(courses, k=len(courses) // 2)
             if i < len(students) // 2:
-                student_courses = courses  # Enroll first half of students in all courses
+                student_courses = courses["2025"]  # Enroll first half of students in all courses
+            else:
+                student_courses = courses["2026"]  # Enroll second half of students in all courses
             for course in student_courses:
                 CourseEnrollment.objects.get_or_create(student=student_data["user"], course=course)
                 enrollments_count += 1
@@ -445,15 +457,17 @@ class Command(BaseCommand):
         """Calculate LO and PO scores for all courses"""
         self.stdout.write(f"  → Calculating outcome scores for {len(courses)} courses...")
 
-        for i, course in enumerate(courses, 1):
-            self.stdout.write(f"    • Course {i}/{len(courses)}: {course.code}", ending="... ")
-            try:
-                calculate_course_scores(course.id)
-                self.stdout.write(self.style.SUCCESS("✓"))
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"✗ Error: {str(e)}"))
+        for course_list in courses.values():
+            self.stdout.write(f"  → Processing {len(course_list)} courses for term {course_list[0].term.name}...")
+            for i, course in enumerate(course_list, 1):
+                self.stdout.write(f"    • Course {i}/{len(course_list)}: {course.code}", ending="... ")
+                try:
+                    calculate_course_scores(course.id)
+                    self.stdout.write(self.style.SUCCESS("✓"))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f"✗ Error: {str(e)}"))
 
-        self.stdout.write("  ✓ Score calculation completed")
+            self.stdout.write("  ✓ Score calculation completed")
 
     def export_credentials(self, students):
         """Export student credentials to CSV"""

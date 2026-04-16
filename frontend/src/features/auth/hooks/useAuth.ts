@@ -1,8 +1,7 @@
 import React, { useContext, createContext, useEffect, useState, useCallback, ReactNode } from 'react'
-import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
+import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthLogoutCreate, usersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
-import { TokenResponse } from '../../../shared/api/model/tokenResponse'
 
 /**
  * Authentication context type definition.
@@ -10,14 +9,14 @@ import { TokenResponse } from '../../../shared/api/model/tokenResponse'
  * @interface AuthContextType
  * @property {CustomUser | null} user - Current authenticated user or null if not logged in
  * @property {(username: string, password: string) => Promise<void>} login - Login function
- * @property {() => void} logout - Logout function that clears tokens and cache
+ * @property {() => Promise<void>} logout - Logout function that clears tokens and cache
  * @property {boolean} isLoading - Whether auth state is being initialized
  * @property {boolean} isAuthenticated - Whether user is currently authenticated
  */
 interface AuthContextType {
   user: CustomUser | null
   login: (username: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   isLoading: boolean
   isAuthenticated: boolean
 }
@@ -98,25 +97,31 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     error: userError
   } = useUsersAuthMeRetrieve({
     query: {
-      enabled: !!localStorage.getItem('access_token'),
-      retry: false
+      retry: false,
+      // Don't run this query on the login page to avoid unnecessary 401s
+      enabled: typeof window !== 'undefined' && window.location.pathname !== '/login'
     }
   })
 
   // Create a custom login mutation that handles token storage
   const loginMutation = useUsersAuthLoginCreate({
     mutation: {
-      onSuccess: (data: TokenResponse): void => {
-        // Store tokens in localStorage
-        localStorage.setItem('access_token', data.access)
-        localStorage.setItem('refresh_token', data.refresh)
-
-        // Invalidate and refetch user data
-        queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
+      onSuccess: async (): Promise<void> => {
+        // Tokens are stored in HTTP-only cookies by the server
+        // Fetch user data directly since the query may be disabled on /login
+        try {
+          const userData = await queryClient.fetchQuery({
+            queryKey: ['/api/users/auth/me/'],
+            queryFn: () => usersAuthMeRetrieve(),
+          })
+          setUser(userData)
+        } catch {
+          // If fetch fails, invalidate and let the query handle it
+          queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
+        }
       },
-      onError: (error: Error): void => {
-        // Re-throw error for component-level handling
-        throw error
+      onError: (): void => {
+        // Error is thrown by mutateAsync and handled by the caller
       }
     }
   })
@@ -124,21 +129,22 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   /**
    * Logs out the current user.
    *
-   * Clears stored tokens, resets user state, clears query cache,
+   * Clears stored tokens (cookies), resets user state, clears query cache,
    * and redirects to the login page.
    *
    * @callback logout
    */
-  const logout = useCallback((): void => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    setUser(null)
-
-    // Clear all cached queries to prevent data leakage
-    queryClient.clear()
-
-    // Redirect to login page
-    window.location.href = '/login'
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      // Ask backend to clear HTTP-only cookies and invalidate refresh token.
+      await usersAuthLogoutCreate()
+    } catch {
+      // Even if logout request fails, continue with local state cleanup.
+    } finally {
+      setUser(null)
+      queryClient.clear()
+      window.location.href = '/login'
+    }
   }, [queryClient])
 
   useEffect(() => {
@@ -148,8 +154,10 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     }
 
     // Handle authentication errors by logging out
-    if (userError instanceof Error) {
-      logout()
+    // Only logout if user was previously authenticated (user !== null)
+    // This prevents redirect loops on public pages like /login
+    if (userError instanceof Error && user !== null) {
+      void logout()
     }
 
     // Mark loading as complete when user fetch finishes

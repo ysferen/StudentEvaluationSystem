@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
@@ -58,6 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """CRUD operations for users."""
 
     queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("department", "university")
@@ -97,6 +99,77 @@ class InstructorProfileViewSet(viewsets.ModelViewSet):
 
     queryset = InstructorProfile.objects.select_related("user").all()
     serializer_class = InstructorProfileSerializer
+
+
+class CookieTokenRefreshView(APIView):
+    """
+    Token refresh view that reads the refresh token from an HTTP-only cookie.
+
+    This enables cookie-based authentication for browser clients without
+    exposing tokens to JavaScript (XSS protection).
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Refresh access token",
+        description="Exchange a valid refresh token (from HTTP-only cookie) for a new access token.",
+        request=None,
+        responses={
+            200: {"type": "object", "properties": {"access": {"type": "string"}}},
+            401: {"type": "object", "properties": {"error": {"type": "string"}}},
+        },
+        tags=["Authentication"],
+    )
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if not refresh_token:
+            return Response({"error": "No refresh token found"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+            return Response({"access": access_token}, status=status.HTTP_200_OK)
+        except TokenError:
+            return Response({"error": "Token is invalid or expired"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@extend_schema(
+    summary="User logout",
+    description="Invalidate refresh token (when present) and clear authentication cookies.",
+    request=None,
+    responses={200: {"type": "object", "properties": {"detail": {"type": "string"}}}},
+    tags=["Authentication"],
+)
+class LogoutView(APIView):
+    """Logout endpoint for cookie-based authentication."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if refresh_token:
+            try:
+                # Blacklist current refresh token so it cannot be reused.
+                RefreshToken(refresh_token).blacklist()
+            except TokenError:
+                # Token may already be expired/invalid; still clear cookies.
+                pass
+
+        response = Response({"detail": "Logged out successfully"}, status=status.HTTP_200_OK)
+
+        response.delete_cookie(
+            key="access_token",
+            path="/",
+            domain=settings.SESSION_COOKIE_DOMAIN if hasattr(settings, "SESSION_COOKIE_DOMAIN") else None,
+        )
+
+        response.delete_cookie(
+            key="refresh_token",
+            path="/",
+            domain=settings.SESSION_COOKIE_DOMAIN if hasattr(settings, "SESSION_COOKIE_DOMAIN") else None,
+        )
+        return response
 
 
 # Authentication Views

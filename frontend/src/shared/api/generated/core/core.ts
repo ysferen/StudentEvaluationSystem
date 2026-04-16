@@ -38,20 +38,19 @@ import type {
   CoreFileImportProgramOutcomesUploadCreateBody,
   CoreLoPoMappingsListParams,
   CoreProgramsListParams,
-  CoreStudentLoScoresListParams,
   CoreStudentPoScoresListParams,
   CoreStudentsListParams,
   CoreTermsListParams,
   Course,
   DegreeLevel,
   Department,
+  FileImportResponse,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedCourseList,
   PaginatedDegreeLevelList,
   PaginatedDepartmentList,
   PaginatedLearningOutcomeProgramOutcomeMappingList,
   PaginatedProgramList,
-  PaginatedStudentLearningOutcomeScoreList,
   PaginatedStudentProfileList,
   PaginatedStudentProgramOutcomeScoreList,
   PaginatedTermList,
@@ -2022,7 +2021,7 @@ export const coreFileImportAssignmentScoresUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'GET', signal
     },
       options);
@@ -2115,7 +2114,7 @@ if(coreFileImportAssignmentScoresUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportAssignmentScoresUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2171,13 +2170,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportAssignmentScoresValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/assignment-scores/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/assignment-scores/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2185,8 +2189,8 @@ export const coreFileImportAssignmentScoresValidateCreate = (
 
 
 export const getCoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportAssignmentScoresValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2198,10 +2202,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportAssignmentScoresValidateCreate(requestOptions)
+          return  coreFileImportAssignmentScoresValidateCreate(data,requestOptions)
         }
 
 
@@ -2210,15 +2214,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportAssignmentScoresValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>>
-
+    export type CoreFileImportAssignmentScoresValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportAssignmentScoresValidateCreateMutationError = unknown
 
     export const useCoreFileImportAssignmentScoresValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2235,7 +2239,7 @@ export const coreFileImportLearningOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/learning-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2328,7 +2332,7 @@ if(coreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportLearningOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/learning-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2384,13 +2388,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportLearningOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/learning-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/learning-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2398,8 +2407,8 @@ export const coreFileImportLearningOutcomesValidateCreate = (
 
 
 export const getCoreFileImportLearningOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportLearningOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2411,10 +2420,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportLearningOutcomesValidateCreate(requestOptions)
+          return  coreFileImportLearningOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2423,15 +2432,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportLearningOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>>
-
+    export type CoreFileImportLearningOutcomesValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportLearningOutcomesValidateCreateMutationError = unknown
 
     export const useCoreFileImportLearningOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -2448,7 +2457,7 @@ export const coreFileImportProgramOutcomesUploadRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'GET', signal
     },
       options);
@@ -2541,7 +2550,7 @@ if(coreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportProgramOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<void>(
+      return customInstance<FileImportResponse>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
@@ -2597,13 +2606,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportProgramOutcomesValidateCreate = (
-
+    fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
-      return customInstance<void>(
-      {url: `/api/core/file-import/program-outcomes/validate/`, method: 'POST', signal
+      return customInstance<FileImportResponse>(
+      {url: `/api/core/file-import/program-outcomes/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -2611,8 +2625,8 @@ export const coreFileImportProgramOutcomesValidateCreate = (
 
 
 export const getCoreFileImportProgramOutcomesValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
 
 const mutationKey = ['coreFileImportProgramOutcomesValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2624,10 +2638,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
 
-
-          return  coreFileImportProgramOutcomesValidateCreate(requestOptions)
+          return  coreFileImportProgramOutcomesValidateCreate(data,requestOptions)
         }
 
 
@@ -2636,15 +2650,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportProgramOutcomesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>>
-
+    export type CoreFileImportProgramOutcomesValidateCreateMutationBody = FileImportResponse
     export type CoreFileImportProgramOutcomesValidateCreateMutationError = unknown
 
     export const useCoreFileImportProgramOutcomesValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>,
         TError,
-        void,
+        {data: FileImportResponse},
         TContext
       > => {
 
@@ -3797,335 +3811,6 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Read-only viewset for student learning outcome scores.
-
-Permissions:
-- Students: View own scores only
-- Instructors: View scores for students in their courses
-- Admins: View all scores
- */
-export const coreStudentLoScoresList = (
-    params?: CoreStudentLoScoresListParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<PaginatedStudentLearningOutcomeScoreList>(
-      {url: `/api/core/student-lo-scores/`, method: 'GET',
-        params, signal
-    },
-      options);
-    }
-
-
-
-
-export const getCoreStudentLoScoresListInfiniteQueryKey = (params?: CoreStudentLoScoresListParams,) => {
-    return [
-    'infinite', `/api/core/student-lo-scores/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-export const getCoreStudentLoScoresListQueryKey = (params?: CoreStudentLoScoresListParams,) => {
-    return [
-    `/api/core/student-lo-scores/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-
-export const getCoreStudentLoScoresListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresListInfiniteQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresList>>, QueryKey, CoreStudentLoScoresListParams['page']> = ({ signal, pageParam }) => coreStudentLoScoresList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresList>>>
-export type CoreStudentLoScoresListInfiniteQueryError = unknown
-
-
-export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(
- params: undefined |  CoreStudentLoScoresListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresListInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getCoreStudentLoScoresListQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresListQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresList>>> = ({ signal }) => coreStudentLoScoresList(params, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresListQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresList>>>
-export type CoreStudentLoScoresListQueryError = unknown
-
-
-export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(
- params: undefined |  CoreStudentLoScoresListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(
- params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Read-only viewset for student learning outcome scores.
-
-Permissions:
-- Students: View own scores only
-- Instructors: View scores for students in their courses
-- Admins: View all scores
- */
-export const coreStudentLoScoresRetrieve = (
-    id: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<StudentLearningOutcomeScore>(
-      {url: `/api/core/student-lo-scores/${id}/`, method: 'GET', signal
-    },
-      options);
-    }
-
-
-
-
-export const getCoreStudentLoScoresRetrieveInfiniteQueryKey = (id?: number,) => {
-    return [
-    'infinite', `/api/core/student-lo-scores/${id}/`
-    ] as const;
-    }
-
-export const getCoreStudentLoScoresRetrieveQueryKey = (id?: number,) => {
-    return [
-    `/api/core/student-lo-scores/${id}/`
-    ] as const;
-    }
-
-
-export const getCoreStudentLoScoresRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresRetrieveInfiniteQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>> = ({ signal }) => coreStudentLoScoresRetrieve(id, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>
-export type CoreStudentLoScoresRetrieveInfiniteQueryError = unknown
-
-
-export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(
- id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresRetrieveInfiniteQueryOptions(id,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getCoreStudentLoScoresRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresRetrieveQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>> = ({ signal }) => coreStudentLoScoresRetrieve(id, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentLoScoresRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>
-export type CoreStudentLoScoresRetrieveQueryError = unknown
-
-
-export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentLoScoresRetrieveQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
  * Return average LO scores grouped by course.
  */
 export const coreStudentLoScoresCourseAveragesRetrieve = (

@@ -1,12 +1,16 @@
-import Chart from 'react-apexcharts'
-import type { ApexOptions, ApexAxisChartSeries, ApexNonAxisChartSeries } from 'apexcharts'
+import ReactApexChart from 'react-apexcharts'
+import type { ApexOptions } from 'apexcharts'
 import { Card } from './Card'
+
+// Safely unwrap the CJS export. If it's wrapped in an object, we extract .default.
+// If it's already the component, we just use it directly.
+const Chart = (ReactApexChart as any).default || ReactApexChart
 
 export interface ChartWidgetProps {
     title: string
     subtitle?: string
     type: 'line' | 'area' | 'bar' | 'radar' | 'donut' | 'pie'
-    series: ApexAxisChartSeries | ApexNonAxisChartSeries
+    series: any[] // Note: Add your ApexAxisChartSeries type imports back if needed!
     options?: ApexOptions
     height?: number
     className?: string
@@ -32,7 +36,7 @@ export const ChartWidget = ({
             enabled: false
         },
         stroke: {
-            curve: 'smooth'
+            curve: 'smooth' as const
         },
         ...options
     }

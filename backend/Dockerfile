@@ -3,19 +3,24 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 LABEL project="ses" service="backend"
 
-# Set working directory
+RUN groupadd -g 1000 django && \
+    useradd -m -u 1000 -g django django
+
+RUN mkdir -p /app && chown django:django /app
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml uv.lock* ./
+USER django
+
+COPY --chown=django:django pyproject.toml uv.lock* ./
 
 ENV UV_LINK_MODE=copy
+ENV UV_CACHE_DIR=/app/.cache/uv
 
-# Install only dependencies first (cache-friendly layer)
-RUN --mount=type=cache,target=/root/.cache/uv \
-	uv sync --frozen --no-install-project
+RUN --mount=type=cache,target=/app/.cache/uv,uid=1000,gid=1000 \
+    uv sync --frozen --no-install-project
 
-# Copy only Django application code
-COPY student_evaluation_system ./student_evaluation_system
+COPY --chown=django:django student_evaluation_system ./student_evaluation_system
+
+EXPOSE 8000
 
 CMD ["uv", "run", "--no-sync", "python", "student_evaluation_system/manage.py", "runserver", "0.0.0.0:8000"]

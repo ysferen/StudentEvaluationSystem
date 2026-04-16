@@ -11,6 +11,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.db.models import Avg
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from ..models import (
     StudentLearningOutcomeScore,
@@ -22,6 +24,20 @@ from ..serializers import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Scores"],
+        parameters=[
+            OpenApiParameter(
+                name="course", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, description="Filter by course ID"
+            ),
+            OpenApiParameter(
+                name="student", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, description="Filter by student ID"
+            ),
+        ],
+    ),
+    retrieve=extend_schema(tags=["Scores"]),
+)
 class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only viewset for student learning outcome scores.
