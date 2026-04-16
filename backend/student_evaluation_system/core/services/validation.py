@@ -1036,9 +1036,106 @@ class AssignmentScoreValidator:
         return result
 
     @staticmethod
+    def validate_column_structure(dataframe: pd.DataFrame) -> ValidationResult:
+        """
+        Phase 2: Validate required columns are present and at least one
+        assessment column exists.
+        """
+        result = ValidationResult()
+
+        required_cols = [
+            ("öğrenci no", "Student ID"),
+            ("adı", "First Name"),
+            ("soyadı", "Last Name"),
+        ]
+
+        for col, label in required_cols:
+            matched = any(col.lower() == c.lower() for c in dataframe.columns)
+            if not matched:
+                result.add_error(f"Student ID column not found. Expected column containing '{col}'", "column_structure")
+
+        assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        if not assessment_cols:
+            result.add_error(
+                "No assessment score columns found in file. "
+                "Expected columns like 'Midterm 1(%25)_XXXXX', 'Project(%40)_XXXXX', etc.",
+                "column_structure",
+            )
+
+        if not result.is_valid:
+            result.add_detail("column_structure", {"passed": False, "columns_found": dataframe.columns.tolist()})
+        else:
+            result.add_detail(
+                "column_structure", {"passed": True, "columns_found": dataframe.columns.tolist(), "row_count": len(dataframe)}
+            )
+
+        return result
+
+    @staticmethod
+    def validate_scores(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
+        """
+        Phase 5: Validate all score values are numeric and within 0-100 (or 0-total_score).
+        """
+        result = ValidationResult()
+
+        assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        if not assessment_cols:
+            result.add_detail("score_validation", {"passed": True, "invalid_scores": []})
+            return result
+
+        db_assessments = {a.name.lower().strip(): a for a in Assessment.objects.filter(course=course)}
+
+        invalid_scores = []
+
+        for col_name, parsed_name in assessment_cols:
+            clean = BusinessStructureValidator._clean_assessment_name(parsed_name)
+            db_assessment = db_assessments.get(clean.lower().strip())
+
+            if not db_assessment:
+                continue
+
+            max_score = db_assessment.total_score or 100
+
+            for row_idx, value in enumerate(dataframe[col_name]):
+                if pd.isna(value):
+                    continue
+                try:
+                    score = float(value)
+                    if score < 0 or score > max_score:
+                        invalid_scores.append(
+                            {
+                                "row": row_idx + 2,
+                                "column": col_name,
+                                "value": str(value),
+                                "parsed_name": clean,
+                                "max_score": max_score,
+                            }
+                        )
+                except (ValueError, TypeError):
+                    invalid_scores.append(
+                        {
+                            "row": row_idx + 2,
+                            "column": col_name,
+                            "value": str(value),
+                            "parsed_name": clean,
+                            "error": "non-numeric",
+                        }
+                    )
+
+        if invalid_scores:
+            sample = invalid_scores[:3]
+            sample_values = [s["value"] for s in sample]
+            result.add_error(f"Found {len(invalid_scores)} invalid score(s): values {sample_values}", "score_validation")
+            result.add_detail("score_validation", {"passed": False, "invalid_scores": invalid_scores[:50]})
+        else:
+            result.add_detail("score_validation", {"passed": True, "invalid_scores": []})
+
+        return result
+
+    @staticmethod
     def validate_complete(file_obj, course: Course) -> ValidationResult:
         """
-        Run complete validation: file structure, assessments, and students.
+        Run complete validation: file structure, column structure, assessments, students, and scores.
 
         Args:
             file_obj: Uploaded file object
@@ -1048,20 +1145,29 @@ class AssignmentScoreValidator:
             ValidationResult: Combined validation results
         """
         final_result = ValidationResult()
+        final_result.add_detail("phases_completed", [])
 
-        # 1. Validate file structure
+        def add_phase_result(phase_name, phase_result):
+            final_result.errors.extend(phase_result.errors)
+            final_result.warnings.extend(phase_result.warnings)
+            final_result.suggestions.extend(phase_result.suggestions)
+            final_result.validation_details.update(phase_result.validation_details)
+            final_result.validation_details["phases_completed"].append(
+                {
+                    "phase": phase_name,
+                    "passed": phase_result.is_valid,
+                }
+            )
+            if not phase_result.is_valid:
+                final_result.is_valid = False
+
         file_result = AssignmentScoreValidator.validate_file_structure(file_obj)
-        final_result.errors.extend(file_result.errors)
-        final_result.warnings.extend(file_result.warnings)
-        final_result.validation_details.update(file_result.validation_details)
+        add_phase_result("Phase 1: File Structure", file_result)
 
         if not file_result.is_valid:
-            final_result.is_valid = False
             return final_result
 
-        # 2. Parse the file
         try:
-            # Reset file position
             file_obj.seek(0)
             dataframe = pd.read_excel(file_obj)
             final_result.add_detail("file_parsed", True)
@@ -1072,23 +1178,19 @@ class AssignmentScoreValidator:
             final_result.is_valid = False
             return final_result
 
-        # 3. Validate assessments
+        column_result = AssignmentScoreValidator.validate_column_structure(dataframe)
+        add_phase_result("Phase 2: Column Structure", column_result)
+
+        if not column_result.is_valid:
+            return final_result
+
         assessment_result = AssignmentScoreValidator.validate_assignments(dataframe, course)
-        final_result.errors.extend(assessment_result.errors)
-        final_result.warnings.extend(assessment_result.warnings)
-        final_result.suggestions.extend(assessment_result.suggestions)
-        final_result.validation_details.update(assessment_result.validation_details)
+        add_phase_result("Phase 3: Assessment Assignments", assessment_result)
 
-        if not assessment_result.is_valid:
-            final_result.is_valid = False
-
-        # 4. Validate students
         student_result = AssignmentScoreValidator.validate_students(dataframe, course)
-        final_result.errors.extend(student_result.errors)
-        final_result.warnings.extend(student_result.warnings)
-        final_result.validation_details.update(student_result.validation_details)
+        add_phase_result("Phase 4: Student Validation", student_result)
 
-        if not student_result.is_valid:
-            final_result.is_valid = False
+        score_result = AssignmentScoreValidator.validate_scores(dataframe, course)
+        add_phase_result("Phase 5: Score Validation", score_result)
 
         return final_result
