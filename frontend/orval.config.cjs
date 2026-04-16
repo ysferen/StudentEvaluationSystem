@@ -64,6 +64,11 @@ module.exports = {
               useInfinite: false,
             },
           },
+          evaluation_grades_course_averages_retrieve: {
+            query: {
+              useInfinite: false,
+            },
+          },
           // Disable infinite queries for evaluation endpoints
           v1_evaluation_grades_course_averages_retrieve: {
             query: {

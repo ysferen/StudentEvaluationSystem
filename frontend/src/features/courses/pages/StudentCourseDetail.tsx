@@ -10,7 +10,7 @@ import {
   ChartPieIcon,
 } from '@heroicons/react/24/outline'
 import { coreCoursesRetrieve, coreCoursesLearningOutcomesRetrieve } from '../../../shared/api/generated/core/core'
-import { coreStudentLoScoresList } from '../../../shared/api/generated/core/core'
+import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { evaluationGradesList, evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
 import type { CoreLearningOutcome } from '../../../shared/api/model'
 
