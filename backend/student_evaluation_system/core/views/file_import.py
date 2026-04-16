@@ -14,7 +14,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import UserRateThrottle
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 from ..serializers import FileImportResponseSerializer
 from ..services.file_import import FileImportService, FileImportError
@@ -137,17 +137,32 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         )
 
     @extend_schema(
-        request={
-            "multipart/form-data": {
+        parameters=[
+            OpenApiParameter(
+                name="course_code",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Course code",
+            ),
+            OpenApiParameter(
+                name="term_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True, description="Term ID"
+            ),
+        ],
+        request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+        responses={
+            200: {
                 "type": "object",
                 "properties": {
-                    "file": {"type": "string", "format": "binary"},
-                    "course_code": {"type": "string"},
-                    "term_id": {"type": "integer"},
+                    "is_valid": {"type": "boolean"},
+                    "phase_reached": {"type": "string"},
+                    "checks": {"type": "object"},
+                    "errors": {"type": "array", "items": {"type": "string"}},
+                    "warnings": {"type": "array", "items": {"type": "string"}},
+                    "suggestions": {"type": "array", "items": {"type": "string"}},
                 },
             }
         },
-        responses={200: FileImportResponseSerializer},
     )
     @action(detail=False, methods=["post"])
     def validate(self, request):
@@ -248,18 +263,20 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                 errors.append(f"Failed to create assessment {assessment_data.get('name', 'unknown')}: {str(e)}")
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter(name="course_code", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=True),
+            OpenApiParameter(name="term_id", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=True),
+        ],
         request={
             "multipart/form-data": {
                 "type": "object",
                 "properties": {
                     "file": {"type": "string", "format": "binary"},
-                    "course_code": {"type": "string"},
-                    "term_id": {"type": "integer"},
-                    "resolutions": {"type": "string"},
+                    "resolutions": {"type": "string", "description": "JSON string of ResolutionChoices"},
                 },
             }
         },
-        responses={200: FileImportResponseSerializer},
+        responses={200: {"type": "object"}},
     )
     @action(detail=False, methods=["post"])
     def resolve(self, request):
