@@ -3,6 +3,7 @@ import {
   useCoreFileImportAssignmentScoresUploadCreate,
   useCoreFileImportAssignmentScoresValidateCreate,
   useCoreFileImportAssignmentScoresUploadRetrieve,
+  useCoreFileImportAssignmentScoresResolveCreate,
   useCoreFileImportLearningOutcomesUploadRetrieve,
   useCoreFileImportLearningOutcomesUploadCreate,
   useCoreFileImportLearningOutcomesValidateCreate,
@@ -19,64 +20,49 @@ import {
   Info,
   FileSpreadsheet,
   Shield,
-  Lightbulb
+  Lightbulb,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
+import {
+  MissingAssessmentsModal,
+  MissingStudentsModal,
+  UnenrolledStudentsModal,
+  InvalidScoresModal
+} from './ResolutionModals'
 
-// Validation result types
-interface ValidationError {
-  message: string
-  category: string
-  severity: string
-}
-
-interface ValidationDetails {
-  file_info?: {
-    name: string
-    size: number
-    size_mb: number
-    extension: string
-  }
-  available_sheets?: string[]
-  assessment_validation?: {
-    total_columns_found: number
-    found_assessments: Array<{
-      column: string
-      parsed_name: string
-      db_assessment: string
-    }>
-    missing_assessments: Array<{
-      column: string
-      parsed_name: string
-    }>
-    available_in_database: string[]
-  }
-  student_validation?: {
-    total_in_file: number
-    found_in_database: number
-    missing_from_database: number
-    student_id_column: string
-  }
-  row_count?: number
-  columns?: string[]
-  missing_students?: string[]
+interface CheckResult {
+  passed: boolean
+  details?: Record<string, unknown>
 }
 
 interface ValidationResult {
   is_valid: boolean
-  errors?: ValidationError[]
-  warnings?: ValidationError[]
-  suggestions?: ValidationError[]
-  validation_details?: ValidationDetails
-  course_info?: {
-    code: string
-    name: string
-    term: string
+  phase_reached?: string
+  checks?: {
+    file_structure?: CheckResult
+    column_structure?: CheckResult
+    assessment_validation?: {
+      passed: boolean
+      found_assessments?: Array<{ column: string; parsed_name: string; db_name: string }>
+      missing_assessments?: Array<{ column: string; parsed_name: string }>
+      available_in_database?: string[]
+    }
+    student_validation?: {
+      passed: boolean
+      total_in_file?: number
+      found_in_database?: number
+      missing_from_database?: Array<{ student_id: string; first_name: string; last_name: string }>
+      not_enrolled?: Array<{ student_id: string; first_name: string; last_name: string }>
+    }
+    score_validation?: {
+      passed: boolean
+      invalid_scores?: Array<{ row: number; column: string; value: string; error?: string }>
+    }
   }
-  file_info?: {
-    name: string
-    size: number
-    format: string
-  }
+  errors?: Array<{ message: string; category: string; severity: string }>
+  warnings?: Array<{ message: string; category: string; severity: string }>
+  suggestions?: Array<{ message: string; category: string; severity: string }>
 }
 
 interface UploadInfoResponse {
@@ -99,12 +85,11 @@ const toValidationResult = (value: unknown, defaultIsValid: boolean): Validation
 
   return {
     is_valid: typeof value.is_valid === 'boolean' ? value.is_valid : defaultIsValid,
-    errors: Array.isArray(value.errors) ? value.errors as ValidationError[] : undefined,
-    warnings: Array.isArray(value.warnings) ? value.warnings as ValidationError[] : undefined,
-    suggestions: Array.isArray(value.suggestions) ? value.suggestions as ValidationError[] : undefined,
-    validation_details: isRecord(value.validation_details) ? value.validation_details as ValidationDetails : undefined,
-    course_info: isRecord(value.course_info) ? value.course_info as ValidationResult['course_info'] : undefined,
-    file_info: isRecord(value.file_info) ? value.file_info as ValidationResult['file_info'] : undefined,
+    phase_reached: typeof value.phase_reached === 'string' ? value.phase_reached : undefined,
+    checks: isRecord(value.checks) ? value.checks as ValidationResult['checks'] : undefined,
+    errors: Array.isArray(value.errors) ? value.errors as ValidationResult['errors'] : undefined,
+    warnings: Array.isArray(value.warnings) ? value.warnings as ValidationResult['warnings'] : undefined,
+    suggestions: Array.isArray(value.suggestions) ? value.suggestions as ValidationResult['suggestions'] : undefined,
   }
 }
 
@@ -140,6 +125,8 @@ interface FileUploadModalProps {
   onUploadComplete?: (result: unknown) => void
 }
 
+type ActiveProblem = 'assessments' | 'students' | 'unenrolled' | 'scores' | null
+
 const FileUploadModal: React.FC<FileUploadModalProps> = ({
   course,
   courseCode,
@@ -152,24 +139,25 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
+  const [resolutions, setResolutions] = useState<Record<string, unknown>>({})
+  const [expandedChecks, setExpandedChecks] = useState<Set<string>>(new Set())
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Upload info queries
-  const { data: assignmentUploadInfo } = useCoreFileImportAssignmentScoresUploadRetrieve<UploadInfoResponse>({
-    query: { enabled: type === 'assignment_scores' && isOpen }
-  })
-  const { data: loUploadInfo } = useCoreFileImportLearningOutcomesUploadRetrieve<UploadInfoResponse>({
-    query: { enabled: type === 'learning_outcomes' && isOpen }
-  })
-  const { data: poUploadInfo } = useCoreFileImportProgramOutcomesUploadRetrieve<UploadInfoResponse>({
-    query: { enabled: type === 'program_outcomes' && isOpen }
-  })
+  const uploadInfoQueries = {
+    assignment_scores: useCoreFileImportAssignmentScoresUploadRetrieve<UploadInfoResponse>({
+      query: { enabled: type === 'assignment_scores' && isOpen }
+    }),
+    learning_outcomes: useCoreFileImportLearningOutcomesUploadRetrieve<UploadInfoResponse>({
+      query: { enabled: type === 'learning_outcomes' && isOpen }
+    }),
+    program_outcomes: useCoreFileImportProgramOutcomesUploadRetrieve<UploadInfoResponse>({
+      query: { enabled: type === 'program_outcomes' && isOpen }
+    }),
+  }
 
-  const uploadInfo = type === 'assignment_scores' ? assignmentUploadInfo
-    : type === 'learning_outcomes' ? loUploadInfo
-    : poUploadInfo
+  const uploadInfo = uploadInfoQueries[type]?.data
 
-  // LO mutation hooks
   const loValidateMutation = useCoreFileImportLearningOutcomesValidateCreate({
     request: {
       data: file ? { file } : undefined,
@@ -178,7 +166,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   })
   const loUploadMutation = useCoreFileImportLearningOutcomesUploadCreate()
 
-  // PO mutation hooks
   const poValidateMutation = useCoreFileImportProgramOutcomesValidateCreate({
     request: {
       data: file ? { file } : undefined,
@@ -187,7 +174,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   })
   const poUploadMutation = useCoreFileImportProgramOutcomesUploadCreate()
 
-  // Assignment scores mutations
   const validationMutation = useCoreFileImportAssignmentScoresValidateCreate({
     request: {
       params: {
@@ -208,9 +194,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }
   })
 
-  // Computed loading states for the various mutation types
+  const resolveMutation = useCoreFileImportAssignmentScoresResolveCreate({
+    request: {
+      params: {
+        course_code: courseCode,
+        term_id: termId
+      }
+    }
+  })
+
   const isAnyValidatePending = validationMutation.isPending || loValidateMutation.isPending || poValidateMutation.isPending
   const isAnyUploadPending = uploadMutation.isPending || loUploadMutation.isPending || poUploadMutation.isPending
+  const isResolving = resolveMutation.isPending
 
   const getTypeDisplayName = (type: string) => {
     switch (type) {
@@ -230,6 +225,33 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       setFile(e.target.files[0])
       setValidationResult(null)
       setModalError(null)
+      setResolutions({})
+    }
+  }
+
+  const handleResolve = async (newResolutions: Record<string, unknown>) => {
+    if (!file) return
+
+    setResolutions(prev => ({ ...prev, ...newResolutions }))
+    setActiveProblem(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('resolutions', JSON.stringify({ ...resolutions, ...newResolutions }))
+
+      const result = await resolveMutation.mutateAsync({
+        data: { file, resolutions: JSON.stringify({ ...resolutions, ...newResolutions }) } as any,
+        params: { course_code: courseCode, term_id: termId }
+      } as any)
+      setValidationResult(toValidationResult(result, false))
+    } catch (error) {
+      const errorData = getErrorData(error)
+      if (errorData) {
+        setValidationResult(toValidationResult(errorData, false))
+      } else {
+        setModalError(getErrorMessage(error, 'Resolution failed'))
+      }
     }
   }
 
@@ -241,6 +263,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     setValidationResult(null)
     setModalError(null)
+    setResolutions({})
 
     switch (type) {
       case 'assignment_scores':
@@ -347,13 +370,75 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onClose()
   }
 
+  const toggleCheckExpanded = (checkName: string) => {
+    const next = new Set(expandedChecks)
+    if (next.has(checkName)) {
+      next.delete(checkName)
+    } else {
+      next.add(checkName)
+    }
+    setExpandedChecks(next)
+  }
+
+  const renderCheckRow = (checkName: string, check: CheckResult | undefined, extra?: React.ReactNode) => {
+    if (!check) return null
+    const passed = check.passed
+    const isExpanded = expandedChecks.has(checkName)
+
+    return (
+      <div key={checkName} className="border border-secondary-200 rounded-lg overflow-hidden">
+        <div
+          className={`flex items-center justify-between p-3 ${passed ? 'bg-emerald-50' : 'bg-danger-50'}`}
+        >
+          <div className="flex items-center gap-3">
+            {passed ? (
+              <CheckCircle className="w-5 h-5 text-emerald-500" />
+            ) : (
+              <XCircle className="w-5 h-5 text-danger-500" />
+            )}
+            <span className="font-medium text-sm text-secondary-900 capitalize">
+              {checkName.replace(/_/g, ' ')}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {!passed && (
+              <button
+                onClick={() => {
+                  if (checkName === 'assessment validation') setActiveProblem('assessments')
+                  else if (checkName === 'student validation') setActiveProblem('students')
+                  else if (checkName === 'score validation') setActiveProblem('scores')
+                }}
+                className="text-sm bg-warning-100 text-warning-700 px-3 py-1 rounded-md hover:bg-warning-200 font-medium transition-colors"
+              >
+                Solve
+              </button>
+            )}
+            {extra && (
+              <button
+                onClick={() => toggleCheckExpanded(checkName)}
+                className="text-secondary-400 hover:text-secondary-600"
+              >
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        </div>
+        {isExpanded && extra && (
+          <div className="p-3 bg-white border-t border-secondary-200">
+            {extra}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const renderValidationResult = () => {
     if (!validationResult) return null
 
-    const { is_valid, errors, warnings, suggestions, validation_details } = validationResult
+    const { is_valid, checks, errors, warnings, suggestions } = validationResult
 
     return (
-      <div className={`mt-4 p-4 rounded-xl ${is_valid ? 'bg-emerald-50 border border-emerald-200' : 'bg-danger-50 border border-danger-200'}`}>
+      <div className={`mt-4 p-4 rounded-xl ${is_valid ? 'bg-emerald-50 border border-emerald-200' : 'bg-secondary-50 border border-secondary-200'}`}>
         <div className="flex items-center mb-3">
           {is_valid ? (
             <>
@@ -362,13 +447,120 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </>
           ) : (
             <>
-              <XCircle className="w-5 h-5 text-danger-500 mr-2" />
-              <span className="font-semibold text-danger-800">Validation Failed</span>
+              <AlertTriangle className="w-5 h-5 text-warning-500 mr-2" />
+              <span className="font-semibold text-secondary-800">Validation Issues Found</span>
             </>
           )}
         </div>
 
-        {/* Errors */}
+        {validationResult.phase_reached && (
+          <p className="text-xs text-secondary-500 mb-3">
+            Phase reached: <span className="font-medium">{validationResult.phase_reached.replace(/_/g, ' ')}</span>
+          </p>
+        )}
+
+        {checks && (
+          <div className="space-y-2 mb-4">
+            {renderCheckRow('file structure', checks.file_structure)}
+            {renderCheckRow('column structure', checks.column_structure)}
+            {renderCheckRow(
+              'assessment validation',
+              checks.assessment_validation,
+              checks.assessment_validation && !checks.assessment_validation.passed && (
+                <div className="space-y-1">
+                  {checks.assessment_validation.missing_assessments?.map((a, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      <XCircle className="w-3 h-3 text-danger-500" />
+                      <span className="text-danger-600">{a.parsed_name}</span>
+                      <span className="text-secondary-400">({a.column})</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+            {renderCheckRow(
+              'student validation',
+              checks.student_validation,
+              checks.student_validation && !checks.student_validation.passed && (
+                <div className="space-y-2">
+                  {checks.student_validation.missing_from_database && checks.student_validation.missing_from_database.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-danger-600 mb-1">
+                        Missing from database ({checks.student_validation.missing_from_database.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {checks.student_validation.missing_from_database.slice(0, 5).map((s, idx) => (
+                          <span key={idx} className="text-xs bg-danger-100 text-danger-700 px-2 py-0.5 rounded">
+                            {s.student_id}
+                          </span>
+                        ))}
+                        {(checks.student_validation.missing_from_database.length ?? 0) > 5 && (
+                          <span className="text-xs text-secondary-500">
+                            +{(checks.student_validation.missing_from_database.length ?? 0) - 5} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {checks.student_validation.not_enrolled && checks.student_validation.not_enrolled.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-warning-600 mb-1">
+                        Not enrolled ({checks.student_validation.not_enrolled.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {checks.student_validation.not_enrolled.slice(0, 5).map((s, idx) => (
+                          <span key={idx} className="text-xs bg-warning-100 text-warning-700 px-2 py-0.5 rounded">
+                            {s.student_id}
+                          </span>
+                        ))}
+                        {(checks.student_validation.not_enrolled.length ?? 0) > 5 && (
+                          <span className="text-xs text-secondary-500">
+                            +{(checks.student_validation.not_enrolled.length ?? 0) - 5} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+            {checks.student_validation && !checks.student_validation.passed && (
+              <button
+                onClick={() => {
+                  const hasMissing = (checks.student_validation?.missing_from_database?.length ?? 0) > 0
+                  const hasUnenrolled = (checks.student_validation?.not_enrolled?.length ?? 0) > 0
+                  if (hasMissing) setActiveProblem('students')
+                  else if (hasUnenrolled) setActiveProblem('unenrolled')
+                }}
+                className="text-sm bg-warning-100 text-warning-700 px-3 py-1 rounded-md hover:bg-warning-200 font-medium transition-colors"
+              >
+                Solve
+              </button>
+            )}
+            {renderCheckRow(
+              'score validation',
+              checks.score_validation,
+              checks.score_validation && !checks.score_validation.passed && checks.score_validation.invalid_scores && (
+                <div>
+                  <p className="text-xs text-danger-600 mb-1">
+                    Invalid scores ({checks.score_validation.invalid_scores.length}):
+                  </p>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {checks.score_validation.invalid_scores.slice(0, 10).map((s, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        <span className="text-secondary-500">Row {s.row}:</span>
+                        <span className="text-secondary-700 truncate max-w-[150px]">{s.column}</span>
+                        <span className="font-mono text-danger-600">={s.value}</span>
+                        <span className="text-danger-400">({s.error})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+
         {errors && errors.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
@@ -384,7 +576,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
         )}
 
-        {/* Warnings */}
         {warnings && warnings.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
@@ -400,7 +591,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
         )}
 
-        {/* Suggestions */}
         {suggestions && suggestions.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
@@ -416,85 +606,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
         )}
 
-        {/* Validation Details */}
-        {validation_details && (
-          <div className="border-t border-secondary-200 mt-3 pt-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-secondary-500" />
-              <h4 className="text-sm font-semibold text-secondary-700">Details:</h4>
-            </div>
-
-            {/* File Info */}
-            {validation_details.file_info && (
-              <div className="bg-white shadow-sm border border-secondary-200 rounded-lg p-3 mb-2">
-                <div className="flex items-center gap-2 text-sm text-secondary-600">
-                  <FileSpreadsheet className="w-4 h-4 text-secondary-400" />
-                  <span className="font-medium">{validation_details.file_info.name}</span>
-                  <span className="text-secondary-500">({validation_details.file_info.size_mb} MB)</span>
-                </div>
-              </div>
-            )}
-
-            {/* Row Count */}
-            {validation_details.row_count !== undefined && (
-              <div className="text-sm text-secondary-600 mb-2">
-                <span className="font-medium">Rows in file:</span> {validation_details.row_count}
-              </div>
-            )}
-
-            {/* Assessment Validation */}
-            {validation_details.assessment_validation && (
-              <div className="bg-white shadow-sm border border-secondary-200 rounded-lg p-3 mb-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm font-semibold text-secondary-700">Assessments found:</span>
-                  <span className="text-sm text-secondary-600">
-                    {validation_details.assessment_validation.found_assessments?.length || 0} / {validation_details.assessment_validation.total_columns_found || 0}
-                  </span>
-                </div>
-                {validation_details.assessment_validation.found_assessments && validation_details.assessment_validation.found_assessments.length > 0 && (
-                  <ul className="mt-1 ml-6 list-disc text-emerald-600 text-sm">
-                    {validation_details.assessment_validation.found_assessments.map((a, idx) => (
-                      <li key={idx}>{a.parsed_name} → {a.db_assessment}</li>
-                    ))}
-                  </ul>
-                )}
-                {validation_details.assessment_validation.missing_assessments && validation_details.assessment_validation.missing_assessments.length > 0 && (
-                  <ul className="mt-1 ml-6 list-disc text-danger-600 text-sm">
-                    {validation_details.assessment_validation.missing_assessments.map((a, idx) => (
-                      <li key={idx}>{a.parsed_name} (not found)</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {/* Student Validation */}
-            {validation_details.student_validation && (
-              <div className="bg-white shadow-sm border border-secondary-200 rounded-lg p-3 mb-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm font-semibold text-secondary-700">Students:</span>
-                  <span className="text-sm text-secondary-600">
-                    {validation_details.student_validation.found_in_database} found / {validation_details.student_validation.total_in_file} in file
-                  </span>
-                </div>
-                {validation_details.student_validation.missing_from_database > 0 && (
-                  <div className="flex items-center gap-2 mt-1 ml-6 text-danger-600 text-sm">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>{validation_details.student_validation.missing_from_database} missing</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Missing Students */}
-            {validation_details.missing_students && validation_details.missing_students.length > 0 && (
-              <div className="text-sm text-danger-600 mt-2">
-                <span className="font-medium">Missing student IDs:</span> {validation_details.missing_students.slice(0, 10).join(', ')}
-                {validation_details.missing_students.length > 10 && ` and ${validation_details.missing_students.length - 10} more...`}
-              </div>
-            )}
+        {Object.keys(resolutions).length > 0 && (
+          <div className="mt-3 pt-3 border-t border-secondary-200">
+            <p className="text-xs text-secondary-500">
+              {Object.keys(resolutions).length} resolution(s) applied
+            </p>
           </div>
         )}
       </div>
@@ -529,7 +645,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           <h2 className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</h2>
           <button
             onClick={handleModalClose}
-            disabled={uploadMutation.isPending || validationMutation.isPending}
+            disabled={isAnyUploadPending || isAnyValidatePending || isResolving}
             className="text-secondary-400 hover:text-secondary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-6 h-6" />
@@ -537,10 +653,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         </div>
 
         <div className="p-6 max-h-[70vh] overflow-y-auto">
-          {/* Modal Error Display */}
           {renderModalError()}
 
-          {/* Upload Info for Assignment Scores */}
           {type === 'assignment_scores' && (
             <div className="mb-4 p-4 bg-primary-50 border border-primary-200 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
@@ -594,7 +708,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                   type="file"
                   accept=".xlsx,.xls"
                   onChange={handleFileChange}
-                  disabled={isAnyUploadPending || isAnyValidatePending}
+                  disabled={isAnyUploadPending || isAnyValidatePending || isResolving}
                   className="hidden"
                 />
                 <Upload className="w-8 h-8 text-secondary-400 mx-auto mb-2" />
@@ -623,13 +737,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
               </div>
             )}
 
-            {/* Validation Result */}
             {renderValidationResult()}
 
             <div className="flex space-x-3">
               <button
                 onClick={handleValidate}
-                disabled={!file || isAnyValidatePending || (file && file.size > 10 * 1024 * 1024)}
+                disabled={!file || isAnyValidatePending || isResolving || (file && file.size > 10 * 1024 * 1024)}
                 className="flex-1 flex items-center justify-center gap-2 bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAnyValidatePending ? (
@@ -647,13 +760,13 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
               <button
                 onClick={handleUpload}
-                disabled={!file || isAnyUploadPending || isAnyValidatePending || (file && file.size > 10 * 1024 * 1024)}
+                disabled={!file || isAnyUploadPending || isAnyValidatePending || isResolving || (file && file.size > 10 * 1024 * 1024)}
                 className="flex-1 flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAnyUploadPending ? (
+                {isAnyUploadPending || isResolving ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Uploading...
+                    {isResolving ? 'Resolving...' : 'Uploading...'}
                   </>
                 ) : (
                   <>
@@ -669,6 +782,63 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </p>
           </div>
         </div>
+
+        {activeProblem === 'assessments' && validationResult?.checks?.assessment_validation && (
+          <MissingAssessmentsModal
+            isOpen={true}
+            missingAssessments={validationResult.checks.assessment_validation.missing_assessments || []}
+            availableInDatabase={validationResult.checks.assessment_validation.available_in_database || []}
+            onClose={() => setActiveProblem(null)}
+            onResolve={(choice, assessmentNames) => {
+              handleResolve({
+                skip_missing_assessments: choice === 'skip',
+                create_assessments: choice === 'create' ? assessmentNames : []
+              })
+            }}
+          />
+        )}
+
+        {activeProblem === 'students' && validationResult?.checks?.student_validation?.missing_from_database && (
+          <MissingStudentsModal
+            isOpen={true}
+            missingStudents={validationResult.checks.student_validation.missing_from_database || []}
+            onClose={() => setActiveProblem(null)}
+            onResolve={(choice, students) => {
+              handleResolve({
+                skip_missing_students: choice === 'skip',
+                create_students: choice === 'create' ? students : []
+              })
+            }}
+          />
+        )}
+
+        {activeProblem === 'unenrolled' && validationResult?.checks?.student_validation?.not_enrolled && (
+          <UnenrolledStudentsModal
+            isOpen={true}
+            unenrolledStudents={validationResult.checks.student_validation.not_enrolled || []}
+            onClose={() => setActiveProblem(null)}
+            onResolve={(choice, studentIds) => {
+              handleResolve({
+                skip_unenrolled_students: choice === 'skip',
+                enroll_students: choice === 'enroll' ? studentIds : []
+              })
+            }}
+          />
+        )}
+
+        {activeProblem === 'scores' && validationResult?.checks?.score_validation?.invalid_scores && (
+          <InvalidScoresModal
+            isOpen={true}
+            invalidScores={validationResult.checks.score_validation.invalid_scores || []}
+            onClose={() => setActiveProblem(null)}
+            onResolve={(choice) => {
+              handleResolve({
+                skip_invalid_scores: choice === 'skip',
+                clamp_scores: choice === 'clamp'
+              })
+            }}
+          />
+        )}
       </div>
     </div>
   )
