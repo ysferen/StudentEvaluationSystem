@@ -14,6 +14,7 @@ import {
 import {
   Upload,
   X,
+  Check,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -22,7 +23,6 @@ import {
   Shield,
   Lightbulb,
   ChevronDown,
-  ChevronRight
 } from 'lucide-react'
 import {
   MissingAssessmentsModal,
@@ -36,6 +36,39 @@ interface CheckResult {
   details?: Record<string, unknown>
 }
 
+type PhaseKey =
+  | 'file_structure'
+  | 'column_structure'
+  | 'assessment_validation'
+  | 'student_validation'
+  | 'score_validation'
+
+interface ValidationDetails {
+  phases_completed?: Array<{ phase: string; passed: boolean }>
+  file_parsed?: boolean
+  column_structure?: Record<string, unknown> & { passed?: boolean }
+  assessment_validation?: Record<string, unknown> & {
+    passed?: boolean
+    found_assessments?: Array<{ column: string; parsed_name: string; db_assessment?: string; db_name?: string }>
+    missing_assessments?: Array<{ column: string; parsed_name: string }>
+    available_in_database?: string[]
+  }
+  missing_students?: string[]
+  student_validation?: Record<string, unknown> & {
+    passed?: boolean
+    total_in_file?: number
+    found_in_database?: number
+    missing_from_database?:
+      | number
+      | Array<{ student_id?: string; first_name?: string; last_name?: string }>
+    not_enrolled?: Array<{ student_id: string; first_name: string; last_name: string }>
+  }
+  score_validation?: Record<string, unknown> & {
+    passed?: boolean
+    invalid_scores?: Array<{ row: number; column: string; value: string; error?: string }>
+  }
+}
+
 interface ValidationResult {
   is_valid: boolean
   phase_reached?: string
@@ -44,7 +77,7 @@ interface ValidationResult {
     column_structure?: CheckResult
     assessment_validation?: {
       passed: boolean
-      found_assessments?: Array<{ column: string; parsed_name: string; db_name: string }>
+      found_assessments?: Array<{ column: string; parsed_name: string; db_assessment?: string; db_name?: string }>
       missing_assessments?: Array<{ column: string; parsed_name: string }>
       available_in_database?: string[]
     }
@@ -63,6 +96,7 @@ interface ValidationResult {
   errors?: Array<{ message: string; category: string; severity: string }>
   warnings?: Array<{ message: string; category: string; severity: string }>
   suggestions?: Array<{ message: string; category: string; severity: string }>
+  details?: ValidationDetails
 }
 
 interface UploadInfoResponse {
@@ -90,6 +124,7 @@ const toValidationResult = (value: unknown, defaultIsValid: boolean): Validation
     errors: Array.isArray(value.errors) ? value.errors as ValidationResult['errors'] : undefined,
     warnings: Array.isArray(value.warnings) ? value.warnings as ValidationResult['warnings'] : undefined,
     suggestions: Array.isArray(value.suggestions) ? value.suggestions as ValidationResult['suggestions'] : undefined,
+    details: isRecord(value.details) ? value.details as ValidationDetails : undefined,
   }
 }
 
@@ -113,6 +148,44 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
     return error.message
   }
   return fallback
+}
+
+const getPhaseKeyFromText = (phaseText?: string): PhaseKey | undefined => {
+  if (!phaseText) return undefined
+
+  const normalized = phaseText.toLowerCase()
+
+  if (normalized.includes('file structure')) return 'file_structure'
+  if (normalized.includes('column structure')) return 'column_structure'
+  if (normalized.includes('assessment')) return 'assessment_validation'
+  if (normalized.includes('student validation')) return 'student_validation'
+  if (normalized.includes('score validation')) return 'score_validation'
+
+  return undefined
+}
+
+const normalizeMissingStudents = (
+  detail: ValidationDetails | undefined
+): Array<{ student_id: string; first_name: string; last_name: string }> => {
+  const studentValidation = detail?.student_validation
+
+  if (Array.isArray(studentValidation?.missing_from_database)) {
+    return studentValidation.missing_from_database.map((entry, idx) => ({
+      student_id: String(entry?.student_id ?? idx),
+      first_name: entry?.first_name ?? '',
+      last_name: entry?.last_name ?? '',
+    }))
+  }
+
+  if (Array.isArray(detail?.missing_students)) {
+    return detail.missing_students.map((studentId) => ({
+      student_id: String(studentId),
+      first_name: '',
+      last_name: '',
+    }))
+  }
+
+  return []
 }
 
 interface FileUploadModalProps {
@@ -141,7 +214,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [modalError, setModalError] = useState<string | null>(null)
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
   const [resolutions, setResolutions] = useState<Record<string, unknown>>({})
-  const [expandedChecks, setExpandedChecks] = useState<Set<string>>(new Set())
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const uploadInfoQueries = {
@@ -226,6 +299,44 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       setValidationResult(null)
       setModalError(null)
       setResolutions({})
+    }
+  }
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const droppedFile = e.dataTransfer.files?.[0]
+    if (droppedFile) {
+      const validTypes = ['.xlsx', '.xls']
+      const ext = droppedFile.name.substring(droppedFile.name.lastIndexOf('.')).toLowerCase()
+      if (validTypes.includes(ext)) {
+        setFile(droppedFile)
+        setValidationResult(null)
+        setModalError(null)
+        setResolutions({})
+      } else {
+        setModalError('Please drop an Excel file (.xlsx or .xls)')
+      }
     }
   }
 
@@ -370,72 +481,160 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onClose()
   }
 
-  const toggleCheckExpanded = (checkName: string) => {
-    const next = new Set(expandedChecks)
-    if (next.has(checkName)) {
-      next.delete(checkName)
-    } else {
-      next.add(checkName)
+  const getSolveTarget = (phase: PhaseKey, checks: ValidationResult["checks"]): ActiveProblem => {
+    if (phase === "assessment_validation" && checks?.assessment_validation?.passed === false) return "assessments"
+    if (phase === "student_validation" && checks?.student_validation?.passed === false) {
+      if ((checks.student_validation.not_enrolled || []).length > 0) return "unenrolled"
+      if ((checks.student_validation.missing_from_database || []).length > 0) return "students"
     }
-    setExpandedChecks(next)
-  }
-
-  const renderCheckRow = (checkName: string, check: CheckResult | undefined, extra?: React.ReactNode) => {
-    if (!check) return null
-    const passed = check.passed
-    const isExpanded = expandedChecks.has(checkName)
-
-    return (
-      <div key={checkName} className="border border-secondary-200 rounded-lg overflow-hidden">
-        <div
-          className={`flex items-center justify-between p-3 ${passed ? 'bg-emerald-50' : 'bg-danger-50'}`}
-        >
-          <div className="flex items-center gap-3">
-            {passed ? (
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
-            ) : (
-              <XCircle className="w-5 h-5 text-danger-500" />
-            )}
-            <span className="font-medium text-sm text-secondary-900 capitalize">
-              {checkName.replace(/_/g, ' ')}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {!passed && (
-              <button
-                onClick={() => {
-                  if (checkName === 'assessment validation') setActiveProblem('assessments')
-                  else if (checkName === 'student validation') setActiveProblem('students')
-                  else if (checkName === 'score validation') setActiveProblem('scores')
-                }}
-                className="text-sm bg-warning-100 text-warning-700 px-3 py-1 rounded-md hover:bg-warning-200 font-medium transition-colors"
-              >
-                Solve
-              </button>
-            )}
-            {extra && (
-              <button
-                onClick={() => toggleCheckExpanded(checkName)}
-                className="text-secondary-400 hover:text-secondary-600"
-              >
-                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-            )}
-          </div>
-        </div>
-        {isExpanded && extra && (
-          <div className="p-3 bg-white border-t border-secondary-200">
-            {extra}
-          </div>
-        )}
-      </div>
-    )
+    if (phase === "score_validation" && checks?.score_validation?.passed === false) return "scores"
+    return null
   }
 
   const renderValidationResult = () => {
     if (!validationResult) return null
 
-    const { is_valid, checks, errors, warnings, suggestions } = validationResult
+    const { is_valid, checks, errors, warnings, suggestions, phase_reached } = validationResult
+
+    const { details } = validationResult
+
+    const phaseResults = details?.phases_completed?.reduce<Partial<Record<PhaseKey, boolean>>>((acc, phaseInfo) => {
+      const key = getPhaseKeyFromText(phaseInfo.phase)
+      if (key) {
+        acc[key] = phaseInfo.passed
+      }
+      return acc
+    }, {}) ?? {}
+
+    type NormalizedChecks = {
+      file_structure?: { passed: boolean } | undefined
+      column_structure?: { passed: boolean; details?: Record<string, unknown> } | undefined
+      assessment_validation?: {
+        passed: boolean
+        found_assessments?: Array<{ column: string; parsed_name: string; db_assessment?: string; db_name?: string }>
+        missing_assessments?: Array<{ column: string; parsed_name: string }>
+        available_in_database?: string[]
+      } | undefined
+      student_validation?: {
+        passed: boolean
+        total_in_file?: number
+        found_in_database?: number
+        missing_from_database?: Array<{ student_id: string; first_name: string; last_name: string }>
+        not_enrolled?: Array<{ student_id: string; first_name: string; last_name: string }>
+      } | undefined
+      score_validation?: {
+        passed: boolean
+        invalid_scores?: Array<{ row: number; column: string; value: string; error?: string }>
+      } | undefined
+    }
+    let normalizedChecks: NormalizedChecks
+
+    if (checks) {
+      normalizedChecks = {
+        file_structure: checks.file_structure,
+        column_structure: checks.column_structure,
+        assessment_validation: checks.assessment_validation,
+        student_validation: checks.student_validation,
+        score_validation: checks.score_validation,
+      }
+    } else {
+      const phaseResultsFallback = details?.phases_completed?.reduce<Partial<Record<PhaseKey, boolean>>>((acc, phaseInfo) => {
+        const key = getPhaseKeyFromText(phaseInfo.phase)
+        if (key) {
+          acc[key] = phaseInfo.passed
+        }
+        return acc
+      }, {}) ?? {}
+
+      normalizedChecks = {
+        file_structure:
+          typeof phaseResultsFallback.file_structure === 'boolean'
+            ? { passed: phaseResultsFallback.file_structure }
+            : typeof details?.file_parsed === 'boolean'
+              ? { passed: details.file_parsed }
+              : undefined,
+        column_structure:
+          details?.column_structure
+            ? {
+                passed:
+                  typeof details.column_structure.passed === 'boolean'
+                    ? details.column_structure.passed
+                    : (phaseResultsFallback.column_structure ?? false),
+                details: details.column_structure,
+              }
+            : typeof phaseResultsFallback.column_structure === 'boolean'
+              ? { passed: phaseResultsFallback.column_structure }
+              : undefined,
+        assessment_validation:
+          details?.assessment_validation
+            ? {
+                passed:
+                  typeof details.assessment_validation.passed === 'boolean'
+                    ? details.assessment_validation.passed
+                    : typeof phaseResultsFallback.assessment_validation === 'boolean'
+                      ? phaseResultsFallback.assessment_validation
+                      : (details.assessment_validation.missing_assessments?.length ?? 0) === 0,
+                found_assessments: details.assessment_validation.found_assessments,
+                missing_assessments: details.assessment_validation.missing_assessments,
+                available_in_database: details.assessment_validation.available_in_database,
+              }
+            : typeof phaseResultsFallback.assessment_validation === 'boolean'
+              ? { passed: phaseResultsFallback.assessment_validation }
+              : undefined,
+        student_validation:
+          details?.student_validation
+            ? {
+                passed:
+                  typeof details.student_validation.passed === 'boolean'
+                    ? details.student_validation.passed
+                    : typeof phaseResultsFallback.student_validation === 'boolean'
+                      ? phaseResultsFallback.student_validation
+                      : normalizeMissingStudents(details).length === 0,
+                total_in_file: details.student_validation.total_in_file,
+                found_in_database: details.student_validation.found_in_database,
+                missing_from_database: normalizeMissingStudents(details),
+                not_enrolled: Array.isArray(details.student_validation.not_enrolled)
+                  ? details.student_validation.not_enrolled
+                  : [],
+              }
+            : typeof phaseResultsFallback.student_validation === 'boolean'
+              ? { passed: phaseResultsFallback.student_validation }
+              : undefined,
+        score_validation:
+          details?.score_validation
+            ? {
+                passed:
+                  typeof details.score_validation.passed === 'boolean'
+                    ? details.score_validation.passed
+                    : (phaseResultsFallback.score_validation ?? false),
+                invalid_scores: Array.isArray(details.score_validation.invalid_scores)
+                  ? details.score_validation.invalid_scores
+                  : [],
+              }
+            : typeof phaseResultsFallback.score_validation === 'boolean'
+              ? { passed: phaseResultsFallback.score_validation }
+              : undefined,
+      }
+    }
+
+              const normalizedPhaseReached = getPhaseKeyFromText(phase_reached)
+
+    const phases = [
+      { key: 'file_structure' as PhaseKey, label: 'File Structure', description: 'Validates file exists, is Excel format, and under 10MB', check: normalizedChecks.file_structure, phasePassed: phaseResults.file_structure },
+      { key: 'column_structure' as PhaseKey, label: 'Column Structure', description: 'Checks required columns: student ID, name, surname + assessment columns', check: normalizedChecks.column_structure, phasePassed: phaseResults.column_structure },
+      { key: 'assessment_validation' as PhaseKey, label: 'Assessments', description: 'Verifies assessment columns exist in course', check: normalizedChecks.assessment_validation, phasePassed: phaseResults.assessment_validation },
+      { key: 'student_validation' as PhaseKey, label: 'Students', description: 'Confirms students exist and are enrolled', check: normalizedChecks.student_validation, phasePassed: phaseResults.student_validation },
+      { key: 'score_validation' as PhaseKey, label: 'Scores', description: 'Validates score values are within range', check: normalizedChecks.score_validation, phasePassed: phaseResults.score_validation },
+    ]
+
+    const firstFailedIndex = phases.findIndex((phase) =>
+      typeof phase.phasePassed === 'boolean' ? phase.phasePassed === false : phase.check?.passed === false
+    )
+    const reachedPhaseIndex = normalizedPhaseReached ? phases.findIndex((phase) => phase.key === normalizedPhaseReached) : -1
+    const lastEvaluatedIndex = phases.reduce((lastIndex, phase, idx) => {
+      if (typeof phase.phasePassed === 'boolean') return idx
+      return typeof phase.check?.passed === 'boolean' ? idx : lastIndex
+    }, -1)
 
     return (
       <div className={`mt-4 p-4 rounded-xl ${is_valid ? 'bg-emerald-50 border border-emerald-200' : 'bg-secondary-50 border border-secondary-200'}`}>
@@ -453,113 +652,107 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           )}
         </div>
 
-        {validationResult.phase_reached && (
-          <p className="text-xs text-secondary-500 mb-3">
-            Phase reached: <span className="font-medium">{validationResult.phase_reached.replace(/_/g, ' ')}</span>
-          </p>
-        )}
+        <div className="mb-4">
+          <p className="text-xs text-secondary-500 mb-3 uppercase tracking-wide font-medium">Validation Phases</p>
+          <div className="space-y-2">
+            {phases.map((phase, idx) => {
+              let phaseState: 'passed' | 'failed' | 'active' | 'pending' = 'pending'
 
-        {checks && (
-          <div className="space-y-2 mb-4">
-            {renderCheckRow('file structure', checks.file_structure)}
-            {renderCheckRow('column structure', checks.column_structure)}
-            {renderCheckRow(
-              'assessment validation',
-              checks.assessment_validation,
-              checks.assessment_validation && !checks.assessment_validation.passed && (
-                <div className="space-y-1">
-                  {checks.assessment_validation.missing_assessments?.map((a, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
-                      <XCircle className="w-3 h-3 text-danger-500" />
-                      <span className="text-danger-600">{a.parsed_name}</span>
-                      <span className="text-secondary-400">({a.column})</span>
+              if (typeof phase.phasePassed === 'boolean') {
+                phaseState = phase.phasePassed ? 'passed' : 'failed'
+              } else if (phase.check?.passed === true) {
+                phaseState = 'passed'
+              } else if (phase.check?.passed === false) {
+                phaseState = 'failed'
+              } else if (firstFailedIndex !== -1) {
+                phaseState = idx < firstFailedIndex ? 'passed' : 'pending'
+              } else if (is_valid) {
+                phaseState = 'passed'
+              } else if (reachedPhaseIndex !== -1) {
+                phaseState = idx <= reachedPhaseIndex ? 'active' : 'pending'
+              } else if (idx <= lastEvaluatedIndex) {
+                phaseState = 'active'
+              }
+
+              const isPassed = phaseState === 'passed'
+              const isFailed = phaseState === 'failed'
+              const isActive = phaseState === 'active'
+              const isPending = phaseState === 'pending'
+
+              let circleClass = 'bg-secondary-300'
+              let statusTextClass = 'text-secondary-400'
+              let statusBgClass = 'bg-secondary-50'
+              let statusBorderClass = 'border-secondary-200'
+              let statusLabel = 'Pending'
+              let StatusIcon = null
+
+              if (isPassed) {
+                circleClass = 'bg-emerald-500'
+                statusTextClass = 'text-emerald-700'
+                statusBgClass = 'bg-emerald-50'
+                statusBorderClass = 'border-emerald-200'
+                statusLabel = 'Passed'
+                StatusIcon = <Check className="w-3 h-3 text-white" />
+              } else if (isFailed) {
+                circleClass = 'bg-danger-500'
+                statusTextClass = 'text-danger-700'
+                statusBgClass = 'bg-danger-50'
+                statusBorderClass = 'border-danger-200'
+                statusLabel = 'Failed'
+                StatusIcon = <X className="w-3 h-3 text-white" />
+              } else if (isActive) {
+                circleClass = 'bg-primary-500'
+                statusTextClass = 'text-primary-700'
+                statusBgClass = 'bg-primary-50'
+                statusBorderClass = 'border-primary-200'
+                statusLabel = 'In Progress'
+              }
+
+              return (
+                <div key={phase.key} className="flex items-start gap-3">
+                  <div className="flex flex-col items-center flex-shrink-0 pt-1">
+                    <div className={`w-6 h-6 rounded-full ${circleClass} flex items-center justify-center`}>
+                      {StatusIcon ?? <span className="text-white text-xs font-medium">{idx + 1}</span>}
                     </div>
-                  ))}
-                </div>
-              )
-            )}
-            {renderCheckRow(
-              'student validation',
-              checks.student_validation,
-              checks.student_validation && !checks.student_validation.passed && (
-                <div className="space-y-2">
-                  {checks.student_validation.missing_from_database && checks.student_validation.missing_from_database.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-danger-600 mb-1">
-                        Missing from database ({checks.student_validation.missing_from_database.length}):
+                    {idx < phases.length - 1 && (
+                      <div className="h-6 flex items-center justify-center text-secondary-300">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`flex items-center gap-3 p-2 rounded-lg border flex-1 ${statusBgClass} ${statusBorderClass}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${statusTextClass}`}>
+                        {phase.label}
                       </p>
-                      <div className="flex flex-wrap gap-1">
-                        {checks.student_validation.missing_from_database.slice(0, 5).map((s, idx) => (
-                          <span key={idx} className="text-xs bg-danger-100 text-danger-700 px-2 py-0.5 rounded">
-                            {s.student_id}
-                          </span>
-                        ))}
-                        {(checks.student_validation.missing_from_database.length ?? 0) > 5 && (
-                          <span className="text-xs text-secondary-500">
-                            +{(checks.student_validation.missing_from_database.length ?? 0) - 5} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {checks.student_validation.not_enrolled && checks.student_validation.not_enrolled.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-warning-600 mb-1">
-                        Not enrolled ({checks.student_validation.not_enrolled.length}):
+                      <p className={`text-xs ${isPending ? 'text-secondary-400' : 'text-secondary-500'}`}>
+                        {phase.description}
                       </p>
-                      <div className="flex flex-wrap gap-1">
-                        {checks.student_validation.not_enrolled.slice(0, 5).map((s, idx) => (
-                          <span key={idx} className="text-xs bg-warning-100 text-warning-700 px-2 py-0.5 rounded">
-                            {s.student_id}
-                          </span>
-                        ))}
-                        {(checks.student_validation.not_enrolled.length ?? 0) > 5 && (
-                          <span className="text-xs text-secondary-500">
-                            +{(checks.student_validation.not_enrolled.length ?? 0) - 5} more
-                          </span>
-                        )}
-                      </div>
                     </div>
-                  )}
-                </div>
-              )
-            )}
-            {checks.student_validation && !checks.student_validation.passed && (
-              <button
-                onClick={() => {
-                  const hasMissing = (checks.student_validation?.missing_from_database?.length ?? 0) > 0
-                  const hasUnenrolled = (checks.student_validation?.not_enrolled?.length ?? 0) > 0
-                  if (hasMissing) setActiveProblem('students')
-                  else if (hasUnenrolled) setActiveProblem('unenrolled')
-                }}
-                className="text-sm bg-warning-100 text-warning-700 px-3 py-1 rounded-md hover:bg-warning-200 font-medium transition-colors"
-              >
-                Solve
-              </button>
-            )}
-            {renderCheckRow(
-              'score validation',
-              checks.score_validation,
-              checks.score_validation && !checks.score_validation.passed && checks.score_validation.invalid_scores && (
-                <div>
-                  <p className="text-xs text-danger-600 mb-1">
-                    Invalid scores ({checks.score_validation.invalid_scores.length}):
-                  </p>
-                  <div className="max-h-32 overflow-y-auto space-y-1">
-                    {checks.score_validation.invalid_scores.slice(0, 10).map((s, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs">
-                        <span className="text-secondary-500">Row {s.row}:</span>
-                        <span className="text-secondary-700 truncate max-w-[150px]">{s.column}</span>
-                        <span className="font-mono text-danger-600">={s.value}</span>
-                        <span className="text-danger-400">({s.error})</span>
-                      </div>
-                    ))}
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <span className={`text-xs font-medium ${isPassed ? 'text-emerald-600' : isFailed ? 'text-danger-600' : isActive ? 'text-primary-600' : 'text-secondary-400'}`}>
+                        {statusLabel}
+                      </span>
+                      {!isPassed && !isPending && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const target = getSolveTarget(phase.key, normalizedChecks)
+                            if (target) setActiveProblem(target)
+                          }}
+                          className="text-xs bg-warning-100 text-warning-700 px-2 py-1 rounded-md hover:bg-warning-200"
+                        >
+                          Solve
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
-            )}
+            })}
           </div>
-        )}
+        </div>
 
         {errors && errors.length > 0 && (
           <div className="mb-3">
@@ -639,7 +832,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   }
 
   return (
-    <div className={`fixed inset-0 z-50 overflow-auto bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4 ${isOpen ? '' : 'hidden'}`}>
+    <div className={`fixed inset-0 z-20 isolate overflow-auto bg-secondary-900/60 flex items-center justify-center p-4 ${isOpen ? '' : 'hidden'}`}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <h2 className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</h2>
@@ -701,7 +894,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
               </label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-secondary-300 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer"
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
+                  isDragging
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-secondary-300 hover:border-primary-500'
+                }`}
               >
                 <input
                   ref={fileInputRef}
@@ -711,9 +912,9 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                   disabled={isAnyUploadPending || isAnyValidatePending || isResolving}
                   className="hidden"
                 />
-                <Upload className="w-8 h-8 text-secondary-400 mx-auto mb-2" />
-                <p className="text-sm text-secondary-600">
-                  {file ? file.name : 'Click to select or drag and drop your file'}
+                <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-primary-500' : 'text-secondary-400'}`} />
+                <p className={`text-sm ${isDragging ? 'text-primary-600' : 'text-secondary-600'}`}>
+                  {file ? file.name : isDragging ? 'Drop file here' : 'Click to select or drag and drop your file'}
                 </p>
                 <p className="text-xs text-secondary-500 mt-1">.xlsx, .xls files only</p>
               </div>
