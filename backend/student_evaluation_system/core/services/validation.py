@@ -821,22 +821,10 @@ class ValidationPipeline:
             self._merge_results(result, structure_result)
         return result
 
-    def _run_assessment_validator(self, validator_class, all_kwargs) -> ValidationResult:
-        if validator_class == FileFormatValidator:
-            return self._run_file_format_validation(all_kwargs)
-        if validator_class == BusinessStructureValidator:
-            return BusinessStructureValidator.validate_assessment_scores_structure(
-                all_kwargs["dataframe"], all_kwargs["course"]
-            )
-        if validator_class == DatabaseIntegrityValidator:
-            return DatabaseIntegrityValidator.validate_assessment_scores_database(
-                all_kwargs["dataframe"], all_kwargs["course"], all_kwargs["term"]
-            )
-        if validator_class == DataQualityValidator:
-            return DataQualityValidator.validate_assessment_scores_quality(all_kwargs["dataframe"], all_kwargs["course"])
-        return ValidationResult()
+    def _run_validator(self, validator_class, all_kwargs) -> ValidationResult:
+        if self.import_type != "assignment_scores":
+            return ValidationResult()
 
-    def _run_assignment_validator(self, validator_class, all_kwargs) -> ValidationResult:
         if validator_class == FileFormatValidator:
             return self._run_file_format_validation(all_kwargs)
         if validator_class == BusinessStructureValidator:
@@ -849,13 +837,6 @@ class ValidationPipeline:
             )
         if validator_class == DataQualityValidator:
             return DataQualityValidator.validate_assignment_scores_quality(all_kwargs["dataframe"], all_kwargs["course"])
-        return ValidationResult()
-
-    def _run_validator(self, validator_class, all_kwargs) -> ValidationResult:
-        if self.import_type == "assessment_scores":
-            return self._run_assessment_validator(validator_class, all_kwargs)
-        if self.import_type == "assignment_scores":
-            return self._run_assignment_validator(validator_class, all_kwargs)
         return ValidationResult()
 
     def run_validation(self, **kwargs) -> ValidationResult:
@@ -893,6 +874,16 @@ class AssignmentScoreValidator:
     2. Assignment names: Parses and checks against database
     3. Students: Checks if students exist in database
     """
+
+    @staticmethod
+    def _base_checks() -> Dict[str, Dict[str, Any]]:
+        return {
+            "file_structure": {"passed": False},
+            "column_structure": {"passed": False},
+            "assessment_validation": {"passed": False},
+            "student_validation": {"passed": False},
+            "score_validation": {"passed": False},
+        }
 
     @staticmethod
     def validate_file_structure(file_obj) -> ValidationResult:
@@ -1052,7 +1043,7 @@ class AssignmentScoreValidator:
         for col, label in required_cols:
             matched = any(col.lower() == c.lower() for c in dataframe.columns)
             if not matched:
-                result.add_error(f"Student ID column not found. Expected column containing '{col}'", "column_structure")
+                result.add_error(f"{label} column not found. Expected column containing '{col}'", "column_structure")
 
         assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
         if not assessment_cols:
@@ -1134,36 +1125,23 @@ class AssignmentScoreValidator:
 
     @staticmethod
     def validate_complete(file_obj, course: Course) -> ValidationResult:
-        """
-        Run complete validation: file structure, column structure, assessments, students, and scores.
-
-        Args:
-            file_obj: Uploaded file object
-            course: Course to validate against
-
-        Returns:
-            ValidationResult: Combined validation results
-        """
         final_result = ValidationResult()
-        final_result.add_detail("phases_completed", [])
+        checks = AssignmentScoreValidator._base_checks()
+        final_result.add_detail("checks", checks)
+        final_result.add_detail("phase_reached", "file_structure")
 
-        def add_phase_result(phase_name, phase_result):
-            final_result.errors.extend(phase_result.errors)
-            final_result.warnings.extend(phase_result.warnings)
-            final_result.suggestions.extend(phase_result.suggestions)
-            final_result.validation_details.update(phase_result.validation_details)
-            final_result.validation_details["phases_completed"].append(
-                {
-                    "phase": phase_name,
-                    "passed": phase_result.is_valid,
-                }
-            )
-            if not phase_result.is_valid:
+        def merge_phase(phase_key: str, result: ValidationResult):
+            final_result.errors.extend(result.errors)
+            final_result.warnings.extend(result.warnings)
+            final_result.suggestions.extend(result.suggestions)
+            final_result.validation_details.update(result.validation_details)
+            checks[phase_key]["passed"] = result.is_valid
+            if not result.is_valid:
                 final_result.is_valid = False
+                final_result.validation_details["phase_reached"] = phase_key
 
         file_result = AssignmentScoreValidator.validate_file_structure(file_obj)
-        add_phase_result("Phase 1: File Structure", file_result)
-
+        merge_phase("file_structure", file_result)
         if not file_result.is_valid:
             return final_result
 
@@ -1173,24 +1151,33 @@ class AssignmentScoreValidator:
             final_result.add_detail("file_parsed", True)
             final_result.add_detail("row_count", len(dataframe))
             final_result.add_detail("columns", dataframe.columns.tolist())
-        except Exception as e:
-            final_result.add_error(f"Failed to parse Excel file: {str(e)}", "file_parse")
+        except Exception as exc:
+            final_result.add_error(f"Failed to parse Excel file: {str(exc)}", "file_parse")
             final_result.is_valid = False
+            final_result.validation_details["phase_reached"] = "file_structure"
+            checks["file_structure"]["passed"] = False
             return final_result
 
+        final_result.validation_details["phase_reached"] = "column_structure"
         column_result = AssignmentScoreValidator.validate_column_structure(dataframe)
-        add_phase_result("Phase 2: Column Structure", column_result)
-
+        merge_phase("column_structure", column_result)
         if not column_result.is_valid:
             return final_result
 
+        final_result.validation_details["phase_reached"] = "assessment_validation"
         assessment_result = AssignmentScoreValidator.validate_assignments(dataframe, course)
-        add_phase_result("Phase 3: Assessment Assignments", assessment_result)
+        merge_phase("assessment_validation", assessment_result)
 
+        final_result.validation_details["phase_reached"] = "student_validation"
         student_result = AssignmentScoreValidator.validate_students(dataframe, course)
-        add_phase_result("Phase 4: Student Validation", student_result)
+        merge_phase("student_validation", student_result)
 
+        final_result.validation_details["phase_reached"] = "score_validation"
         score_result = AssignmentScoreValidator.validate_scores(dataframe, course)
-        add_phase_result("Phase 5: Score Validation", score_result)
+        merge_phase("score_validation", score_result)
 
+        if final_result.is_valid:
+            final_result.validation_details["phase_reached"] = "complete"
+
+        final_result.validation_details["checks"] = checks
         return final_result
