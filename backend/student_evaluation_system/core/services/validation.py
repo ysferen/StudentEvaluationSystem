@@ -224,62 +224,6 @@ class BusinessStructureValidator:
         return invalid_scores
 
     @staticmethod
-    def validate_assessment_scores_structure(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
-        """
-        Validate assessment scores data structure and business rules.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object for context
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        assessments, assessment_names = BusinessStructureValidator._get_course_assessment_names(course)
-
-        if not assessments:
-            result.add_error(f"No assessments found for course {course.code}. Create assessments first.", "business_rules")
-            return result
-
-        file_assessment_names, invalid_assessments = BusinessStructureValidator._collect_file_assessment_issues(
-            dataframe.columns, assessment_names
-        )
-
-        if invalid_assessments:
-            result.add_error(f"Invalid assessment names: {', '.join(invalid_assessments)}", "assessment_validation")
-            result.add_suggestion(f"Valid assessments for this course: {', '.join(assessment_names)}", "assessment_validation")
-
-        # Validate student IDs format
-        invalid_student_ids = BusinessStructureValidator._collect_invalid_student_ids(dataframe.get("student_id", []))
-
-        if invalid_student_ids:
-            result.add_error(f"Found {len(invalid_student_ids)} empty or invalid student IDs", "data_format")
-
-        # Validate score formats and ranges
-        score_columns = [col for col in dataframe.columns if "score" in str(col).lower()]
-        invalid_scores = BusinessStructureValidator._collect_invalid_scores(dataframe, score_columns)
-
-        if invalid_scores:
-            result.add_error(f"Found {len(invalid_scores)} invalid scores", "score_validation")
-            result.add_detail("invalid_scores_sample", invalid_scores[:5])  # Show first 5
-
-        # Add business validation details
-        result.add_detail(
-            "business_validation",
-            {
-                "course_assessments": assessment_names,
-                "file_assessments": list(file_assessment_names),
-                "invalid_assessments": list(invalid_assessments),
-                "student_count": len(dataframe),
-                "score_columns": score_columns,
-            },
-        )
-
-        return result
-
-    @staticmethod
     def validate_assignment_scores_structure(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
         Validate assignment scores data structure for Turkish Excel format.
@@ -434,93 +378,6 @@ class DatabaseIntegrityValidator:
     """
 
     @staticmethod
-    def _validate_course_for_term(result: ValidationResult, course: Course, term: Term):
-        try:
-            validated_course = Course.objects.get(code=course.code, term=term)
-            result.add_detail("course_validated", True)
-            return validated_course
-        except Course.DoesNotExist:
-            result.add_error(f"Course {course.code} not found for term {term.name}", "course_validation")
-            available_courses = Course.objects.filter(code=course.code).select_related("term")
-            if available_courses.exists():
-                terms = [f"{existing_course.code} ({existing_course.term.name})" for existing_course in available_courses]
-                result.add_suggestion(f"Available terms for {course.code}: {', '.join(terms)}", "course_validation")
-            return None
-
-    @staticmethod
-    def _collect_student_ids(values):
-        return {str(student_id).strip() for student_id in values if pd.notna(student_id)}
-
-    @staticmethod
-    def _extract_assessment_names_from_columns(columns):
-        assessment_columns = [column for column in columns if "assessment" in str(column).lower()]
-        return {str(column).strip() for column in assessment_columns if "score" not in str(column).lower()}
-
-    @staticmethod
-    def validate_assessment_scores_database(dataframe: pd.DataFrame, course: Course, term: Term) -> ValidationResult:
-        """
-        Validate database integrity for assessment scores import.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object
-            term: Term object
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        course = DatabaseIntegrityValidator._validate_course_for_term(result, course, term)
-        if not course:
-            return result
-
-        # Validate student enrollment
-        student_ids = DatabaseIntegrityValidator._collect_student_ids(dataframe.get("student_id", []))
-
-        # Check if students exist in database
-        from users.models import StudentProfile
-
-        existing_students = StudentProfile.objects.filter(student_id__in=student_ids).values_list("student_id", flat=True)
-
-        missing_students = student_ids - set(existing_students)
-
-        if missing_students:
-            result.add_error(f"{len(missing_students)} students not found in database", "student_validation")
-            result.add_detail("missing_students", list(missing_students)[:10])  # Show first 10
-
-        # Validate assessments exist
-        assessment_names = DatabaseIntegrityValidator._extract_assessment_names_from_columns(dataframe.columns)
-
-        invalid_assessments = set()
-        valid_assessments = set(Assessment.objects.filter(course=course).values_list("name", flat=True))
-
-        for assessment_name in assessment_names:
-            if assessment_name not in valid_assessments:
-                invalid_assessments.add(assessment_name)
-
-        if invalid_assessments:
-            result.add_error(
-                f"{len(invalid_assessments)} assessments not found for course {course.code}", "assessment_validation"
-            )
-            result.add_detail("invalid_assessments", list(invalid_assessments))
-
-        # Add database validation details
-        result.add_detail(
-            "database_validation",
-            {
-                "course_validated": True,
-                "total_students_in_file": len(student_ids),
-                "valid_students_found": len(existing_students),
-                "missing_students_count": len(missing_students),
-                "valid_assessments_found": len(valid_assessments),
-                "invalid_assessments": list(invalid_assessments),
-            },
-        )
-
-        return result
-
-    @staticmethod
     def validate_assignment_scores_database(dataframe: pd.DataFrame, course: Course, term: Term) -> ValidationResult:
         """
         Validate database integrity for assignment scores import (Turkish format).
@@ -564,7 +421,7 @@ class DatabaseIntegrityValidator:
 
         if missing_students:
             result.add_error(f"{len(missing_students)} students not found in database", "assignment_scores")
-            result.add_detail("missing_students", list(missing_students)[:10])  # Show first 10
+            result.add_detail("missing_students", list(missing_students)[:10])
 
         # Validate assessments exist
         assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
@@ -585,7 +442,6 @@ class DatabaseIntegrityValidator:
             result.add_error(f"{len(invalid_assessments)} assessments not found for course {course.code}", "assignment_scores")
             result.add_detail("invalid_assessments", list(invalid_assessments))
 
-        # Add database validation details
         result.add_detail(
             "database_validation",
             {
@@ -657,92 +513,6 @@ class DataQualityValidator:
                 )
             except Assessment.DoesNotExist:
                 continue
-
-    @staticmethod
-    def validate_assessment_scores_quality(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
-        """
-        Validate data quality for assessment scores.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        # Check for duplicate student IDs
-        student_ids = dataframe.get("student_id", [])
-        if len(student_ids) != len(set(student_ids)):
-            duplicates = len(student_ids) - len(set(student_ids))
-            result.add_warning(f"Found {duplicates} duplicate student IDs", "data_quality")
-
-        # Check score distributions
-        score_columns = [col for col in dataframe.columns if "score" in str(col).lower()]
-
-        for col in score_columns:
-            scores = dataframe[col].dropna()
-
-            if len(scores) > 0:
-                min_score = scores.min()
-                max_score = scores.max()
-                avg_score = scores.mean()
-
-                # Get assessment total score
-                assessment_name = col.replace("_score", "").replace("assessment_", "").strip()
-                try:
-                    assessment = Assessment.objects.get(name=assessment_name, course=course)
-                    if max_score > assessment.total_score:
-                        result.add_warning(
-                            f"Max score ({max_score}) exceeds assessment total ({assessment.total_score}) in {col}",
-                            "score_validation",
-                        )
-
-                    # Add score statistics
-                    result.add_detail(
-                        f"score_stats_{col}",
-                        {
-                            "min": float(min_score),
-                            "max": float(max_score),
-                            "avg": float(avg_score),
-                            "assessment_total": assessment.total_score,
-                        },
-                    )
-                except Assessment.DoesNotExist:
-                    pass  # Already handled in database validation
-
-        # Check for missing data
-        missing_data_analysis = {}
-        total_rows = len(dataframe)
-
-        for col in dataframe.columns:
-            missing_count = dataframe[col].isna().sum()
-            if missing_count > 0:
-                missing_percentage = (missing_count / total_rows) * 100
-                missing_data_analysis[col] = {
-                    "missing_count": int(missing_count),
-                    "missing_percentage": round(missing_percentage, 2),
-                }
-
-                if missing_percentage > 50:
-                    result.add_warning(f"Column {col} has {missing_percentage:.1f}% missing data", "data_quality")
-
-        if missing_data_analysis:
-            result.add_detail("missing_data_analysis", missing_data_analysis)
-
-        # Data consistency checks
-        result.add_detail(
-            "data_quality",
-            {
-                "total_rows": total_rows,
-                "duplicate_students_found": len(student_ids) != len(set(student_ids)),
-                "score_columns_analyzed": len(score_columns),
-                "columns_with_missing_data": len(missing_data_analysis),
-            },
-        )
-
-        return result
 
     @staticmethod
     def validate_assignment_scores_quality(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
