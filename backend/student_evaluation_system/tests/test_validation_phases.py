@@ -138,3 +138,59 @@ class TestPhase5ScoreValidation:
         )
         result = AssignmentScoreValidator.validate_scores(df, course)
         assert not result.is_valid
+
+
+def test_validate_complete_sets_phase_reached_and_checks(db_setup):
+    from io import BytesIO
+    from evaluation.models import Assessment
+
+    course = db_setup["course"]
+    Assessment.objects.create(course=course, name="Midterm", total_score=100)
+
+    df = pd.DataFrame(
+        {
+            "öğrenci no": ["S001"],
+            "adı": ["Ali"],
+            "soyadı": ["Veli"],
+            "Midterm(%30)_X1": [80],
+        }
+    )
+    buf = BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+    buf.name = "ok.xlsx"
+    buf.size = buf.getbuffer().nbytes
+
+    result = AssignmentScoreValidator.validate_complete(buf, course)
+
+    assert "phase_reached" in result.validation_details
+    checks = result.validation_details.get("checks")
+    assert isinstance(checks, dict)
+    assert set(checks.keys()) == {
+        "file_structure",
+        "column_structure",
+        "assessment_validation",
+        "student_validation",
+        "score_validation",
+    }
+    assert checks["file_structure"]["passed"] is True
+
+
+def test_validate_complete_hard_stops_at_column_structure(db_setup):
+    from io import BytesIO
+
+    course = db_setup["course"]
+    df = pd.DataFrame({"adı": ["Ali"], "soyadı": ["Veli"]})
+    buf = BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+    buf.name = "missing-columns.xlsx"
+    buf.size = buf.getbuffer().nbytes
+
+    result = AssignmentScoreValidator.validate_complete(buf, course)
+
+    assert result.is_valid is False
+    assert result.validation_details["phase_reached"] == "column_structure"
+    checks = result.validation_details["checks"]
+    assert checks["file_structure"]["passed"] is True
+    assert checks["column_structure"]["passed"] is False

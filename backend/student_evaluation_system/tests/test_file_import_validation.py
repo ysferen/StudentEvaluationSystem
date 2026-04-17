@@ -158,7 +158,16 @@ class TestValidateEndpoint:
         assert "suggestions" in data
         assert "details" in data
 
-        assert data["checks"]["errors"] == []
+        assert "checks" in data
+        for key in [
+            "file_structure",
+            "column_structure",
+            "assessment_validation",
+            "student_validation",
+            "score_validation",
+        ]:
+            assert key in data["checks"]
+            assert "passed" in data["checks"][key]
         assert data["is_valid"] is True
 
     @pytest.mark.django_db
@@ -381,3 +390,34 @@ class TestResolveEndpoint:
         data = response.data
         assert data["resolutions_applied"]["created"]["students"] == 1
         assert data["is_valid"] is True
+
+    @pytest.mark.django_db
+    def test_resolve_accepts_assignment_resolution_keys(self, api_client, course, term, assessments):
+        df = pd.DataFrame(
+            {
+                "öğrenci no": ["NEW001"],
+                "adı": ["Yeni"],
+                "soyadı": ["Ogrenci"],
+                "Midterm Exam(%30)_0833AB": [75],
+            }
+        )
+        buffer = create_excel_buffer(df)
+        buffer.name = "resolve-keys.xlsx"
+
+        resolutions = {
+            "create_students": [{"student_id": "NEW001", "first_name": "Yeni", "last_name": "Ogrenci"}],
+            "skip_unenrolled_students": False,
+            "enroll_students": ["NEW001"],
+            "create_assessments": [],
+            "skip_invalid_scores": False,
+            "clamp_scores": False,
+        }
+
+        response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/resolve/?course_code={course.code}&term_id={term.id}",
+            {"file": buffer, "resolutions": json.dumps(resolutions)},
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "resolutions_applied" in response.data
