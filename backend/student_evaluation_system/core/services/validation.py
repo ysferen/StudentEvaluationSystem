@@ -1043,7 +1043,7 @@ class AssignmentScoreValidator:
         for col, label in required_cols:
             matched = any(col.lower() == c.lower() for c in dataframe.columns)
             if not matched:
-                result.add_error(f"{label} column not found. Expected column containing '{col}'", "column_structure")
+                result.add_error(f"{label} column not found. Expected column '{col}'", "column_structure")
 
         assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
         if not assessment_cols:
@@ -1179,5 +1179,4 @@ class AssignmentScoreValidator:
         if final_result.is_valid:
             final_result.validation_details["phase_reached"] = "complete"
 
-        final_result.validation_details["checks"] = checks
         return final_result
