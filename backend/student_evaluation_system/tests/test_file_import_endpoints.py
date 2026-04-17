@@ -27,6 +27,16 @@ def api_client():
     return APIClient()
 
 
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    """Clear DRF throttle cache between tests."""
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 @pytest.fixture
 def term(db):
     """Create a test term."""
@@ -192,6 +202,61 @@ class TestValidateEndpoint:
         assert any("students not found" in msg.lower() or "not found" in msg.lower() for msg in error_messages)
 
     @pytest.mark.django_db
+    def test_validate_unenrolled_students_returns_error(self, api_client, course, term, assessments):
+        enrolled_user = User.objects.create_user(
+            username="enrolled_student",
+            email="enrolled@test.com",
+            password="testpass123",
+            first_name="Enrolled",
+            last_name="Student",
+            role="student",
+        )
+        StudentProfile.objects.create(
+            user=enrolled_user, student_id="ENROLLED_001", program=course.program, enrollment_term=term
+        )
+
+        unenrolled_user = User.objects.create_user(
+            username="unenrolled_student",
+            email="unenrolled@test.com",
+            password="testpass123",
+            first_name="Unenrolled",
+            last_name="Student",
+            role="student",
+        )
+        StudentProfile.objects.create(
+            user=unenrolled_user,
+            student_id="UNENROLLED_001",
+            program=course.program,
+            enrollment_term=term,
+        )
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": ["ENROLLED_001", "UNENROLLED_001"],
+                "adı": ["Enrolled", "Unenrolled"],
+                "soyadı": ["Student", "Student"],
+                "Midterm Exam(%30)_0833AB": [75.0, 80.0],
+                "Final Exam(%40)_0833AB": [85.0, 88.0],
+                "Project(%30)_0833AB": [90.0, 92.0],
+            }
+        )
+        buffer = create_excel_buffer(df)
+        buffer.name = "unenrolled_students.xlsx"
+
+        response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/validate/?course_code={course.code}&term_id={term.id}",
+            {"file": buffer},
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data
+        assert data["is_valid"] is False
+        assert "student_validation" in data["checks"]
+        assert data["checks"]["student_validation"]["passed"] is False
+        assert any("not enrolled" in str(error).lower() for error in data["errors"])
+
+    @pytest.mark.django_db
     def test_validate_missing_course_returns_404(self, api_client, term):
         df = pd.DataFrame(
             {
@@ -352,6 +417,7 @@ class TestResolveEndpoint:
 
         resolutions = {
             "create_students": [{"student_id": "RESOLVED_STUDENT_001", "first_name": "Resolved", "last_name": "Student"}],
+            "enroll_students": ["RESOLVED_STUDENT_001"],
         }
 
         response = api_client.post(

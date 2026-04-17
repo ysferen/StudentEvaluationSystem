@@ -12,12 +12,13 @@ to create comprehensive validation pipelines.
 """
 
 import pandas as pd
-import re
 from typing import Dict, Any
 from django.contrib.auth import get_user_model
 
 from ..models import Term, Course
-from evaluation.models import Assessment
+from evaluation.models import Assessment, CourseEnrollment
+from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
+from .validators import InputValidator, FileValidator
 
 User = get_user_model()
 
@@ -92,27 +93,26 @@ class FileFormatValidator:
         """
         result = ValidationResult()
 
-        # Validate file extension - only Excel files allowed for assignment_scores
-        if import_type == "assignment_scores":
-            valid_extensions = [".xlsx", ".xls"]
-        else:
-            valid_extensions = [".xlsx", ".xls", ".csv"]
+        # Validate file extension
+        valid_extensions = [".xlsx", ".xls"] if import_type == "assignment_scores" else [".xlsx", ".xls", ".csv"]
 
-        file_extension = file_obj.name.lower().split(".")[-1]
-
-        if not any(file_obj.name.lower().endswith(ext) for ext in valid_extensions):
+        try:
+            InputValidator.validate_file_extension(file_obj.name)
+        except Exception:
             result.add_error(f"Invalid file format. Supported formats: {', '.join(valid_extensions)}", "file_format")
             return result
 
         # Validate file size (10MB limit)
-        max_size = FileFormatValidator.MAX_FILE_SIZE
-        if file_obj.size > max_size:
+        try:
+            FileValidator.validate_file_size(file_obj.size)
+        except Exception:
+            max_mb = FileValidator.MAX_FILE_SIZE_MB
             result.add_error(
-                f"File size exceeds {max_size // (1024 * 1024)}MB limit. Your file is {file_obj.size / (1024 * 1024):.2f}MB",
+                f"File size exceeds {max_mb}MB limit. Your file is {file_obj.size / (1024 * 1024):.2f}MB",
                 "file_size",
             )
 
-        # Add file info to details
+        file_extension = file_obj.name.lower().split(".")[-1]
         result.add_detail(
             "file_info",
             {
@@ -244,7 +244,7 @@ class BusinessStructureValidator:
             return result
 
         # Extract assessment columns from Turkish format
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
 
         if not assessment_columns:
             result.add_error(
@@ -259,7 +259,7 @@ class BusinessStructureValidator:
         invalid_assessments = []
         for _, assessment_name in assessment_columns:
             # Clean assessment name by removing suffixes and weights
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name not in assessment_names:
                 invalid_assessments.append(clean_name)
 
@@ -268,8 +268,9 @@ class BusinessStructureValidator:
             result.add_suggestion(f"Available assessments: {', '.join(assessment_names)}", "assignment_scores")
 
         # Validate student IDs (öğrenci no column)
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found. Expected columns containing 'öğrenci no'", "assignment_scores")
             return result
 
@@ -302,74 +303,6 @@ class BusinessStructureValidator:
 
         return result
 
-    @staticmethod
-    def _extract_assessment_columns(columns):
-        """
-        Extract assessment columns from Turkish Excel format.
-
-        Column format examples:
-        - 'Midterm 1(%25)_0833AB' -> 'Midterm 1'
-        - 'Project(%40)_0833AB' -> 'Project'
-        - 'Attendance(%10)_0833AB' -> 'Attendance'
-
-        We only look at the first word/part before any suffix like _0833AB.
-        Non-assessment columns are: No, Öğrenci No, Adı, Soyadı, Snf, Girme Durum, Harf Notu
-        """
-        assessment_columns = []
-
-        # Known non-assessment column prefixes (case-insensitive)
-        non_assessment_prefixes = ["no", "öğrenci no", "adı", "soyadı", "snf", "girme durum", "harf notu"]
-
-        for col in columns:
-            col_str = str(col).strip()
-
-            # Extract the first part before any suffix pattern (_XXXXXX)
-            # Split by underscore and take everything before the last part if it looks like a suffix
-            parts = col_str.split("_")
-            if len(parts) > 1:
-                # Check if last part looks like a suffix (alphanumeric code)
-                last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 2:
-                    # Reconstruct without the suffix
-                    base_name = "_".join(parts[:-1])
-                else:
-                    base_name = col_str
-            else:
-                base_name = col_str
-
-            # Extract assessment name by removing weight pattern like (%25)
-            import re
-
-            assessment_name = re.sub(r"\(%?\d+%?\)", "", base_name).strip()
-
-            # Check if this is a non-assessment column
-            is_non_assessment = False
-            for prefix in non_assessment_prefixes:
-                if assessment_name.lower().startswith(prefix.lower()):
-                    is_non_assessment = True
-                    break
-
-            if not is_non_assessment and assessment_name:
-                assessment_columns.append((col_str, assessment_name))
-
-        return assessment_columns
-
-    @staticmethod
-    def _clean_assessment_name(name):
-        """Clean assessment name by removing weight information."""
-        # Remove weight patterns like "(%25)", "(%40)", etc.
-        cleaned = re.sub(r"\(%\d+\)", "", name).strip()
-        return cleaned
-
-    @staticmethod
-    def _find_student_id_column(columns):
-        """Find the student ID column from Turkish column names."""
-        for col in columns:
-            col_str = str(col).lower().strip()
-            if "öğrenci no" in col_str:
-                return col
-        return None
-
 
 class DatabaseIntegrityValidator:
     """
@@ -401,8 +334,9 @@ class DatabaseIntegrityValidator:
             return result
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found", "assignment_scores")
             return result
 
@@ -424,11 +358,11 @@ class DatabaseIntegrityValidator:
             result.add_detail("missing_students", list(missing_students)[:10])
 
         # Validate assessments exist
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
         assessment_names = set()
 
         for col_name, assessment_name in assessment_columns:
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             assessment_names.add(clean_name)
 
         invalid_assessments = set()
@@ -492,7 +426,7 @@ class DataQualityValidator:
             min_score = scores.min()
             max_score = scores.max()
             avg_score = scores.mean()
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
 
             try:
                 assessment = Assessment.objects.get(name=clean_name, course=course)
@@ -529,8 +463,9 @@ class DataQualityValidator:
         result = ValidationResult()
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found", "assignment_scores")
             return result
 
@@ -540,7 +475,7 @@ class DataQualityValidator:
             duplicates = len(student_ids) - len(set(student_ids))
             result.add_warning(f"Found {duplicates} duplicate student IDs", "data_quality")
 
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
         DataQualityValidator._add_assignment_score_details(result, dataframe, assessment_columns, course)
 
         missing_data_analysis, total_rows = DataQualityValidator._analyze_missing_data(dataframe, result)
@@ -683,7 +618,7 @@ class AssignmentScoreValidator:
         result = ValidationResult()
 
         # Extract assessment columns
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
 
         if not assessment_columns:
             result.add_error(
@@ -709,7 +644,7 @@ class AssignmentScoreValidator:
         missing_assessments = []
 
         for col_name, assessment_name in assessment_columns:
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name.lower().strip() in db_assessment_names:
                 found_assessments.append(
                     {
@@ -744,7 +679,7 @@ class AssignmentScoreValidator:
     @staticmethod
     def validate_students(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
-        Validate that students in file exist in database.
+        Validate that students in file exist in database and are enrolled in course.
 
         Args:
             dataframe: Parsed Excel data
@@ -756,8 +691,9 @@ class AssignmentScoreValidator:
         result = ValidationResult()
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found. Expected column containing 'öğrenci no' or 'No'", "student_column")
             return result
 
@@ -774,15 +710,41 @@ class AssignmentScoreValidator:
         # Check students in database
         from users.models import StudentProfile
 
-        existing_students = StudentProfile.objects.filter(student_id__in=file_student_ids).values_list("student_id", flat=True)
+        student_profiles = StudentProfile.objects.filter(student_id__in=file_student_ids).select_related("user")
+        existing_students = [profile.student_id for profile in student_profiles]
 
         existing_set = set(str(sid).strip() for sid in existing_students)
         missing_students = file_student_ids - existing_set
         found_students = file_student_ids & existing_set
 
+        # Check enrollment for students that exist in database
+        not_enrolled = []
+        if found_students:
+            user_ids = [profile.user_id for profile in student_profiles]
+            enrolled_user_ids = set(
+                CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+            )
+
+            for profile in student_profiles:
+                if profile.user_id not in enrolled_user_ids:
+                    not_enrolled.append(
+                        {
+                            "student_id": str(profile.student_id),
+                            "first_name": profile.user.first_name or "",
+                            "last_name": profile.user.last_name or "",
+                        }
+                    )
+
         if missing_students:
             result.add_error(f"{len(missing_students)} students not found in database", "student_validation")
             result.add_detail("missing_students", list(missing_students)[:20])  # Show first 20
+
+        if not_enrolled:
+            sample_ids = [student["student_id"] for student in not_enrolled[:20]]
+            result.add_error(
+                f"The following students are not enrolled in course {course.code}: {', '.join(sample_ids)}",
+                "student_validation",
+            )
 
         result.add_detail(
             "student_validation",
@@ -790,6 +752,7 @@ class AssignmentScoreValidator:
                 "total_in_file": len(file_student_ids),
                 "found_in_database": len(found_students),
                 "missing_from_database": len(missing_students),
+                "not_enrolled": not_enrolled,
                 "student_id_column": student_id_col,
             },
         )
@@ -815,7 +778,7 @@ class AssignmentScoreValidator:
             if not matched:
                 result.add_error(f"{label} column not found. Expected column '{col}'", "column_structure")
 
-        assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_cols = extract_assessment_columns(dataframe.columns)
         if not assessment_cols:
             result.add_error(
                 "No assessment score columns found in file. "
@@ -839,7 +802,7 @@ class AssignmentScoreValidator:
         """
         result = ValidationResult()
 
-        assessment_cols = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_cols = extract_assessment_columns(dataframe.columns)
         if not assessment_cols:
             result.add_detail("score_validation", {"passed": True, "invalid_scores": []})
             return result
@@ -849,7 +812,7 @@ class AssignmentScoreValidator:
         invalid_scores = []
 
         for col_name, parsed_name in assessment_cols:
-            clean = BusinessStructureValidator._clean_assessment_name(parsed_name)
+            clean = clean_assessment_name(parsed_name)
             db_assessment = db_assessments.get(clean.lower().strip())
 
             if not db_assessment:

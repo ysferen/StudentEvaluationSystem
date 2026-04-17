@@ -20,7 +20,6 @@ Supported file formats:
 """
 
 import pandas as pd
-import re
 from django.db import transaction
 from django.contrib.auth import get_user_model
 import logging
@@ -31,6 +30,7 @@ from ..models import Program, Term, Course, LearningOutcome, ProgramOutcome
 from evaluation.models import Assessment, StudentGrade, CourseEnrollment
 from evaluation.services import calculate_course_scores
 from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
+from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -369,7 +369,7 @@ class FileImportService:
     def _find_missing_assessments(self, assessment_columns, assessment_lookup):
         missing_assessments = []
         for _, assessment_name in assessment_columns:
-            clean_name = self._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name.lower().strip() not in assessment_lookup:
                 missing_assessments.append(clean_name)
         return missing_assessments
@@ -386,8 +386,11 @@ class FileImportService:
 
         self._validate_assignment_scores(df, course, course.term)
 
-        student_id_col = self._find_student_id_column(df.columns)
-        assessment_columns = self._extract_assessment_columns(df.columns)
+        try:
+            student_id_col = find_student_id_column(df.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
+        assessment_columns = extract_assessment_columns(df.columns)
         if not assessment_columns:
             raise FileImportError("No assessment score columns found in file")
 
@@ -490,7 +493,7 @@ class FileImportService:
             score = row[col_name]
             if pd.notna(score):
                 try:
-                    clean_name = self._clean_assessment_name(assessment_name)
+                    clean_name = clean_assessment_name(assessment_name)
                     assessment = assessment_lookup[clean_name.lower().strip()]
 
                     score_result = self._process_score_with_policy(
@@ -648,70 +651,6 @@ class FileImportService:
         except Exception as e:
             raise FileImportError(f"Error importing program outcomes: {str(e)}")
 
-    def _extract_assessment_columns(self, columns):
-        """
-        Extract assessment columns from Excel format.
-
-        Column format examples:
-        - 'Midterm 1(%25)_XXX' -> 'Midterm 1'
-        - 'Project(%40)_XXX' -> 'Project'
-        - 'Attendance(%10)_XXX' -> 'Attendance'
-
-        We only look at the first word/part before any suffix like _XXX.
-        Non-assessment columns are: No, Öğrenci No, Adı, Soyadı, Snf, Girme Durum, Harf Notu
-        """
-        assessment_columns = []
-
-        # Known non-assessment column prefixes (case-insensitive)
-        non_assessment_prefixes = ["no", "öğrenci no", "adı", "soyadı", "snf", "girme durum", "harf notu"]
-
-        for col in columns:
-            # Sanitize column name
-            col_str = InputValidator.sanitize_column_name(str(col))
-
-            # Extract the first part before any suffix pattern (_XXXXXX)
-            # Split by underscore and take everything before the last part if it looks like a suffix
-            parts = col_str.split("_")
-            if len(parts) > 1:
-                # Check if last part looks like a suffix (alphanumeric code)
-                last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 2:
-                    # Reconstruct without the suffix
-                    base_name = "_".join(parts[:-1])
-                else:
-                    base_name = col_str
-            else:
-                base_name = col_str
-
-            # Extract assessment name by removing weight pattern like (%25)
-            assessment_name = re.sub(r"\(%?\d+%?\)", "", base_name).strip()
-
-            # Check if this is a non-assessment column
-            is_non_assessment = False
-            for prefix in non_assessment_prefixes:
-                if assessment_name.lower().startswith(prefix.lower()):
-                    is_non_assessment = True
-                    break
-
-            if not is_non_assessment and assessment_name:
-                assessment_columns.append((col_str, assessment_name))
-
-        return assessment_columns
-
-    def _clean_assessment_name(self, name):
-        """Clean assessment name by removing weight information."""
-        # Remove weight patterns like "(%25)", "(%40)", etc.
-        cleaned = re.sub(r"\(%\d+\)", "", name).strip()
-        return cleaned
-
-    def _find_student_id_column(self, columns):
-        """Find the student ID column from Turkish column names."""
-        for col in columns:
-            col_str = str(col).lower().strip()
-            if "öğrenci no" in col_str:
-                return col
-        raise FileImportError("Student ID column not found. Expected columns containing 'öğrenci no'")
-
     def _validate_assignment_scores(self, dataframe: pd.DataFrame, course: Course, term: Term):
         """
         Validate that all required columns are present in dataframe for assessment scores.
@@ -761,7 +700,7 @@ class FileImportService:
         if assessments:
             assessment_list = list(assessments)
             # Use _extract_assessment_columns to get cleaned assessment names from columns
-            assessment_columns = self._extract_assessment_columns(dataframe.columns)
+            assessment_columns = extract_assessment_columns(dataframe.columns)
             found_assessment_names = [name for _, name in assessment_columns]
 
             assessment_col_found = []
@@ -792,7 +731,10 @@ class FileImportService:
         Raises:
             FileImportError: If any student is not enrolled in the course
         """
-        student_id_col = self._find_student_id_column(dataframe.columns)
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
 
         student_ids = [str(sid).strip() for sid in dataframe[student_id_col]]
         enrolled_students = CourseEnrollment.objects.filter(
@@ -818,7 +760,10 @@ class FileImportService:
         Raises:
             FileImportError: If any student is not enrolled in the course
         """
-        student_id_col = self._find_student_id_column(dataframe.columns)
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
         student_ids = [str(sid).strip() for sid in dataframe[student_id_col].tolist()]
         enrolled_students = CourseEnrollment.objects.filter(
             course=course, student__student_profile__student_id__in=student_ids
