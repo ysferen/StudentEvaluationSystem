@@ -630,6 +630,46 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/core/file-import/assignment-scores/resolve/:
+    post:
+      operationId: core_file_import_assignment_scores_resolve_create
+      description: Apply resolutions and re-validate.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolutions:
+                  type: string
+                  description: JSON string of ResolutionChoices
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
   /api/core/file-import/assignment-scores/upload/:
     get:
       operationId: core_file_import_assignment_scores_upload_retrieve
@@ -676,17 +716,30 @@ paths:
     post:
       operationId: core_file_import_assignment_scores_validate_create
       description: Validate file without importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -696,7 +749,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
           description: ''
   /api/core/file-import/learning-outcomes/upload/:
     get:
@@ -4488,6 +4560,46 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/core/file-import/assignment-scores/resolve/:
+    post:
+      operationId: v1_core_file_import_assignment_scores_resolve_create
+      description: Apply resolutions and re-validate.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolutions:
+                  type: string
+                  description: JSON string of ResolutionChoices
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
   /api/v1/core/file-import/assignment-scores/upload/:
     get:
       operationId: v1_core_file_import_assignment_scores_upload_retrieve
@@ -4534,17 +4646,30 @@ paths:
     post:
       operationId: v1_core_file_import_assignment_scores_validate_create
       description: Validate file without importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -4554,7 +4679,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
           description: ''
   /api/v1/core/file-import/learning-outcomes/upload/:
     get:

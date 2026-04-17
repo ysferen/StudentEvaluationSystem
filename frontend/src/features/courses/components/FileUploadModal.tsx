@@ -631,6 +631,9 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       typeof phase.phasePassed === 'boolean' ? phase.phasePassed === false : phase.check?.passed === false
     )
     const reachedPhaseIndex = normalizedPhaseReached ? phases.findIndex((phase) => phase.key === normalizedPhaseReached) : -1
+    const firstFailedFromChecksOnlyIndex = phases.findIndex(
+      (phase) => typeof phase.phasePassed !== 'boolean' && phase.check?.passed === false
+    )
     const lastEvaluatedIndex = phases.reduce((lastIndex, phase, idx) => {
       if (typeof phase.phasePassed === 'boolean') return idx
       return typeof phase.check?.passed === 'boolean' ? idx : lastIndex
@@ -658,12 +661,24 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             {phases.map((phase, idx) => {
               let phaseState: 'passed' | 'failed' | 'active' | 'pending' = 'pending'
 
-              if (typeof phase.phasePassed === 'boolean') {
+              // Treat phases after the reached phase as neutral/pending, even if backend
+              // sends default passed:false placeholders for them.
+              const isBeyondReachedPhase = reachedPhaseIndex !== -1 && idx > reachedPhaseIndex
+
+              if (isBeyondReachedPhase) {
+                phaseState = 'pending'
+              } else if (typeof phase.phasePassed === 'boolean') {
                 phaseState = phase.phasePassed ? 'passed' : 'failed'
               } else if (phase.check?.passed === true) {
                 phaseState = 'passed'
               } else if (phase.check?.passed === false) {
-                phaseState = 'failed'
+                // If backend did not send explicit per-phase progression, treat only
+                // the first failed check as failed and keep subsequent phases neutral.
+                if (reachedPhaseIndex === -1 && firstFailedFromChecksOnlyIndex !== -1) {
+                  phaseState = idx === firstFailedFromChecksOnlyIndex ? 'failed' : 'pending'
+                } else {
+                  phaseState = 'failed'
+                }
               } else if (firstFailedIndex !== -1) {
                 phaseState = idx < firstFailedIndex ? 'passed' : 'pending'
               } else if (is_valid) {
@@ -831,8 +846,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     )
   }
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking directly on the backdrop (not the modal content)
+    if (e.target === e.currentTarget && !isAnyUploadPending && !isAnyValidatePending && !isResolving) {
+      handleModalClose()
+    }
+  }
+
   return (
-    <div className={`fixed inset-0 z-20 isolate overflow-auto bg-secondary-900/60 flex items-center justify-center p-4 ${isOpen ? '' : 'hidden'}`}>
+    <div
+      onClick={handleBackdropClick}
+      className={`fixed inset-0 z-20 isolate overflow-auto bg-secondary-900/60 flex items-center justify-center p-4 ${isOpen ? '' : 'hidden'}`}
+    >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <h2 className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</h2>

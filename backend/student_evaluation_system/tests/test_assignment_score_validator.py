@@ -1,27 +1,117 @@
-import pytest
+"""
+Tests for assignment score validation phases and complete validation flow.
+"""
+
+from io import BytesIO
+
 import pandas as pd
+import pytest
+
 from core.services.validation import AssignmentScoreValidator
+from evaluation.models import Assessment
 
 
-@pytest.fixture
-def db_setup(db):
-    from core.models import University, Department, DegreeLevel, Program, Term, Course
+@pytest.mark.django_db
+class TestAssignmentScoreValidator:
+    """Tests for AssignmentScoreValidator class."""
 
-    university = University.objects.create(name="Test University")
-    department = Department.objects.create(code="TEST", name="Test Department", university=university)
-    degree_level = DegreeLevel.objects.create(name="Bachelor's")
-    program = Program.objects.create(code="TESTPROG", name="Test Program", degree_level=degree_level, department=department)
-    term = Term.objects.create(name="2025 Spring", is_active=True)
-    course = Course.objects.create(code="CS101", name="Intro to CS", credits=3, program=program, term=term)
+    def test_validate_missing_student_id_column(self, db_setup):
+        """Test validation fails when student ID column is missing."""
+        course = db_setup["course"]
 
-    return {
-        "university": university,
-        "department": department,
-        "degree_level": degree_level,
-        "program": program,
-        "term": term,
-        "course": course,
-    }
+        df = pd.DataFrame({"name": ["Student 1", "Student 2"], "grade": [85, 90]})
+        buffer = BytesIO()
+        df.to_excel(buffer, engine="openpyxl", index=False)
+        buffer.seek(0)
+        buffer.name = "test_missing_id.xlsx"
+        buffer.size = buffer.getbuffer().nbytes
+
+        result = AssignmentScoreValidator.validate_complete(buffer, course)
+
+        assert not result.is_valid
+        assert any("Student ID" in str(error) for error in result.errors)
+
+    def test_validate_missing_assessment_columns(self, db_setup):
+        """Test validation fails when no assessment columns found."""
+        course = db_setup["course"]
+
+        df = pd.DataFrame({"öğrenci no": ["12345", "67890"], "adı": ["John", "Jane"], "soyadı": ["Doe", "Smith"]})
+        buffer = BytesIO()
+        df.to_excel(buffer, engine="openpyxl", index=False)
+        buffer.seek(0)
+        buffer.name = "test_missing_assessments.xlsx"
+        buffer.size = buffer.getbuffer().nbytes
+
+        result = AssignmentScoreValidator.validate_complete(buffer, course)
+
+        assert not result.is_valid
+        assert any("assessment" in str(error).lower() for error in result.errors)
+
+    def test_validate_unknown_assessment(self, db_setup):
+        """Test validation warns about unknown assessments."""
+        course = db_setup["course"]
+
+        df = pd.DataFrame(
+            {"öğrenci no": ["12345"], "adı": ["John"], "soyadı": ["Doe"], "Unknown Assessment(%25)_0833AB": [85]}
+        )
+        buffer = BytesIO()
+        df.to_excel(buffer, engine="openpyxl", index=False)
+        buffer.seek(0)
+        buffer.name = "test_unknown_assessment.xlsx"
+        buffer.size = buffer.getbuffer().nbytes
+
+        result = AssignmentScoreValidator.validate_complete(buffer, course)
+
+        assert len(result.warnings) > 0 or not result.is_valid
+
+    def test_validate_unknown_students(self, db_setup):
+        """Test validation warns about unknown student IDs."""
+        course = db_setup["course"]
+
+        Assessment.objects.create(name="Midterm", course=course, total_score=100, weight=0.3, date="2025-12-28")
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": ["99999"],
+                "adı": ["Unknown"],
+                "soyadı": ["Student"],
+                "Midterm(%25)_0833AB": [85],
+            }
+        )
+        buffer = BytesIO()
+        df.to_excel(buffer, engine="openpyxl", index=False)
+        buffer.seek(0)
+        buffer.name = "test_unknown_student.xlsx"
+        buffer.size = buffer.getbuffer().nbytes
+
+        result = AssignmentScoreValidator.validate_complete(buffer, course)
+
+        assert len(result.warnings) > 0 or not result.is_valid
+
+    def test_validate_valid_assignment_scores(self, db_setup, student_factory, sample_assessments):
+        """Test validation passes for valid assignment scores file."""
+        course = db_setup["course"]
+        student = student_factory("student1")
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": [student.student_id],
+                "adı": [student.user.first_name],
+                "soyadı": [student.user.last_name],
+                "Midterm Exam(%30)_0833AB": [85.5],
+                "Final Exam(%40)_0833AB": [90.0],
+                "Project(%30)_0833AB": [88.0],
+            }
+        )
+        buffer = BytesIO()
+        df.to_excel(buffer, engine="openpyxl", index=False)
+        buffer.seek(0)
+        buffer.name = "test_valid_assignment_scores.xlsx"
+        buffer.size = buffer.getbuffer().nbytes
+
+        result = AssignmentScoreValidator.validate_complete(buffer, course)
+
+        assert result.is_valid or len(result.errors) == 0
 
 
 class TestPhase2ColumnStructure:
@@ -38,36 +128,18 @@ class TestPhase2ColumnStructure:
         assert result.is_valid
 
     def test_missing_student_id_column_fails(self, db_setup):
-        df = pd.DataFrame(
-            {
-                "adı": ["Ali"],
-                "soyadı": ["Veli"],
-                "Midterm(%30)": [80],
-            }
-        )
+        df = pd.DataFrame({"adı": ["Ali"], "soyadı": ["Veli"], "Midterm(%30)": [80]})
         result = AssignmentScoreValidator.validate_column_structure(df)
         assert not result.is_valid
         assert any("öğrenci no" in e["message"] for e in result.errors)
 
     def test_missing_first_name_column_fails(self, db_setup):
-        df = pd.DataFrame(
-            {
-                "öğrenci no": ["S001"],
-                "soyadı": ["Veli"],
-                "Midterm(%30)": [80],
-            }
-        )
+        df = pd.DataFrame({"öğrenci no": ["S001"], "soyadı": ["Veli"], "Midterm(%30)": [80]})
         result = AssignmentScoreValidator.validate_column_structure(df)
         assert not result.is_valid
 
     def test_missing_assessment_column_fails(self, db_setup):
-        df = pd.DataFrame(
-            {
-                "öğrenci no": ["S001"],
-                "adı": ["Ali"],
-                "soyadı": ["Veli"],
-            }
-        )
+        df = pd.DataFrame({"öğrenci no": ["S001"], "adı": ["Ali"], "soyadı": ["Veli"]})
         result = AssignmentScoreValidator.validate_column_structure(df)
         assert not result.is_valid
         assert any("No assessment" in e["message"] for e in result.errors)
@@ -76,8 +148,6 @@ class TestPhase2ColumnStructure:
 class TestPhase5ScoreValidation:
     def test_valid_scores_pass(self, db_setup):
         course = db_setup["course"]
-        from evaluation.models import Assessment
-
         Assessment.objects.create(course=course, name="Midterm", total_score=100)
         df = pd.DataFrame(
             {
@@ -92,8 +162,6 @@ class TestPhase5ScoreValidation:
 
     def test_out_of_range_score_fails(self, db_setup):
         course = db_setup["course"]
-        from evaluation.models import Assessment
-
         Assessment.objects.create(course=course, name="Midterm", total_score=100)
         df = pd.DataFrame(
             {
@@ -109,8 +177,6 @@ class TestPhase5ScoreValidation:
 
     def test_negative_score_fails(self, db_setup):
         course = db_setup["course"]
-        from evaluation.models import Assessment
-
         Assessment.objects.create(course=course, name="Midterm", total_score=100)
         df = pd.DataFrame(
             {
@@ -125,8 +191,6 @@ class TestPhase5ScoreValidation:
 
     def test_non_numeric_score_fails(self, db_setup):
         course = db_setup["course"]
-        from evaluation.models import Assessment
-
         Assessment.objects.create(course=course, name="Midterm", total_score=100)
         df = pd.DataFrame(
             {
@@ -141,20 +205,10 @@ class TestPhase5ScoreValidation:
 
 
 def test_validate_complete_sets_phase_reached_and_checks(db_setup):
-    from io import BytesIO
-    from evaluation.models import Assessment
-
     course = db_setup["course"]
     Assessment.objects.create(course=course, name="Midterm", total_score=100)
 
-    df = pd.DataFrame(
-        {
-            "öğrenci no": ["S001"],
-            "adı": ["Ali"],
-            "soyadı": ["Veli"],
-            "Midterm(%30)_X1": [80],
-        }
-    )
+    df = pd.DataFrame({"öğrenci no": ["S001"], "adı": ["Ali"], "soyadı": ["Veli"], "Midterm(%30)_X1": [80]})
     buf = BytesIO()
     df.to_excel(buf, index=False)
     buf.seek(0)
@@ -177,8 +231,6 @@ def test_validate_complete_sets_phase_reached_and_checks(db_setup):
 
 
 def test_validate_complete_hard_stops_at_column_structure(db_setup):
-    from io import BytesIO
-
     course = db_setup["course"]
     df = pd.DataFrame({"adı": ["Ali"], "soyadı": ["Veli"]})
     buf = BytesIO()

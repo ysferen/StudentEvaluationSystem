@@ -33,7 +33,13 @@ import type {
   CoreCoursesListParams,
   CoreDegreeLevelsListParams,
   CoreDepartmentsListParams,
+  CoreFileImportAssignmentScoresResolveCreate200,
+  CoreFileImportAssignmentScoresResolveCreateBody,
+  CoreFileImportAssignmentScoresResolveCreateParams,
   CoreFileImportAssignmentScoresUploadCreateBody,
+  CoreFileImportAssignmentScoresValidateCreate200,
+  CoreFileImportAssignmentScoresValidateCreateBody,
+  CoreFileImportAssignmentScoresValidateCreateParams,
   CoreFileImportLearningOutcomesUploadCreateBody,
   CoreFileImportProgramOutcomesUploadCreateBody,
   CoreLoPoMappingsListParams,
@@ -2013,6 +2019,76 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Apply resolutions and re-validate.
+ */
+export const coreFileImportAssignmentScoresResolveCreate = (
+    coreFileImportAssignmentScoresResolveCreateBody: CoreFileImportAssignmentScoresResolveCreateBody,
+    params: CoreFileImportAssignmentScoresResolveCreateParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+if(coreFileImportAssignmentScoresResolveCreateBody.file !== undefined) {
+ formData.append(`file`, coreFileImportAssignmentScoresResolveCreateBody.file)
+ }
+if(coreFileImportAssignmentScoresResolveCreateBody.resolutions !== undefined) {
+ formData.append(`resolutions`, coreFileImportAssignmentScoresResolveCreateBody.resolutions)
+ }
+
+      return customInstance<CoreFileImportAssignmentScoresResolveCreate200>(
+      {url: `/api/core/file-import/assignment-scores/resolve/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreFileImportAssignmentScoresResolveCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>, TError,{data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>, TError,{data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams}, TContext> => {
+
+const mutationKey = ['coreFileImportAssignmentScoresResolveCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>, {data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  coreFileImportAssignmentScoresResolveCreate(data,params,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreFileImportAssignmentScoresResolveCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>>
+    export type CoreFileImportAssignmentScoresResolveCreateMutationBody = CoreFileImportAssignmentScoresResolveCreateBody
+    export type CoreFileImportAssignmentScoresResolveCreateMutationError = unknown
+
+    export const useCoreFileImportAssignmentScoresResolveCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>, TError,{data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>,
+        TError,
+        {data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreFileImportAssignmentScoresResolveCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Upload and process file.
  */
 export const coreFileImportAssignmentScoresUploadRetrieve = (
@@ -2170,18 +2246,21 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const coreFileImportAssignmentScoresValidateCreate = (
-    fileImportResponse: FileImportResponse,
+    coreFileImportAssignmentScoresValidateCreateBody: CoreFileImportAssignmentScoresValidateCreateBody,
+    params: CoreFileImportAssignmentScoresValidateCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
       const formData = new FormData();
-formData.append(`message`, fileImportResponse.message)
-formData.append(`results`, JSON.stringify(fileImportResponse.results));
+if(coreFileImportAssignmentScoresValidateCreateBody.file !== undefined) {
+ formData.append(`file`, coreFileImportAssignmentScoresValidateCreateBody.file)
+ }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<CoreFileImportAssignmentScoresValidateCreate200>(
       {url: `/api/core/file-import/assignment-scores/validate/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
@@ -2189,8 +2268,8 @@ formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
 
 export const getCoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams}, TContext> => {
 
 const mutationKey = ['coreFileImportAssignmentScoresValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2202,10 +2281,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, {data: FileImportResponse}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, {data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  coreFileImportAssignmentScoresValidateCreate(data,requestOptions)
+          return  coreFileImportAssignmentScoresValidateCreate(data,params,requestOptions)
         }
 
 
@@ -2214,15 +2293,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportAssignmentScoresValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>>
-    export type CoreFileImportAssignmentScoresValidateCreateMutationBody = FileImportResponse
+    export type CoreFileImportAssignmentScoresValidateCreateMutationBody = CoreFileImportAssignmentScoresValidateCreateBody
     export type CoreFileImportAssignmentScoresValidateCreateMutationError = unknown
 
     export const useCoreFileImportAssignmentScoresValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, TError,{data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>,
         TError,
-        {data: FileImportResponse},
+        {data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams},
         TContext
       > => {
 

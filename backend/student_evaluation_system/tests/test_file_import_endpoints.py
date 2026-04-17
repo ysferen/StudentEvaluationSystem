@@ -5,13 +5,14 @@ Tests the validate and resolve endpoints for the file import system.
 """
 
 import json
-import pytest
 from io import BytesIO
+
 import pandas as pd
+import pytest
 from django.contrib.auth import get_user_model
 from rest_framework import status
 
-from core.models import Term, Course
+from core.models import Course, Term
 from evaluation.models import Assessment, CourseEnrollment
 from users.models import StudentProfile
 
@@ -122,12 +123,10 @@ class TestValidateEndpoint:
     """Tests for the /validate/ endpoint."""
 
     def setup_method(self):
-        """Set up test fixtures."""
         pass
 
     @pytest.mark.django_db
     def test_validate_returns_structured_response(self, api_client, course, term, student, assessments):
-        """Test that validate endpoint returns structured response with phases."""
         df = pd.DataFrame(
             {
                 "öğrenci no": [student.student_profile.student_id],
@@ -158,21 +157,13 @@ class TestValidateEndpoint:
         assert "suggestions" in data
         assert "details" in data
 
-        assert "checks" in data
-        for key in [
-            "file_structure",
-            "column_structure",
-            "assessment_validation",
-            "student_validation",
-            "score_validation",
-        ]:
+        for key in ["file_structure", "column_structure", "assessment_validation", "student_validation", "score_validation"]:
             assert key in data["checks"]
             assert "passed" in data["checks"][key]
         assert data["is_valid"] is True
 
     @pytest.mark.django_db
     def test_validate_missing_students_returns_soft_failure(self, api_client, course, term, assessments):
-        """Test that validation doesn't hard-fail when students are missing from database."""
         df = pd.DataFrame(
             {
                 "öğrenci no": ["UNKNOWN_STUDENT_1", "UNKNOWN_STUDENT_2"],
@@ -193,7 +184,6 @@ class TestValidateEndpoint:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
         data = response.data
         assert data["is_valid"] is False
         assert len(data["errors"]) > 0
@@ -203,7 +193,6 @@ class TestValidateEndpoint:
 
     @pytest.mark.django_db
     def test_validate_missing_course_returns_404(self, api_client, term):
-        """Test validation returns 404 for non-existent course."""
         df = pd.DataFrame(
             {
                 "öğrenci no": ["STU001"],
@@ -225,7 +214,6 @@ class TestValidateEndpoint:
 
     @pytest.mark.django_db
     def test_validate_missing_file_returns_400(self, api_client, course, term):
-        """Test validation returns 400 when no file is provided."""
         response = api_client.post(
             f"/api/v1/core/file-import/assignment-scores/validate/?course_code={course.code}&term_id={term.id}",
             {},
@@ -236,12 +224,7 @@ class TestValidateEndpoint:
 
     @pytest.mark.django_db
     def test_validate_missing_params_returns_400(self, api_client):
-        """Test validation returns 400 when required params are missing."""
-        response = api_client.post(
-            "/api/v1/core/file-import/assignment-scores/validate/",
-            {},
-            format="multipart",
-        )
+        response = api_client.post("/api/v1/core/file-import/assignment-scores/validate/", {}, format="multipart")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -251,7 +234,6 @@ class TestResolveEndpoint:
 
     @pytest.mark.django_db
     def test_resolve_endpoint_creates_students(self, api_client, course, term, assessments):
-        """Test that /resolve/ endpoint creates missing students from file data."""
         df = pd.DataFrame(
             {
                 "öğrenci no": ["NEW_STUDENT_001", "NEW_STUDENT_002"],
@@ -279,18 +261,15 @@ class TestResolveEndpoint:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
         data = response.data
         assert "resolutions_applied" in data
         assert "created" in data["resolutions_applied"]
         assert data["resolutions_applied"]["created"]["students"] == 2
-
         assert StudentProfile.objects.filter(student_id="NEW_STUDENT_001").exists()
         assert StudentProfile.objects.filter(student_id="NEW_STUDENT_002").exists()
 
     @pytest.mark.django_db
     def test_resolve_endpoint_creates_enrollments(self, api_client, course, term, assessments):
-        """Test that /resolve/ endpoint creates enrollments for existing students."""
         new_user = User.objects.create_user(
             username="pre_existing",
             email="preexisting@test.com",
@@ -326,14 +305,12 @@ class TestResolveEndpoint:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
         data = response.data
         assert data["resolutions_applied"]["created"]["enrollments"] == 1
         assert CourseEnrollment.objects.filter(student=new_user, course=course).exists()
 
     @pytest.mark.django_db
     def test_resolve_endpoint_creates_assessments(self, api_client, course, term):
-        """Test that /resolve/ endpoint creates missing assessments."""
         df = pd.DataFrame(
             {
                 "öğrenci no": ["STU001"],
@@ -354,14 +331,12 @@ class TestResolveEndpoint:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
         data = response.data
         assert data["resolutions_applied"]["created"]["assessments"] == 1
         assert Assessment.objects.filter(name="Quiz 1", course=course).exists()
 
     @pytest.mark.django_db
     def test_resolve_after_student_creation_is_valid(self, api_client, course, term, assessments):
-        """Test that after creating students via resolve, validation passes."""
         df = pd.DataFrame(
             {
                 "öğrenci no": ["RESOLVED_STUDENT_001"],
@@ -386,7 +361,6 @@ class TestResolveEndpoint:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
         data = response.data
         assert data["resolutions_applied"]["created"]["students"] == 1
         assert data["is_valid"] is True

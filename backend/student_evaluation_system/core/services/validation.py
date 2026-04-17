@@ -811,7 +811,7 @@ class AssignmentScoreValidator:
         ]
 
         for col, label in required_cols:
-            matched = any(col.lower() == c.lower() for c in dataframe.columns)
+            matched = any(col.lower() in c.lower() for c in dataframe.columns)
             if not matched:
                 result.add_error(f"{label} column not found. Expected column '{col}'", "column_structure")
 

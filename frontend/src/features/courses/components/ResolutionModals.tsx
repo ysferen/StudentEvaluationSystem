@@ -31,7 +31,7 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div className="flex items-center gap-3">
@@ -254,7 +254,7 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div className="flex items-center gap-3">
