@@ -385,7 +385,7 @@ class BusinessStructureValidator:
             if len(parts) > 1:
                 # Check if last part looks like a suffix (alphanumeric code)
                 last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 4:
+                if last_part.isalnum() and len(last_part) >= 2:
                     # Reconstruct without the suffix
                     base_name = "_".join(parts[:-1])
                 else:

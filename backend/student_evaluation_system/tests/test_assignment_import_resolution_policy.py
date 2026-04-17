@@ -49,3 +49,4 @@ def test_import_with_skip_invalid_scores_does_not_raise_for_invalid_cells():
     )
 
     assert "errors" in result
+    assert result.get("skipped", 0) >= 1

@@ -45,6 +45,19 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
 
     import_type = None
 
+    def _parse_resolution_policy(self, request):
+        resolution_policy_raw = request.data.get("resolution_policy")
+        if resolution_policy_raw is None:
+            return {}
+        if isinstance(resolution_policy_raw, str):
+            try:
+                return json.loads(resolution_policy_raw)
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid resolution_policy JSON"}, status=status.HTTP_400_BAD_REQUEST)
+        if isinstance(resolution_policy_raw, dict):
+            return resolution_policy_raw
+        return {}
+
     @extend_schema(
         request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}}
     )
@@ -79,7 +92,14 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
             service.validate_file()
 
             if self.import_type == "assignment_scores":
-                result = service.import_assignment_scores(course_code=course_code, term_id=term_id)
+                resolution_policy = self._parse_resolution_policy(request)
+                if isinstance(resolution_policy, Response):
+                    return resolution_policy
+                result = service.import_assignment_scores(
+                    course_code=course_code,
+                    term_id=term_id,
+                    resolution_policy=resolution_policy,
+                )
             elif self.import_type == "learning_outcomes":
                 result = service.import_learning_outcomes()
             elif self.import_type == "program_outcomes":

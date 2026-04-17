@@ -281,19 +281,33 @@ class FileImportService:
                 raise
             raise FileImportError(f"Invalid file: {str(e)}")
 
-    def import_assignment_scores(self, course_code: str, term_id: int):
+    def import_assignment_scores(self, course_code: str, term_id: int, resolution_policy: Optional[Dict[str, bool]] = None):
         """
         Import assignment scores from Turkish Excel format.
 
         Args:
             course_code (str): Code of the course for which grades are being imported
             term_id (int): ID of the academic term for which grades are being imported
+            resolution_policy (dict, optional): Policy dict with keys:
+                - skip_missing_assessments: bool
+                - skip_missing_students: bool
+                - skip_unenrolled_students: bool
+                - skip_invalid_scores: bool
+                - clamp_scores: bool
 
         Returns:
             dict: Import results with created/updated counts
         """
         try:
             course_code, term_id = self._validate_assignment_import_params(course_code, term_id)
+
+            policy = {
+                "skip_missing_assessments": bool((resolution_policy or {}).get("skip_missing_assessments", False)),
+                "skip_missing_students": bool((resolution_policy or {}).get("skip_missing_students", False)),
+                "skip_unenrolled_students": bool((resolution_policy or {}).get("skip_unenrolled_students", False)),
+                "skip_invalid_scores": bool((resolution_policy or {}).get("skip_invalid_scores", False)),
+                "clamp_scores": bool((resolution_policy or {}).get("clamp_scores", False)),
+            }
             (
                 df,
                 course,
@@ -320,6 +334,7 @@ class FileImportService:
                             assessment_columns=assessment_columns,
                             assessment_lookup=assessment_lookup,
                             affected_courses=affected_courses,
+                            policy=policy,
                         )
                         created_count += row_created
                         updated_count += row_updated
@@ -385,6 +400,32 @@ class FileImportService:
 
         return df, course, course_assessments, assessment_lookup, student_id_col, assessment_columns
 
+    def _process_score_with_policy(
+        self,
+        score,
+        assessment,
+        row_number: int,
+        clean_name: str,
+        policy: Dict[str, bool],
+    ):
+        try:
+            return InputValidator.validate_score(score, max_score=assessment.total_score)
+        except CustomValidationError:
+            if policy.get("clamp_scores"):
+                try:
+                    raw_score = float(score)
+                    return max(0.0, min(float(assessment.total_score), raw_score))
+                except (ValueError, TypeError):
+                    if policy.get("skip_invalid_scores"):
+                        return None
+                    self.import_results["errors"].append(f"Row {row_number}: Invalid score '{score}' for {clean_name}")
+                    return None
+            elif policy.get("skip_invalid_scores"):
+                return None
+            else:
+                self.import_results["errors"].append(f"Row {row_number}: Invalid score '{score}' for {clean_name}")
+                return None
+
     def _process_assignment_row(
         self,
         row,
@@ -393,7 +434,9 @@ class FileImportService:
         assessment_columns,
         assessment_lookup,
         affected_courses,
+        policy: Dict[str, bool] = None,
     ):
+        policy = policy or {}
         created_count = 0
         updated_count = 0
         skipped_count = 0
@@ -414,6 +457,35 @@ class FileImportService:
             self.import_results["errors"].append(f"Row {row_number}: Student '{student_id}' not found in database")
             return created_count, updated_count, skipped_count
 
+        assessment_results = self._process_row_assessments(
+            row=row,
+            row_number=row_number,
+            student_user=student_user,
+            assessment_columns=assessment_columns,
+            assessment_lookup=assessment_lookup,
+            affected_courses=affected_courses,
+            policy=policy,
+        )
+        return (
+            created_count + assessment_results[0],
+            updated_count + assessment_results[1],
+            skipped_count + assessment_results[2],
+        )
+
+    def _process_row_assessments(
+        self,
+        row,
+        row_number: int,
+        student_user,
+        assessment_columns,
+        assessment_lookup,
+        affected_courses,
+        policy: Dict[str, bool],
+    ):
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+
         for col_name, assessment_name in assessment_columns:
             score = row[col_name]
             if pd.notna(score):
@@ -421,11 +493,19 @@ class FileImportService:
                     clean_name = self._clean_assessment_name(assessment_name)
                     assessment = assessment_lookup[clean_name.lower().strip()]
 
-                    try:
-                        score_float = InputValidator.validate_score(score, max_score=assessment.total_score)
-                    except CustomValidationError as e:
-                        self.import_results["errors"].append(f"Row {row_number}: {str(e)} for {clean_name}")
+                    score_result = self._process_score_with_policy(
+                        score=score,
+                        assessment=assessment,
+                        row_number=row_number,
+                        clean_name=clean_name,
+                        policy=policy,
+                    )
+                    if score_result is None:
+                        if policy.get("skip_invalid_scores"):
+                            skipped_count += 1
                         continue
+
+                    score_float = score_result
 
                     _, created = StudentGrade.objects.update_or_create(
                         student=student_user,
@@ -595,7 +675,7 @@ class FileImportService:
             if len(parts) > 1:
                 # Check if last part looks like a suffix (alphanumeric code)
                 last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 4:
+                if last_part.isalnum() and len(last_part) >= 2:
                     # Reconstruct without the suffix
                     base_name = "_".join(parts[:-1])
                 else:
