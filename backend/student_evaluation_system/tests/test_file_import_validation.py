@@ -266,7 +266,7 @@ class TestResolveEndpoint:
         buffer.name = "new_students.xlsx"
 
         resolutions = {
-            "students": [
+            "create_students": [
                 {"student_id": "NEW_STUDENT_001", "first_name": "New", "last_name": "Student1"},
                 {"student_id": "NEW_STUDENT_002", "first_name": "Another", "last_name": "Student2"},
             ]
@@ -315,8 +315,8 @@ class TestResolveEndpoint:
         buffer.name = "enroll_student.xlsx"
 
         resolutions = {
-            "students": [{"student_id": "EXISTING_001", "first_name": "Pre", "last_name": "Existing"}],
-            "enrollments": [{"student_id": "EXISTING_001"}],
+            "create_students": [{"student_id": "EXISTING_001", "first_name": "Pre", "last_name": "Existing"}],
+            "enroll_students": ["EXISTING_001"],
         }
 
         response = api_client.post(
@@ -345,7 +345,7 @@ class TestResolveEndpoint:
         buffer = create_excel_buffer(df)
         buffer.name = "new_assessment.xlsx"
 
-        resolutions = {"assessments": [{"name": "Quiz 1", "assessment_type": "quiz", "total_score": 20, "weight": 0.1}]}
+        resolutions = {"create_assessments": [{"name": "Quiz 1", "assessment_type": "quiz", "total_score": 20, "weight": 0.1}]}
 
         response = api_client.post(
             f"/api/v1/core/file-import/assignment-scores/resolve/?course_code={course.code}&term_id={term.id}",
@@ -376,7 +376,7 @@ class TestResolveEndpoint:
         buffer.name = "resolved_student.xlsx"
 
         resolutions = {
-            "students": [{"student_id": "RESOLVED_STUDENT_001", "first_name": "Resolved", "last_name": "Student"}],
+            "create_students": [{"student_id": "RESOLVED_STUDENT_001", "first_name": "Resolved", "last_name": "Student"}],
         }
 
         response = api_client.post(

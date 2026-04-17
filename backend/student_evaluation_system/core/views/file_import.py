@@ -111,30 +111,22 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
 
     import_type = "assignment_scores"
 
-    def _build_validation_response(self, validation_result, phase_reached=None):
-        """Build standardized validation response."""
-        phases_completed = validation_result.validation_details.get("phases_completed", [])
-        if phase_reached and phases_completed:
-            current_phase = phases_completed[-1]["phase"] if phases_completed else None
-        else:
-            current_phase = phases_completed[-1]["phase"] if phases_completed else None
-
-        return Response(
-            {
-                "is_valid": validation_result.is_valid,
-                "phase_reached": current_phase,
-                "checks": {
-                    "errors": validation_result.errors,
-                    "warnings": validation_result.warnings,
-                    "suggestions": validation_result.suggestions,
-                },
-                "errors": validation_result.errors,
-                "warnings": validation_result.warnings,
-                "suggestions": validation_result.suggestions,
-                "details": validation_result.validation_details,
-            },
-            status=status.HTTP_200_OK,
-        )
+    def _build_validation_response(self, validation_result, resolutions_applied=None):
+        """Build standardized validation response with canonical shape."""
+        details = validation_result.validation_details
+        checks = details.get("checks", {})
+        payload = {
+            "is_valid": validation_result.is_valid,
+            "phase_reached": details.get("phase_reached", "unknown"),
+            "checks": checks,
+            "errors": validation_result.errors,
+            "warnings": validation_result.warnings,
+            "suggestions": validation_result.suggestions,
+            "details": details,
+        }
+        if resolutions_applied is not None:
+            payload["resolutions_applied"] = resolutions_applied
+        return Response(payload, status=status.HTTP_200_OK)
 
     @extend_schema(
         parameters=[
@@ -195,9 +187,9 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         validation_result = AssignmentScoreValidator.validate_complete(file_obj, course)
         return self._build_validation_response(validation_result)
 
-    def _apply_student_resolutions(self, resolutions, course, errors, created_counts):
+    def _apply_student_resolutions(self, create_students, course, errors, created_counts):
         """Apply student creation resolutions."""
-        for student_data in resolutions.get("students", []):
+        for student_data in create_students:
             try:
                 student_id = student_data.get("student_id")
                 first_name = student_data.get("first_name", "")
@@ -213,18 +205,15 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     last_name=last_name,
                     role="student",
                 )
-
                 StudentProfile.objects.create(user=user, student_id=student_id, program=course.program)
                 created_counts["students"] += 1
             except Exception as e:
                 errors.append(f"Failed to create student {student_data.get('student_id', 'unknown')}: {str(e)}")
 
-    def _apply_enrollment_resolutions(self, resolutions, course, errors, created_counts):
+    def _apply_enrollment_resolutions(self, enroll_students, course, errors, created_counts):
         """Apply enrollment resolutions."""
-        for enrollment_data in resolutions.get("enrollments", []):
+        for student_id in enroll_students:
             try:
-                student_id = enrollment_data.get("student_id")
-
                 try:
                     student_profile = StudentProfile.objects.get(student_id=student_id)
                 except StudentProfile.DoesNotExist:
@@ -237,18 +226,24 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     CourseEnrollment.objects.create(student=student_user, course=course, status="active")
                     created_counts["enrollments"] += 1
             except Exception as e:
-                errors.append(f"Failed to create enrollment for {enrollment_data.get('student_id', 'unknown')}: {str(e)}")
+                errors.append(f"Failed to create enrollment for {student_id}: {str(e)}")
 
-    def _apply_assessment_resolutions(self, resolutions, course, errors, created_counts):
+    def _apply_assessment_resolutions(self, create_assessments, course, errors, created_counts):
         """Apply assessment creation resolutions."""
         from evaluation.models import Assessment
 
-        for assessment_data in resolutions.get("assessments", []):
+        for assessment_data in create_assessments:
             try:
-                name = assessment_data.get("name")
-                assessment_type = assessment_data.get("assessment_type", "homework")
-                total_score = assessment_data.get("total_score", 100)
-                weight = assessment_data.get("weight", 0.0)
+                if isinstance(assessment_data, dict):
+                    name = assessment_data.get("name")
+                    assessment_type = assessment_data.get("assessment_type", "homework")
+                    total_score = assessment_data.get("total_score", 100)
+                    weight = assessment_data.get("weight", 0.0)
+                else:
+                    name = assessment_data
+                    assessment_type = "homework"
+                    total_score = 100
+                    weight = 0.0
 
                 if not Assessment.objects.filter(name=name, course=course).exists():
                     Assessment.objects.create(
@@ -260,7 +255,7 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     )
                     created_counts["assessments"] += 1
             except Exception as e:
-                errors.append(f"Failed to create assessment {assessment_data.get('name', 'unknown')}: {str(e)}")
+                errors.append(f"Failed to create assessment {name}: {str(e)}")
 
     @extend_schema(
         parameters=[
@@ -307,47 +302,48 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
             )
 
         resolutions_json = request.data.get("resolutions")
-        if not resolutions_json:
-            return Response({"error": "resolutions JSON is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if isinstance(resolutions_json, str):
+            try:
+                resolutions = json.loads(resolutions_json)
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid resolutions JSON"}, status=status.HTTP_400_BAD_REQUEST)
+        elif isinstance(resolutions_json, dict):
+            resolutions = resolutions_json
+        else:
+            resolutions = {}
 
-        try:
-            resolutions = json.loads(resolutions_json)
-        except json.JSONDecodeError:
-            return Response({"error": "Invalid resolutions JSON"}, status=status.HTTP_400_BAD_REQUEST)
+        create_students = resolutions.get("create_students", [])
+        enroll_students = resolutions.get("enroll_students", [])
+        create_assessments = resolutions.get("create_assessments", [])
+
+        skip_missing_assessments = bool(resolutions.get("skip_missing_assessments", False))
+        skip_missing_students = bool(resolutions.get("skip_missing_students", False))
+        skip_unenrolled_students = bool(resolutions.get("skip_unenrolled_students", False))
+        skip_invalid_scores = bool(resolutions.get("skip_invalid_scores", False))
+        clamp_scores = bool(resolutions.get("clamp_scores", False))
 
         errors = []
         created_counts = {"students": 0, "enrollments": 0, "assessments": 0}
 
-        self._apply_student_resolutions(resolutions, course, errors, created_counts)
-        self._apply_enrollment_resolutions(resolutions, course, errors, created_counts)
-        self._apply_assessment_resolutions(resolutions, course, errors, created_counts)
+        self._apply_student_resolutions(create_students, course, errors, created_counts)
+        self._apply_enrollment_resolutions(enroll_students, course, errors, created_counts)
+        self._apply_assessment_resolutions(create_assessments, course, errors, created_counts)
 
         file_obj.seek(0)
         validation_result = AssignmentScoreValidator.validate_complete(file_obj, course)
 
-        phases = validation_result.validation_details.get("phases_completed", [])
-        phase_reached = phases[-1]["phase"] if phases else None
-
-        return Response(
-            {
-                "is_valid": validation_result.is_valid,
-                "phase_reached": phase_reached,
-                "checks": {
-                    "errors": validation_result.errors,
-                    "warnings": validation_result.warnings,
-                    "suggestions": validation_result.suggestions,
-                },
-                "errors": validation_result.errors,
-                "warnings": validation_result.warnings,
-                "suggestions": validation_result.suggestions,
-                "details": validation_result.validation_details,
-                "resolutions_applied": {
-                    "created": created_counts,
-                    "errors": errors,
-                },
+        resolution_summary = {
+            "created": created_counts,
+            "errors": errors,
+            "policy": {
+                "skip_missing_assessments": skip_missing_assessments,
+                "skip_missing_students": skip_missing_students,
+                "skip_unenrolled_students": skip_unenrolled_students,
+                "skip_invalid_scores": skip_invalid_scores,
+                "clamp_scores": clamp_scores,
             },
-            status=status.HTTP_200_OK,
-        )
+        }
+        return self._build_validation_response(validation_result, resolutions_applied=resolution_summary)
 
 
 class LearningOutcomesImportViewSet(BaseFileImportViewSet):
