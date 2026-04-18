@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: mode !== 'production',
+      cssMinify: 'esbuild',
 
       // Code splitting for better caching
       rollupOptions: {

@@ -674,6 +674,19 @@ paths:
     get:
       operationId: core_file_import_assignment_scores_upload_retrieve
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       security:
@@ -685,22 +698,52 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
     post:
       operationId: core_file_import_assignment_scores_upload_create
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -710,7 +753,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/core/file-import/assignment-scores/validate/:
     post:
@@ -4824,6 +4879,19 @@ paths:
     get:
       operationId: v1_core_file_import_assignment_scores_upload_retrieve
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       security:
@@ -4835,22 +4903,52 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
     post:
       operationId: v1_core_file_import_assignment_scores_upload_create
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -4860,7 +4958,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/v1/core/file-import/assignment-scores/validate/:
     post:
@@ -8326,9 +8436,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -8367,9 +8476,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -8499,9 +8607,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -8647,9 +8754,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
       required:
       - id
       - name
@@ -9249,9 +9355,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -9348,9 +9453,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -9475,9 +9579,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
     PatchedDepartment:
       type: object
       description: |-

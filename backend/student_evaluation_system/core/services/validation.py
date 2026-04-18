@@ -11,8 +11,10 @@ Each validator focuses on specific responsibility and can be combined
 to create comprehensive validation pipelines.
 """
 
+import re
+
 import pandas as pd
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from django.contrib.auth import get_user_model
 
 from ..models import Term, Course
@@ -591,6 +593,195 @@ class AssignmentScoreValidator:
         }
 
     @staticmethod
+    def _normalize_resolution_policy(resolution_policy: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+        policy = resolution_policy or {}
+        return {
+            "skip_missing_assessments": bool(policy.get("skip_missing_assessments", False)),
+            "skip_missing_students": bool(policy.get("skip_missing_students", False)),
+            "skip_unenrolled_students": bool(policy.get("skip_unenrolled_students", False)),
+            "skip_invalid_scores": bool(policy.get("skip_invalid_scores", False)),
+            "clamp_scores": bool(policy.get("clamp_scores", False)),
+        }
+
+    @staticmethod
+    def normalize_resolution_policy(resolution_policy: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+        """Public helper to normalize resolution policy flags."""
+        return AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
+
+    @staticmethod
+    def _build_student_lookups(
+        dataframe: pd.DataFrame,
+        course: Course,
+    ) -> tuple[Dict[str, Any], set[Any], set[str], set[str], str]:
+        """Build lookups for student profiles and enrollments.
+
+        Returns:
+            Tuple of (profile_lookup, enrolled_ids_set, found_ids_set, missing_ids_set, student_id_col)
+        """
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
+            return {}, set(), set(), set(), ""
+
+        file_student_ids = {str(sid).strip() for sid in dataframe[student_id_col] if pd.notna(sid)}
+
+        from users.models import StudentProfile
+
+        student_profiles = StudentProfile.objects.filter(student_id__in=file_student_ids).select_related("user")
+        profile_by_student_id = {str(p.student_id).strip(): p for p in student_profiles}
+        found_ids = set(profile_by_student_id.keys())
+        missing_ids = file_student_ids - found_ids
+
+        enrolled_ids: set[Any] = set()
+        if found_ids:
+            user_ids = [p.user.pk for p in student_profiles]
+            enrolled_ids = set(
+                CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+            )
+
+        return profile_by_student_id, enrolled_ids, found_ids, missing_ids, student_id_col
+
+    @staticmethod
+    def _filter_rows_by_policy(
+        dataframe: pd.DataFrame,
+        student_id_col: str,
+        profile_lookup: Dict[str, Any],
+        enrolled_ids: set,
+        missing_ids: set,
+        policy: Dict[str, bool],
+    ) -> tuple[pd.DataFrame, Dict[str, int]]:
+        """Filter rows based on student-level policy rules."""
+        keep_rows = []
+        dropped_missing = 0
+        dropped_unenrolled = 0
+
+        for student_id in dataframe[student_id_col]:
+            if pd.isna(student_id):
+                keep_rows.append(True)
+                continue
+
+            sid = str(student_id).strip()
+
+            if sid in missing_ids and policy.get("skip_missing_students"):
+                dropped_missing += 1
+                keep_rows.append(False)
+                continue
+
+            profile = profile_lookup.get(sid)
+            if profile and profile.user.pk not in enrolled_ids and policy.get("skip_unenrolled_students"):
+                dropped_unenrolled += 1
+                keep_rows.append(False)
+                continue
+
+            keep_rows.append(True)
+
+        filtered_df = dataframe[keep_rows].reset_index(drop=True)
+        return filtered_df, {"missing": dropped_missing, "unenrolled": dropped_unenrolled}
+
+    @staticmethod
+    def _apply_score_policies(
+        dataframe: pd.DataFrame,
+        course: Course,
+        policy: Dict[str, bool],
+    ) -> Dict[str, int]:
+        """Apply score-level policy rules to assessment columns."""
+        effects = {"clamped": 0, "skipped": 0}
+
+        assessment_cols = extract_assessment_columns(dataframe.columns)
+        db_assessments = {a.name.lower().strip(): a for a in Assessment.objects.filter(course=course)}
+
+        for col_name, parsed_name in assessment_cols:
+            clean_name = clean_assessment_name(parsed_name)
+            db_assessment = db_assessments.get(clean_name.lower().strip())
+            if not db_assessment:
+                continue
+
+            max_score = db_assessment.total_score or 100
+            AssignmentScoreValidator._apply_score_policy_to_column(dataframe, col_name, max_score, policy, effects)
+
+        return effects
+
+    @staticmethod
+    def _apply_score_policy_to_column(
+        dataframe: pd.DataFrame,
+        col_name: str,
+        max_score: float,
+        policy: Dict[str, bool],
+        effects: Dict[str, int],
+    ) -> None:
+        """Apply score policy to a single assessment column."""
+        for row_idx in range(len(dataframe)):
+            value = dataframe.at[row_idx, col_name]
+            if pd.isna(value):
+                continue
+
+            try:
+                numeric_value = float(value)  # type: ignore[arg-type]
+            except (ValueError, TypeError):
+                if policy.get("skip_invalid_scores"):
+                    dataframe.at[row_idx, col_name] = pd.NA
+                    effects["skipped"] += 1
+                continue
+
+            is_out_of_range = numeric_value < 0 or numeric_value > max_score
+
+            if policy.get("clamp_scores") and is_out_of_range:
+                dataframe.at[row_idx, col_name] = max(0.0, min(float(max_score), numeric_value))
+                effects["clamped"] += 1
+            elif policy.get("skip_invalid_scores") and is_out_of_range:
+                dataframe.at[row_idx, col_name] = pd.NA
+                effects["skipped"] += 1
+
+    @staticmethod
+    def _apply_resolution_policy_to_dataframe(
+        dataframe: pd.DataFrame,
+        course: Course,
+        policy: Dict[str, bool],
+    ) -> tuple[pd.DataFrame, Dict[str, Any]]:
+        transformed = dataframe.copy()
+        effects = {
+            "rows_before": len(transformed),
+            "rows_dropped_missing_students": 0,
+            "rows_dropped_unenrolled_students": 0,
+            "scores_clamped": 0,
+            "scores_skipped": 0,
+        }
+
+        # Build student lookups
+        profile_lookup, enrolled_ids, found_ids, missing_ids, student_id_col = AssignmentScoreValidator._build_student_lookups(
+            transformed, course
+        )
+
+        if not student_id_col:
+            effects["rows_after"] = len(transformed)
+            return transformed, effects
+
+        # Filter rows based on student policy
+        transformed, row_effects = AssignmentScoreValidator._filter_rows_by_policy(
+            transformed, student_id_col, profile_lookup, enrolled_ids, missing_ids, policy
+        )
+        effects["rows_dropped_missing_students"] = row_effects["missing"]
+        effects["rows_dropped_unenrolled_students"] = row_effects["unenrolled"]
+
+        # Apply score policies
+        score_effects = AssignmentScoreValidator._apply_score_policies(transformed, course, policy)
+        effects["scores_clamped"] = score_effects["clamped"]
+        effects["scores_skipped"] = score_effects["skipped"]
+
+        effects["rows_after"] = len(transformed)
+        return transformed, effects
+
+    @staticmethod
+    def apply_resolution_policy_to_dataframe(
+        dataframe: pd.DataFrame,
+        course: Course,
+        resolution_policy: Optional[Dict[str, Any]] = None,
+    ) -> tuple[pd.DataFrame, Dict[str, Any]]:
+        """Public helper used by resolve/upload paths to keep transformation behavior consistent."""
+        policy = AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
+        return AssignmentScoreValidator._apply_resolution_policy_to_dataframe(dataframe, course, policy)
+
+    @staticmethod
     def validate_file_structure(file_obj) -> ValidationResult:
         """
         Validate file is Excel format and under 10MB.
@@ -720,13 +911,13 @@ class AssignmentScoreValidator:
         # Check enrollment for students that exist in database
         not_enrolled = []
         if found_students:
-            user_ids = [profile.user_id for profile in student_profiles]
+            user_ids = [profile.user.pk for profile in student_profiles]
             enrolled_user_ids = set(
                 CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
             )
 
             for profile in student_profiles:
-                if profile.user_id not in enrolled_user_ids:
+                if profile.user.pk not in enrolled_user_ids:
                     not_enrolled.append(
                         {
                             "student_id": str(profile.student_id),
@@ -767,6 +958,18 @@ class AssignmentScoreValidator:
         """
         result = ValidationResult()
 
+        def matches_required_column(required_column: str, dataframe_column: str) -> bool:
+            required_tokens = re.findall(r"[a-z0-9ğüşıöç]+", required_column.lower())
+            dataframe_tokens = re.findall(r"[a-z0-9ğüşıöç]+", dataframe_column.lower())
+
+            if not required_tokens or not dataframe_tokens:
+                return False
+
+            if len(dataframe_tokens) < len(required_tokens):
+                return False
+
+            return dataframe_tokens[: len(required_tokens)] == required_tokens
+
         required_cols = [
             ("öğrenci no", "Student ID"),
             ("adı", "First Name"),
@@ -774,7 +977,7 @@ class AssignmentScoreValidator:
         ]
 
         for col, label in required_cols:
-            matched = any(col.lower() in c.lower() for c in dataframe.columns)
+            matched = any(matches_required_column(col, str(c)) for c in dataframe.columns)
             if not matched:
                 result.add_error(f"{label} column not found. Expected column '{col}'", "column_structure")
 
@@ -824,7 +1027,7 @@ class AssignmentScoreValidator:
                 if pd.isna(value):
                     continue
                 try:
-                    score = float(value)
+                    score = float(value)  # type: ignore[arg-type]
                     if score < 0 or score > max_score:
                         invalid_scores.append(
                             {
@@ -857,11 +1060,13 @@ class AssignmentScoreValidator:
         return result
 
     @staticmethod
-    def validate_complete(file_obj, course: Course) -> ValidationResult:
+    def validate_complete(file_obj, course: Course, resolution_policy: Optional[Dict[str, Any]] = None) -> ValidationResult:
         final_result = ValidationResult()
         checks = AssignmentScoreValidator._base_checks()
+        policy = AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
         final_result.add_detail("checks", checks)
         final_result.add_detail("phase_reached", "file_structure")
+        final_result.add_detail("resolution_policy", policy)
 
         def merge_phase(phase_key: str, result: ValidationResult):
             final_result.errors.extend(result.errors)
@@ -897,16 +1102,27 @@ class AssignmentScoreValidator:
         if not column_result.is_valid:
             return final_result
 
+        transformed_dataframe, policy_effects = AssignmentScoreValidator._apply_resolution_policy_to_dataframe(
+            dataframe,
+            course,
+            policy,
+        )
+        final_result.add_detail("policy_effects", policy_effects)
+
         final_result.validation_details["phase_reached"] = "assessment_validation"
-        assessment_result = AssignmentScoreValidator.validate_assignments(dataframe, course)
+        assessment_result = AssignmentScoreValidator.validate_assignments(transformed_dataframe, course)
+        if policy.get("skip_missing_assessments") and not assessment_result.is_valid:
+            remaining_errors = [err for err in assessment_result.errors if err.get("category") != "assessment_validation"]
+            assessment_result.errors = remaining_errors
+            assessment_result.is_valid = len(remaining_errors) == 0
         merge_phase("assessment_validation", assessment_result)
 
         final_result.validation_details["phase_reached"] = "student_validation"
-        student_result = AssignmentScoreValidator.validate_students(dataframe, course)
+        student_result = AssignmentScoreValidator.validate_students(transformed_dataframe, course)
         merge_phase("student_validation", student_result)
 
         final_result.validation_details["phase_reached"] = "score_validation"
-        score_result = AssignmentScoreValidator.validate_scores(dataframe, course)
+        score_result = AssignmentScoreValidator.validate_scores(transformed_dataframe, course)
         merge_phase("score_validation", score_result)
 
         if final_result.is_valid:

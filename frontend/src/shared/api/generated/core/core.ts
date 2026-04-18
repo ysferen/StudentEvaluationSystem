@@ -36,6 +36,15 @@ import type {
   CoreFileImportAssignmentScoresResolveCreate200,
   CoreFileImportAssignmentScoresResolveCreateBody,
   CoreFileImportAssignmentScoresResolveCreateParams,
+  CoreFileImportAssignmentScoresUploadCreate200,
+  CoreFileImportAssignmentScoresUploadCreate400,
+  CoreFileImportAssignmentScoresUploadCreate404,
+  CoreFileImportAssignmentScoresUploadCreateBody,
+  CoreFileImportAssignmentScoresUploadCreateParams,
+  CoreFileImportAssignmentScoresUploadRetrieve200,
+  CoreFileImportAssignmentScoresUploadRetrieve400,
+  CoreFileImportAssignmentScoresUploadRetrieve404,
+  CoreFileImportAssignmentScoresUploadRetrieveParams,
   CoreFileImportAssignmentScoresValidateCreate200,
   CoreFileImportAssignmentScoresValidateCreateBody,
   CoreFileImportAssignmentScoresValidateCreateParams,
@@ -2103,13 +2112,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Upload and import assignment scores. Always validates before importing.
  */
 export const coreFileImportAssignmentScoresUploadRetrieve = (
-
+    params: CoreFileImportAssignmentScoresUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<FileImportResponse>(
-      {url: `/api/core/file-import/assignment-scores/upload/`, method: 'GET', signal
+      return customInstance<CoreFileImportAssignmentScoresUploadRetrieve200>(
+      {url: `/api/core/file-import/assignment-scores/upload/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -2117,23 +2127,23 @@ export const coreFileImportAssignmentScoresUploadRetrieve = (
 
 
 
-export const getCoreFileImportAssignmentScoresUploadRetrieveQueryKey = () => {
+export const getCoreFileImportAssignmentScoresUploadRetrieveQueryKey = (params?: CoreFileImportAssignmentScoresUploadRetrieveParams,) => {
     return [
-    `/api/core/file-import/assignment-scores/upload/`
+    `/api/core/file-import/assignment-scores/upload/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCoreFileImportAssignmentScoresUploadRetrieveQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getCoreFileImportAssignmentScoresUploadRetrieveQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => coreFileImportAssignmentScoresUploadRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => coreFileImportAssignmentScoresUploadRetrieve(params, requestOptions, signal);
 
 
 
@@ -2143,11 +2153,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type CoreFileImportAssignmentScoresUploadRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>>
-export type CoreFileImportAssignmentScoresUploadRetrieveQueryError = unknown
+export type CoreFileImportAssignmentScoresUploadRetrieveQueryError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404
 
 
-export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
+export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: CoreFileImportAssignmentScoresUploadRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>,
           TError,
@@ -2156,8 +2166,8 @@ export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
+export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>,
           TError,
@@ -2166,17 +2176,17 @@ export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions(options)
+  const queryOptions = getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2192,27 +2202,31 @@ export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<
  * Upload and import assignment scores. Always validates before importing.
  */
 export const coreFileImportAssignmentScoresUploadCreate = (
-    fileImportResponse: FileImportResponse,
+    coreFileImportAssignmentScoresUploadCreateBody: CoreFileImportAssignmentScoresUploadCreateBody,
+    params: CoreFileImportAssignmentScoresUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
       const formData = new FormData();
-formData.append(`message`, fileImportResponse.message)
-formData.append(`results`, JSON.stringify(fileImportResponse.results));
+formData.append(`file`, coreFileImportAssignmentScoresUploadCreateBody.file)
+if(coreFileImportAssignmentScoresUploadCreateBody.resolution_policy !== undefined) {
+ formData.append(`resolution_policy`, coreFileImportAssignmentScoresUploadCreateBody.resolution_policy)
+ }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<CoreFileImportAssignmentScoresUploadCreate200>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
 
 
 
-export const getCoreFileImportAssignmentScoresUploadCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: FileImportResponse}, TContext> => {
+export const getCoreFileImportAssignmentScoresUploadCreateMutationOptions = <TError = CoreFileImportAssignmentScoresUploadCreate400 | CoreFileImportAssignmentScoresUploadCreate404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams}, TContext> => {
 
 const mutationKey = ['coreFileImportAssignmentScoresUploadCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2224,10 +2238,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, {data: FileImportResponse}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, {data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  coreFileImportAssignmentScoresUploadCreate(data,requestOptions)
+          return  coreFileImportAssignmentScoresUploadCreate(data,params,requestOptions)
         }
 
 
@@ -2236,15 +2250,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreFileImportAssignmentScoresUploadCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>>
-    export type CoreFileImportAssignmentScoresUploadCreateMutationBody = FileImportResponse
-    export type CoreFileImportAssignmentScoresUploadCreateMutationError = unknown
+    export type CoreFileImportAssignmentScoresUploadCreateMutationBody = CoreFileImportAssignmentScoresUploadCreateBody
+    export type CoreFileImportAssignmentScoresUploadCreateMutationError = CoreFileImportAssignmentScoresUploadCreate400 | CoreFileImportAssignmentScoresUploadCreate404
 
-    export const useCoreFileImportAssignmentScoresUploadCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useCoreFileImportAssignmentScoresUploadCreate = <TError = CoreFileImportAssignmentScoresUploadCreate400 | CoreFileImportAssignmentScoresUploadCreate404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, TError,{data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>,
         TError,
-        {data: FileImportResponse},
+        {data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams},
         TContext
       > => {
 

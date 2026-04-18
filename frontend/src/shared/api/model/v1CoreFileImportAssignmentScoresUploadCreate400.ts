@@ -6,8 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type V1CoreFileImportAssignmentScoresUploadCreateBody = {
-  file: Blob;
-  /** JSON string of resolution policy flags */
-  resolution_policy?: string;
-};
+export type V1CoreFileImportAssignmentScoresUploadCreate400 = { [key: string]: unknown };

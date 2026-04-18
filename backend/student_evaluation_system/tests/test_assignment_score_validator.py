@@ -2,13 +2,12 @@
 Tests for assignment score validation phases and complete validation flow.
 """
 
-from io import BytesIO
-
 import pandas as pd
 import pytest
 
 from core.services.validation import AssignmentScoreValidator
-from evaluation.models import Assessment
+from evaluation.models import Assessment, CourseEnrollment
+from tests.upload_helpers import InMemoryUpload
 
 
 @pytest.mark.django_db
@@ -20,11 +19,10 @@ class TestAssignmentScoreValidator:
         course = db_setup["course"]
 
         df = pd.DataFrame({"name": ["Student 1", "Student 2"], "grade": [85, 90]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_missing_id.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         result = AssignmentScoreValidator.validate_complete(buffer, course)
 
@@ -36,11 +34,10 @@ class TestAssignmentScoreValidator:
         course = db_setup["course"]
 
         df = pd.DataFrame({"öğrenci no": ["12345", "67890"], "adı": ["John", "Jane"], "soyadı": ["Doe", "Smith"]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_missing_assessments.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         result = AssignmentScoreValidator.validate_complete(buffer, course)
 
@@ -54,11 +51,10 @@ class TestAssignmentScoreValidator:
         df = pd.DataFrame(
             {"öğrenci no": ["12345"], "adı": ["John"], "soyadı": ["Doe"], "Unknown Assessment(%25)_0833AB": [85]}
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_unknown_assessment.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         result = AssignmentScoreValidator.validate_complete(buffer, course)
 
@@ -78,11 +74,10 @@ class TestAssignmentScoreValidator:
                 "Midterm(%25)_0833AB": [85],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_unknown_student.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         result = AssignmentScoreValidator.validate_complete(buffer, course)
 
@@ -92,6 +87,7 @@ class TestAssignmentScoreValidator:
         """Test validation passes for valid assignment scores file."""
         course = db_setup["course"]
         student = student_factory("student1")
+        CourseEnrollment.objects.create(student=student.user, course=course)
 
         df = pd.DataFrame(
             {
@@ -103,11 +99,10 @@ class TestAssignmentScoreValidator:
                 "Project(%30)_0833AB": [88.0],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_valid_assignment_scores.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         result = AssignmentScoreValidator.validate_complete(buffer, course)
 
@@ -137,6 +132,7 @@ class TestPhase2ColumnStructure:
         df = pd.DataFrame({"öğrenci no": ["S001"], "soyadı": ["Veli"], "Midterm(%30)": [80]})
         result = AssignmentScoreValidator.validate_column_structure(df)
         assert not result.is_valid
+        assert any("First Name" in e["message"] for e in result.errors)
 
     def test_missing_assessment_column_fails(self, db_setup):
         df = pd.DataFrame({"öğrenci no": ["S001"], "adı": ["Ali"], "soyadı": ["Veli"]})
@@ -209,11 +205,10 @@ def test_validate_complete_sets_phase_reached_and_checks(db_setup):
     Assessment.objects.create(course=course, name="Midterm", total_score=100)
 
     df = pd.DataFrame({"öğrenci no": ["S001"], "adı": ["Ali"], "soyadı": ["Veli"], "Midterm(%30)_X1": [80]})
-    buf = BytesIO()
+    buf = InMemoryUpload()
     df.to_excel(buf, index=False)
     buf.seek(0)
     buf.name = "ok.xlsx"
-    buf.size = buf.getbuffer().nbytes
 
     result = AssignmentScoreValidator.validate_complete(buf, course)
 
@@ -233,11 +228,10 @@ def test_validate_complete_sets_phase_reached_and_checks(db_setup):
 def test_validate_complete_hard_stops_at_column_structure(db_setup):
     course = db_setup["course"]
     df = pd.DataFrame({"adı": ["Ali"], "soyadı": ["Veli"]})
-    buf = BytesIO()
+    buf = InMemoryUpload()
     df.to_excel(buf, index=False)
     buf.seek(0)
     buf.name = "missing-columns.xlsx"
-    buf.size = buf.getbuffer().nbytes
 
     result = AssignmentScoreValidator.validate_complete(buf, course)
 

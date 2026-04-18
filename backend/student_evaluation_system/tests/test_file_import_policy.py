@@ -1,19 +1,17 @@
 import pytest
 import pandas as pd
-from io import BytesIO
 
 from core.models import Term, Course, University, Department, DegreeLevel, Program
 from core.services.file_import import FileImportService
 from evaluation.models import Assessment, CourseEnrollment
+from tests.upload_helpers import InMemoryUpload
 from users.models import CustomUser, StudentProfile
 
 
 def make_excel(df):
-    buf = BytesIO()
+    buf = InMemoryUpload(name="policy.xlsx")
     df.to_excel(buf, index=False)
     buf.seek(0)
-    buf.name = "policy.xlsx"
-    buf.size = buf.getbuffer().nbytes
     return buf
 
 

@@ -2,14 +2,13 @@
 Tests for file import service behavior.
 """
 
-from io import BytesIO
-
 import pandas as pd
 import pytest
 
 from core.models import LearningOutcome, ProgramOutcome
 from core.services.file_import import FileImportError, FileImportService
 from evaluation.models import CourseEnrollment, StudentGrade
+from tests.upload_helpers import InMemoryUpload
 
 
 @pytest.mark.django_db
@@ -19,7 +18,7 @@ class TestFileImportService:
     def test_detect_file_format_xlsx(self):
         """Test detecting .xlsx file format."""
         df = pd.DataFrame({"data": [1, 2, 3]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl")
         buffer.seek(0)
         buffer.name = "test.xlsx"
@@ -32,7 +31,7 @@ class TestFileImportService:
     def test_detect_file_format_xls(self):
         """Test detecting .xls file format."""
         df = pd.DataFrame({"data": [1, 2, 3]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl")
         buffer.seek(0)
         buffer.name = "test.xls"
@@ -45,7 +44,7 @@ class TestFileImportService:
     def test_detect_file_format_csv(self):
         """Test detecting .csv file format."""
         df = pd.DataFrame({"data": [1, 2, 3]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_csv(buffer, index=False)
         buffer.seek(0)
         buffer.name = "test.csv"
@@ -57,11 +56,10 @@ class TestFileImportService:
 
     def test_validate_file_size_too_large(self):
         """Test validation rejects file larger than 10MB."""
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         buffer.write(b"x" * (11 * 1024 * 1024))
         buffer.seek(0)
         buffer.name = "large_test.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         with pytest.raises(FileImportError, match="File size must be less than"):
@@ -69,11 +67,10 @@ class TestFileImportService:
 
     def test_validate_file_empty_file(self):
         """Test validation rejects empty file."""
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         buffer.write(b"")
         buffer.seek(0)
         buffer.name = "empty_test.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         with pytest.raises(FileImportError, match="File is empty"):
@@ -101,11 +98,10 @@ class TestAssignmentScoresImport:
                 "Project(%30)_0833AB": [88.0],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_import_assignment_scores.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         service.validate_file()
@@ -135,11 +131,10 @@ class TestAssignmentScoresImport:
                 "Project(%30)_0833AB": [88.0],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_update_assignment_scores.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         service.validate_file()
@@ -152,8 +147,8 @@ class TestAssignmentScoresImport:
         grade = StudentGrade.objects.get(student=student.user, assessment=assessments[0])
         assert grade.score == 85.5
 
-    def test_import_skips_unenrolled_students(self, db_setup, student_factory, sample_assessments):
-        """Test that import skips students not enrolled in the course."""
+    def test_import_errors_on_unenrolled_students_by_default(self, db_setup, student_factory, sample_assessments):
+        """Test that import errors when students are not enrolled unless explicitly resolved."""
         course = db_setup["course"]
         student = student_factory("student_unenrolled")
 
@@ -167,11 +162,10 @@ class TestAssignmentScoresImport:
                 "Project(%30)_0833AB": [88.0],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_unenrolled_student.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         service.validate_file()
@@ -195,11 +189,10 @@ class TestLearningOutcomesImport:
                 "course_code": [course.code, course.code, course.code],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, sheet_name="learning_outcomes", engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_import_learning_outcomes.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         service.validate_file()
@@ -229,11 +222,10 @@ class TestProgramOutcomesImport:
                 "term_name": [term.name, term.name],
             }
         )
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, sheet_name="program_outcomes", engine="openpyxl", index=False)
         buffer.seek(0)
         buffer.name = "test_import_program_outcomes.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         service = FileImportService(buffer)
         service.validate_file()

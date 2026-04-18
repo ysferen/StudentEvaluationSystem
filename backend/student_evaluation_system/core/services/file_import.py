@@ -31,6 +31,7 @@ from evaluation.models import Assessment, StudentGrade, CourseEnrollment
 from evaluation.services import calculate_course_scores
 from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
 from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
+from .validation import AssignmentScoreValidator
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -315,11 +316,18 @@ class FileImportService:
                 assessment_lookup,
                 student_id_col,
                 assessment_columns,
-            ) = self._prepare_assignment_import_context(course_code, term_id)
+                policy_effects,
+            ) = self._prepare_assignment_import_context(course_code, term_id, policy)
+
+            self.import_results["policy_effects"] = policy_effects
 
             created_count = 0
             updated_count = 0
-            skipped_count = 0
+            skipped_count = (
+                int(policy_effects.get("rows_dropped_missing_students", 0))
+                + int(policy_effects.get("rows_dropped_unenrolled_students", 0))
+                + int(policy_effects.get("scores_skipped", 0))
+            )
             affected_courses = set()
 
             with transaction.atomic():
@@ -374,9 +382,19 @@ class FileImportService:
                 missing_assessments.append(clean_name)
         return missing_assessments
 
-    def _prepare_assignment_import_context(self, course_code: str, term_id: int):
+    def _prepare_assignment_import_context(
+        self,
+        course_code: str,
+        term_id: int,
+        resolution_policy: Optional[Dict[str, bool]] = None,
+    ):
         df = self._get_parser().parse_sheet(self.file_obj, import_type="assignment_scores")
         course = self._get_course_by_code_and_term(course_code, term_id)
+        transformed_df, policy_effects = AssignmentScoreValidator.apply_resolution_policy_to_dataframe(
+            df,
+            course,
+            resolution_policy=resolution_policy,
+        )
 
         course_assessments = Assessment.objects.filter(course=course)
         assessment_lookup = {assessment.name.lower().strip(): assessment for assessment in course_assessments}
@@ -384,13 +402,17 @@ class FileImportService:
         if not course_assessments.exists():
             raise FileImportError(f"No assessments found for course {course.code}. Please create assessments first.")
 
-        self._validate_assignment_scores(df, course, course.term)
+        self._validate_required_columns(transformed_df, "assignment_scores")
+
+        policy = resolution_policy or {}
+        if not policy.get("skip_missing_students") and not policy.get("skip_unenrolled_students"):
+            self._validate_students(transformed_df, course)
 
         try:
-            student_id_col = find_student_id_column(df.columns)
+            student_id_col = find_student_id_column(transformed_df.columns)
         except ValueError as e:
             raise FileImportError(str(e))
-        assessment_columns = extract_assessment_columns(df.columns)
+        assessment_columns = extract_assessment_columns(transformed_df.columns)
         if not assessment_columns:
             raise FileImportError("No assessment score columns found in file")
 
@@ -401,7 +423,15 @@ class FileImportService:
                 f"Assessments not found in database: {', '.join(missing_assessments)}. Available assessments: {available}"
             )
 
-        return df, course, course_assessments, assessment_lookup, student_id_col, assessment_columns
+        return (
+            transformed_df,
+            course,
+            course_assessments,
+            assessment_lookup,
+            student_id_col,
+            assessment_columns,
+            policy_effects,
+        )
 
     def _process_score_with_policy(
         self,
@@ -437,9 +467,10 @@ class FileImportService:
         assessment_columns,
         assessment_lookup,
         affected_courses,
-        policy: Dict[str, bool] = None,
+        policy: Optional[Dict[str, bool]] = None,
     ):
-        policy = policy or {}
+        if policy is None:
+            policy = {}
         created_count = 0
         updated_count = 0
         skipped_count = 0

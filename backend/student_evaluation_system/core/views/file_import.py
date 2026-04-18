@@ -14,7 +14,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import UserRateThrottle
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from ..serializers import FileImportResponseSerializer
 from ..services.file_import import FileImportService, FileImportError
@@ -60,6 +61,62 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
 
     @extend_schema(
         request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}}
+    )
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="course_code",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Course code",
+            ),
+            OpenApiParameter(
+                name="term_id",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Term ID",
+            ),
+        ],
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "format": "binary"},
+                    "resolution_policy": {
+                        "type": "string",
+                        "description": "Optional JSON policy (e.g. skip_invalid_scores, clamp_scores)",
+                    },
+                },
+                "required": ["file"],
+            }
+        },
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "created": {"type": "object"},
+                    "updated": {"type": "object"},
+                    "errors": {"type": "array", "items": {"type": "string"}},
+                    "skipped": {"type": "integer"},
+                    "total_rows": {"type": "integer"},
+                },
+            },
+            400: {
+                "type": "object",
+                "properties": {
+                    "error": {"type": "string"},
+                    "is_valid": {"type": "boolean"},
+                    "phase_reached": {"type": "string"},
+                    "checks": {"type": "object"},
+                    "errors": {"type": "array", "items": {"type": "string"}},
+                    "warnings": {"type": "array", "items": {"type": "string"}},
+                    "suggestions": {"type": "array", "items": {"type": "string"}},
+                    "details": {"type": "object"},
+                },
+            },
+        },
     )
     @action(detail=False, methods=["get", "post"])
     def upload(self, request):
@@ -131,7 +188,7 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
 
     import_type = "assignment_scores"
 
-    def _build_validation_response(self, validation_result, resolutions_applied=None):
+    def _build_validation_response(self, validation_result, resolutions_applied=None, status_code=status.HTTP_200_OK):
         """Build standardized validation response with canonical shape."""
         details = validation_result.validation_details
         checks = details.get("checks", {})
@@ -146,7 +203,105 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         }
         if resolutions_applied is not None:
             payload["resolutions_applied"] = resolutions_applied
-        return Response(payload, status=status.HTTP_200_OK)
+        return Response(payload, status=status_code)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="course_code",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Course code",
+            ),
+            OpenApiParameter(
+                name="term_id",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Term ID",
+            ),
+        ],
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "format": "binary"},
+                    "resolution_policy": {
+                        "type": "string",
+                        "description": "JSON string of resolution policy flags",
+                    },
+                },
+                "required": ["file"],
+            }
+        },
+        responses={
+            200: {"type": "object"},
+            400: {"type": "object"},
+            404: {"type": "object"},
+        },
+    )
+    @action(detail=False, methods=["get", "post"])
+    def upload(self, request):
+        """Upload and import assignment scores. Always validates before importing."""
+        if request.method.lower() == "get":
+            info = {
+                "message": "Upload a file to import data.",
+                "required_query_parameters": "course_code and term_id",
+            }
+            return Response(info, status=status.HTTP_200_OK)
+
+        course_code = request.query_params.get("course_code")
+        term_id = request.query_params.get("term_id")
+        if not course_code or not term_id:
+            return Response(
+                {"error": {"course_code": "course_code is required", "term_id": "term_id is required"}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            term = Term.objects.get(id=term_id)
+        except Term.DoesNotExist:
+            return Response({"error": f"Term with id {term_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            course = Course.objects.get(code=course_code, term=term)
+        except Course.DoesNotExist:
+            return Response(
+                {"error": f"Course {course_code} not found for term {term.name}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            service = FileImportService(file_obj)
+            service.validate_file()
+
+            resolution_policy = self._parse_resolution_policy(request)
+            if isinstance(resolution_policy, Response):
+                return resolution_policy
+
+            # Always run full validation server-side before importing, regardless of frontend flow.
+            validation_result = AssignmentScoreValidator.validate_complete(
+                file_obj,
+                course,
+                resolution_policy=resolution_policy,
+            )
+            if not validation_result.is_valid:
+                return self._build_validation_response(validation_result, status_code=status.HTTP_400_BAD_REQUEST)
+
+            file_obj.seek(0)
+            result = service.import_assignment_scores(
+                course_code=course_code,
+                term_id=term_id,
+                resolution_policy=resolution_policy,
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except FileImportError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         parameters=[
@@ -253,6 +408,7 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         from evaluation.models import Assessment
 
         for assessment_data in create_assessments:
+            name = "unknown"
             try:
                 if isinstance(assessment_data, dict):
                     name = assessment_data.get("name")
@@ -349,19 +505,25 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         self._apply_enrollment_resolutions(enroll_students, course, errors, created_counts)
         self._apply_assessment_resolutions(create_assessments, course, errors, created_counts)
 
+        resolution_policy = {
+            "skip_missing_assessments": skip_missing_assessments,
+            "skip_missing_students": skip_missing_students,
+            "skip_unenrolled_students": skip_unenrolled_students,
+            "skip_invalid_scores": skip_invalid_scores,
+            "clamp_scores": clamp_scores,
+        }
+
         file_obj.seek(0)
-        validation_result = AssignmentScoreValidator.validate_complete(file_obj, course)
+        validation_result = AssignmentScoreValidator.validate_complete(
+            file_obj,
+            course,
+            resolution_policy=resolution_policy,
+        )
 
         resolution_summary = {
             "created": created_counts,
             "errors": errors,
-            "policy": {
-                "skip_missing_assessments": skip_missing_assessments,
-                "skip_missing_students": skip_missing_students,
-                "skip_unenrolled_students": skip_unenrolled_students,
-                "skip_invalid_scores": skip_invalid_scores,
-                "clamp_scores": clamp_scores,
-            },
+            "policy": resolution_policy,
         }
         return self._build_validation_response(validation_result, resolutions_applied=resolution_summary)
 

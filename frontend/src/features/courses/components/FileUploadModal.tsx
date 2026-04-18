@@ -2,14 +2,7 @@ import React, { useState, useRef } from 'react'
 import {
   useCoreFileImportAssignmentScoresUploadCreate,
   useCoreFileImportAssignmentScoresValidateCreate,
-  useCoreFileImportAssignmentScoresUploadRetrieve,
   useCoreFileImportAssignmentScoresResolveCreate,
-  useCoreFileImportLearningOutcomesUploadRetrieve,
-  useCoreFileImportLearningOutcomesUploadCreate,
-  useCoreFileImportLearningOutcomesValidateCreate,
-  useCoreFileImportProgramOutcomesUploadRetrieve,
-  useCoreFileImportProgramOutcomesUploadCreate,
-  useCoreFileImportProgramOutcomesValidateCreate,
 } from '../../../shared/api/generated/core/core'
 import {
   Upload,
@@ -97,11 +90,33 @@ interface ValidationResult {
   warnings?: Array<{ message: string; category: string; severity: string }>
   suggestions?: Array<{ message: string; category: string; severity: string }>
   details?: ValidationDetails
+  resolutions_applied?: {
+    created?: { students?: number; enrollments?: number; assessments?: number }
+    errors?: string[]
+    policy?: Record<string, unknown>
+  }
 }
 
-interface UploadInfoResponse {
-  expected_columns?: string[]
-  description?: string
+type NormalizedChecks = {
+  file_structure?: { passed: boolean } | undefined
+  column_structure?: { passed: boolean; details?: Record<string, unknown> } | undefined
+  assessment_validation?: {
+    passed: boolean
+    found_assessments?: Array<{ column: string; parsed_name: string; db_assessment?: string; db_name?: string }>
+    missing_assessments?: Array<{ column: string; parsed_name: string }>
+    available_in_database?: string[]
+  } | undefined
+  student_validation?: {
+    passed: boolean
+    total_in_file?: number
+    found_in_database?: number
+    missing_from_database?: Array<{ student_id: string; first_name: string; last_name: string }>
+    not_enrolled?: Array<{ student_id: string; first_name: string; last_name: string }>
+  } | undefined
+  score_validation?: {
+    passed: boolean
+    invalid_scores?: Array<{ row: number; column: string; value: string; error?: string }>
+  } | undefined
 }
 
 type UploadErrorPayload = Partial<ValidationResult> & {
@@ -164,6 +179,37 @@ const getPhaseKeyFromText = (phaseText?: string): PhaseKey | undefined => {
   return undefined
 }
 
+const getErrorCategoriesForPhase = (phase: PhaseKey): string[] => {
+  switch (phase) {
+    case 'file_structure':
+      return ['file_structure', 'file_format', 'file_parse']
+    case 'column_structure':
+      return ['column_structure']
+    case 'assessment_validation':
+      return ['assessment_validation', 'assignment_columns']
+    case 'student_validation':
+      return ['student_validation', 'student_column']
+    case 'score_validation':
+      return ['score_validation']
+    default:
+      return []
+  }
+}
+
+const filterErrorsForCurrentPhase = (
+  errors: ValidationResult['errors'],
+  currentPhase?: PhaseKey,
+): ValidationResult['errors'] => {
+  if (!errors || errors.length === 0 || !currentPhase) return errors
+
+  const categories = getErrorCategoriesForPhase(currentPhase)
+  return errors.filter((error) => {
+    if (typeof error === 'string') return false
+    const category = String(error?.category ?? '').toLowerCase()
+    return categories.includes(category)
+  })
+}
+
 const normalizeMissingStudents = (
   detail: ValidationDetails | undefined
 ): Array<{ student_id: string; first_name: string; last_name: string }> => {
@@ -188,12 +234,189 @@ const normalizeMissingStudents = (
   return []
 }
 
+const normalizeChecks = (result: ValidationResult | null): NormalizedChecks => {
+  if (!result) return {}
+
+  const checks = result.checks
+  const details = result.details
+  const phaseResultsFallback = details?.phases_completed?.reduce<Partial<Record<PhaseKey, boolean>>>((acc, phaseInfo) => {
+    const key = getPhaseKeyFromText(phaseInfo.phase)
+    if (key) {
+      acc[key] = phaseInfo.passed
+    }
+    return acc
+  }, {}) ?? {}
+
+  if (checks) {
+    return {
+      file_structure: checks.file_structure,
+      column_structure: checks.column_structure ?? (details?.column_structure
+        ? {
+            passed:
+              typeof details.column_structure.passed === 'boolean'
+                ? details.column_structure.passed
+                : (phaseResultsFallback.column_structure ?? false),
+            details: details.column_structure,
+          }
+        : undefined),
+      assessment_validation: checks.assessment_validation
+        ? {
+            ...checks.assessment_validation,
+            missing_assessments:
+              checks.assessment_validation.missing_assessments
+              ?? details?.assessment_validation?.missing_assessments
+              ?? [],
+            available_in_database:
+              checks.assessment_validation.available_in_database
+              ?? details?.assessment_validation?.available_in_database
+              ?? [],
+            found_assessments:
+              checks.assessment_validation.found_assessments
+              ?? details?.assessment_validation?.found_assessments
+              ?? [],
+          }
+        : details?.assessment_validation
+          ? {
+              passed:
+                typeof details.assessment_validation.passed === 'boolean'
+                  ? details.assessment_validation.passed
+                  : typeof phaseResultsFallback.assessment_validation === 'boolean'
+                    ? phaseResultsFallback.assessment_validation
+                    : (details.assessment_validation.missing_assessments?.length ?? 0) === 0,
+              found_assessments: details.assessment_validation.found_assessments,
+              missing_assessments: details.assessment_validation.missing_assessments ?? [],
+              available_in_database: details.assessment_validation.available_in_database ?? [],
+            }
+          : undefined,
+      student_validation: checks.student_validation
+        ? {
+            ...checks.student_validation,
+            missing_from_database:
+              checks.student_validation.missing_from_database
+              ?? normalizeMissingStudents(details)
+              ?? [],
+            not_enrolled:
+              checks.student_validation.not_enrolled
+              ?? (Array.isArray(details?.student_validation?.not_enrolled)
+                ? details.student_validation.not_enrolled
+                : []),
+          }
+        : details?.student_validation
+          ? {
+              passed:
+                typeof details.student_validation.passed === 'boolean'
+                  ? details.student_validation.passed
+                  : typeof phaseResultsFallback.student_validation === 'boolean'
+                    ? phaseResultsFallback.student_validation
+                    : normalizeMissingStudents(details).length === 0,
+              total_in_file: details.student_validation.total_in_file,
+              found_in_database: details.student_validation.found_in_database,
+              missing_from_database: normalizeMissingStudents(details),
+              not_enrolled: Array.isArray(details.student_validation.not_enrolled)
+                ? details.student_validation.not_enrolled
+                : [],
+            }
+          : undefined,
+      score_validation: checks.score_validation
+        ? {
+            ...checks.score_validation,
+            invalid_scores:
+              checks.score_validation.invalid_scores
+              ?? (Array.isArray(details?.score_validation?.invalid_scores)
+                ? details.score_validation.invalid_scores
+                : []),
+          }
+        : details?.score_validation
+          ? {
+              passed:
+                typeof details.score_validation.passed === 'boolean'
+                  ? details.score_validation.passed
+                  : (phaseResultsFallback.score_validation ?? false),
+              invalid_scores: Array.isArray(details.score_validation.invalid_scores)
+                ? details.score_validation.invalid_scores
+                : [],
+            }
+          : undefined,
+    }
+  }
+
+  return {
+    file_structure:
+      typeof phaseResultsFallback.file_structure === 'boolean'
+        ? { passed: phaseResultsFallback.file_structure }
+        : typeof details?.file_parsed === 'boolean'
+          ? { passed: details.file_parsed }
+          : undefined,
+    column_structure:
+      details?.column_structure
+        ? {
+            passed:
+              typeof details.column_structure.passed === 'boolean'
+                ? details.column_structure.passed
+                : (phaseResultsFallback.column_structure ?? false),
+            details: details.column_structure,
+          }
+        : typeof phaseResultsFallback.column_structure === 'boolean'
+          ? { passed: phaseResultsFallback.column_structure }
+          : undefined,
+    assessment_validation:
+      details?.assessment_validation
+        ? {
+            passed:
+              typeof details.assessment_validation.passed === 'boolean'
+                ? details.assessment_validation.passed
+                : typeof phaseResultsFallback.assessment_validation === 'boolean'
+                  ? phaseResultsFallback.assessment_validation
+                  : (details.assessment_validation.missing_assessments?.length ?? 0) === 0,
+            found_assessments: details.assessment_validation.found_assessments,
+            missing_assessments: details.assessment_validation.missing_assessments,
+            available_in_database: details.assessment_validation.available_in_database,
+          }
+        : typeof phaseResultsFallback.assessment_validation === 'boolean'
+          ? { passed: phaseResultsFallback.assessment_validation }
+          : undefined,
+    student_validation:
+      details?.student_validation
+        ? {
+            passed:
+              typeof details.student_validation.passed === 'boolean'
+                ? details.student_validation.passed
+                : typeof phaseResultsFallback.student_validation === 'boolean'
+                  ? phaseResultsFallback.student_validation
+                  : normalizeMissingStudents(details).length === 0,
+            total_in_file: details.student_validation.total_in_file,
+            found_in_database: details.student_validation.found_in_database,
+            missing_from_database: normalizeMissingStudents(details),
+            not_enrolled: Array.isArray(details.student_validation.not_enrolled)
+              ? details.student_validation.not_enrolled
+              : [],
+          }
+        : typeof phaseResultsFallback.student_validation === 'boolean'
+          ? { passed: phaseResultsFallback.student_validation }
+          : undefined,
+    score_validation:
+      details?.score_validation
+        ? {
+            passed:
+              typeof details.score_validation.passed === 'boolean'
+                ? details.score_validation.passed
+                : (phaseResultsFallback.score_validation ?? false),
+            invalid_scores: Array.isArray(details.score_validation.invalid_scores)
+              ? details.score_validation.invalid_scores
+              : [],
+          }
+        : typeof phaseResultsFallback.score_validation === 'boolean'
+          ? { passed: phaseResultsFallback.score_validation }
+          : undefined,
+  }
+}
+
 interface FileUploadModalProps {
   course: string
   courseCode: string
   termId: number
   isOpen: boolean
-  type: 'assignment_scores' | 'learning_outcomes' | 'program_outcomes'
+  type: 'assignment_scores'
   onClose: () => void
   onUploadComplete?: (result: unknown) => void
 }
@@ -214,38 +437,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [modalError, setModalError] = useState<string | null>(null)
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
   const [resolutions, setResolutions] = useState<Record<string, unknown>>({})
+  const resolutionsRef = useRef<Record<string, unknown>>({})
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const uploadInfoQueries = {
-    assignment_scores: useCoreFileImportAssignmentScoresUploadRetrieve<UploadInfoResponse>({
-      query: { enabled: type === 'assignment_scores' && isOpen }
-    }),
-    learning_outcomes: useCoreFileImportLearningOutcomesUploadRetrieve<UploadInfoResponse>({
-      query: { enabled: type === 'learning_outcomes' && isOpen }
-    }),
-    program_outcomes: useCoreFileImportProgramOutcomesUploadRetrieve<UploadInfoResponse>({
-      query: { enabled: type === 'program_outcomes' && isOpen }
-    }),
-  }
 
-  const uploadInfo = uploadInfoQueries[type]?.data
-
-  const loValidateMutation = useCoreFileImportLearningOutcomesValidateCreate({
-    request: {
-      data: file ? { file } : undefined,
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }
-  })
-  const loUploadMutation = useCoreFileImportLearningOutcomesUploadCreate()
-
-  const poValidateMutation = useCoreFileImportProgramOutcomesValidateCreate({
-    request: {
-      data: file ? { file } : undefined,
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }
-  })
-  const poUploadMutation = useCoreFileImportProgramOutcomesUploadCreate()
 
   const validationMutation = useCoreFileImportAssignmentScoresValidateCreate({
     request: {
@@ -258,14 +454,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }
   })
 
-  const uploadMutation = useCoreFileImportAssignmentScoresUploadCreate({
-    request: {
-      params: {
-        course_code: courseCode,
-        term_id: termId
-      }
-    }
-  })
+  const uploadMutation = useCoreFileImportAssignmentScoresUploadCreate()
 
   const resolveMutation = useCoreFileImportAssignmentScoresResolveCreate({
     request: {
@@ -276,18 +465,16 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }
   })
 
-  const isAnyValidatePending = validationMutation.isPending || loValidateMutation.isPending || poValidateMutation.isPending
-  const isAnyUploadPending = uploadMutation.isPending || loUploadMutation.isPending || poUploadMutation.isPending
+  const isAnyValidatePending = validationMutation.isPending
+  const isAnyUploadPending = uploadMutation.isPending
   const isResolving = resolveMutation.isPending
+  const hasSuccessfulValidation = validationResult?.is_valid === true
+  const normalizedChecks = normalizeChecks(validationResult)
 
   const getTypeDisplayName = (type: string) => {
     switch (type) {
       case 'assignment_scores':
         return 'Assessment Scores'
-      case 'learning_outcomes':
-        return 'Learning Outcomes'
-      case 'program_outcomes':
-        return 'Program Outcomes'
       default:
         return 'File'
     }
@@ -299,6 +486,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       setValidationResult(null)
       setModalError(null)
       setResolutions({})
+      resolutionsRef.current = {}
     }
   }
 
@@ -334,6 +522,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         setValidationResult(null)
         setModalError(null)
         setResolutions({})
+        resolutionsRef.current = {}
       } else {
         setModalError('Please drop an Excel file (.xlsx or .xls)')
       }
@@ -343,18 +532,17 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const handleResolve = async (newResolutions: Record<string, unknown>) => {
     if (!file) return
 
-    setResolutions(prev => ({ ...prev, ...newResolutions }))
     setActiveProblem(null)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('resolutions', JSON.stringify({ ...resolutions, ...newResolutions }))
+      const mergedResolutions = { ...resolutionsRef.current, ...newResolutions }
+      resolutionsRef.current = mergedResolutions
+      setResolutions(mergedResolutions)
 
       const result = await resolveMutation.mutateAsync({
-        data: { file, resolutions: JSON.stringify({ ...resolutions, ...newResolutions }) } as any,
+        data: { file, resolutions: JSON.stringify(mergedResolutions) },
         params: { course_code: courseCode, term_id: termId }
-      } as any)
+      })
       setValidationResult(toValidationResult(result, false))
     } catch (error) {
       const errorData = getErrorData(error)
@@ -375,49 +563,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     setValidationResult(null)
     setModalError(null)
     setResolutions({})
+    resolutionsRef.current = {}
 
-    switch (type) {
-      case 'assignment_scores':
-        try {
-          const result = await validationMutation.mutateAsync({ data: { file } } as any)
-          setValidationResult(toValidationResult(result, true))
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Validation failed'))
-          }
-        }
-        break
-      case 'learning_outcomes':
-        try {
-          const result = await loValidateMutation.mutateAsync({ data: { file } } as any)
-          setValidationResult(toValidationResult(result, true))
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Validation failed'))
-          }
-        }
-        break
-      case 'program_outcomes':
-        try {
-          const result = await poValidateMutation.mutateAsync({ data: { file } } as any)
-          setValidationResult(toValidationResult(result, true))
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Validation failed'))
-          }
-        }
-        break
-      default:
-        setModalError('Unknown import type')
+    try {
+      const result = await validationMutation.mutateAsync({ data: { file } } as any)
+      setValidationResult(toValidationResult(result, true))
+    } catch (error) {
+      const errorData = getErrorData(error)
+      if (errorData) {
+        setValidationResult(toValidationResult(errorData, false))
+      } else {
+        setModalError(getErrorMessage(error, 'Validation failed'))
+      }
     }
   }
 
@@ -429,51 +586,23 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     setModalError(null)
 
-    switch (type) {
-      case 'assignment_scores':
-        try {
-          const result = await uploadMutation.mutateAsync({ data: { file } })
-          onUploadComplete?.(result)
-          onClose()
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData?.errors) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Upload failed'))
-          }
+    try {
+      const result = await uploadMutation.mutateAsync({
+        params: { course_code: courseCode, term_id: termId },
+        data: {
+          file,
+          resolution_policy: JSON.stringify(resolutionsRef.current),
         }
-        break
-      case 'learning_outcomes':
-        try {
-          const result = await loUploadMutation.mutateAsync({ data: { file } })
-          onUploadComplete?.(result)
-          onClose()
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData?.errors) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Upload failed'))
-          }
-        }
-        break
-      case 'program_outcomes':
-        try {
-          const result = await poUploadMutation.mutateAsync({ data: { file } })
-          onUploadComplete?.(result)
-          onClose()
-        } catch (error) {
-          const errorData = getErrorData(error)
-          if (errorData?.errors) {
-            setValidationResult(toValidationResult(errorData, false))
-          } else {
-            setModalError(getErrorMessage(error, 'Upload failed'))
-          }
-        }
-        break
-      default:
-        setModalError('Unknown import type')
+      } as any)
+      onUploadComplete?.(result)
+      onClose()
+    } catch (error) {
+      const errorData = getErrorData(error)
+      if (errorData?.errors) {
+        setValidationResult(toValidationResult(errorData, false))
+      } else {
+        setModalError(getErrorMessage(error, 'Upload failed'))
+      }
     }
   }
 
@@ -481,11 +610,23 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onClose()
   }
 
-  const getSolveTarget = (phase: PhaseKey, checks: ValidationResult["checks"]): ActiveProblem => {
+  const getSolveTarget = (phase: PhaseKey, checks: NormalizedChecks, result: ValidationResult): ActiveProblem => {
     if (phase === "assessment_validation" && checks?.assessment_validation?.passed === false) return "assessments"
     if (phase === "student_validation" && checks?.student_validation?.passed === false) {
       if ((checks.student_validation.not_enrolled || []).length > 0) return "unenrolled"
       if ((checks.student_validation.missing_from_database || []).length > 0) return "students"
+
+      const studentErrors = (result.errors ?? []).filter(
+        (error) => (error?.category ?? '').toLowerCase().includes('student')
+      )
+      if (studentErrors.some((error) => {
+        const message = error?.message ?? ''
+        return message.toLowerCase().includes('not enrolled')
+      })) {
+        return 'unenrolled'
+      }
+
+      return 'students'
     }
     if (phase === "score_validation" && checks?.score_validation?.passed === false) return "scores"
     return null
@@ -494,7 +635,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const renderValidationResult = () => {
     if (!validationResult) return null
 
-    const { is_valid, checks, errors, warnings, suggestions, phase_reached } = validationResult
+    const { is_valid, errors, warnings, suggestions, phase_reached } = validationResult
 
     const { details } = validationResult
 
@@ -506,118 +647,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       return acc
     }, {}) ?? {}
 
-    type NormalizedChecks = {
-      file_structure?: { passed: boolean } | undefined
-      column_structure?: { passed: boolean; details?: Record<string, unknown> } | undefined
-      assessment_validation?: {
-        passed: boolean
-        found_assessments?: Array<{ column: string; parsed_name: string; db_assessment?: string; db_name?: string }>
-        missing_assessments?: Array<{ column: string; parsed_name: string }>
-        available_in_database?: string[]
-      } | undefined
-      student_validation?: {
-        passed: boolean
-        total_in_file?: number
-        found_in_database?: number
-        missing_from_database?: Array<{ student_id: string; first_name: string; last_name: string }>
-        not_enrolled?: Array<{ student_id: string; first_name: string; last_name: string }>
-      } | undefined
-      score_validation?: {
-        passed: boolean
-        invalid_scores?: Array<{ row: number; column: string; value: string; error?: string }>
-      } | undefined
-    }
-    let normalizedChecks: NormalizedChecks
-
-    if (checks) {
-      normalizedChecks = {
-        file_structure: checks.file_structure,
-        column_structure: checks.column_structure,
-        assessment_validation: checks.assessment_validation,
-        student_validation: checks.student_validation,
-        score_validation: checks.score_validation,
-      }
-    } else {
-      const phaseResultsFallback = details?.phases_completed?.reduce<Partial<Record<PhaseKey, boolean>>>((acc, phaseInfo) => {
-        const key = getPhaseKeyFromText(phaseInfo.phase)
-        if (key) {
-          acc[key] = phaseInfo.passed
-        }
-        return acc
-      }, {}) ?? {}
-
-      normalizedChecks = {
-        file_structure:
-          typeof phaseResultsFallback.file_structure === 'boolean'
-            ? { passed: phaseResultsFallback.file_structure }
-            : typeof details?.file_parsed === 'boolean'
-              ? { passed: details.file_parsed }
-              : undefined,
-        column_structure:
-          details?.column_structure
-            ? {
-                passed:
-                  typeof details.column_structure.passed === 'boolean'
-                    ? details.column_structure.passed
-                    : (phaseResultsFallback.column_structure ?? false),
-                details: details.column_structure,
-              }
-            : typeof phaseResultsFallback.column_structure === 'boolean'
-              ? { passed: phaseResultsFallback.column_structure }
-              : undefined,
-        assessment_validation:
-          details?.assessment_validation
-            ? {
-                passed:
-                  typeof details.assessment_validation.passed === 'boolean'
-                    ? details.assessment_validation.passed
-                    : typeof phaseResultsFallback.assessment_validation === 'boolean'
-                      ? phaseResultsFallback.assessment_validation
-                      : (details.assessment_validation.missing_assessments?.length ?? 0) === 0,
-                found_assessments: details.assessment_validation.found_assessments,
-                missing_assessments: details.assessment_validation.missing_assessments,
-                available_in_database: details.assessment_validation.available_in_database,
-              }
-            : typeof phaseResultsFallback.assessment_validation === 'boolean'
-              ? { passed: phaseResultsFallback.assessment_validation }
-              : undefined,
-        student_validation:
-          details?.student_validation
-            ? {
-                passed:
-                  typeof details.student_validation.passed === 'boolean'
-                    ? details.student_validation.passed
-                    : typeof phaseResultsFallback.student_validation === 'boolean'
-                      ? phaseResultsFallback.student_validation
-                      : normalizeMissingStudents(details).length === 0,
-                total_in_file: details.student_validation.total_in_file,
-                found_in_database: details.student_validation.found_in_database,
-                missing_from_database: normalizeMissingStudents(details),
-                not_enrolled: Array.isArray(details.student_validation.not_enrolled)
-                  ? details.student_validation.not_enrolled
-                  : [],
-              }
-            : typeof phaseResultsFallback.student_validation === 'boolean'
-              ? { passed: phaseResultsFallback.student_validation }
-              : undefined,
-        score_validation:
-          details?.score_validation
-            ? {
-                passed:
-                  typeof details.score_validation.passed === 'boolean'
-                    ? details.score_validation.passed
-                    : (phaseResultsFallback.score_validation ?? false),
-                invalid_scores: Array.isArray(details.score_validation.invalid_scores)
-                  ? details.score_validation.invalid_scores
-                  : [],
-              }
-            : typeof phaseResultsFallback.score_validation === 'boolean'
-              ? { passed: phaseResultsFallback.score_validation }
-              : undefined,
-      }
-    }
-
-              const normalizedPhaseReached = getPhaseKeyFromText(phase_reached)
+    const normalizedPhaseReached = getPhaseKeyFromText(phase_reached)
+    const visibleErrors = filterErrorsForCurrentPhase(errors, normalizedPhaseReached)
 
     const phases = [
       { key: 'file_structure' as PhaseKey, label: 'File Structure', description: 'Validates file exists, is Excel format, and under 10MB', check: normalizedChecks.file_structure, phasePassed: phaseResults.file_structure },
@@ -693,6 +724,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
               const isFailed = phaseState === 'failed'
               const isActive = phaseState === 'active'
               const isPending = phaseState === 'pending'
+              const solveTarget = isFailed ? getSolveTarget(phase.key, normalizedChecks, validationResult) : null
 
               let circleClass = 'bg-secondary-300'
               let statusTextClass = 'text-secondary-400'
@@ -749,12 +781,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                       <span className={`text-xs font-medium ${isPassed ? 'text-emerald-600' : isFailed ? 'text-danger-600' : isActive ? 'text-primary-600' : 'text-secondary-400'}`}>
                         {statusLabel}
                       </span>
-                      {!isPassed && !isPending && (
+                      {!isPassed && !isPending && solveTarget && (
                         <button
                           type="button"
                           onClick={() => {
-                            const target = getSolveTarget(phase.key, normalizedChecks)
-                            if (target) setActiveProblem(target)
+                            setActiveProblem(solveTarget)
                           }}
                           className="text-xs bg-warning-100 text-warning-700 px-2 py-1 rounded-md hover:bg-warning-200"
                         >
@@ -769,14 +800,14 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
         </div>
 
-        {errors && errors.length > 0 && (
+        {visibleErrors && visibleErrors.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <XCircle className="w-4 h-4 text-danger-500" />
               <h4 className="text-sm font-semibold text-danger-800">Errors:</h4>
             </div>
             <ul className="list-disc list-inside text-sm text-danger-600 space-y-1 ml-6">
-              {errors.map((error, idx) => {
+              {visibleErrors.map((error, idx) => {
                 const msg = typeof error === 'string' ? error : error?.message ?? 'Unknown error'
                 return <li key={idx}>{msg}</li>
               })}
@@ -819,6 +850,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             <p className="text-xs text-secondary-500">
               {Object.keys(resolutions).length} resolution(s) applied
             </p>
+            {validationResult.resolutions_applied?.created && (
+              <p className="text-xs text-secondary-500 mt-1">
+                Created: {validationResult.resolutions_applied.created.students ?? 0} student(s), {validationResult.resolutions_applied.created.enrollments ?? 0} enrollment(s), {validationResult.resolutions_applied.created.assessments ?? 0} assessment(s)
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -895,22 +931,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </div>
           )}
 
-          {uploadInfo && type !== 'assignment_scores' && (
-            <div className="mb-4 p-4 bg-primary-50 border border-primary-200 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <FileSpreadsheet className="w-4 h-4 text-primary-600" />
-                <h3 className="font-semibold text-primary-800">Expected Columns:</h3>
-              </div>
-              <ul className="text-sm text-primary-700 space-y-1 ml-4 list-disc">
-                {uploadInfo.expected_columns?.map((column: string, index: number) => (
-                  <li key={index}>• {column}</li>
-                ))}
-              </ul>
-              {uploadInfo.description && (
-                <p className="text-sm mt-2 text-primary-700">{uploadInfo.description}</p>
-              )}
-            </div>
-          )}
+
 
           <div className="space-y-4">
             <div>
@@ -986,7 +1007,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
               <button
                 onClick={handleUpload}
-                disabled={!file || isAnyUploadPending || isAnyValidatePending || isResolving || (file && file.size > 10 * 1024 * 1024)}
+                disabled={!file || !hasSuccessfulValidation || isAnyUploadPending || isAnyValidatePending || isResolving || (file && file.size > 10 * 1024 * 1024)}
                 className="flex-1 flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAnyUploadPending || isResolving ? (
@@ -1004,16 +1025,16 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </div>
 
             <p className="text-xs text-secondary-500 text-center mt-3">
-              Tip: Click "Validate File" first to check for errors before uploading
+              Tip: Upload is enabled only after a successful validation
             </p>
           </div>
         </div>
 
-        {activeProblem === 'assessments' && validationResult?.checks?.assessment_validation && (
+        {activeProblem === 'assessments' && normalizedChecks.assessment_validation && (
           <MissingAssessmentsModal
             isOpen={true}
-            missingAssessments={validationResult.checks.assessment_validation.missing_assessments || []}
-            availableInDatabase={validationResult.checks.assessment_validation.available_in_database || []}
+            missingAssessments={normalizedChecks.assessment_validation.missing_assessments || []}
+            availableInDatabase={normalizedChecks.assessment_validation.available_in_database || []}
             onClose={() => setActiveProblem(null)}
             onResolve={(choice, assessmentNames) => {
               handleResolve({
@@ -1024,10 +1045,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           />
         )}
 
-        {activeProblem === 'students' && validationResult?.checks?.student_validation?.missing_from_database && (
+        {activeProblem === 'students' && (
           <MissingStudentsModal
             isOpen={true}
-            missingStudents={validationResult.checks.student_validation.missing_from_database || []}
+            missingStudents={normalizedChecks.student_validation?.missing_from_database || []}
             onClose={() => setActiveProblem(null)}
             onResolve={(choice, students) => {
               handleResolve({
@@ -1038,10 +1059,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           />
         )}
 
-        {activeProblem === 'unenrolled' && validationResult?.checks?.student_validation?.not_enrolled && (
+        {activeProblem === 'unenrolled' && (
           <UnenrolledStudentsModal
             isOpen={true}
-            unenrolledStudents={validationResult.checks.student_validation.not_enrolled || []}
+            unenrolledStudents={normalizedChecks.student_validation?.not_enrolled || []}
             onClose={() => setActiveProblem(null)}
             onResolve={(choice, studentIds) => {
               handleResolve({
@@ -1052,10 +1073,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           />
         )}
 
-        {activeProblem === 'scores' && validationResult?.checks?.score_validation?.invalid_scores && (
+        {activeProblem === 'scores' && (
           <InvalidScoresModal
             isOpen={true}
-            invalidScores={validationResult.checks.score_validation.invalid_scores || []}
+            invalidScores={normalizedChecks.score_validation?.invalid_scores || []}
             onClose={() => setActiveProblem(null)}
             onResolve={(choice) => {
               handleResolve({

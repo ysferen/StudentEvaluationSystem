@@ -125,7 +125,6 @@ def create_excel_buffer(dataframe):
     buffer = BytesIO()
     dataframe.to_excel(buffer, engine="openpyxl", index=False)
     buffer.seek(0)
-    buffer.size = buffer.getbuffer().nbytes
     return buffer
 
 

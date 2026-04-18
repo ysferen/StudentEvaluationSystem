@@ -3,11 +3,11 @@ Tests for file import parsing utilities.
 """
 
 import pytest
-from io import BytesIO
 
 import pandas as pd
 
 from core.services.file_import import ExcelParser, FileImportError
+from tests.upload_helpers import InMemoryUpload
 
 
 @pytest.mark.django_db
@@ -17,18 +17,17 @@ class TestExcelParser:
     def test_validate_file_valid_excel(self):
         """Test validation of valid Excel file."""
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, engine="openpyxl")
         buffer.seek(0)
         buffer.name = "test.xlsx"
-        buffer.size = buffer.getbuffer().nbytes
 
         parser = ExcelParser()
         assert parser.validate_file(buffer) is True
 
     def test_validate_file_invalid_format(self):
         """Test validation of invalid file format."""
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         buffer.write(b"This is not an Excel file")
         buffer.seek(0)
         buffer.name = "test.txt"
@@ -40,7 +39,7 @@ class TestExcelParser:
     def test_get_sheet_names(self):
         """Test getting sheet names from Excel file."""
         df = pd.DataFrame({"data": [1, 2, 3]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
             df.to_excel(writer, sheet_name="Sheet1", index=False)
             df.to_excel(writer, sheet_name="Sheet2", index=False)
@@ -55,7 +54,7 @@ class TestExcelParser:
     def test_parse_sheet(self):
         """Test parsing a sheet from Excel file."""
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-        buffer = BytesIO()
+        buffer = InMemoryUpload()
         df.to_excel(buffer, sheet_name="TestData", engine="openpyxl", index=False)
         buffer.seek(0)
 

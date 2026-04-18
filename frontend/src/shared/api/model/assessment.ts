@@ -15,7 +15,7 @@ export interface Assessment {
   date?: string;
   /**
    * @minimum 0
-   * @maximum 9223372036854776000
+   * @maximum 2147483647
    */
   total_score?: number;
   /**

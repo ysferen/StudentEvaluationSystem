@@ -30,7 +30,7 @@ class TestCourseSetupWorkflow:
             "name": "Computer Science",
             "code": "CS-BS",
             "department": dept_id,
-            "degree_level": degree.id,
+            "degree_level": degree.pk,
         }
         response = api_client.post("/api/v1/core/programs/", prog_data)
         assert response.status_code == status.HTTP_201_CREATED
