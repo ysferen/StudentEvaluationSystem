@@ -20,7 +20,6 @@ Supported file formats:
 """
 
 import pandas as pd
-import re
 from django.db import transaction
 from django.contrib.auth import get_user_model
 import logging
@@ -31,6 +30,8 @@ from ..models import Program, Term, Course, LearningOutcome, ProgramOutcome
 from evaluation.models import Assessment, StudentGrade, CourseEnrollment
 from evaluation.services import calculate_course_scores
 from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
+from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
+from .validation import AssignmentScoreValidator
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -281,19 +282,33 @@ class FileImportService:
                 raise
             raise FileImportError(f"Invalid file: {str(e)}")
 
-    def import_assignment_scores(self, course_code: str, term_id: int):
+    def import_assignment_scores(self, course_code: str, term_id: int, resolution_policy: Optional[Dict[str, bool]] = None):
         """
         Import assignment scores from Turkish Excel format.
 
         Args:
             course_code (str): Code of the course for which grades are being imported
             term_id (int): ID of the academic term for which grades are being imported
+            resolution_policy (dict, optional): Policy dict with keys:
+                - skip_missing_assessments: bool
+                - skip_missing_students: bool
+                - skip_unenrolled_students: bool
+                - skip_invalid_scores: bool
+                - clamp_scores: bool
 
         Returns:
             dict: Import results with created/updated counts
         """
         try:
             course_code, term_id = self._validate_assignment_import_params(course_code, term_id)
+
+            policy = {
+                "skip_missing_assessments": bool((resolution_policy or {}).get("skip_missing_assessments", False)),
+                "skip_missing_students": bool((resolution_policy or {}).get("skip_missing_students", False)),
+                "skip_unenrolled_students": bool((resolution_policy or {}).get("skip_unenrolled_students", False)),
+                "skip_invalid_scores": bool((resolution_policy or {}).get("skip_invalid_scores", False)),
+                "clamp_scores": bool((resolution_policy or {}).get("clamp_scores", False)),
+            }
             (
                 df,
                 course,
@@ -301,11 +316,18 @@ class FileImportService:
                 assessment_lookup,
                 student_id_col,
                 assessment_columns,
-            ) = self._prepare_assignment_import_context(course_code, term_id)
+                policy_effects,
+            ) = self._prepare_assignment_import_context(course_code, term_id, policy)
+
+            self.import_results["policy_effects"] = policy_effects
 
             created_count = 0
             updated_count = 0
-            skipped_count = 0
+            skipped_count = (
+                int(policy_effects.get("rows_dropped_missing_students", 0))
+                + int(policy_effects.get("rows_dropped_unenrolled_students", 0))
+                + int(policy_effects.get("scores_skipped", 0))
+            )
             affected_courses = set()
 
             with transaction.atomic():
@@ -320,6 +342,7 @@ class FileImportService:
                             assessment_columns=assessment_columns,
                             assessment_lookup=assessment_lookup,
                             affected_courses=affected_courses,
+                            policy=policy,
                         )
                         created_count += row_created
                         updated_count += row_updated
@@ -354,14 +377,24 @@ class FileImportService:
     def _find_missing_assessments(self, assessment_columns, assessment_lookup):
         missing_assessments = []
         for _, assessment_name in assessment_columns:
-            clean_name = self._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name.lower().strip() not in assessment_lookup:
                 missing_assessments.append(clean_name)
         return missing_assessments
 
-    def _prepare_assignment_import_context(self, course_code: str, term_id: int):
+    def _prepare_assignment_import_context(
+        self,
+        course_code: str,
+        term_id: int,
+        resolution_policy: Optional[Dict[str, bool]] = None,
+    ):
         df = self._get_parser().parse_sheet(self.file_obj, import_type="assignment_scores")
         course = self._get_course_by_code_and_term(course_code, term_id)
+        transformed_df, policy_effects = AssignmentScoreValidator.apply_resolution_policy_to_dataframe(
+            df,
+            course,
+            resolution_policy=resolution_policy,
+        )
 
         course_assessments = Assessment.objects.filter(course=course)
         assessment_lookup = {assessment.name.lower().strip(): assessment for assessment in course_assessments}
@@ -369,10 +402,17 @@ class FileImportService:
         if not course_assessments.exists():
             raise FileImportError(f"No assessments found for course {course.code}. Please create assessments first.")
 
-        self._validate_assignment_scores(df, course, course.term)
+        self._validate_required_columns(transformed_df, "assignment_scores")
 
-        student_id_col = self._find_student_id_column(df.columns)
-        assessment_columns = self._extract_assessment_columns(df.columns)
+        policy = resolution_policy or {}
+        if not policy.get("skip_missing_students") and not policy.get("skip_unenrolled_students"):
+            self._validate_students(transformed_df, course)
+
+        try:
+            student_id_col = find_student_id_column(transformed_df.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
+        assessment_columns = extract_assessment_columns(transformed_df.columns)
         if not assessment_columns:
             raise FileImportError("No assessment score columns found in file")
 
@@ -383,7 +423,41 @@ class FileImportService:
                 f"Assessments not found in database: {', '.join(missing_assessments)}. Available assessments: {available}"
             )
 
-        return df, course, course_assessments, assessment_lookup, student_id_col, assessment_columns
+        return (
+            transformed_df,
+            course,
+            course_assessments,
+            assessment_lookup,
+            student_id_col,
+            assessment_columns,
+            policy_effects,
+        )
+
+    def _process_score_with_policy(
+        self,
+        score,
+        assessment,
+        row_number: int,
+        clean_name: str,
+        policy: Dict[str, bool],
+    ):
+        try:
+            return InputValidator.validate_score(score, max_score=assessment.total_score)
+        except CustomValidationError:
+            if policy.get("clamp_scores"):
+                try:
+                    raw_score = float(score)
+                    return max(0.0, min(float(assessment.total_score), raw_score))
+                except (ValueError, TypeError):
+                    if policy.get("skip_invalid_scores"):
+                        return None
+                    self.import_results["errors"].append(f"Row {row_number}: Invalid score '{score}' for {clean_name}")
+                    return None
+            elif policy.get("skip_invalid_scores"):
+                return None
+            else:
+                self.import_results["errors"].append(f"Row {row_number}: Invalid score '{score}' for {clean_name}")
+                return None
 
     def _process_assignment_row(
         self,
@@ -393,7 +467,10 @@ class FileImportService:
         assessment_columns,
         assessment_lookup,
         affected_courses,
+        policy: Optional[Dict[str, bool]] = None,
     ):
+        if policy is None:
+            policy = {}
         created_count = 0
         updated_count = 0
         skipped_count = 0
@@ -414,18 +491,55 @@ class FileImportService:
             self.import_results["errors"].append(f"Row {row_number}: Student '{student_id}' not found in database")
             return created_count, updated_count, skipped_count
 
+        assessment_results = self._process_row_assessments(
+            row=row,
+            row_number=row_number,
+            student_user=student_user,
+            assessment_columns=assessment_columns,
+            assessment_lookup=assessment_lookup,
+            affected_courses=affected_courses,
+            policy=policy,
+        )
+        return (
+            created_count + assessment_results[0],
+            updated_count + assessment_results[1],
+            skipped_count + assessment_results[2],
+        )
+
+    def _process_row_assessments(
+        self,
+        row,
+        row_number: int,
+        student_user,
+        assessment_columns,
+        assessment_lookup,
+        affected_courses,
+        policy: Dict[str, bool],
+    ):
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+
         for col_name, assessment_name in assessment_columns:
             score = row[col_name]
             if pd.notna(score):
                 try:
-                    clean_name = self._clean_assessment_name(assessment_name)
+                    clean_name = clean_assessment_name(assessment_name)
                     assessment = assessment_lookup[clean_name.lower().strip()]
 
-                    try:
-                        score_float = InputValidator.validate_score(score, max_score=assessment.total_score)
-                    except CustomValidationError as e:
-                        self.import_results["errors"].append(f"Row {row_number}: {str(e)} for {clean_name}")
+                    score_result = self._process_score_with_policy(
+                        score=score,
+                        assessment=assessment,
+                        row_number=row_number,
+                        clean_name=clean_name,
+                        policy=policy,
+                    )
+                    if score_result is None:
+                        if policy.get("skip_invalid_scores"):
+                            skipped_count += 1
                         continue
+
+                    score_float = score_result
 
                     _, created = StudentGrade.objects.update_or_create(
                         student=student_user,
@@ -568,70 +682,6 @@ class FileImportService:
         except Exception as e:
             raise FileImportError(f"Error importing program outcomes: {str(e)}")
 
-    def _extract_assessment_columns(self, columns):
-        """
-        Extract assessment columns from Excel format.
-
-        Column format examples:
-        - 'Midterm 1(%25)_XXX' -> 'Midterm 1'
-        - 'Project(%40)_XXX' -> 'Project'
-        - 'Attendance(%10)_XXX' -> 'Attendance'
-
-        We only look at the first word/part before any suffix like _XXX.
-        Non-assessment columns are: No, Öğrenci No, Adı, Soyadı, Snf, Girme Durum, Harf Notu
-        """
-        assessment_columns = []
-
-        # Known non-assessment column prefixes (case-insensitive)
-        non_assessment_prefixes = ["no", "öğrenci no", "adı", "soyadı", "snf", "girme durum", "harf notu"]
-
-        for col in columns:
-            # Sanitize column name
-            col_str = InputValidator.sanitize_column_name(str(col))
-
-            # Extract the first part before any suffix pattern (_XXXXXX)
-            # Split by underscore and take everything before the last part if it looks like a suffix
-            parts = col_str.split("_")
-            if len(parts) > 1:
-                # Check if last part looks like a suffix (alphanumeric code)
-                last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 4:
-                    # Reconstruct without the suffix
-                    base_name = "_".join(parts[:-1])
-                else:
-                    base_name = col_str
-            else:
-                base_name = col_str
-
-            # Extract assessment name by removing weight pattern like (%25)
-            assessment_name = re.sub(r"\(%?\d+%?\)", "", base_name).strip()
-
-            # Check if this is a non-assessment column
-            is_non_assessment = False
-            for prefix in non_assessment_prefixes:
-                if assessment_name.lower().startswith(prefix.lower()):
-                    is_non_assessment = True
-                    break
-
-            if not is_non_assessment and assessment_name:
-                assessment_columns.append((col_str, assessment_name))
-
-        return assessment_columns
-
-    def _clean_assessment_name(self, name):
-        """Clean assessment name by removing weight information."""
-        # Remove weight patterns like "(%25)", "(%40)", etc.
-        cleaned = re.sub(r"\(%\d+\)", "", name).strip()
-        return cleaned
-
-    def _find_student_id_column(self, columns):
-        """Find the student ID column from Turkish column names."""
-        for col in columns:
-            col_str = str(col).lower().strip()
-            if "öğrenci no" in col_str:
-                return col
-        raise FileImportError("Student ID column not found. Expected columns containing 'öğrenci no'")
-
     def _validate_assignment_scores(self, dataframe: pd.DataFrame, course: Course, term: Term):
         """
         Validate that all required columns are present in dataframe for assessment scores.
@@ -681,7 +731,7 @@ class FileImportService:
         if assessments:
             assessment_list = list(assessments)
             # Use _extract_assessment_columns to get cleaned assessment names from columns
-            assessment_columns = self._extract_assessment_columns(dataframe.columns)
+            assessment_columns = extract_assessment_columns(dataframe.columns)
             found_assessment_names = [name for _, name in assessment_columns]
 
             assessment_col_found = []
@@ -712,7 +762,10 @@ class FileImportService:
         Raises:
             FileImportError: If any student is not enrolled in the course
         """
-        student_id_col = self._find_student_id_column(dataframe.columns)
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
 
         student_ids = [str(sid).strip() for sid in dataframe[student_id_col]]
         enrolled_students = CourseEnrollment.objects.filter(
@@ -738,7 +791,10 @@ class FileImportService:
         Raises:
             FileImportError: If any student is not enrolled in the course
         """
-        student_id_col = self._find_student_id_column(dataframe.columns)
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError as e:
+            raise FileImportError(str(e))
         student_ids = [str(sid).strip() for sid in dataframe[student_id_col].tolist()]
         enrolled_students = CourseEnrollment.objects.filter(
             course=course, student__student_profile__student_id__in=student_ids

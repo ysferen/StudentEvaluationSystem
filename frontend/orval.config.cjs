@@ -75,6 +75,21 @@ module.exports = {
               useInfinite: false,
             },
           },
+          v1_core_file_import_program_outcomes_upload_retrieve: {
+            query: {
+              useInfinite: false,
+            },
+          },
+          v1_core_file_import_learning_outcomes_upload_retrieve: {
+            query: {
+              useInfinite: false,
+            },
+          },
+          v1_core_file_import_assignment_scores_upload_retrieve: {
+            query: {
+              useInfinite: false,
+            },
+          },
         },
       },
     },

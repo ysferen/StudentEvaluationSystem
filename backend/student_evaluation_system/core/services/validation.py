@@ -11,13 +11,16 @@ Each validator focuses on specific responsibility and can be combined
 to create comprehensive validation pipelines.
 """
 
-import pandas as pd
 import re
-from typing import Dict, Any
+
+import pandas as pd
+from typing import Dict, Any, Optional
 from django.contrib.auth import get_user_model
 
 from ..models import Term, Course
-from evaluation.models import Assessment
+from evaluation.models import Assessment, CourseEnrollment
+from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
+from .validators import InputValidator, FileValidator
 
 User = get_user_model()
 
@@ -92,27 +95,26 @@ class FileFormatValidator:
         """
         result = ValidationResult()
 
-        # Validate file extension - only Excel files allowed for assignment_scores
-        if import_type == "assignment_scores":
-            valid_extensions = [".xlsx", ".xls"]
-        else:
-            valid_extensions = [".xlsx", ".xls", ".csv"]
+        # Validate file extension
+        valid_extensions = [".xlsx", ".xls"] if import_type == "assignment_scores" else [".xlsx", ".xls", ".csv"]
 
-        file_extension = file_obj.name.lower().split(".")[-1]
-
-        if not any(file_obj.name.lower().endswith(ext) for ext in valid_extensions):
+        try:
+            InputValidator.validate_file_extension(file_obj.name)
+        except Exception:
             result.add_error(f"Invalid file format. Supported formats: {', '.join(valid_extensions)}", "file_format")
             return result
 
         # Validate file size (10MB limit)
-        max_size = FileFormatValidator.MAX_FILE_SIZE
-        if file_obj.size > max_size:
+        try:
+            FileValidator.validate_file_size(file_obj.size)
+        except Exception:
+            max_mb = FileValidator.MAX_FILE_SIZE_MB
             result.add_error(
-                f"File size exceeds {max_size // (1024 * 1024)}MB limit. Your file is {file_obj.size / (1024 * 1024):.2f}MB",
+                f"File size exceeds {max_mb}MB limit. Your file is {file_obj.size / (1024 * 1024):.2f}MB",
                 "file_size",
             )
 
-        # Add file info to details
+        file_extension = file_obj.name.lower().split(".")[-1]
         result.add_detail(
             "file_info",
             {
@@ -224,62 +226,6 @@ class BusinessStructureValidator:
         return invalid_scores
 
     @staticmethod
-    def validate_assessment_scores_structure(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
-        """
-        Validate assessment scores data structure and business rules.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object for context
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        assessments, assessment_names = BusinessStructureValidator._get_course_assessment_names(course)
-
-        if not assessments:
-            result.add_error(f"No assessments found for course {course.code}. Create assessments first.", "business_rules")
-            return result
-
-        file_assessment_names, invalid_assessments = BusinessStructureValidator._collect_file_assessment_issues(
-            dataframe.columns, assessment_names
-        )
-
-        if invalid_assessments:
-            result.add_error(f"Invalid assessment names: {', '.join(invalid_assessments)}", "assessment_validation")
-            result.add_suggestion(f"Valid assessments for this course: {', '.join(assessment_names)}", "assessment_validation")
-
-        # Validate student IDs format
-        invalid_student_ids = BusinessStructureValidator._collect_invalid_student_ids(dataframe.get("student_id", []))
-
-        if invalid_student_ids:
-            result.add_error(f"Found {len(invalid_student_ids)} empty or invalid student IDs", "data_format")
-
-        # Validate score formats and ranges
-        score_columns = [col for col in dataframe.columns if "score" in str(col).lower()]
-        invalid_scores = BusinessStructureValidator._collect_invalid_scores(dataframe, score_columns)
-
-        if invalid_scores:
-            result.add_error(f"Found {len(invalid_scores)} invalid scores", "score_validation")
-            result.add_detail("invalid_scores_sample", invalid_scores[:5])  # Show first 5
-
-        # Add business validation details
-        result.add_detail(
-            "business_validation",
-            {
-                "course_assessments": assessment_names,
-                "file_assessments": list(file_assessment_names),
-                "invalid_assessments": list(invalid_assessments),
-                "student_count": len(dataframe),
-                "score_columns": score_columns,
-            },
-        )
-
-        return result
-
-    @staticmethod
     def validate_assignment_scores_structure(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
         Validate assignment scores data structure for Turkish Excel format.
@@ -300,7 +246,7 @@ class BusinessStructureValidator:
             return result
 
         # Extract assessment columns from Turkish format
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
 
         if not assessment_columns:
             result.add_error(
@@ -315,7 +261,7 @@ class BusinessStructureValidator:
         invalid_assessments = []
         for _, assessment_name in assessment_columns:
             # Clean assessment name by removing suffixes and weights
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name not in assessment_names:
                 invalid_assessments.append(clean_name)
 
@@ -324,8 +270,9 @@ class BusinessStructureValidator:
             result.add_suggestion(f"Available assessments: {', '.join(assessment_names)}", "assignment_scores")
 
         # Validate student IDs (öğrenci no column)
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found. Expected columns containing 'öğrenci no'", "assignment_scores")
             return result
 
@@ -358,167 +305,12 @@ class BusinessStructureValidator:
 
         return result
 
-    @staticmethod
-    def _extract_assessment_columns(columns):
-        """
-        Extract assessment columns from Turkish Excel format.
-
-        Column format examples:
-        - 'Midterm 1(%25)_0833AB' -> 'Midterm 1'
-        - 'Project(%40)_0833AB' -> 'Project'
-        - 'Attendance(%10)_0833AB' -> 'Attendance'
-
-        We only look at the first word/part before any suffix like _0833AB.
-        Non-assessment columns are: No, Öğrenci No, Adı, Soyadı, Snf, Girme Durum, Harf Notu
-        """
-        assessment_columns = []
-
-        # Known non-assessment column prefixes (case-insensitive)
-        non_assessment_prefixes = ["no", "öğrenci no", "adı", "soyadı", "snf", "girme durum", "harf notu"]
-
-        for col in columns:
-            col_str = str(col).strip()
-
-            # Extract the first part before any suffix pattern (_XXXXXX)
-            # Split by underscore and take everything before the last part if it looks like a suffix
-            parts = col_str.split("_")
-            if len(parts) > 1:
-                # Check if last part looks like a suffix (alphanumeric code)
-                last_part = parts[-1]
-                if last_part.isalnum() and len(last_part) >= 4:
-                    # Reconstruct without the suffix
-                    base_name = "_".join(parts[:-1])
-                else:
-                    base_name = col_str
-            else:
-                base_name = col_str
-
-            # Extract assessment name by removing weight pattern like (%25)
-            import re
-
-            assessment_name = re.sub(r"\(%?\d+%?\)", "", base_name).strip()
-
-            # Check if this is a non-assessment column
-            is_non_assessment = False
-            for prefix in non_assessment_prefixes:
-                if assessment_name.lower().startswith(prefix.lower()):
-                    is_non_assessment = True
-                    break
-
-            if not is_non_assessment and assessment_name:
-                assessment_columns.append((col_str, assessment_name))
-
-        return assessment_columns
-
-    @staticmethod
-    def _clean_assessment_name(name):
-        """Clean assessment name by removing weight information."""
-        # Remove weight patterns like "(%25)", "(%40)", etc.
-        cleaned = re.sub(r"\(%\d+\)", "", name).strip()
-        return cleaned
-
-    @staticmethod
-    def _find_student_id_column(columns):
-        """Find the student ID column from Turkish column names."""
-        for col in columns:
-            col_str = str(col).lower().strip()
-            if "öğrenci no" in col_str:
-                return col
-        return None
-
 
 class DatabaseIntegrityValidator:
     """
     Handles database consistency and relationship validation.
     Focus: Database lookups, relationship integrity, permission checks.
     """
-
-    @staticmethod
-    def _validate_course_for_term(result: ValidationResult, course: Course, term: Term):
-        try:
-            validated_course = Course.objects.get(code=course.code, term=term)
-            result.add_detail("course_validated", True)
-            return validated_course
-        except Course.DoesNotExist:
-            result.add_error(f"Course {course.code} not found for term {term.name}", "course_validation")
-            available_courses = Course.objects.filter(code=course.code).select_related("term")
-            if available_courses.exists():
-                terms = [f"{existing_course.code} ({existing_course.term.name})" for existing_course in available_courses]
-                result.add_suggestion(f"Available terms for {course.code}: {', '.join(terms)}", "course_validation")
-            return None
-
-    @staticmethod
-    def _collect_student_ids(values):
-        return {str(student_id).strip() for student_id in values if pd.notna(student_id)}
-
-    @staticmethod
-    def _extract_assessment_names_from_columns(columns):
-        assessment_columns = [column for column in columns if "assessment" in str(column).lower()]
-        return {str(column).strip() for column in assessment_columns if "score" not in str(column).lower()}
-
-    @staticmethod
-    def validate_assessment_scores_database(dataframe: pd.DataFrame, course: Course, term: Term) -> ValidationResult:
-        """
-        Validate database integrity for assessment scores import.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object
-            term: Term object
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        course = DatabaseIntegrityValidator._validate_course_for_term(result, course, term)
-        if not course:
-            return result
-
-        # Validate student enrollment
-        student_ids = DatabaseIntegrityValidator._collect_student_ids(dataframe.get("student_id", []))
-
-        # Check if students exist in database
-        from users.models import StudentProfile
-
-        existing_students = StudentProfile.objects.filter(student_id__in=student_ids).values_list("student_id", flat=True)
-
-        missing_students = student_ids - set(existing_students)
-
-        if missing_students:
-            result.add_error(f"{len(missing_students)} students not found in database", "student_validation")
-            result.add_detail("missing_students", list(missing_students)[:10])  # Show first 10
-
-        # Validate assessments exist
-        assessment_names = DatabaseIntegrityValidator._extract_assessment_names_from_columns(dataframe.columns)
-
-        invalid_assessments = set()
-        valid_assessments = set(Assessment.objects.filter(course=course).values_list("name", flat=True))
-
-        for assessment_name in assessment_names:
-            if assessment_name not in valid_assessments:
-                invalid_assessments.add(assessment_name)
-
-        if invalid_assessments:
-            result.add_error(
-                f"{len(invalid_assessments)} assessments not found for course {course.code}", "assessment_validation"
-            )
-            result.add_detail("invalid_assessments", list(invalid_assessments))
-
-        # Add database validation details
-        result.add_detail(
-            "database_validation",
-            {
-                "course_validated": True,
-                "total_students_in_file": len(student_ids),
-                "valid_students_found": len(existing_students),
-                "missing_students_count": len(missing_students),
-                "valid_assessments_found": len(valid_assessments),
-                "invalid_assessments": list(invalid_assessments),
-            },
-        )
-
-        return result
 
     @staticmethod
     def validate_assignment_scores_database(dataframe: pd.DataFrame, course: Course, term: Term) -> ValidationResult:
@@ -544,8 +336,9 @@ class DatabaseIntegrityValidator:
             return result
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found", "assignment_scores")
             return result
 
@@ -564,14 +357,14 @@ class DatabaseIntegrityValidator:
 
         if missing_students:
             result.add_error(f"{len(missing_students)} students not found in database", "assignment_scores")
-            result.add_detail("missing_students", list(missing_students)[:10])  # Show first 10
+            result.add_detail("missing_students", list(missing_students)[:10])
 
         # Validate assessments exist
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
         assessment_names = set()
 
         for col_name, assessment_name in assessment_columns:
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             assessment_names.add(clean_name)
 
         invalid_assessments = set()
@@ -585,7 +378,6 @@ class DatabaseIntegrityValidator:
             result.add_error(f"{len(invalid_assessments)} assessments not found for course {course.code}", "assignment_scores")
             result.add_detail("invalid_assessments", list(invalid_assessments))
 
-        # Add database validation details
         result.add_detail(
             "database_validation",
             {
@@ -636,7 +428,7 @@ class DataQualityValidator:
             min_score = scores.min()
             max_score = scores.max()
             avg_score = scores.mean()
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
 
             try:
                 assessment = Assessment.objects.get(name=clean_name, course=course)
@@ -659,92 +451,6 @@ class DataQualityValidator:
                 continue
 
     @staticmethod
-    def validate_assessment_scores_quality(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
-        """
-        Validate data quality for assessment scores.
-
-        Args:
-            dataframe: Assessment scores data
-            course: Course object
-
-        Returns:
-            ValidationResult: Validation results
-        """
-        result = ValidationResult()
-
-        # Check for duplicate student IDs
-        student_ids = dataframe.get("student_id", [])
-        if len(student_ids) != len(set(student_ids)):
-            duplicates = len(student_ids) - len(set(student_ids))
-            result.add_warning(f"Found {duplicates} duplicate student IDs", "data_quality")
-
-        # Check score distributions
-        score_columns = [col for col in dataframe.columns if "score" in str(col).lower()]
-
-        for col in score_columns:
-            scores = dataframe[col].dropna()
-
-            if len(scores) > 0:
-                min_score = scores.min()
-                max_score = scores.max()
-                avg_score = scores.mean()
-
-                # Get assessment total score
-                assessment_name = col.replace("_score", "").replace("assessment_", "").strip()
-                try:
-                    assessment = Assessment.objects.get(name=assessment_name, course=course)
-                    if max_score > assessment.total_score:
-                        result.add_warning(
-                            f"Max score ({max_score}) exceeds assessment total ({assessment.total_score}) in {col}",
-                            "score_validation",
-                        )
-
-                    # Add score statistics
-                    result.add_detail(
-                        f"score_stats_{col}",
-                        {
-                            "min": float(min_score),
-                            "max": float(max_score),
-                            "avg": float(avg_score),
-                            "assessment_total": assessment.total_score,
-                        },
-                    )
-                except Assessment.DoesNotExist:
-                    pass  # Already handled in database validation
-
-        # Check for missing data
-        missing_data_analysis = {}
-        total_rows = len(dataframe)
-
-        for col in dataframe.columns:
-            missing_count = dataframe[col].isna().sum()
-            if missing_count > 0:
-                missing_percentage = (missing_count / total_rows) * 100
-                missing_data_analysis[col] = {
-                    "missing_count": int(missing_count),
-                    "missing_percentage": round(missing_percentage, 2),
-                }
-
-                if missing_percentage > 50:
-                    result.add_warning(f"Column {col} has {missing_percentage:.1f}% missing data", "data_quality")
-
-        if missing_data_analysis:
-            result.add_detail("missing_data_analysis", missing_data_analysis)
-
-        # Data consistency checks
-        result.add_detail(
-            "data_quality",
-            {
-                "total_rows": total_rows,
-                "duplicate_students_found": len(student_ids) != len(set(student_ids)),
-                "score_columns_analyzed": len(score_columns),
-                "columns_with_missing_data": len(missing_data_analysis),
-            },
-        )
-
-        return result
-
-    @staticmethod
     def validate_assignment_scores_quality(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
         Validate data quality for assignment scores (Turkish format).
@@ -759,8 +465,9 @@ class DataQualityValidator:
         result = ValidationResult()
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found", "assignment_scores")
             return result
 
@@ -770,7 +477,7 @@ class DataQualityValidator:
             duplicates = len(student_ids) - len(set(student_ids))
             result.add_warning(f"Found {duplicates} duplicate student IDs", "data_quality")
 
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
         DataQualityValidator._add_assignment_score_details(result, dataframe, assessment_columns, course)
 
         missing_data_analysis, total_rows = DataQualityValidator._analyze_missing_data(dataframe, result)
@@ -821,22 +528,10 @@ class ValidationPipeline:
             self._merge_results(result, structure_result)
         return result
 
-    def _run_assessment_validator(self, validator_class, all_kwargs) -> ValidationResult:
-        if validator_class == FileFormatValidator:
-            return self._run_file_format_validation(all_kwargs)
-        if validator_class == BusinessStructureValidator:
-            return BusinessStructureValidator.validate_assessment_scores_structure(
-                all_kwargs["dataframe"], all_kwargs["course"]
-            )
-        if validator_class == DatabaseIntegrityValidator:
-            return DatabaseIntegrityValidator.validate_assessment_scores_database(
-                all_kwargs["dataframe"], all_kwargs["course"], all_kwargs["term"]
-            )
-        if validator_class == DataQualityValidator:
-            return DataQualityValidator.validate_assessment_scores_quality(all_kwargs["dataframe"], all_kwargs["course"])
-        return ValidationResult()
+    def _run_validator(self, validator_class, all_kwargs) -> ValidationResult:
+        if self.import_type != "assignment_scores":
+            return ValidationResult()
 
-    def _run_assignment_validator(self, validator_class, all_kwargs) -> ValidationResult:
         if validator_class == FileFormatValidator:
             return self._run_file_format_validation(all_kwargs)
         if validator_class == BusinessStructureValidator:
@@ -849,13 +544,6 @@ class ValidationPipeline:
             )
         if validator_class == DataQualityValidator:
             return DataQualityValidator.validate_assignment_scores_quality(all_kwargs["dataframe"], all_kwargs["course"])
-        return ValidationResult()
-
-    def _run_validator(self, validator_class, all_kwargs) -> ValidationResult:
-        if self.import_type == "assessment_scores":
-            return self._run_assessment_validator(validator_class, all_kwargs)
-        if self.import_type == "assignment_scores":
-            return self._run_assignment_validator(validator_class, all_kwargs)
         return ValidationResult()
 
     def run_validation(self, **kwargs) -> ValidationResult:
@@ -895,6 +583,205 @@ class AssignmentScoreValidator:
     """
 
     @staticmethod
+    def _base_checks() -> Dict[str, Dict[str, Any]]:
+        return {
+            "file_structure": {"passed": False},
+            "column_structure": {"passed": False},
+            "assessment_validation": {"passed": False},
+            "student_validation": {"passed": False},
+            "score_validation": {"passed": False},
+        }
+
+    @staticmethod
+    def _normalize_resolution_policy(resolution_policy: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+        policy = resolution_policy or {}
+        return {
+            "skip_missing_assessments": bool(policy.get("skip_missing_assessments", False)),
+            "skip_missing_students": bool(policy.get("skip_missing_students", False)),
+            "skip_unenrolled_students": bool(policy.get("skip_unenrolled_students", False)),
+            "skip_invalid_scores": bool(policy.get("skip_invalid_scores", False)),
+            "clamp_scores": bool(policy.get("clamp_scores", False)),
+        }
+
+    @staticmethod
+    def normalize_resolution_policy(resolution_policy: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+        """Public helper to normalize resolution policy flags."""
+        return AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
+
+    @staticmethod
+    def _build_student_lookups(
+        dataframe: pd.DataFrame,
+        course: Course,
+    ) -> tuple[Dict[str, Any], set[Any], set[str], set[str], str]:
+        """Build lookups for student profiles and enrollments.
+
+        Returns:
+            Tuple of (profile_lookup, enrolled_ids_set, found_ids_set, missing_ids_set, student_id_col)
+        """
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
+            return {}, set(), set(), set(), ""
+
+        file_student_ids = {str(sid).strip() for sid in dataframe[student_id_col] if pd.notna(sid)}
+
+        from users.models import StudentProfile
+
+        student_profiles = StudentProfile.objects.filter(student_id__in=file_student_ids).select_related("user")
+        profile_by_student_id = {str(p.student_id).strip(): p for p in student_profiles}
+        found_ids = set(profile_by_student_id.keys())
+        missing_ids = file_student_ids - found_ids
+
+        enrolled_ids: set[Any] = set()
+        if found_ids:
+            user_ids = [p.user.pk for p in student_profiles]
+            enrolled_ids = set(
+                CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+            )
+
+        return profile_by_student_id, enrolled_ids, found_ids, missing_ids, student_id_col
+
+    @staticmethod
+    def _filter_rows_by_policy(
+        dataframe: pd.DataFrame,
+        student_id_col: str,
+        profile_lookup: Dict[str, Any],
+        enrolled_ids: set,
+        missing_ids: set,
+        policy: Dict[str, bool],
+    ) -> tuple[pd.DataFrame, Dict[str, int]]:
+        """Filter rows based on student-level policy rules."""
+        keep_rows = []
+        dropped_missing = 0
+        dropped_unenrolled = 0
+
+        for student_id in dataframe[student_id_col]:
+            if pd.isna(student_id):
+                keep_rows.append(True)
+                continue
+
+            sid = str(student_id).strip()
+
+            if sid in missing_ids and policy.get("skip_missing_students"):
+                dropped_missing += 1
+                keep_rows.append(False)
+                continue
+
+            profile = profile_lookup.get(sid)
+            if profile and profile.user.pk not in enrolled_ids and policy.get("skip_unenrolled_students"):
+                dropped_unenrolled += 1
+                keep_rows.append(False)
+                continue
+
+            keep_rows.append(True)
+
+        filtered_df = dataframe[keep_rows].reset_index(drop=True)
+        return filtered_df, {"missing": dropped_missing, "unenrolled": dropped_unenrolled}
+
+    @staticmethod
+    def _apply_score_policies(
+        dataframe: pd.DataFrame,
+        course: Course,
+        policy: Dict[str, bool],
+    ) -> Dict[str, int]:
+        """Apply score-level policy rules to assessment columns."""
+        effects = {"clamped": 0, "skipped": 0}
+
+        assessment_cols = extract_assessment_columns(dataframe.columns)
+        db_assessments = {a.name.lower().strip(): a for a in Assessment.objects.filter(course=course)}
+
+        for col_name, parsed_name in assessment_cols:
+            clean_name = clean_assessment_name(parsed_name)
+            db_assessment = db_assessments.get(clean_name.lower().strip())
+            if not db_assessment:
+                continue
+
+            max_score = db_assessment.total_score or 100
+            AssignmentScoreValidator._apply_score_policy_to_column(dataframe, col_name, max_score, policy, effects)
+
+        return effects
+
+    @staticmethod
+    def _apply_score_policy_to_column(
+        dataframe: pd.DataFrame,
+        col_name: str,
+        max_score: float,
+        policy: Dict[str, bool],
+        effects: Dict[str, int],
+    ) -> None:
+        """Apply score policy to a single assessment column."""
+        for row_idx in range(len(dataframe)):
+            value = dataframe.at[row_idx, col_name]
+            if pd.isna(value):
+                continue
+
+            try:
+                numeric_value = float(value)  # type: ignore[arg-type]
+            except (ValueError, TypeError):
+                if policy.get("skip_invalid_scores"):
+                    dataframe.at[row_idx, col_name] = pd.NA
+                    effects["skipped"] += 1
+                continue
+
+            is_out_of_range = numeric_value < 0 or numeric_value > max_score
+
+            if policy.get("clamp_scores") and is_out_of_range:
+                dataframe.at[row_idx, col_name] = max(0.0, min(float(max_score), numeric_value))
+                effects["clamped"] += 1
+            elif policy.get("skip_invalid_scores") and is_out_of_range:
+                dataframe.at[row_idx, col_name] = pd.NA
+                effects["skipped"] += 1
+
+    @staticmethod
+    def _apply_resolution_policy_to_dataframe(
+        dataframe: pd.DataFrame,
+        course: Course,
+        policy: Dict[str, bool],
+    ) -> tuple[pd.DataFrame, Dict[str, Any]]:
+        transformed = dataframe.copy()
+        effects = {
+            "rows_before": len(transformed),
+            "rows_dropped_missing_students": 0,
+            "rows_dropped_unenrolled_students": 0,
+            "scores_clamped": 0,
+            "scores_skipped": 0,
+        }
+
+        # Build student lookups
+        profile_lookup, enrolled_ids, found_ids, missing_ids, student_id_col = AssignmentScoreValidator._build_student_lookups(
+            transformed, course
+        )
+
+        if not student_id_col:
+            effects["rows_after"] = len(transformed)
+            return transformed, effects
+
+        # Filter rows based on student policy
+        transformed, row_effects = AssignmentScoreValidator._filter_rows_by_policy(
+            transformed, student_id_col, profile_lookup, enrolled_ids, missing_ids, policy
+        )
+        effects["rows_dropped_missing_students"] = row_effects["missing"]
+        effects["rows_dropped_unenrolled_students"] = row_effects["unenrolled"]
+
+        # Apply score policies
+        score_effects = AssignmentScoreValidator._apply_score_policies(transformed, course, policy)
+        effects["scores_clamped"] = score_effects["clamped"]
+        effects["scores_skipped"] = score_effects["skipped"]
+
+        effects["rows_after"] = len(transformed)
+        return transformed, effects
+
+    @staticmethod
+    def apply_resolution_policy_to_dataframe(
+        dataframe: pd.DataFrame,
+        course: Course,
+        resolution_policy: Optional[Dict[str, Any]] = None,
+    ) -> tuple[pd.DataFrame, Dict[str, Any]]:
+        """Public helper used by resolve/upload paths to keep transformation behavior consistent."""
+        policy = AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
+        return AssignmentScoreValidator._apply_resolution_policy_to_dataframe(dataframe, course, policy)
+
+    @staticmethod
     def validate_file_structure(file_obj) -> ValidationResult:
         """
         Validate file is Excel format and under 10MB.
@@ -922,7 +809,7 @@ class AssignmentScoreValidator:
         result = ValidationResult()
 
         # Extract assessment columns
-        assessment_columns = BusinessStructureValidator._extract_assessment_columns(dataframe.columns)
+        assessment_columns = extract_assessment_columns(dataframe.columns)
 
         if not assessment_columns:
             result.add_error(
@@ -948,7 +835,7 @@ class AssignmentScoreValidator:
         missing_assessments = []
 
         for col_name, assessment_name in assessment_columns:
-            clean_name = BusinessStructureValidator._clean_assessment_name(assessment_name)
+            clean_name = clean_assessment_name(assessment_name)
             if clean_name.lower().strip() in db_assessment_names:
                 found_assessments.append(
                     {
@@ -983,7 +870,7 @@ class AssignmentScoreValidator:
     @staticmethod
     def validate_students(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
-        Validate that students in file exist in database.
+        Validate that students in file exist in database and are enrolled in course.
 
         Args:
             dataframe: Parsed Excel data
@@ -995,8 +882,9 @@ class AssignmentScoreValidator:
         result = ValidationResult()
 
         # Find student ID column
-        student_id_col = BusinessStructureValidator._find_student_id_column(dataframe.columns)
-        if not student_id_col:
+        try:
+            student_id_col = find_student_id_column(dataframe.columns)
+        except ValueError:
             result.add_error("Student ID column not found. Expected column containing 'öğrenci no' or 'No'", "student_column")
             return result
 
@@ -1013,15 +901,41 @@ class AssignmentScoreValidator:
         # Check students in database
         from users.models import StudentProfile
 
-        existing_students = StudentProfile.objects.filter(student_id__in=file_student_ids).values_list("student_id", flat=True)
+        student_profiles = StudentProfile.objects.filter(student_id__in=file_student_ids).select_related("user")
+        existing_students = [profile.student_id for profile in student_profiles]
 
         existing_set = set(str(sid).strip() for sid in existing_students)
         missing_students = file_student_ids - existing_set
         found_students = file_student_ids & existing_set
 
+        # Check enrollment for students that exist in database
+        not_enrolled = []
+        if found_students:
+            user_ids = [profile.user.pk for profile in student_profiles]
+            enrolled_user_ids = set(
+                CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+            )
+
+            for profile in student_profiles:
+                if profile.user.pk not in enrolled_user_ids:
+                    not_enrolled.append(
+                        {
+                            "student_id": str(profile.student_id),
+                            "first_name": profile.user.first_name or "",
+                            "last_name": profile.user.last_name or "",
+                        }
+                    )
+
         if missing_students:
             result.add_error(f"{len(missing_students)} students not found in database", "student_validation")
             result.add_detail("missing_students", list(missing_students)[:20])  # Show first 20
+
+        if not_enrolled:
+            sample_ids = [student["student_id"] for student in not_enrolled[:20]]
+            result.add_error(
+                f"The following students are not enrolled in course {course.code}: {', '.join(sample_ids)}",
+                "student_validation",
+            )
 
         result.add_detail(
             "student_validation",
@@ -1029,6 +943,7 @@ class AssignmentScoreValidator:
                 "total_in_file": len(file_student_ids),
                 "found_in_database": len(found_students),
                 "missing_from_database": len(missing_students),
+                "not_enrolled": not_enrolled,
                 "student_id_column": student_id_col,
             },
         )
@@ -1036,59 +951,181 @@ class AssignmentScoreValidator:
         return result
 
     @staticmethod
-    def validate_complete(file_obj, course: Course) -> ValidationResult:
+    def validate_column_structure(dataframe: pd.DataFrame) -> ValidationResult:
         """
-        Run complete validation: file structure, assessments, and students.
-
-        Args:
-            file_obj: Uploaded file object
-            course: Course to validate against
-
-        Returns:
-            ValidationResult: Combined validation results
+        Phase 2: Validate required columns are present and at least one
+        assessment column exists.
         """
+        result = ValidationResult()
+
+        def matches_required_column(required_column: str, dataframe_column: str) -> bool:
+            required_tokens = re.findall(r"[a-z0-9ğüşıöç]+", required_column.lower())
+            dataframe_tokens = re.findall(r"[a-z0-9ğüşıöç]+", dataframe_column.lower())
+
+            if not required_tokens or not dataframe_tokens:
+                return False
+
+            if len(dataframe_tokens) < len(required_tokens):
+                return False
+
+            return dataframe_tokens[: len(required_tokens)] == required_tokens
+
+        required_cols = [
+            ("öğrenci no", "Student ID"),
+            ("adı", "First Name"),
+            ("soyadı", "Last Name"),
+        ]
+
+        for col, label in required_cols:
+            matched = any(matches_required_column(col, str(c)) for c in dataframe.columns)
+            if not matched:
+                result.add_error(f"{label} column not found. Expected column '{col}'", "column_structure")
+
+        assessment_cols = extract_assessment_columns(dataframe.columns)
+        if not assessment_cols:
+            result.add_error(
+                "No assessment score columns found in file. "
+                "Expected columns like 'Midterm 1(%25)_XXXXX', 'Project(%40)_XXXXX', etc.",
+                "column_structure",
+            )
+
+        if not result.is_valid:
+            result.add_detail("column_structure", {"passed": False, "columns_found": dataframe.columns.tolist()})
+        else:
+            result.add_detail(
+                "column_structure", {"passed": True, "columns_found": dataframe.columns.tolist(), "row_count": len(dataframe)}
+            )
+
+        return result
+
+    @staticmethod
+    def validate_scores(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
+        """
+        Phase 5: Validate all score values are numeric and within 0-100 (or 0-total_score).
+        """
+        result = ValidationResult()
+
+        assessment_cols = extract_assessment_columns(dataframe.columns)
+        if not assessment_cols:
+            result.add_detail("score_validation", {"passed": True, "invalid_scores": []})
+            return result
+
+        db_assessments = {a.name.lower().strip(): a for a in Assessment.objects.filter(course=course)}
+
+        invalid_scores = []
+
+        for col_name, parsed_name in assessment_cols:
+            clean = clean_assessment_name(parsed_name)
+            db_assessment = db_assessments.get(clean.lower().strip())
+
+            if not db_assessment:
+                continue
+
+            max_score = db_assessment.total_score or 100
+
+            for row_idx, value in enumerate(dataframe[col_name]):
+                if pd.isna(value):
+                    continue
+                try:
+                    score = float(value)  # type: ignore[arg-type]
+                    if score < 0 or score > max_score:
+                        invalid_scores.append(
+                            {
+                                "row": row_idx + 2,
+                                "column": col_name,
+                                "value": str(value),
+                                "parsed_name": clean,
+                                "max_score": max_score,
+                            }
+                        )
+                except (ValueError, TypeError):
+                    invalid_scores.append(
+                        {
+                            "row": row_idx + 2,
+                            "column": col_name,
+                            "value": str(value),
+                            "parsed_name": clean,
+                            "error": "non-numeric",
+                        }
+                    )
+
+        if invalid_scores:
+            sample = invalid_scores[:3]
+            sample_values = [s["value"] for s in sample]
+            result.add_error(f"Found {len(invalid_scores)} invalid score(s): values {sample_values}", "score_validation")
+            result.add_detail("score_validation", {"passed": False, "invalid_scores": invalid_scores[:50]})
+        else:
+            result.add_detail("score_validation", {"passed": True, "invalid_scores": []})
+
+        return result
+
+    @staticmethod
+    def validate_complete(file_obj, course: Course, resolution_policy: Optional[Dict[str, Any]] = None) -> ValidationResult:
         final_result = ValidationResult()
+        checks = AssignmentScoreValidator._base_checks()
+        policy = AssignmentScoreValidator._normalize_resolution_policy(resolution_policy)
+        final_result.add_detail("checks", checks)
+        final_result.add_detail("phase_reached", "file_structure")
+        final_result.add_detail("resolution_policy", policy)
 
-        # 1. Validate file structure
+        def merge_phase(phase_key: str, result: ValidationResult):
+            final_result.errors.extend(result.errors)
+            final_result.warnings.extend(result.warnings)
+            final_result.suggestions.extend(result.suggestions)
+            final_result.validation_details.update(result.validation_details)
+            checks[phase_key]["passed"] = result.is_valid
+            if not result.is_valid:
+                final_result.is_valid = False
+                final_result.validation_details["phase_reached"] = phase_key
+
         file_result = AssignmentScoreValidator.validate_file_structure(file_obj)
-        final_result.errors.extend(file_result.errors)
-        final_result.warnings.extend(file_result.warnings)
-        final_result.validation_details.update(file_result.validation_details)
-
+        merge_phase("file_structure", file_result)
         if not file_result.is_valid:
-            final_result.is_valid = False
             return final_result
 
-        # 2. Parse the file
         try:
-            # Reset file position
             file_obj.seek(0)
             dataframe = pd.read_excel(file_obj)
             final_result.add_detail("file_parsed", True)
             final_result.add_detail("row_count", len(dataframe))
             final_result.add_detail("columns", dataframe.columns.tolist())
-        except Exception as e:
-            final_result.add_error(f"Failed to parse Excel file: {str(e)}", "file_parse")
+        except Exception as exc:
+            final_result.add_error(f"Failed to parse Excel file: {str(exc)}", "file_parse")
             final_result.is_valid = False
+            final_result.validation_details["phase_reached"] = "file_structure"
+            checks["file_structure"]["passed"] = False
             return final_result
 
-        # 3. Validate assessments
-        assessment_result = AssignmentScoreValidator.validate_assignments(dataframe, course)
-        final_result.errors.extend(assessment_result.errors)
-        final_result.warnings.extend(assessment_result.warnings)
-        final_result.suggestions.extend(assessment_result.suggestions)
-        final_result.validation_details.update(assessment_result.validation_details)
+        final_result.validation_details["phase_reached"] = "column_structure"
+        column_result = AssignmentScoreValidator.validate_column_structure(dataframe)
+        merge_phase("column_structure", column_result)
+        if not column_result.is_valid:
+            return final_result
 
-        if not assessment_result.is_valid:
-            final_result.is_valid = False
+        transformed_dataframe, policy_effects = AssignmentScoreValidator._apply_resolution_policy_to_dataframe(
+            dataframe,
+            course,
+            policy,
+        )
+        final_result.add_detail("policy_effects", policy_effects)
 
-        # 4. Validate students
-        student_result = AssignmentScoreValidator.validate_students(dataframe, course)
-        final_result.errors.extend(student_result.errors)
-        final_result.warnings.extend(student_result.warnings)
-        final_result.validation_details.update(student_result.validation_details)
+        final_result.validation_details["phase_reached"] = "assessment_validation"
+        assessment_result = AssignmentScoreValidator.validate_assignments(transformed_dataframe, course)
+        if policy.get("skip_missing_assessments") and not assessment_result.is_valid:
+            remaining_errors = [err for err in assessment_result.errors if err.get("category") != "assessment_validation"]
+            assessment_result.errors = remaining_errors
+            assessment_result.is_valid = len(remaining_errors) == 0
+        merge_phase("assessment_validation", assessment_result)
 
-        if not student_result.is_valid:
-            final_result.is_valid = False
+        final_result.validation_details["phase_reached"] = "student_validation"
+        student_result = AssignmentScoreValidator.validate_students(transformed_dataframe, course)
+        merge_phase("student_validation", student_result)
+
+        final_result.validation_details["phase_reached"] = "score_validation"
+        score_result = AssignmentScoreValidator.validate_scores(transformed_dataframe, course)
+        merge_phase("score_validation", score_result)
+
+        if final_result.is_valid:
+            final_result.validation_details["phase_reached"] = "complete"
 
         return final_result
