@@ -423,6 +423,23 @@ interface FileUploadModalProps {
 
 type ActiveProblem = 'assessments' | 'students' | 'unenrolled' | 'scores' | null
 
+const RESOLUTION_POLICY_KEYS = [
+  'skip_missing_assessments',
+  'skip_missing_students',
+  'skip_unenrolled_students',
+  'skip_invalid_scores',
+  'clamp_scores',
+]
+
+const extractResolutionPolicy = (resolutions: Record<string, unknown>): Record<string, unknown> => {
+  return RESOLUTION_POLICY_KEYS.reduce<Record<string, unknown>>((policy, key) => {
+    if (key in resolutions) {
+      policy[key] = resolutions[key]
+    }
+    return policy
+  }, {})
+}
+
 const FileUploadModal: React.FC<FileUploadModalProps> = ({
   course,
   courseCode,
@@ -436,8 +453,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
-  const [resolutions, setResolutions] = useState<Record<string, unknown>>({})
-  const resolutionsRef = useRef<Record<string, unknown>>({})
+  const [resolvedOperationCount, setResolvedOperationCount] = useState(0)
+  const resolutionPolicyRef = useRef<Record<string, unknown>>({})
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -485,8 +502,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       setFile(e.target.files[0])
       setValidationResult(null)
       setModalError(null)
-      setResolutions({})
-      resolutionsRef.current = {}
+      setResolvedOperationCount(0)
+      resolutionPolicyRef.current = {}
     }
   }
 
@@ -521,8 +538,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         setFile(droppedFile)
         setValidationResult(null)
         setModalError(null)
-        setResolutions({})
-        resolutionsRef.current = {}
+        setResolvedOperationCount(0)
+        resolutionPolicyRef.current = {}
       } else {
         setModalError('Please drop an Excel file (.xlsx or .xls)')
       }
@@ -535,14 +552,16 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     setActiveProblem(null)
 
     try {
-      const mergedResolutions = { ...resolutionsRef.current, ...newResolutions }
-      resolutionsRef.current = mergedResolutions
-      setResolutions(mergedResolutions)
+      const newPolicy = extractResolutionPolicy(newResolutions)
+      if (Object.keys(newPolicy).length > 0) {
+        resolutionPolicyRef.current = { ...resolutionPolicyRef.current, ...newPolicy }
+      }
 
       const result = await resolveMutation.mutateAsync({
-        data: { file, resolutions: JSON.stringify(mergedResolutions) },
+        data: { file, resolutions: JSON.stringify(newResolutions) },
         params: { course_code: courseCode, term_id: termId }
       })
+      setResolvedOperationCount((count) => count + 1)
       setValidationResult(toValidationResult(result, false))
     } catch (error) {
       const errorData = getErrorData(error)
@@ -562,8 +581,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     setValidationResult(null)
     setModalError(null)
-    setResolutions({})
-    resolutionsRef.current = {}
+    setResolvedOperationCount(0)
+    resolutionPolicyRef.current = {}
 
     try {
       const result = await validationMutation.mutateAsync({ data: { file } } as any)
@@ -591,7 +610,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         params: { course_code: courseCode, term_id: termId },
         data: {
           file,
-          resolution_policy: JSON.stringify(resolutionsRef.current),
+          resolution_policy: JSON.stringify(resolutionPolicyRef.current),
         }
       } as any)
       onUploadComplete?.(result)
@@ -845,10 +864,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           </div>
         )}
 
-        {Object.keys(resolutions).length > 0 && (
+        {resolvedOperationCount > 0 && (
           <div className="mt-3 pt-3 border-t border-secondary-200">
             <p className="text-xs text-secondary-500">
-              {Object.keys(resolutions).length} resolution(s) applied
+              {resolvedOperationCount} resolution(s) applied
             </p>
             {validationResult.resolutions_applied?.created && (
               <p className="text-xs text-secondary-500 mt-1">
