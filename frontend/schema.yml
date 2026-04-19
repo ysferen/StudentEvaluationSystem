@@ -630,26 +630,21 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/core/file-import/assignment-scores/upload/:
-    get:
-      operationId: core_file_import_assignment_scores_upload_retrieve
-      description: Upload and process file.
-      tags:
-      - core
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
+  /api/core/file-import/assignment-scores/resolve/:
     post:
-      operationId: core_file_import_assignment_scores_upload_create
-      description: Upload and process file.
+      operationId: core_file_import_assignment_scores_resolve_create
+      description: Apply resolutions and re-validate.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        required: true
       tags:
       - core
       requestBody:
@@ -661,6 +656,9 @@ paths:
                 file:
                   type: string
                   format: binary
+                resolutions:
+                  type: string
+                  description: JSON string of ResolutionChoices
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -670,54 +668,122 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+  /api/core/file-import/assignment-scores/upload/:
+    get:
+      operationId: core_file_import_assignment_scores_upload_retrieve
+      description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+    post:
+      operationId: core_file_import_assignment_scores_upload_create
+      description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/core/file-import/assignment-scores/validate/:
     post:
       operationId: core_file_import_assignment_scores_validate_create
       description: Validate file without importing.
-      tags:
-      - core
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
         required: true
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
-  /api/core/file-import/learning-outcomes/upload/:
-    get:
-      operationId: core_file_import_learning_outcomes_upload_retrieve
-      description: Upload and process file.
-      tags:
-      - core
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
-    post:
-      operationId: core_file_import_learning_outcomes_upload_create
-      description: Upload and process file.
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       requestBody:
@@ -738,7 +804,178 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+  /api/core/file-import/learning-outcomes/upload/:
+    get:
+      operationId: core_file_import_learning_outcomes_upload_retrieve
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+    post:
+      operationId: core_file_import_learning_outcomes_upload_create
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
   /api/core/file-import/learning-outcomes/validate/:
     post:
@@ -770,6 +1007,19 @@ paths:
     get:
       operationId: core_file_import_program_outcomes_upload_retrieve
       description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       security:
@@ -781,11 +1031,66 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
     post:
       operationId: core_file_import_program_outcomes_upload_create
       description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       requestBody:
@@ -806,7 +1111,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
   /api/core/file-import/program-outcomes/validate/:
     post:
@@ -4488,26 +4835,21 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/core/file-import/assignment-scores/upload/:
-    get:
-      operationId: v1_core_file_import_assignment_scores_upload_retrieve
-      description: Upload and process file.
-      tags:
-      - v1
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
+  /api/v1/core/file-import/assignment-scores/resolve/:
     post:
-      operationId: v1_core_file_import_assignment_scores_upload_create
-      description: Upload and process file.
+      operationId: v1_core_file_import_assignment_scores_resolve_create
+      description: Apply resolutions and re-validate.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        required: true
       tags:
       - v1
       requestBody:
@@ -4519,6 +4861,9 @@ paths:
                 file:
                   type: string
                   format: binary
+                resolutions:
+                  type: string
+                  description: JSON string of ResolutionChoices
       security:
       - jwtCookie: []
       - cookieAuth: []
@@ -4528,54 +4873,122 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+  /api/v1/core/file-import/assignment-scores/upload/:
+    get:
+      operationId: v1_core_file_import_assignment_scores_upload_retrieve
+      description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+    post:
+      operationId: v1_core_file_import_assignment_scores_upload_create
+      description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/v1/core/file-import/assignment-scores/validate/:
     post:
       operationId: v1_core_file_import_assignment_scores_validate_create
       description: Validate file without importing.
-      tags:
-      - v1
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
         required: true
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
-  /api/v1/core/file-import/learning-outcomes/upload/:
-    get:
-      operationId: v1_core_file_import_learning_outcomes_upload_retrieve
-      description: Upload and process file.
-      tags:
-      - v1
-      security:
-      - jwtCookie: []
-      - cookieAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportResponse'
-          description: ''
-    post:
-      operationId: v1_core_file_import_learning_outcomes_upload_create
-      description: Upload and process file.
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       requestBody:
@@ -4596,7 +5009,178 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+  /api/v1/core/file-import/learning-outcomes/upload/:
+    get:
+      operationId: v1_core_file_import_learning_outcomes_upload_retrieve
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+    post:
+      operationId: v1_core_file_import_learning_outcomes_upload_create
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtCookie: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
   /api/v1/core/file-import/learning-outcomes/validate/:
     post:
@@ -4628,6 +5212,19 @@ paths:
     get:
       operationId: v1_core_file_import_program_outcomes_upload_retrieve
       description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       security:
@@ -4639,11 +5236,66 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
     post:
       operationId: v1_core_file_import_program_outcomes_upload_create
       description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       requestBody:
@@ -4664,7 +5316,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
           description: ''
   /api/v1/core/file-import/program-outcomes/validate/:
     post:

@@ -80,9 +80,35 @@ import type {
   V1CoreCoursesListParams,
   V1CoreDegreeLevelsListParams,
   V1CoreDepartmentsListParams,
+  V1CoreFileImportAssignmentScoresResolveCreate200,
+  V1CoreFileImportAssignmentScoresResolveCreateBody,
+  V1CoreFileImportAssignmentScoresResolveCreateParams,
+  V1CoreFileImportAssignmentScoresUploadCreate200,
+  V1CoreFileImportAssignmentScoresUploadCreate400,
+  V1CoreFileImportAssignmentScoresUploadCreate404,
   V1CoreFileImportAssignmentScoresUploadCreateBody,
+  V1CoreFileImportAssignmentScoresUploadCreateParams,
+  V1CoreFileImportAssignmentScoresUploadRetrieve200,
+  V1CoreFileImportAssignmentScoresUploadRetrieve400,
+  V1CoreFileImportAssignmentScoresUploadRetrieve404,
+  V1CoreFileImportAssignmentScoresUploadRetrieveParams,
+  V1CoreFileImportAssignmentScoresValidateCreate200,
+  V1CoreFileImportAssignmentScoresValidateCreateBody,
+  V1CoreFileImportAssignmentScoresValidateCreateParams,
+  V1CoreFileImportLearningOutcomesUploadCreate200,
+  V1CoreFileImportLearningOutcomesUploadCreate400,
   V1CoreFileImportLearningOutcomesUploadCreateBody,
+  V1CoreFileImportLearningOutcomesUploadCreateParams,
+  V1CoreFileImportLearningOutcomesUploadRetrieve200,
+  V1CoreFileImportLearningOutcomesUploadRetrieve400,
+  V1CoreFileImportLearningOutcomesUploadRetrieveParams,
+  V1CoreFileImportProgramOutcomesUploadCreate200,
+  V1CoreFileImportProgramOutcomesUploadCreate400,
   V1CoreFileImportProgramOutcomesUploadCreateBody,
+  V1CoreFileImportProgramOutcomesUploadCreateParams,
+  V1CoreFileImportProgramOutcomesUploadRetrieve200,
+  V1CoreFileImportProgramOutcomesUploadRetrieve400,
+  V1CoreFileImportProgramOutcomesUploadRetrieveParams,
   V1CoreLoPoMappingsListParams,
   V1CoreProgramsListParams,
   V1CoreStudentPoScoresListParams,
@@ -2046,16 +2072,87 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Upload and process file.
+ * Apply resolutions and re-validate.
+ */
+export const v1CoreFileImportAssignmentScoresResolveCreate = (
+    v1CoreFileImportAssignmentScoresResolveCreateBody: V1CoreFileImportAssignmentScoresResolveCreateBody,
+    params: V1CoreFileImportAssignmentScoresResolveCreateParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+if(v1CoreFileImportAssignmentScoresResolveCreateBody.file !== undefined) {
+ formData.append(`file`, v1CoreFileImportAssignmentScoresResolveCreateBody.file)
+ }
+if(v1CoreFileImportAssignmentScoresResolveCreateBody.resolutions !== undefined) {
+ formData.append(`resolutions`, v1CoreFileImportAssignmentScoresResolveCreateBody.resolutions)
+ }
+
+      return customInstance<V1CoreFileImportAssignmentScoresResolveCreate200>(
+      {url: `/api/v1/core/file-import/assignment-scores/resolve/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getV1CoreFileImportAssignmentScoresResolveCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>, TError,{data: V1CoreFileImportAssignmentScoresResolveCreateBody;params: V1CoreFileImportAssignmentScoresResolveCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>, TError,{data: V1CoreFileImportAssignmentScoresResolveCreateBody;params: V1CoreFileImportAssignmentScoresResolveCreateParams}, TContext> => {
+
+const mutationKey = ['v1CoreFileImportAssignmentScoresResolveCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>, {data: V1CoreFileImportAssignmentScoresResolveCreateBody;params: V1CoreFileImportAssignmentScoresResolveCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  v1CoreFileImportAssignmentScoresResolveCreate(data,params,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreFileImportAssignmentScoresResolveCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>>
+    export type V1CoreFileImportAssignmentScoresResolveCreateMutationBody = V1CoreFileImportAssignmentScoresResolveCreateBody
+    export type V1CoreFileImportAssignmentScoresResolveCreateMutationError = unknown
+
+    export const useV1CoreFileImportAssignmentScoresResolveCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>, TError,{data: V1CoreFileImportAssignmentScoresResolveCreateBody;params: V1CoreFileImportAssignmentScoresResolveCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresResolveCreate>>,
+        TError,
+        {data: V1CoreFileImportAssignmentScoresResolveCreateBody;params: V1CoreFileImportAssignmentScoresResolveCreateParams},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreFileImportAssignmentScoresResolveCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Upload and import assignment scores. Always validates before importing.
  */
 export const v1CoreFileImportAssignmentScoresUploadRetrieve = (
-
+    params: V1CoreFileImportAssignmentScoresUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<FileImportResponse>(
-      {url: `/api/v1/core/file-import/assignment-scores/upload/`, method: 'GET', signal
+      return customInstance<V1CoreFileImportAssignmentScoresUploadRetrieve200>(
+      {url: `/api/v1/core/file-import/assignment-scores/upload/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -2063,93 +2160,23 @@ export const v1CoreFileImportAssignmentScoresUploadRetrieve = (
 
 
 
-export const getV1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryKey = () => {
+export const getV1CoreFileImportAssignmentScoresUploadRetrieveQueryKey = (params?: V1CoreFileImportAssignmentScoresUploadRetrieveParams,) => {
     return [
-    'infinite', `/api/v1/core/file-import/assignment-scores/upload/`
-    ] as const;
-    }
-
-export const getV1CoreFileImportAssignmentScoresUploadRetrieveQueryKey = () => {
-    return [
-    `/api/v1/core/file-import/assignment-scores/upload/`
+    `/api/v1/core/file-import/assignment-scores/upload/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getV1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1CoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404>(params: V1CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportAssignmentScoresUploadRetrieveQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => v1CoreFileImportAssignmentScoresUploadRetrieve(requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>
-export type V1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryError = unknown
-
-
-export function useV1CoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>, TError = unknown>(
-  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreFileImportAssignmentScoresUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreFileImportAssignmentScoresUploadRetrieveInfiniteQueryOptions(options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getV1CoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportAssignmentScoresUploadRetrieveQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => v1CoreFileImportAssignmentScoresUploadRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => v1CoreFileImportAssignmentScoresUploadRetrieve(params, requestOptions, signal);
 
 
 
@@ -2159,11 +2186,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type V1CoreFileImportAssignmentScoresUploadRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>>
-export type V1CoreFileImportAssignmentScoresUploadRetrieveQueryError = unknown
+export type V1CoreFileImportAssignmentScoresUploadRetrieveQueryError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404
 
 
-export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: V1CoreFileImportAssignmentScoresUploadRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>,
           TError,
@@ -2172,8 +2199,8 @@ export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaite
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: V1CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>,
           TError,
@@ -2182,17 +2209,17 @@ export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaite
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: V1CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError = V1CoreFileImportAssignmentScoresUploadRetrieve400 | V1CoreFileImportAssignmentScoresUploadRetrieve404>(
+ params: V1CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1CoreFileImportAssignmentScoresUploadRetrieveQueryOptions(options)
+  const queryOptions = getV1CoreFileImportAssignmentScoresUploadRetrieveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2205,31 +2232,34 @@ export function useV1CoreFileImportAssignmentScoresUploadRetrieve<TData = Awaite
 
 
 /**
- * Upload and process file.
+ * Upload and import assignment scores. Always validates before importing.
  */
 export const v1CoreFileImportAssignmentScoresUploadCreate = (
     v1CoreFileImportAssignmentScoresUploadCreateBody: V1CoreFileImportAssignmentScoresUploadCreateBody,
+    params: V1CoreFileImportAssignmentScoresUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
       const formData = new FormData();
-if(v1CoreFileImportAssignmentScoresUploadCreateBody.file !== undefined) {
- formData.append(`file`, v1CoreFileImportAssignmentScoresUploadCreateBody.file)
+formData.append(`file`, v1CoreFileImportAssignmentScoresUploadCreateBody.file)
+if(v1CoreFileImportAssignmentScoresUploadCreateBody.resolution_policy !== undefined) {
+ formData.append(`resolution_policy`, v1CoreFileImportAssignmentScoresUploadCreateBody.resolution_policy)
  }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<V1CoreFileImportAssignmentScoresUploadCreate200>(
       {url: `/api/v1/core/file-import/assignment-scores/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
 
 
 
-export const getV1CoreFileImportAssignmentScoresUploadCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody}, TContext> => {
+export const getV1CoreFileImportAssignmentScoresUploadCreateMutationOptions = <TError = V1CoreFileImportAssignmentScoresUploadCreate400 | V1CoreFileImportAssignmentScoresUploadCreate404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody;params: V1CoreFileImportAssignmentScoresUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody;params: V1CoreFileImportAssignmentScoresUploadCreateParams}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportAssignmentScoresUploadCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2241,10 +2271,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, {data: V1CoreFileImportAssignmentScoresUploadCreateBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, {data: V1CoreFileImportAssignmentScoresUploadCreateBody;params: V1CoreFileImportAssignmentScoresUploadCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  v1CoreFileImportAssignmentScoresUploadCreate(data,requestOptions)
+          return  v1CoreFileImportAssignmentScoresUploadCreate(data,params,requestOptions)
         }
 
 
@@ -2254,14 +2284,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type V1CoreFileImportAssignmentScoresUploadCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>>
     export type V1CoreFileImportAssignmentScoresUploadCreateMutationBody = V1CoreFileImportAssignmentScoresUploadCreateBody
-    export type V1CoreFileImportAssignmentScoresUploadCreateMutationError = unknown
+    export type V1CoreFileImportAssignmentScoresUploadCreateMutationError = V1CoreFileImportAssignmentScoresUploadCreate400 | V1CoreFileImportAssignmentScoresUploadCreate404
 
-    export const useV1CoreFileImportAssignmentScoresUploadCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useV1CoreFileImportAssignmentScoresUploadCreate = <TError = V1CoreFileImportAssignmentScoresUploadCreate400 | V1CoreFileImportAssignmentScoresUploadCreate404,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>, TError,{data: V1CoreFileImportAssignmentScoresUploadCreateBody;params: V1CoreFileImportAssignmentScoresUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresUploadCreate>>,
         TError,
-        {data: V1CoreFileImportAssignmentScoresUploadCreateBody},
+        {data: V1CoreFileImportAssignmentScoresUploadCreateBody;params: V1CoreFileImportAssignmentScoresUploadCreateParams},
         TContext
       > => {
 
@@ -2273,18 +2303,21 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Validate file without importing.
  */
 export const v1CoreFileImportAssignmentScoresValidateCreate = (
-    fileImportResponse: FileImportResponse,
+    v1CoreFileImportAssignmentScoresValidateCreateBody: V1CoreFileImportAssignmentScoresValidateCreateBody,
+    params: V1CoreFileImportAssignmentScoresValidateCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
       const formData = new FormData();
-formData.append(`message`, fileImportResponse.message)
-formData.append(`results`, JSON.stringify(fileImportResponse.results));
+if(v1CoreFileImportAssignmentScoresValidateCreateBody.file !== undefined) {
+ formData.append(`file`, v1CoreFileImportAssignmentScoresValidateCreateBody.file)
+ }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<V1CoreFileImportAssignmentScoresValidateCreate200>(
       {url: `/api/v1/core/file-import/assignment-scores/validate/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
@@ -2292,8 +2325,8 @@ formData.append(`results`, JSON.stringify(fileImportResponse.results));
 
 
 export const getV1CoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: V1CoreFileImportAssignmentScoresValidateCreateBody;params: V1CoreFileImportAssignmentScoresValidateCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: V1CoreFileImportAssignmentScoresValidateCreateBody;params: V1CoreFileImportAssignmentScoresValidateCreateParams}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportAssignmentScoresValidateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2305,10 +2338,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, {data: FileImportResponse}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, {data: V1CoreFileImportAssignmentScoresValidateCreateBody;params: V1CoreFileImportAssignmentScoresValidateCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  v1CoreFileImportAssignmentScoresValidateCreate(data,requestOptions)
+          return  v1CoreFileImportAssignmentScoresValidateCreate(data,params,requestOptions)
         }
 
 
@@ -2317,15 +2350,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CoreFileImportAssignmentScoresValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>>
-    export type V1CoreFileImportAssignmentScoresValidateCreateMutationBody = FileImportResponse
+    export type V1CoreFileImportAssignmentScoresValidateCreateMutationBody = V1CoreFileImportAssignmentScoresValidateCreateBody
     export type V1CoreFileImportAssignmentScoresValidateCreateMutationError = unknown
 
     export const useV1CoreFileImportAssignmentScoresValidateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>, TError,{data: V1CoreFileImportAssignmentScoresValidateCreateBody;params: V1CoreFileImportAssignmentScoresValidateCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportAssignmentScoresValidateCreate>>,
         TError,
-        {data: FileImportResponse},
+        {data: V1CoreFileImportAssignmentScoresValidateCreateBody;params: V1CoreFileImportAssignmentScoresValidateCreateParams},
         TContext
       > => {
 
@@ -2337,13 +2370,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Upload and process file.
  */
 export const v1CoreFileImportLearningOutcomesUploadRetrieve = (
-
+    params: V1CoreFileImportLearningOutcomesUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<FileImportResponse>(
-      {url: `/api/v1/core/file-import/learning-outcomes/upload/`, method: 'GET', signal
+      return customInstance<V1CoreFileImportLearningOutcomesUploadRetrieve200>(
+      {url: `/api/v1/core/file-import/learning-outcomes/upload/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -2351,93 +2385,23 @@ export const v1CoreFileImportLearningOutcomesUploadRetrieve = (
 
 
 
-export const getV1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryKey = () => {
+export const getV1CoreFileImportLearningOutcomesUploadRetrieveQueryKey = (params?: V1CoreFileImportLearningOutcomesUploadRetrieveParams,) => {
     return [
-    'infinite', `/api/v1/core/file-import/learning-outcomes/upload/`
-    ] as const;
-    }
-
-export const getV1CoreFileImportLearningOutcomesUploadRetrieveQueryKey = () => {
-    return [
-    `/api/v1/core/file-import/learning-outcomes/upload/`
+    `/api/v1/core/file-import/learning-outcomes/upload/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getV1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1CoreFileImportLearningOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = V1CoreFileImportLearningOutcomesUploadRetrieve400>(params: V1CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportLearningOutcomesUploadRetrieveQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportLearningOutcomesUploadRetrieve(requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>
-export type V1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryError = unknown
-
-
-export function useV1CoreFileImportLearningOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>, TError = unknown>(
-  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportLearningOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportLearningOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreFileImportLearningOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreFileImportLearningOutcomesUploadRetrieveInfiniteQueryOptions(options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getV1CoreFileImportLearningOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportLearningOutcomesUploadRetrieveQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportLearningOutcomesUploadRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportLearningOutcomesUploadRetrieve(params, requestOptions, signal);
 
 
 
@@ -2447,11 +2411,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type V1CoreFileImportLearningOutcomesUploadRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>>
-export type V1CoreFileImportLearningOutcomesUploadRetrieveQueryError = unknown
+export type V1CoreFileImportLearningOutcomesUploadRetrieveQueryError = V1CoreFileImportLearningOutcomesUploadRetrieve400
 
 
-export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = V1CoreFileImportLearningOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportLearningOutcomesUploadRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>,
           TError,
@@ -2460,8 +2424,8 @@ export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaite
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = V1CoreFileImportLearningOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>,
           TError,
@@ -2470,17 +2434,17 @@ export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaite
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = V1CoreFileImportLearningOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError = V1CoreFileImportLearningOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1CoreFileImportLearningOutcomesUploadRetrieveQueryOptions(options)
+  const queryOptions = getV1CoreFileImportLearningOutcomesUploadRetrieveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2497,6 +2461,7 @@ export function useV1CoreFileImportLearningOutcomesUploadRetrieve<TData = Awaite
  */
 export const v1CoreFileImportLearningOutcomesUploadCreate = (
     v1CoreFileImportLearningOutcomesUploadCreateBody: V1CoreFileImportLearningOutcomesUploadCreateBody,
+    params: V1CoreFileImportLearningOutcomesUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -2505,19 +2470,20 @@ if(v1CoreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, v1CoreFileImportLearningOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<V1CoreFileImportLearningOutcomesUploadCreate200>(
       {url: `/api/v1/core/file-import/learning-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
 
 
 
-export const getV1CoreFileImportLearningOutcomesUploadCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody}, TContext> => {
+export const getV1CoreFileImportLearningOutcomesUploadCreateMutationOptions = <TError = V1CoreFileImportLearningOutcomesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody;params: V1CoreFileImportLearningOutcomesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody;params: V1CoreFileImportLearningOutcomesUploadCreateParams}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportLearningOutcomesUploadCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2529,10 +2495,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, {data: V1CoreFileImportLearningOutcomesUploadCreateBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, {data: V1CoreFileImportLearningOutcomesUploadCreateBody;params: V1CoreFileImportLearningOutcomesUploadCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  v1CoreFileImportLearningOutcomesUploadCreate(data,requestOptions)
+          return  v1CoreFileImportLearningOutcomesUploadCreate(data,params,requestOptions)
         }
 
 
@@ -2542,14 +2508,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type V1CoreFileImportLearningOutcomesUploadCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>>
     export type V1CoreFileImportLearningOutcomesUploadCreateMutationBody = V1CoreFileImportLearningOutcomesUploadCreateBody
-    export type V1CoreFileImportLearningOutcomesUploadCreateMutationError = unknown
+    export type V1CoreFileImportLearningOutcomesUploadCreateMutationError = V1CoreFileImportLearningOutcomesUploadCreate400
 
-    export const useV1CoreFileImportLearningOutcomesUploadCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useV1CoreFileImportLearningOutcomesUploadCreate = <TError = V1CoreFileImportLearningOutcomesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>, TError,{data: V1CoreFileImportLearningOutcomesUploadCreateBody;params: V1CoreFileImportLearningOutcomesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportLearningOutcomesUploadCreate>>,
         TError,
-        {data: V1CoreFileImportLearningOutcomesUploadCreateBody},
+        {data: V1CoreFileImportLearningOutcomesUploadCreateBody;params: V1CoreFileImportLearningOutcomesUploadCreateParams},
         TContext
       > => {
 
@@ -2625,13 +2591,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Upload and process file.
  */
 export const v1CoreFileImportProgramOutcomesUploadRetrieve = (
-
+    params: V1CoreFileImportProgramOutcomesUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<FileImportResponse>(
-      {url: `/api/v1/core/file-import/program-outcomes/upload/`, method: 'GET', signal
+      return customInstance<V1CoreFileImportProgramOutcomesUploadRetrieve200>(
+      {url: `/api/v1/core/file-import/program-outcomes/upload/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -2639,93 +2606,23 @@ export const v1CoreFileImportProgramOutcomesUploadRetrieve = (
 
 
 
-export const getV1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryKey = () => {
+export const getV1CoreFileImportProgramOutcomesUploadRetrieveQueryKey = (params?: V1CoreFileImportProgramOutcomesUploadRetrieveParams,) => {
     return [
-    'infinite', `/api/v1/core/file-import/program-outcomes/upload/`
-    ] as const;
-    }
-
-export const getV1CoreFileImportProgramOutcomesUploadRetrieveQueryKey = () => {
-    return [
-    `/api/v1/core/file-import/program-outcomes/upload/`
+    `/api/v1/core/file-import/program-outcomes/upload/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getV1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1CoreFileImportProgramOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = V1CoreFileImportProgramOutcomesUploadRetrieve400>(params: V1CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportProgramOutcomesUploadRetrieveQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportProgramOutcomesUploadRetrieve(requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>
-export type V1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryError = unknown
-
-
-export function useV1CoreFileImportProgramOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>, TError = unknown>(
-  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportProgramOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportProgramOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreFileImportProgramOutcomesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreFileImportProgramOutcomesUploadRetrieveInfiniteQueryOptions(options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getV1CoreFileImportProgramOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportProgramOutcomesUploadRetrieveQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportProgramOutcomesUploadRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportProgramOutcomesUploadRetrieve(params, requestOptions, signal);
 
 
 
@@ -2735,11 +2632,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type V1CoreFileImportProgramOutcomesUploadRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>>
-export type V1CoreFileImportProgramOutcomesUploadRetrieveQueryError = unknown
+export type V1CoreFileImportProgramOutcomesUploadRetrieveQueryError = V1CoreFileImportProgramOutcomesUploadRetrieve400
 
 
-export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = V1CoreFileImportProgramOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportProgramOutcomesUploadRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>,
           TError,
@@ -2748,8 +2645,8 @@ export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = V1CoreFileImportProgramOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>,
           TError,
@@ -2758,17 +2655,17 @@ export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = V1CoreFileImportProgramOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError = V1CoreFileImportProgramOutcomesUploadRetrieve400>(
+ params: V1CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1CoreFileImportProgramOutcomesUploadRetrieveQueryOptions(options)
+  const queryOptions = getV1CoreFileImportProgramOutcomesUploadRetrieveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2785,6 +2682,7 @@ export function useV1CoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited
  */
 export const v1CoreFileImportProgramOutcomesUploadCreate = (
     v1CoreFileImportProgramOutcomesUploadCreateBody: V1CoreFileImportProgramOutcomesUploadCreateBody,
+    params: V1CoreFileImportProgramOutcomesUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -2793,19 +2691,20 @@ if(v1CoreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, v1CoreFileImportProgramOutcomesUploadCreateBody.file)
  }
 
-      return customInstance<FileImportResponse>(
+      return customInstance<V1CoreFileImportProgramOutcomesUploadCreate200>(
       {url: `/api/v1/core/file-import/program-outcomes/upload/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData, signal
+       data: formData,
+        params, signal
     },
       options);
     }
 
 
 
-export const getV1CoreFileImportProgramOutcomesUploadCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody}, TContext> => {
+export const getV1CoreFileImportProgramOutcomesUploadCreateMutationOptions = <TError = V1CoreFileImportProgramOutcomesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody;params: V1CoreFileImportProgramOutcomesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody;params: V1CoreFileImportProgramOutcomesUploadCreateParams}, TContext> => {
 
 const mutationKey = ['v1CoreFileImportProgramOutcomesUploadCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2817,10 +2716,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, {data: V1CoreFileImportProgramOutcomesUploadCreateBody}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, {data: V1CoreFileImportProgramOutcomesUploadCreateBody;params: V1CoreFileImportProgramOutcomesUploadCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  v1CoreFileImportProgramOutcomesUploadCreate(data,requestOptions)
+          return  v1CoreFileImportProgramOutcomesUploadCreate(data,params,requestOptions)
         }
 
 
@@ -2830,14 +2729,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type V1CoreFileImportProgramOutcomesUploadCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>>
     export type V1CoreFileImportProgramOutcomesUploadCreateMutationBody = V1CoreFileImportProgramOutcomesUploadCreateBody
-    export type V1CoreFileImportProgramOutcomesUploadCreateMutationError = unknown
+    export type V1CoreFileImportProgramOutcomesUploadCreateMutationError = V1CoreFileImportProgramOutcomesUploadCreate400
 
-    export const useV1CoreFileImportProgramOutcomesUploadCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useV1CoreFileImportProgramOutcomesUploadCreate = <TError = V1CoreFileImportProgramOutcomesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>, TError,{data: V1CoreFileImportProgramOutcomesUploadCreateBody;params: V1CoreFileImportProgramOutcomesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreFileImportProgramOutcomesUploadCreate>>,
         TError,
-        {data: V1CoreFileImportProgramOutcomesUploadCreateBody},
+        {data: V1CoreFileImportProgramOutcomesUploadCreateBody;params: V1CoreFileImportProgramOutcomesUploadCreateParams},
         TContext
       > => {
 

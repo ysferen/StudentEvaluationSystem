@@ -7,5 +7,7 @@
  */
 
 export type V1CoreFileImportAssignmentScoresUploadCreateBody = {
-  file?: Blob;
+  file: Blob;
+  /** JSON string of resolution policy flags */
+  resolution_policy?: string;
 };
