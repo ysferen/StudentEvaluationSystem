@@ -170,6 +170,7 @@ class TestCustomExceptionHandler:
 
         assert response is not None
         assert response.status_code == 400
+        assert response.data is not None
         assert "error" in response.data
         assert response.data["error"]["code"] == "validation_error"
         assert "details" in response.data["error"]
@@ -182,6 +183,7 @@ class TestCustomExceptionHandler:
         response = custom_exception_handler(exc, context)
 
         assert response is not None
+        assert response.data is not None
         assert response.status_code == 403
         assert response.data["error"]["code"] == "permission_denied"
 
@@ -195,6 +197,7 @@ class TestCustomExceptionHandler:
         response = custom_exception_handler(exc, context)
 
         assert response is not None
+        assert response.data is not None
         assert response.status_code == 403
         assert response.data["error"]["code"] == "permission_denied"
         assert "You do not have permission" in response.data["error"]["message"]
@@ -207,6 +210,7 @@ class TestCustomExceptionHandler:
         response = custom_exception_handler(exc, context)
 
         assert response is not None
+        assert response.data is not None
         assert response.status_code == 404
         assert response.data["error"]["code"] == "not_found"
 
@@ -220,6 +224,7 @@ class TestCustomExceptionHandler:
 
             assert response is not None
             assert response.status_code == 400
+            assert response.data is not None
             assert response.data["error"]["code"] == "integrity_error"
             assert "details" in response.data["error"]
             assert "Duplicate key" in response.data["error"]["details"]["detail"]
@@ -233,6 +238,7 @@ class TestCustomExceptionHandler:
             response = custom_exception_handler(exc, context)
 
             assert response is not None
+            assert response.data is not None
             assert response.status_code == 400
             assert response.data["error"]["code"] == "integrity_error"
             assert response.data["error"].get("details") == {}
@@ -247,6 +253,7 @@ class TestCustomExceptionHandler:
             response = custom_exception_handler(exc, context)
 
             assert response is not None
+            assert response.data is not None
             assert response.status_code == 500
             assert response.data["error"]["code"] == "internal_error"
             assert "Unexpected error" in response.data["error"]["details"]["detail"]
@@ -262,6 +269,7 @@ class TestCustomExceptionHandler:
             response = custom_exception_handler(exc, context)
 
             assert response is not None
+            assert response.data is not None
             assert response.status_code == 500
             assert response.data["error"]["code"] == "internal_error"
             assert response.data["error"].get("details") == {}
@@ -277,6 +285,7 @@ class TestCustomExceptionHandler:
         response = custom_exception_handler(exc, context)
 
         assert response is not None
+        assert response.data is not None
         assert "error" in response.data
         assert "code" in response.data["error"]
         assert "message" in response.data["error"]
