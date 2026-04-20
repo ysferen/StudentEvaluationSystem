@@ -22,13 +22,13 @@ Supported file formats:
 import pandas as pd
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional
 
 from ..models import Program, Term, Course, LearningOutcome, ProgramOutcome
-from evaluation.models import Assessment, StudentGrade, CourseEnrollment
-from evaluation.services import calculate_course_scores
+from evaluation.models import Assessment, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
 from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
 from .validation import AssignmentScoreValidator
@@ -282,7 +282,13 @@ class FileImportService:
                 raise
             raise FileImportError(f"Invalid file: {str(e)}")
 
-    def import_assignment_scores(self, course_code: str, term_id: int, resolution_policy: Optional[Dict[str, bool]] = None):
+    def import_assignment_scores(
+        self,
+        course_code: str,
+        term_id: int,
+        resolution_policy: Optional[Dict[str, bool]] = None,
+        triggered_by=None,
+    ):
         """
         Import assignment scores from Turkish Excel format.
 
@@ -356,7 +362,9 @@ class FileImportService:
             self.import_results["skipped"] = skipped_count
             self.import_results["total_rows"] = len(df)
 
-            self._recalculate_affected_courses(affected_courses)
+            recompute_jobs = self._recalculate_affected_courses(affected_courses, triggered_by=triggered_by)
+            self.import_results["recompute_jobs"] = recompute_jobs
+            self.import_results["message"] = "Import completed. Score recomputation queued."
             return self.import_results
 
         except Exception as e:
@@ -560,14 +568,42 @@ class FileImportService:
 
         return created_count, updated_count, skipped_count
 
-    def _recalculate_affected_courses(self, affected_courses):
-        for course_id in affected_courses:
+    def _recalculate_affected_courses(self, affected_courses, triggered_by=None):
+        from evaluation.tasks import recompute_course_scores_task
+
+        queued_jobs = []
+
+        for course_id in sorted(affected_courses):
+            job = ScoreRecomputeJob.objects.create(
+                task_type=ScoreRecomputeJob.TASK_TYPE_COURSE_RECOMPUTE,
+                status=ScoreRecomputeJob.STATUS_PENDING,
+                course_id=course_id,
+                triggered_by=triggered_by,
+            )
             try:
-                calculate_course_scores(course_id)
-                logger.info(f"Recalculated scores for course {course_id} after import")
+                async_result = recompute_course_scores_task.delay(course_id, job.pk)  # type: ignore
+                ScoreRecomputeJob.objects.filter(id=job.pk).update(celery_task_id=async_result.id)
+                job.celery_task_id = async_result.id
+                logger.info(f"Queued score recompute job {job.pk} for course {course_id}")
             except Exception as e:
-                logger.error(f"Failed to recalculate scores for course {course_id}: {e}")
-                self.import_results["errors"].append(f"Score recalculation failed for course {course_id}: {str(e)}")
+                logger.error(f"Failed to queue score recomputation for course {course_id}: {e}")
+                self.import_results["errors"].append(f"Score recomputation queue failed for course {course_id}: {str(e)}")
+                job.status = ScoreRecomputeJob.STATUS_FAILED
+                job.finished_at = timezone.now()
+                job.error = str(e)
+                job.save(update_fields=["status", "finished_at", "error"])
+
+            queued_jobs.append(
+                {
+                    "id": job.pk,
+                    "course_id": job.course_id,
+                    "status": job.status,
+                    "task_type": job.task_type,
+                    "celery_task_id": job.celery_task_id,
+                }
+            )
+
+        return queued_jobs
 
     def import_learning_outcomes(self, sheet_name: str = "learning_outcomes"):
         """

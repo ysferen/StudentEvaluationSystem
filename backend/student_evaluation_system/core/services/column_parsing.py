@@ -71,3 +71,37 @@ def find_student_id_column(columns) -> str:
         if "öğrenci no" in col_str:
             return col
     raise ValueError("Student ID column not found. Expected column containing 'öğrenci no'")
+
+
+def find_first_name_column(columns) -> str:
+    """
+    Find the first name column from Turkish column names.
+
+    Returns:
+        The column name containing 'adı'.
+
+    Raises:
+        ValueError: If no first name column found.
+    """
+    for col in columns:
+        col_str = str(col).lower().strip()
+        if col_str == "adı" or col_str.startswith("adı"):
+            return col
+    raise ValueError("First name column not found. Expected column containing 'adı'")
+
+
+def find_last_name_column(columns) -> str:
+    """
+    Find the last name column from Turkish column names.
+
+    Returns:
+        The column name containing 'soyadı'.
+
+    Raises:
+        ValueError: If no last name column found.
+    """
+    for col in columns:
+        col_str = str(col).lower().strip()
+        if col_str == "soyadı" or col_str.startswith("soyadı"):
+            return col
+    raise ValueError("Last name column not found. Expected column containing 'soyadı'")

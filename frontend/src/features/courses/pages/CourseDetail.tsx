@@ -73,6 +73,20 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   }, [isMappingEditorOpen])
 
+  useEffect(() => {
+    if (!notification) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setNotification(null)
+    }, 4500)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [notification])
+
   const { data, isLoading, error, refetch } = useQuery<CourseDetailQueryData>({
     queryKey: ['course', courseId],
     queryFn: async () => {
@@ -88,10 +102,31 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   })
 
-  const handleUploadComplete = (_result: unknown) => {
+  const handleUploadComplete = (result: unknown) => {
+    let type: 'success' | 'error' = 'success'
+    let message = 'Import completed successfully'
+
+    if (isRecord(result)) {
+      if (typeof result.message === 'string' && result.message.trim()) {
+        message = result.message
+      }
+
+      if (Array.isArray(result.recompute_jobs)) {
+        const hasFailedJobs = result.recompute_jobs.some((job) =>
+          isRecord(job) && job.status === 'failed'
+        )
+        if (hasFailedJobs) {
+          type = 'error'
+          if (message === 'Import completed successfully') {
+            message = 'Import completed, but some score recomputation jobs failed.'
+          }
+        }
+      }
+    }
+
     setNotification({
-      type: 'success',
-      message: 'Import completed successfully'
+      type,
+      message,
     })
 
     // Refresh data without page reload
@@ -313,8 +348,18 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     <div className="space-y-6">
       {/* Notification */}
       {notification && (
-        <div className={`p-4 rounded-lg ${notification.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
-          {notification.message}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-full max-w-xl px-4">
+          <div className={`relative shadow-lg rounded-lg border px-4 py-3 pr-10 ${notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+            <p className="text-sm font-medium">{notification.message}</p>
+            <button
+              type="button"
+              onClick={() => setNotification(null)}
+              className="absolute top-1/2 right-7 -translate-y-1/2 text-current/70 hover:text-current"
+              aria-label="Close notification"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 

@@ -205,18 +205,23 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
           <p className="text-sm text-secondary-600 mb-4">
             {unenrolledStudents.length} student(s) exist in the database but are not enrolled in this course.
           </p>
-          <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-            {unenrolledStudents.map(s => (
-              <div
-                key={s.student_id}
-                className="flex items-center justify-between p-3 rounded-lg border border-secondary-200 bg-secondary-50"
-              >
-                <div>
-                  <span className="font-mono text-sm text-secondary-700">{s.student_id}</span>
-                  <span className="text-sm text-secondary-900 ml-2">{s.first_name} {s.last_name}</span>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-hidden rounded-lg border border-secondary-200 mb-4">
+            <table className="min-w-full divide-y divide-secondary-200">
+              <thead className="bg-secondary-50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">ID</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Name</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-secondary-200">
+                {unenrolledStudents.map(s => (
+                  <tr key={s.student_id}>
+                    <td className="px-3 py-2 text-sm font-mono text-secondary-700">{s.student_id}</td>
+                    <td className="px-3 py-2 text-sm text-secondary-900">{s.first_name} {s.last_name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="flex gap-3">
             <button

@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework import status
+from unittest.mock import patch
 
 from core.models import Course, Term
 from evaluation.models import Assessment, CourseEnrollment
@@ -199,6 +200,18 @@ class TestValidateEndpoint:
 
         error_messages = [e.get("message", "") if isinstance(e, dict) else str(e) for e in data["errors"]]
         assert any("students not found" in msg.lower() or "not found" in msg.lower() for msg in error_messages)
+
+        student_validation = data.get("details", {}).get("student_validation", {})
+        missing = student_validation.get("missing_from_database", [])
+        assert len(missing) == 2
+        missing_ids = {s["student_id"] for s in missing}
+        assert "UNKNOWN_STUDENT_1" in missing_ids
+        assert "UNKNOWN_STUDENT_2" in missing_ids
+        by_id = {s["student_id"]: s for s in missing}
+        assert by_id["UNKNOWN_STUDENT_1"]["first_name"] == "Unknown"
+        assert by_id["UNKNOWN_STUDENT_1"]["last_name"] == "Student1"
+        assert by_id["UNKNOWN_STUDENT_2"]["first_name"] == "Another"
+        assert by_id["UNKNOWN_STUDENT_2"]["last_name"] == "Student2"
 
     @pytest.mark.django_db
     def test_validate_unenrolled_students_returns_error(self, api_client, course, term, assessments):
@@ -460,3 +473,119 @@ class TestResolveEndpoint:
 
         assert response.status_code == status.HTTP_200_OK
         assert "resolutions_applied" in response.data
+
+    @pytest.mark.django_db
+    def test_resolve_skip_unenrolled_then_resolve_scores_keeps_student_validation_clean(
+        self, api_client, course, term, assessments
+    ):
+        enrolled_user = User.objects.create_user(
+            username="resolve_chain_enrolled",
+            email="resolve-chain-enrolled@test.com",
+            password="testpass123",
+            first_name="Enrolled",
+            last_name="Student",
+            role="student",
+        )
+        StudentProfile.objects.create(
+            user=enrolled_user,
+            student_id="CHAIN_ENROLLED_001",
+            program=course.program,
+            enrollment_term=term,
+        )
+        CourseEnrollment.objects.create(student=enrolled_user, course=course)
+
+        unenrolled_user = User.objects.create_user(
+            username="resolve_chain_unenrolled",
+            email="resolve-chain@test.com",
+            password="testpass123",
+            first_name="Chain",
+            last_name="Student",
+            role="student",
+        )
+        StudentProfile.objects.create(
+            user=unenrolled_user,
+            student_id="CHAIN_001",
+            program=course.program,
+            enrollment_term=term,
+        )
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": ["CHAIN_ENROLLED_001", "CHAIN_001"],
+                "adı": ["Enrolled", "Chain"],
+                "soyadı": ["Student", "Student"],
+                "Midterm Exam(%30)_0833AB": [120.0, 80.0],
+                "Final Exam(%40)_0833AB": [90.0, 90.0],
+                "Project(%30)_0833AB": [88.0, 88.0],
+            }
+        )
+
+        first_buffer = create_excel_buffer(df)
+        first_buffer.name = "resolve-chain-1.xlsx"
+        first_resolutions = {"skip_unenrolled_students": True}
+        first_response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/resolve/?course_code={course.code}&term_id={term.id}",
+            {"file": first_buffer, "resolutions": json.dumps(first_resolutions)},
+            format="multipart",
+        )
+
+        assert first_response.status_code == status.HTTP_200_OK
+
+        second_buffer = create_excel_buffer(df)
+        second_buffer.name = "resolve-chain-2.xlsx"
+        second_resolutions = {
+            "skip_unenrolled_students": True,
+            "skip_invalid_scores": False,
+            "clamp_scores": True,
+        }
+        second_response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/resolve/?course_code={course.code}&term_id={term.id}",
+            {"file": second_buffer, "resolutions": json.dumps(second_resolutions)},
+            format="multipart",
+        )
+
+        assert second_response.status_code == status.HTTP_200_OK
+        assert "checks" in second_response.data
+        assert second_response.data["checks"]["student_validation"]["passed"] is True
+
+        student_details = second_response.data.get("details", {}).get("student_validation", {})
+        assert student_details.get("not_enrolled", []) == []
+
+
+class TestUploadEndpoint:
+    """Tests for the /upload/ endpoint."""
+
+    @pytest.mark.django_db
+    @patch("evaluation.tasks.recompute_course_scores_task.delay")
+    def test_upload_returns_202_with_recompute_jobs(self, delay_mock, api_client, course, term, student, assessments):
+        class DummyAsyncResult:
+            id = "test-celery-task-id"
+
+        delay_mock.return_value = DummyAsyncResult()
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": [student.student_profile.student_id],
+                "adı": [student.first_name],
+                "soyadı": [student.last_name],
+                "Midterm Exam(%30)_0833AB": [85.5],
+                "Final Exam(%40)_0833AB": [90.0],
+                "Project(%30)_0833AB": [88.0],
+            }
+        )
+        buffer = create_excel_buffer(df)
+        buffer.name = "upload_async_scores.xlsx"
+
+        response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/upload/?course_code={course.code}&term_id={term.id}",
+            {"file": buffer},
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        data = response.data
+        assert "recompute_jobs" in data
+        assert isinstance(data["recompute_jobs"], list)
+        assert len(data["recompute_jobs"]) >= 1
+        assert data["recompute_jobs"][0]["status"] in {"pending", "failed"}
+        assert "message" in data
