@@ -70,6 +70,7 @@ class Command(BaseCommand):
             step_start = time.time()
             self.stdout.write("\n[4/8] Creating program outcomes...")
             program_outcomes = self.create_program_outcomes(programs[0], terms[0], count=11)
+            program_outcomes.extend(self.create_program_outcomes(programs[0], terms[2], count=11))
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # For each course: 4 assessments
@@ -326,15 +327,16 @@ class Command(BaseCommand):
         for lo in learning_outcomes:
             # Select 2-3 random POs
             selected_pos = random.sample(program_outcomes, k=random.randint(2, 3))
-
             # Generate random weights that sum to 1.0
             weights = [random.random() for _ in selected_pos]
             total = sum(weights)
             normalized_weights = [w / total for w in weights]
-
             for po, weight in zip(selected_pos, normalized_weights):
                 LearningOutcomeProgramOutcomeMapping.objects.get_or_create(
-                    course=lo.course, learning_outcome=lo, program_outcome=po, weight=round(weight, 3)
+                    course=lo.course,
+                    learning_outcome=lo,
+                    program_outcome=po,
+                    defaults={"weight": round(weight, 3)},  # ← weight only used on INSERT
                 )
 
     def create_assessments(self, course, count=4):
@@ -450,7 +452,10 @@ class Command(BaseCommand):
 
         # Bulk create all grades at once (much faster than individual saves)
         self.stdout.write(f"  → Bulk inserting {len(grades_to_create)} grades...")
-        StudentGrade.objects.bulk_create(grades_to_create, batch_size=1000)
+        StudentGrade.objects.bulk_create(
+            grades_to_create,
+            batch_size=1000,
+        )
         self.stdout.write(f"  ✓ Generated {len(grades_to_create)} student grades")
 
     def calculate_all_scores(self, courses):

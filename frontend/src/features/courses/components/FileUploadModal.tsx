@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   useCoreFileImportAssignmentScoresUploadCreate,
   useCoreFileImportAssignmentScoresValidateCreate,
   useCoreFileImportAssignmentScoresResolveCreate,
 } from '../../../shared/api/generated/core/core'
-import { v1EvaluationScoreRecomputeJobsRetrieve } from '../../../shared/api/generated/v1/v1'
+import { useRecomputeJobs } from '@/shared/contexts/RecomputeJobsContext'
 import {
   Upload,
   X,
@@ -128,11 +128,8 @@ type UploadErrorPayload = Partial<ValidationResult> & {
 interface RecomputeJob {
   id: number
   course_id?: number
-  course?: number | null
   status: 'pending' | 'running' | 'success' | 'failed'
   task_type: string
-  celery_task_id?: string
-  error?: string
 }
 
 interface UploadResponse {
@@ -471,17 +468,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const { enqueueJobs } = useRecomputeJobs()
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
   const [resolvedOperationCount, setResolvedOperationCount] = useState(0)
   const resolutionPolicyRef = useRef<Record<string, unknown>>({})
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [recomputeJobs, setRecomputeJobs] = useState<RecomputeJob[] | null>(null)
-  const [isPollingJobs, setIsPollingJobs] = useState(false)
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const recomputeJobsRef = useRef<RecomputeJob[] | null>(null)
-  const pollingInFlightRef = useRef(false)
-  const completionHandledRef = useRef(false)
 
 
 
@@ -659,16 +651,17 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             course_id: typeof job.course_id === 'number' ? job.course_id : undefined,
           })
         })
-
-        setRecomputeJobs(normalizedJobs)
-        completionHandledRef.current = false
-        setIsPollingJobs(true)
-        return
-      } else {
-        // Regular 200 response - import complete
-        onUploadComplete?.(result)
+        enqueueJobs(normalizedJobs)
+        onUploadComplete?.({
+          ...uploadResponse,
+          recompute_jobs: normalizedJobs,
+        })
         onClose()
+        return
       }
+
+      onUploadComplete?.(result)
+      onClose()
     } catch (error) {
       const errorData = getErrorData(error)
       if (errorData?.errors) {
@@ -680,132 +673,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   }
 
   const handleModalClose = () => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-    }
-    completionHandledRef.current = false
-    setRecomputeJobs(null)
-    setIsPollingJobs(false)
     onClose()
   }
-
-  useEffect(() => {
-    recomputeJobsRef.current = recomputeJobs
-  }, [recomputeJobs])
-
-  useEffect(() => {
-    if (!recomputeJobs || recomputeJobs.length === 0) {
-      return
-    }
-
-    const allComplete = recomputeJobs.every(
-      (job) => job.status === 'success' || job.status === 'failed'
-    )
-
-    if (!allComplete || completionHandledRef.current) {
-      return
-    }
-
-    completionHandledRef.current = true
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-    }
-    setIsPollingJobs(false)
-
-    const hasFailedJobs = recomputeJobs.some((job) => job.status === 'failed')
-    onUploadComplete?.({
-      recompute_jobs: recomputeJobs,
-      message: hasFailedJobs
-        ? 'Import completed, but some score recomputation jobs failed.'
-        : 'Import and score recomputation completed successfully.',
-    })
-    onClose()
-  }, [recomputeJobs, onUploadComplete, onClose])
-
-  // Poll job details until all background recomputation jobs are completed.
-  useEffect(() => {
-    if (!isPollingJobs) {
-      return
-    }
-
-    const checkJobCompletion = async () => {
-      if (pollingInFlightRef.current) {
-        return
-      }
-
-      const snapshot = recomputeJobsRef.current
-      if (!snapshot || snapshot.length === 0) {
-        return
-      }
-
-      pollingInFlightRef.current = true
-
-      const pendingJobIds = snapshot
-        .filter((job) => job.status === 'pending' || job.status === 'running')
-        .map((job) => job.id)
-
-      if (pendingJobIds.length === 0) {
-        setIsPollingJobs(false)
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current)
-        }
-        pollingInFlightRef.current = false
-        return
-      }
-
-      try {
-        const updates = await Promise.all(
-          pendingJobIds.map((id) => v1EvaluationScoreRecomputeJobsRetrieve(id))
-        )
-
-        setRecomputeJobs((prevJobs) => {
-          if (!prevJobs) return prevJobs
-
-          const updatesById = new Map(updates.map((job) => [job.id, job]))
-          const merged = prevJobs.map((job) => {
-            const update = updatesById.get(job.id)
-            if (!update) return job
-
-            return {
-              ...job,
-              status: (update.status as RecomputeJob['status']) ?? job.status,
-              task_type: update.task_type ?? job.task_type,
-              celery_task_id: update.celery_task_id ?? job.celery_task_id,
-              error: update.error ?? job.error,
-              course: update.course,
-            }
-          })
-
-          const allComplete = merged.every(
-            (job) => job.status === 'success' || job.status === 'failed'
-          )
-          if (allComplete) {
-            setIsPollingJobs(false)
-            if (pollingIntervalRef.current) {
-              clearInterval(pollingIntervalRef.current)
-            }
-          }
-
-          return merged
-        })
-      } catch {
-        // Keep existing state; polling will retry on next interval.
-      } finally {
-        pollingInFlightRef.current = false
-      }
-    }
-
-    void checkJobCompletion()
-    pollingIntervalRef.current = setInterval(() => {
-      void checkJobCompletion()
-    }, 1000)
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-      }
-    }
-  }, [isPollingJobs])
 
   const getSolveTarget = (phase: PhaseKey, checks: NormalizedChecks, result: ValidationResult): ActiveProblem => {
     if (phase === "assessment_validation" && checks?.assessment_validation?.passed === false) return "assessments"
@@ -1080,8 +949,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   }
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if clicking directly on the backdrop (not the modal content) and no jobs are being processed
-    if (e.target === e.currentTarget && !isAnyUploadPending && !isAnyValidatePending && !isResolving && !isPollingJobs) {
+    if (e.target === e.currentTarget && !isAnyUploadPending && !isAnyValidatePending && !isResolving) {
       handleModalClose()
     }
   }
@@ -1096,7 +964,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           <h2 className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</h2>
           <button
             onClick={handleModalClose}
-            disabled={isAnyUploadPending || isAnyValidatePending || isResolving || isPollingJobs}
+            disabled={isAnyUploadPending || isAnyValidatePending || isResolving}
             className="text-secondary-400 hover:text-secondary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-6 h-6" />

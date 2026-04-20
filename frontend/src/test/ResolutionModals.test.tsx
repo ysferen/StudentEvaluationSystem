@@ -99,6 +99,28 @@ describe('MissingStudentsModal', () => {
     await user.click(screen.getByRole('button', { name: /skip all/i }))
     expect(defaultProps.onResolve).toHaveBeenCalledWith('skip', [])
   })
+
+  it('uses scrollable table region and sticky action footer layout', () => {
+    const { container } = renderModal(<MissingStudentsModal {...defaultProps} />)
+
+    const card = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
+    )
+    expect(card).toBeTruthy()
+
+    const tableScrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
+    )
+    expect(tableScrollRegion).toBeTruthy()
+
+    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('sticky')
+      && el.className.includes('bottom-0')
+      && el.className.includes('bg-white')
+      && el.className.includes('border-t')
+    )
+    expect(stickyFooter).toBeTruthy()
+  })
 })
 
 describe('UnenrolledStudentsModal', () => {
@@ -133,6 +155,28 @@ describe('UnenrolledStudentsModal', () => {
     renderModal(<UnenrolledStudentsModal {...defaultProps} />)
     await user.click(screen.getByRole('button', { name: /skip all/i }))
     expect(defaultProps.onResolve).toHaveBeenCalledWith('skip', [])
+  })
+
+  it('uses scrollable table region and sticky action footer layout', () => {
+    const { container } = renderModal(<UnenrolledStudentsModal {...defaultProps} />)
+
+    const card = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
+    )
+    expect(card).toBeTruthy()
+
+    const tableScrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
+    )
+    expect(tableScrollRegion).toBeTruthy()
+
+    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('sticky')
+      && el.className.includes('bottom-0')
+      && el.className.includes('bg-white')
+      && el.className.includes('border-t')
+    )
+    expect(stickyFooter).toBeTruthy()
   })
 })
 

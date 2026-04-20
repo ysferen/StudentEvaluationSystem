@@ -183,9 +183,7 @@ def calculate_student_po_scores(student_id: int, program_id: int, term_id: int) 
             student=student, learning_outcome__course__in=enrolled_courses
         ).select_related("learning_outcome")
     }
-
     po_score_objects = []
-
     with transaction.atomic():
         # Delete old PO scores for this student in this program/term
         StudentProgramOutcomeScore.objects.filter(

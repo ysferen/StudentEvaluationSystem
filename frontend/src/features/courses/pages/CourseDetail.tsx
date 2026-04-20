@@ -103,8 +103,8 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
   })
 
   const handleUploadComplete = (result: unknown) => {
-    let type: 'success' | 'error' = 'success'
-    let message = 'Import completed successfully'
+    const type: 'success' | 'error' = 'success'
+    let message = 'Student grades uploaded successfully. Score recomputation is running in the background.'
 
     if (isRecord(result)) {
       if (typeof result.message === 'string' && result.message.trim()) {
@@ -112,14 +112,8 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       }
 
       if (Array.isArray(result.recompute_jobs)) {
-        const hasFailedJobs = result.recompute_jobs.some((job) =>
-          isRecord(job) && job.status === 'failed'
-        )
-        if (hasFailedJobs) {
-          type = 'error'
-          if (message === 'Import completed successfully') {
-            message = 'Import completed, but some score recomputation jobs failed.'
-          }
+        if (result.recompute_jobs.length > 0) {
+          message = 'Student grades uploaded successfully. Score recomputation is running in the background.'
         }
       }
     }
@@ -129,7 +123,7 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       message,
     })
 
-    // Refresh data without page reload
+    // Immediate refresh for uploaded grades.
     refetch()
   }
 

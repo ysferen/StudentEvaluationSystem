@@ -18,7 +18,6 @@ dependencies = [
     "psycopg2-binary==2.9.11",
     "redis==5.2.1",
     "openpyxl>=3.1.5",
-    "django-types>=0.23.0",
 ]
 
 [dependency-groups]

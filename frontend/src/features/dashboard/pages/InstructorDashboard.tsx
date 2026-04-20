@@ -570,7 +570,6 @@ const InstructorDashboard = () => {
             onUploadComplete={(result: unknown) => {
               setUploadResult(toUploadResultPayload(result))
               setIsFileUploadModalOpen(false)
-              window.location.reload()
             }}
           />
         )}

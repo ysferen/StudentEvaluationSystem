@@ -383,8 +383,12 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     last_name=last_name,
                     role="student",
                 )
-                StudentProfile.objects.create(user=user, student_id=student_id, program=course.program)
+                StudentProfile.objects.create(
+                    user=user, student_id=student_id, program=course.program, enrollment_term=course.term
+                )
                 created_counts["students"] += 1
+                CourseEnrollment.objects.create(student=user, course=course, status="active")
+                created_counts["enrollments"] += 1
             except Exception as e:
                 errors.append(f"Failed to create student {student_data.get('student_id', 'unknown')}: {str(e)}")
 
