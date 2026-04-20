@@ -468,7 +468,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
-  const { enqueueJobs } = useRecomputeJobs()
+  const { enqueueJobs, showAlert } = useRecomputeJobs()
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
   const [resolvedOperationCount, setResolvedOperationCount] = useState(0)
   const resolutionPolicyRef = useRef<Record<string, unknown>>({})
@@ -659,6 +659,13 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         onClose()
         return
       }
+
+      showAlert(
+        'success',
+        typeof result.message === 'string' && result.message.trim()
+          ? result.message
+          : 'Student grades uploaded successfully.'
+      )
 
       onUploadComplete?.(result)
       onClose()

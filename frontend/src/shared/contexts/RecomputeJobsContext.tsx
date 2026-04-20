@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { v1EvaluationScoreRecomputeJobsRetrieve } from '@/shared/api/generated/v1/v1'
 
 type RecomputeJobStatus = 'pending' | 'running' | 'success' | 'failed'
@@ -12,10 +13,12 @@ interface RecomputeJob {
 interface NotificationState {
   type: 'success' | 'error' | 'info'
   message: string
+  phase?: 'pending' | 'completed'
 }
 
 interface RecomputeJobsContextValue {
   enqueueJobs: (jobs: Array<{ id?: number; status?: string; task_type?: string }>) => void
+  showAlert: (type: 'success' | 'error' | 'info', message: string) => void
 }
 
 const RecomputeJobsContext = createContext<RecomputeJobsContextValue | undefined>(undefined)
@@ -30,28 +33,48 @@ export const useRecomputeJobs = (): RecomputeJobsContextValue => {
 
 export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [jobs, setJobs] = useState<RecomputeJob[]>([])
-  const [notification, setNotification] = useState<NotificationState | null>(null)
+  const [uploadNotification, setUploadNotification] = useState<NotificationState | null>(null)
+  const [jobNotification, setJobNotification] = useState<NotificationState | null>(null)
+  const queryClient = useQueryClient()
+
+  const showAlert = (type: 'success' | 'error' | 'info', message: string) => {
+    setUploadNotification({ type, message, phase: 'completed' })
+  }
 
   const enqueueJobs = (incomingJobs: Array<{ id?: number; status?: string; task_type?: string }>) => {
-    const normalized: RecomputeJob[] = incomingJobs
-      .map((job) => {
-        const id = Number(job.id)
-        if (Number.isNaN(id)) return null
-        const status = job.status
-        if (status !== 'pending' && status !== 'running' && status !== 'success' && status !== 'failed') {
-          return null
-        }
-        return {
-          id,
-          status,
-          task_type: job.task_type,
-        }
+    const normalized = incomingJobs.reduce<RecomputeJob[]>((acc, job) => {
+      const id = Number(job.id)
+      if (Number.isNaN(id)) return acc
+
+      const status = job.status
+      if (status !== 'pending' && status !== 'running' && status !== 'success' && status !== 'failed') {
+        return acc
+      }
+
+      acc.push({
+        id,
+        status,
+        task_type: job.task_type,
       })
-      .filter((job): job is RecomputeJob => job !== null)
+
+      return acc
+    }, [])
 
     if (normalized.length === 0) {
       return
     }
+
+    setUploadNotification({
+      type: 'success',
+      message: 'Student grades uploaded successfully.',
+      phase: 'completed',
+    })
+
+    setJobNotification({
+      type: 'info',
+      message: 'Score recomputation is running in the background...',
+      phase: 'pending',
+    })
 
     setJobs((prev) => {
       const byId = new Map(prev.map((job) => [job.id, job]))
@@ -68,13 +91,17 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
     const allTerminal = jobs.every((job) => job.status === 'success' || job.status === 'failed')
     if (allTerminal) {
       const hasFailed = jobs.some((job) => job.status === 'failed')
-      setNotification({
+      setJobNotification({
         type: hasFailed ? 'error' : 'success',
         message: hasFailed
           ? 'Grade import finished, but some score recomputation jobs failed.'
           : 'Score recomputation completed successfully.',
+        phase: 'completed',
       })
       setJobs([])
+      if (!hasFailed) {
+        void queryClient.invalidateQueries()
+      }
       return
     }
 
@@ -122,43 +149,67 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [jobs])
+  }, [jobs, queryClient])
 
   useEffect(() => {
-    if (!notification) return
-    const timer = window.setTimeout(() => setNotification(null), 4500)
+    if (!uploadNotification) return
+    const timer = window.setTimeout(() => setUploadNotification(null), 4500)
     return () => window.clearTimeout(timer)
-  }, [notification])
+  }, [uploadNotification])
 
-  const value = useMemo<RecomputeJobsContextValue>(() => ({ enqueueJobs }), [])
+  useEffect(() => {
+    if (!jobNotification || jobNotification.phase !== 'completed') return
+    const timer = window.setTimeout(() => setJobNotification(null), 4500)
+    return () => window.clearTimeout(timer)
+  }, [jobNotification])
+
+  const value = useMemo<RecomputeJobsContextValue>(() => ({ enqueueJobs, showAlert }), [])
 
   return (
     <RecomputeJobsContext.Provider value={value}>
       {children}
-      {jobs.length > 0 && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] w-full max-w-xl px-4">
-          <div className="shadow-lg rounded-lg border px-4 py-3 bg-blue-50 border-blue-200 text-blue-800">
-            <p className="text-sm font-medium">Background score recomputation in progress...</p>
+      {uploadNotification && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[71] w-full max-w-xl px-4">
+          <div
+            data-testid="global-upload-alert"
+            className={`relative shadow-lg rounded-lg border px-4 py-3 pr-10 ${
+              uploadNotification.type === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : uploadNotification.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+            } transition-all duration-500 ease-out opacity-100 scale-100 translate-y-0`}
+          >
+            <p className="text-sm font-medium">{uploadNotification.message}</p>
+            <button
+              type="button"
+              aria-label="Close global upload notification"
+              className="absolute top-1/2 right-7 -translate-y-1/2 text-current/70 hover:text-current"
+              onClick={() => setUploadNotification(null)}
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
-      {notification && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[71] w-full max-w-xl px-4">
+      {jobNotification && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[70] w-full max-w-xl px-4">
           <div
+            data-testid="global-job-alert"
             className={`relative shadow-lg rounded-lg border px-4 py-3 pr-10 ${
-              notification.type === 'success'
+              jobNotification.type === 'success'
                 ? 'bg-green-50 border-green-200 text-green-800'
-                : notification.type === 'error'
+                : jobNotification.type === 'error'
                   ? 'bg-red-50 border-red-200 text-red-800'
                   : 'bg-blue-50 border-blue-200 text-blue-800'
-            }`}
+            } transition-all duration-500 ease-out ${jobNotification.phase === 'pending' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-100 scale-100 translate-y-0'}`}
           >
-            <p className="text-sm font-medium">{notification.message}</p>
+            <p className="text-sm font-medium">{jobNotification.message}</p>
             <button
               type="button"
               aria-label="Close global recompute notification"
               className="absolute top-1/2 right-7 -translate-y-1/2 text-current/70 hover:text-current"
-              onClick={() => setNotification(null)}
+              onClick={() => setJobNotification(null)}
             >
               ✕
             </button>

@@ -61,6 +61,28 @@ describe('MissingAssessmentsModal', () => {
     await user.click(screen.getByRole('button', { name: /create & continue/i }))
     expect(defaultProps.onResolve).toHaveBeenCalledWith('create', ['Homework'])
   })
+
+  it('uses scrollable content region and sticky action footer layout', () => {
+    const { container } = renderModal(<MissingAssessmentsModal {...defaultProps} />)
+
+    const card = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
+    )
+    expect(card).toBeTruthy()
+
+    const scrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
+    )
+    expect(scrollRegion).toBeTruthy()
+
+    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('sticky')
+      && el.className.includes('bottom-0')
+      && el.className.includes('bg-white')
+      && el.className.includes('border-t')
+    )
+    expect(stickyFooter).toBeTruthy()
+  })
 })
 
 describe('MissingStudentsModal', () => {
@@ -215,5 +237,27 @@ describe('InvalidScoresModal', () => {
     renderModal(<InvalidScoresModal {...defaultProps} />)
     await user.click(screen.getByRole('button', { name: /clamp to range/i }))
     expect(defaultProps.onResolve).toHaveBeenCalledWith('clamp')
+  })
+
+  it('uses scrollable table region and sticky action footer layout', () => {
+    const { container } = renderModal(<InvalidScoresModal {...defaultProps} />)
+
+    const card = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
+    )
+    expect(card).toBeTruthy()
+
+    const scrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
+    )
+    expect(scrollRegion).toBeTruthy()
+
+    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
+      el.className.includes('sticky')
+      && el.className.includes('bottom-0')
+      && el.className.includes('bg-white')
+      && el.className.includes('border-t')
+    )
+    expect(stickyFooter).toBeTruthy()
   })
 })

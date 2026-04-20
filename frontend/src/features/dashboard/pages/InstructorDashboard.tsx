@@ -18,21 +18,12 @@ import {
   UserGroupIcon,
   AcademicCapIcon,
   ExclamationTriangleIcon,
-  BookOpenIcon,
-  CheckCircleIcon
+  BookOpenIcon
 } from '@heroicons/react/24/outline'
 
 interface LoAverageItem {
   lo_code: string
   avg_score: number
-}
-
-interface UploadResultPayload {
-  message?: string
-  results?: {
-    created?: Record<string, number>
-    updated?: Record<string, number>
-  }
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -49,27 +40,6 @@ const toLoAverages = (value: unknown): LoAverageItem[] => {
       && typeof item.lo_code === 'string'
       && typeof item.avg_score === 'number'
     ))
-}
-
-const toUploadResultPayload = (value: unknown): UploadResultPayload => {
-  if (!isRecord(value)) {
-    return {}
-  }
-
-  const created = isRecord(value.results) && isRecord(value.results.created)
-    ? Object.fromEntries(Object.entries(value.results.created)
-      .filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
-    : undefined
-
-  const updated = isRecord(value.results) && isRecord(value.results.updated)
-    ? Object.fromEntries(Object.entries(value.results.updated)
-      .filter((entry): entry is [string, number] => typeof entry[1] === 'number'))
-    : undefined
-
-  return {
-    message: typeof value.message === 'string' ? value.message : undefined,
-    results: created || updated ? { created, updated } : undefined,
-  }
 }
 
 interface CourseWithAnalytics extends Course {
@@ -92,7 +62,6 @@ const InstructorDashboard = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [activeChart, setActiveChart] = useState('radar')
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
-  const [uploadResult, setUploadResult] = useState<UploadResultPayload | null>(null)
 
   // Fetch courses for the instructor using orval
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
@@ -517,47 +486,6 @@ const InstructorDashboard = () => {
           </div>
         </Card>
 
-        {/* Upload Results */}
-        {uploadResult && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <CheckCircleIcon className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-emerald-800 mb-3">Import Completed Successfully!</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="font-medium text-emerald-700">Message:</span>
-                    <span className="ml-2 text-emerald-600">{uploadResult.message}</span>
-                  </div>
-                  {uploadResult.results && (
-                    <div>
-                      <span className="font-medium text-emerald-700">Results:</span>
-                      <div className="mt-2 space-y-1">
-                        {Object.entries(uploadResult.results?.created || {}).map(([entity, count]) => (
-                          <div key={entity} className="text-sm text-emerald-600">
-                            • Created {count} {entity}
-                          </div>
-                        ))}
-                        {Object.entries(uploadResult.results?.updated || {}).map(([entity, count]) => (
-                          <div key={entity} className="text-sm text-emerald-600">
-                            • Updated {count} {entity}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => setUploadResult(null)}
-              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
         {/* FileUploadModal */}
         {course.id && (
           <FileUploadModal
@@ -567,8 +495,7 @@ const InstructorDashboard = () => {
             isOpen={isFileUploadModalOpen}
             type="assignment_scores"
             onClose={() => setIsFileUploadModalOpen(false)}
-            onUploadComplete={(result: unknown) => {
-              setUploadResult(toUploadResultPayload(result))
+            onUploadComplete={() => {
               setIsFileUploadModalOpen(false)
             }}
           />

@@ -35,6 +35,7 @@ vi.mock('@/shared/contexts/RecomputeJobsContext', async () => {
   return {
     useRecomputeJobs: () => ({
       enqueueJobs: vi.fn(),
+      showAlert: vi.fn(),
     }),
   }
 })

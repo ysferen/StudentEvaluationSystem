@@ -59,7 +59,6 @@ const CourseDetail = () => {
 const { id: courseId } = useParams<{ id: string }>()
 const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
 const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
-const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   // Prevent body scroll when mapping editor is open
   useEffect(() => {
@@ -72,20 +71,6 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
       document.body.style.overflow = 'unset'
     }
   }, [isMappingEditorOpen])
-
-  useEffect(() => {
-    if (!notification) {
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      setNotification(null)
-    }, 4500)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [notification])
 
   const { data, isLoading, error, refetch } = useQuery<CourseDetailQueryData>({
     queryKey: ['course', courseId],
@@ -102,27 +87,7 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   })
 
-  const handleUploadComplete = (result: unknown) => {
-    const type: 'success' | 'error' = 'success'
-    let message = 'Student grades uploaded successfully. Score recomputation is running in the background.'
-
-    if (isRecord(result)) {
-      if (typeof result.message === 'string' && result.message.trim()) {
-        message = result.message
-      }
-
-      if (Array.isArray(result.recompute_jobs)) {
-        if (result.recompute_jobs.length > 0) {
-          message = 'Student grades uploaded successfully. Score recomputation is running in the background.'
-        }
-      }
-    }
-
-    setNotification({
-      type,
-      message,
-    })
-
+  const handleUploadComplete = () => {
     // Immediate refresh for uploaded grades.
     refetch()
   }
@@ -340,23 +305,6 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
 
   return (
     <div className="space-y-6">
-      {/* Notification */}
-      {notification && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-full max-w-xl px-4">
-          <div className={`relative shadow-lg rounded-lg border px-4 py-3 pr-10 ${notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-            <p className="text-sm font-medium">{notification.message}</p>
-            <button
-              type="button"
-              onClick={() => setNotification(null)}
-              className="absolute top-1/2 right-7 -translate-y-1/2 text-current/70 hover:text-current"
-              aria-label="Close notification"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Course Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex justify-between items-start mb-6">
