@@ -5,6 +5,7 @@ Tests serializer validation, field handling, and error messages.
 """
 
 import pytest
+from typing import Any, cast
 
 from core.serializers import (
     UniversitySerializer,
@@ -15,6 +16,11 @@ from core.serializers import (
 )
 
 
+def serializer_data_as_dict(data: Any) -> dict[str, Any]:
+    """Cast serializer output to dict for static type checkers."""
+    return cast(dict[str, Any], data)
+
+
 @pytest.mark.django_db
 class TestUniversitySerializer:
     """Test UniversitySerializer."""
@@ -23,9 +29,10 @@ class TestUniversitySerializer:
         """Test serializer with valid data."""
         university = fb_university_factory()
         serializer = UniversitySerializer(university)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["name"] == university.name
-        assert serializer.data["code"] == university.code
+        assert data["name"] == university.name
+        assert data["code"] == university.code
 
     def test_university_create(self):
         """Test creating university through serializer."""
@@ -58,9 +65,10 @@ class TestDepartmentSerializer:
         """Test serializer includes university data."""
         department = fb_department_factory()
         serializer = DepartmentSerializer(department)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["name"] == department.name
-        assert "university" in serializer.data
+        assert data["name"] == department.name
+        assert "university" in data
 
     def test_department_create(self, fb_university_factory):
         """Test creating department with university."""
@@ -86,11 +94,12 @@ class TestCourseSerializer:
         """Test course data serialization."""
         course = fb_course_factory()
         serializer = CourseSerializer(course)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["name"] == course.name
-        assert serializer.data["code"] == course.code
-        assert "program" in serializer.data
-        assert "term" in serializer.data
+        assert data["name"] == course.name
+        assert data["code"] == course.code
+        assert "program" in data
+        assert "term" in data
 
     def test_course_with_instructors(self, fb_course_factory, fb_instructor_factory):
         """Test course includes instructors."""
@@ -99,8 +108,9 @@ class TestCourseSerializer:
         course.instructors.add(instructor)
 
         serializer = CourseSerializer(course)
-        assert "instructors" in serializer.data
-        assert len(serializer.data["instructors"]) == 1
+        data = serializer_data_as_dict(serializer.data)
+        assert "instructors" in data
+        assert len(cast(list[Any], data["instructors"])) == 1
 
 
 @pytest.mark.django_db
@@ -111,16 +121,18 @@ class TestProgramOutcomeSerializer:
         """Test program outcome serialization."""
         outcome = fb_program_outcome_factory()
         serializer = ProgramOutcomeSerializer(outcome)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["code"] == outcome.code
-        assert serializer.data["description"] == outcome.description
+        assert data["code"] == outcome.code
+        assert data["description"] == outcome.description
 
     def test_outcome_weight_validation(self, fb_program_outcome_factory):
         """Test weight is between 0 and 1."""
         outcome = fb_program_outcome_factory(weight=0.5)
         serializer = ProgramOutcomeSerializer(outcome)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["weight"] == 0.5
+        assert data["weight"] == 0.5
 
 
 @pytest.mark.django_db
@@ -131,16 +143,18 @@ class TestLearningOutcomeSerializer:
         """Test learning outcome serialization."""
         outcome = fb_learning_outcome_factory()
         serializer = CoreLearningOutcomeSerializer(outcome)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert serializer.data["code"] == outcome.code
-        assert serializer.data["description"] == outcome.description
+        assert data["code"] == outcome.code
+        assert data["description"] == outcome.description
 
     def test_learning_outcome_with_course(self, fb_learning_outcome_factory):
         """Test learning outcome includes course info."""
         outcome = fb_learning_outcome_factory()
         serializer = CoreLearningOutcomeSerializer(outcome)
+        data = serializer_data_as_dict(serializer.data)
 
-        assert "course" in serializer.data
+        assert "course" in data
 
 
 @pytest.mark.django_db

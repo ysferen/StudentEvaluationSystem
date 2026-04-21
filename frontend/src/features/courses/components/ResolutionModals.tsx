@@ -32,8 +32,8 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
 
   return (
     <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
           <div className="flex items-center gap-3">
             <BookOpen className="w-5 h-5 text-warning-500" />
             <h2 className="text-lg font-bold text-secondary-900">Missing Assessments</h2>
@@ -45,11 +45,12 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-secondary-600 mb-4">
+        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+          <p className="text-sm text-secondary-600">
             {missingAssessments.length} assessment(s) in the file were not found in the database.
           </p>
-          <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+          <div className="overflow-auto max-h-[50vh] rounded-lg border border-secondary-200 flex-1 min-h-0 p-2">
+            <div className="space-y-2">
             {missingAssessments.map(a => (
               <label
                 key={a.column}
@@ -72,14 +73,16 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
                 </div>
               </label>
             ))}
+            </div>
           </div>
           {availableInDatabase.length > 0 && (
-            <div className="mb-4 p-3 bg-secondary-50 rounded-lg">
+            <div className="p-3 bg-secondary-50 rounded-lg">
               <p className="text-xs text-secondary-500 mb-1">Available in database:</p>
               <p className="text-sm text-secondary-700">{availableInDatabase.join(', ')}</p>
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
+            <div className="flex gap-3">
             <button
               onClick={() => onResolve('skip', [])}
               className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
@@ -92,6 +95,7 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
             >
               Create & Continue ({selectedForCreation.size})
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -116,8 +120,8 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-danger-500" />
             <h2 className="text-lg font-bold text-secondary-900">Missing Students</h2>
@@ -129,13 +133,13 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-secondary-600 mb-4">
+        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+          <p className="text-sm text-secondary-600">
             {missingStudents.length} student(s) in the file were not found in the database. They will be created with temporary passwords.
           </p>
-          <div className="overflow-hidden rounded-lg border border-secondary-200 mb-4">
+          <div className="overflow-auto max-h-[50vh] rounded-lg border border-secondary-200 flex-1 min-h-0">
             <table className="min-w-full divide-y divide-secondary-200">
-              <thead className="bg-secondary-50">
+              <thead className="bg-secondary-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">ID</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Name</th>
@@ -151,7 +155,8 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
               </tbody>
             </table>
           </div>
-          <div className="flex gap-3">
+          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
+            <div className="flex gap-3">
             <button
               onClick={() => onResolve('skip', [])}
               className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
@@ -164,6 +169,7 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
             >
               Create All ({missingStudents.length})
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -188,8 +194,8 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
 
   return (
     <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-warning-500" />
             <h2 className="text-lg font-bold text-secondary-900">Unenrolled Students</h2>
@@ -201,24 +207,30 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-secondary-600 mb-4">
+        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+          <p className="text-sm text-secondary-600">
             {unenrolledStudents.length} student(s) exist in the database but are not enrolled in this course.
           </p>
-          <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-            {unenrolledStudents.map(s => (
-              <div
-                key={s.student_id}
-                className="flex items-center justify-between p-3 rounded-lg border border-secondary-200 bg-secondary-50"
-              >
-                <div>
-                  <span className="font-mono text-sm text-secondary-700">{s.student_id}</span>
-                  <span className="text-sm text-secondary-900 ml-2">{s.first_name} {s.last_name}</span>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-auto max-h-[50vh] rounded-lg border border-secondary-200 flex-1 min-h-0">
+            <table className="min-w-full divide-y divide-secondary-200">
+              <thead className="bg-secondary-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">ID</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Name</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-secondary-200">
+                {unenrolledStudents.map(s => (
+                  <tr key={s.student_id}>
+                    <td className="px-3 py-2 text-sm font-mono text-secondary-700">{s.student_id}</td>
+                    <td className="px-3 py-2 text-sm text-secondary-900">{s.first_name} {s.last_name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="flex gap-3">
+          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
+            <div className="flex gap-3">
             <button
               onClick={() => onResolve('skip', [])}
               className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
@@ -231,6 +243,7 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
             >
               Enroll All ({unenrolledStudents.length})
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -255,8 +268,8 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
           <div className="flex items-center gap-3">
             <FileX className="w-5 h-5 text-danger-500" />
             <h2 className="text-lg font-bold text-secondary-900">Invalid Scores</h2>
@@ -268,13 +281,13 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-secondary-600 mb-4">
+        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+          <p className="text-sm text-secondary-600">
             {invalidScores.length} score(s) have invalid values. They must be fixed or handled before import.
           </p>
-          <div className="overflow-hidden rounded-lg border border-secondary-200 mb-4">
+          <div className="overflow-auto max-h-[50vh] rounded-lg border border-secondary-200 flex-1 min-h-0">
             <table className="min-w-full divide-y divide-secondary-200">
-              <thead className="bg-secondary-50">
+              <thead className="bg-secondary-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Row</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Column</th>
@@ -297,11 +310,12 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
             </table>
           </div>
           {invalidScores.length > 20 && (
-            <p className="text-xs text-secondary-500 mb-4">
+            <p className="text-xs text-secondary-500">
               Showing 20 of {invalidScores.length} invalid scores
             </p>
           )}
-          <div className="flex gap-3">
+          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
+            <div className="flex gap-3">
             <button
               onClick={() => onResolve('skip')}
               className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
@@ -314,6 +328,7 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
             >
               Clamp to Range
             </button>
+            </div>
           </div>
         </div>
       </div>

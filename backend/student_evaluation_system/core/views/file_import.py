@@ -8,6 +8,7 @@ Contains ViewSets for importing data from files:
 """
 
 import json
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -237,6 +238,7 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         },
         responses={
             200: {"type": "object"},
+            202: {"type": "object"},
             400: {"type": "object"},
             404: {"type": "object"},
         },
@@ -298,8 +300,9 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                 course_code=course_code,
                 term_id=term_id,
                 resolution_policy=resolution_policy,
+                triggered_by=request.user if getattr(request.user, "is_authenticated", False) else None,
             )
-            return Response(result, status=status.HTTP_200_OK)
+            return Response(result, status=status.HTTP_202_ACCEPTED)
         except FileImportError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -380,8 +383,12 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
                     last_name=last_name,
                     role="student",
                 )
-                StudentProfile.objects.create(user=user, student_id=student_id, program=course.program)
+                StudentProfile.objects.create(
+                    user=user, student_id=student_id, program=course.program, enrollment_term=course.term
+                )
                 created_counts["students"] += 1
+                CourseEnrollment.objects.create(student=user, course=course, status="active")
+                created_counts["enrollments"] += 1
             except Exception as e:
                 errors.append(f"Failed to create student {student_data.get('student_id', 'unknown')}: {str(e)}")
 
@@ -492,33 +499,22 @@ class AssignmentScoresImportViewSet(BaseFileImportViewSet):
         enroll_students = resolutions.get("enroll_students", [])
         create_assessments = resolutions.get("create_assessments", [])
 
-        skip_missing_assessments = bool(resolutions.get("skip_missing_assessments", False))
-        skip_missing_students = bool(resolutions.get("skip_missing_students", False))
-        skip_unenrolled_students = bool(resolutions.get("skip_unenrolled_students", False))
-        skip_invalid_scores = bool(resolutions.get("skip_invalid_scores", False))
-        clamp_scores = bool(resolutions.get("clamp_scores", False))
+        resolution_policy = AssignmentScoreValidator.normalize_resolution_policy(resolutions)
 
         errors = []
         created_counts = {"students": 0, "enrollments": 0, "assessments": 0}
 
-        self._apply_student_resolutions(create_students, course, errors, created_counts)
-        self._apply_enrollment_resolutions(enroll_students, course, errors, created_counts)
-        self._apply_assessment_resolutions(create_assessments, course, errors, created_counts)
+        with transaction.atomic():
+            self._apply_student_resolutions(create_students, course, errors, created_counts)
+            self._apply_enrollment_resolutions(enroll_students, course, errors, created_counts)
+            self._apply_assessment_resolutions(create_assessments, course, errors, created_counts)
 
-        resolution_policy = {
-            "skip_missing_assessments": skip_missing_assessments,
-            "skip_missing_students": skip_missing_students,
-            "skip_unenrolled_students": skip_unenrolled_students,
-            "skip_invalid_scores": skip_invalid_scores,
-            "clamp_scores": clamp_scores,
-        }
-
-        file_obj.seek(0)
-        validation_result = AssignmentScoreValidator.validate_complete(
-            file_obj,
-            course,
-            resolution_policy=resolution_policy,
-        )
+            file_obj.seek(0)
+            validation_result = AssignmentScoreValidator.validate_complete(
+                file_obj,
+                course,
+                resolution_policy=resolution_policy,
+            )
 
         resolution_summary = {
             "created": created_counts,

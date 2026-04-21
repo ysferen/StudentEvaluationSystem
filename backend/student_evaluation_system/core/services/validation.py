@@ -19,7 +19,13 @@ from django.contrib.auth import get_user_model
 
 from ..models import Term, Course
 from evaluation.models import Assessment, CourseEnrollment
-from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
+from .column_parsing import (
+    extract_assessment_columns,
+    clean_assessment_name,
+    find_student_id_column,
+    find_first_name_column,
+    find_last_name_column,
+)
 from .validators import InputValidator, FileValidator
 
 User = get_user_model()
@@ -868,6 +874,99 @@ class AssignmentScoreValidator:
         return result
 
     @staticmethod
+    def _find_optional_name_columns(dataframe: pd.DataFrame) -> tuple[Optional[str], Optional[str]]:
+        first_name_col: Optional[str] = None
+        last_name_col: Optional[str] = None
+
+        try:
+            first_name_col = find_first_name_column(dataframe.columns)
+        except ValueError:
+            pass
+
+        try:
+            last_name_col = find_last_name_column(dataframe.columns)
+        except ValueError:
+            pass
+
+        return first_name_col, last_name_col
+
+    @staticmethod
+    def _extract_student_ids_and_names(
+        dataframe: pd.DataFrame,
+        student_id_col: str,
+        first_name_col: Optional[str],
+        last_name_col: Optional[str],
+    ) -> tuple[set[str], Dict[str, Dict[str, str]]]:
+        file_student_ids: set[str] = set()
+        student_names: Dict[str, Dict[str, str]] = {}
+
+        for idx, student_id in enumerate(dataframe[student_id_col]):
+            if pd.isna(student_id):
+                continue
+
+            sid = str(student_id).strip()
+            file_student_ids.add(sid)
+
+            first_name = ""
+            last_name = ""
+
+            if first_name_col is not None:
+                first_name_value = dataframe.iloc[idx][first_name_col]
+                if pd.notna(first_name_value):
+                    first_name = str(first_name_value).strip()
+
+            if last_name_col is not None:
+                last_name_value = dataframe.iloc[idx][last_name_col]
+                if pd.notna(last_name_value):
+                    last_name = str(last_name_value).strip()
+
+            student_names[sid] = {"first_name": first_name, "last_name": last_name}
+
+        return file_student_ids, student_names
+
+    @staticmethod
+    def _collect_not_enrolled_students(student_profiles, course: Course) -> list[Dict[str, str]]:
+        if not student_profiles:
+            return []
+
+        user_ids = [profile.user.pk for profile in student_profiles]
+        enrolled_user_ids = set(
+            CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+        )
+
+        not_enrolled: list[Dict[str, str]] = []
+        for profile in student_profiles:
+            if profile.user.pk not in enrolled_user_ids:
+                not_enrolled.append(
+                    {
+                        "student_id": str(profile.student_id),
+                        "first_name": profile.user.first_name or "",
+                        "last_name": profile.user.last_name or "",
+                    }
+                )
+
+        return not_enrolled
+
+    @staticmethod
+    def _build_missing_from_database(
+        missing_students: set[str],
+        student_names: Dict[str, Dict[str, str]],
+    ) -> list[Dict[str, str]]:
+        missing_from_database: list[Dict[str, str]] = []
+
+        for sid in sorted(missing_students):
+            names = student_names.get(sid, {})
+            missing_from_database.append(
+                {
+                    "student_id": sid,
+                    "first_name": names.get("first_name", ""),
+                    "last_name": names.get("last_name", ""),
+                }
+            )
+
+        return missing_from_database
+
+    @staticmethod
     def validate_students(dataframe: pd.DataFrame, course: Course) -> ValidationResult:
         """
         Validate that students in file exist in database and are enrolled in course.
@@ -881,24 +980,24 @@ class AssignmentScoreValidator:
         """
         result = ValidationResult()
 
-        # Find student ID column
         try:
             student_id_col = find_student_id_column(dataframe.columns)
         except ValueError:
             result.add_error("Student ID column not found. Expected column containing 'öğrenci no' or 'No'", "student_column")
             return result
 
-        # Extract student IDs from file
-        file_student_ids = set()
-        for student_id in dataframe[student_id_col]:
-            if pd.notna(student_id):
-                file_student_ids.add(str(student_id).strip())
+        first_name_col, last_name_col = AssignmentScoreValidator._find_optional_name_columns(dataframe)
+        file_student_ids, student_names = AssignmentScoreValidator._extract_student_ids_and_names(
+            dataframe,
+            student_id_col,
+            first_name_col,
+            last_name_col,
+        )
 
         if not file_student_ids:
             result.add_error("No student IDs found in file", "student_validation")
             return result
 
-        # Check students in database
         from users.models import StudentProfile
 
         student_profiles = StudentProfile.objects.filter(student_id__in=file_student_ids).select_related("user")
@@ -908,27 +1007,22 @@ class AssignmentScoreValidator:
         missing_students = file_student_ids - existing_set
         found_students = file_student_ids & existing_set
 
-        # Check enrollment for students that exist in database
-        not_enrolled = []
+        not_enrolled: list[Dict[str, str]] = []
         if found_students:
-            user_ids = [profile.user.pk for profile in student_profiles]
-            enrolled_user_ids = set(
-                CourseEnrollment.objects.filter(course=course, student_id__in=user_ids).values_list("student_id", flat=True)
+            found_profiles = [profile for profile in student_profiles if str(profile.student_id).strip() in found_students]
+            not_enrolled = AssignmentScoreValidator._collect_not_enrolled_students(
+                found_profiles,
+                course,
             )
 
-            for profile in student_profiles:
-                if profile.user.pk not in enrolled_user_ids:
-                    not_enrolled.append(
-                        {
-                            "student_id": str(profile.student_id),
-                            "first_name": profile.user.first_name or "",
-                            "last_name": profile.user.last_name or "",
-                        }
-                    )
-
+        missing_from_database: list[Dict[str, str]] = []
         if missing_students:
+            missing_from_database = AssignmentScoreValidator._build_missing_from_database(
+                missing_students,
+                student_names,
+            )
             result.add_error(f"{len(missing_students)} students not found in database", "student_validation")
-            result.add_detail("missing_students", list(missing_students)[:20])  # Show first 20
+            result.add_detail("missing_students", missing_from_database[:20])
 
         if not_enrolled:
             sample_ids = [student["student_id"] for student in not_enrolled[:20]]
@@ -942,7 +1036,7 @@ class AssignmentScoreValidator:
             {
                 "total_in_file": len(file_student_ids),
                 "found_in_database": len(found_students),
-                "missing_from_database": len(missing_students),
+                "missing_from_database": missing_from_database,
                 "not_enrolled": not_enrolled,
                 "student_id_column": student_id_col,
             },

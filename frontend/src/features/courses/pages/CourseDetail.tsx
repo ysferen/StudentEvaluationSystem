@@ -59,7 +59,6 @@ const CourseDetail = () => {
 const { id: courseId } = useParams<{ id: string }>()
 const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
 const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
-const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   // Prevent body scroll when mapping editor is open
   useEffect(() => {
@@ -88,13 +87,8 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
     }
   })
 
-  const handleUploadComplete = (_result: unknown) => {
-    setNotification({
-      type: 'success',
-      message: 'Import completed successfully'
-    })
-
-    // Refresh data without page reload
+  const handleUploadComplete = () => {
+    // Immediate refresh for uploaded grades.
     refetch()
   }
 
@@ -311,13 +305,6 @@ const [notification, setNotification] = useState<{ type: 'success' | 'error'; me
 
   return (
     <div className="space-y-6">
-      {/* Notification */}
-      {notification && (
-        <div className={`p-4 rounded-lg ${notification.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
-          {notification.message}
-        </div>
-      )}
-
       {/* Course Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex justify-between items-start mb-6">

@@ -3,7 +3,10 @@ Tests for permission classes.
 """
 
 import pytest
+from typing import cast
 from django.contrib.auth import get_user_model
+from rest_framework.request import Request
+from rest_framework.views import APIView
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.views import CourseViewSet, StudentLearningOutcomeScoreViewSet
@@ -118,23 +121,31 @@ class TestPermissionClasses:
     def test_is_admin_permission(self, admin_user, student_user):
         """Test IsAdmin permission."""
         permission = IsAdmin()
+        view = cast(APIView, None)
 
-        # Mock request
-        class MockRequest:
-            def __init__(self, user):
-                self.user = user
+        admin_request = factory.get("/api/core/courses/")
+        admin_request.user = admin_user
 
-        assert permission.has_permission(MockRequest(admin_user), None) is True
-        assert permission.has_permission(MockRequest(student_user), None) is False
+        student_request = factory.get("/api/core/courses/")
+        student_request.user = student_user
+
+        assert permission.has_permission(cast(Request, admin_request), view) is True
+        assert permission.has_permission(cast(Request, student_request), view) is False
 
     def test_is_instructor_or_admin(self, instructor_user, student_user, admin_user):
         """Test IsInstructorOrAdmin permission."""
         permission = IsInstructorOrAdmin()
+        view = cast(APIView, None)
 
-        class MockRequest:
-            def __init__(self, user):
-                self.user = user
+        instructor_request = factory.get("/api/core/courses/")
+        instructor_request.user = instructor_user
 
-        assert permission.has_permission(MockRequest(instructor_user), None) is True
-        assert permission.has_permission(MockRequest(admin_user), None) is True
-        assert permission.has_permission(MockRequest(student_user), None) is False
+        admin_request = factory.get("/api/core/courses/")
+        admin_request.user = admin_user
+
+        student_request = factory.get("/api/core/courses/")
+        student_request.user = student_user
+
+        assert permission.has_permission(cast(Request, instructor_request), view) is True
+        assert permission.has_permission(cast(Request, admin_request), view) is True
+        assert permission.has_permission(cast(Request, student_request), view) is False

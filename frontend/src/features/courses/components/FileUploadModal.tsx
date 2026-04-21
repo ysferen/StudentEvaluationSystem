@@ -4,6 +4,7 @@ import {
   useCoreFileImportAssignmentScoresValidateCreate,
   useCoreFileImportAssignmentScoresResolveCreate,
 } from '../../../shared/api/generated/core/core'
+import { useRecomputeJobs } from '@/shared/contexts/RecomputeJobsContext'
 import {
   Upload,
   X,
@@ -122,6 +123,21 @@ type NormalizedChecks = {
 type UploadErrorPayload = Partial<ValidationResult> & {
   message?: string
   error?: string
+}
+
+interface RecomputeJob {
+  id: number
+  course_id?: number
+  status: 'pending' | 'running' | 'success' | 'failed'
+  task_type: string
+}
+
+interface UploadResponse {
+  created?: Record<string, unknown>
+  recompute_jobs?: RecomputeJob[]
+  message?: string
+  errors?: unknown[]
+  [key: string]: unknown
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -452,6 +468,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   const [file, setFile] = useState<File | null>(null)
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
   const [modalError, setModalError] = useState<string | null>(null)
+  const { enqueueJobs, showAlert } = useRecomputeJobs()
   const [activeProblem, setActiveProblem] = useState<ActiveProblem>(null)
   const [resolvedOperationCount, setResolvedOperationCount] = useState(0)
   const resolutionPolicyRef = useRef<Record<string, unknown>>({})
@@ -557,8 +574,13 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         resolutionPolicyRef.current = { ...resolutionPolicyRef.current, ...newPolicy }
       }
 
+      const resolvePayload = {
+        ...resolutionPolicyRef.current,
+        ...newResolutions,
+      }
+
       const result = await resolveMutation.mutateAsync({
-        data: { file, resolutions: JSON.stringify(newResolutions) },
+        data: { file, resolutions: JSON.stringify(resolvePayload) },
         params: { course_code: courseCode, term_id: termId }
       })
       setResolvedOperationCount((count) => count + 1)
@@ -613,6 +635,38 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           resolution_policy: JSON.stringify(resolutionPolicyRef.current),
         }
       } as any)
+
+      const uploadResponse = result as UploadResponse
+
+      // Check if response includes recompute jobs (202 Accepted response)
+      if (uploadResponse.recompute_jobs && uploadResponse.recompute_jobs.length > 0) {
+        const normalizedJobs: RecomputeJob[] = []
+        uploadResponse.recompute_jobs.forEach((job) => {
+          const normalizedId = Number(job.id)
+          if (Number.isNaN(normalizedId)) return
+
+          normalizedJobs.push({
+            ...job,
+            id: normalizedId,
+            course_id: typeof job.course_id === 'number' ? job.course_id : undefined,
+          })
+        })
+        enqueueJobs(normalizedJobs)
+        onUploadComplete?.({
+          ...uploadResponse,
+          recompute_jobs: normalizedJobs,
+        })
+        onClose()
+        return
+      }
+
+      showAlert(
+        'success',
+        typeof result.message === 'string' && result.message.trim()
+          ? result.message
+          : 'Student grades uploaded successfully.'
+      )
+
       onUploadComplete?.(result)
       onClose()
     } catch (error) {
@@ -902,7 +956,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   }
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if clicking directly on the backdrop (not the modal content)
     if (e.target === e.currentTarget && !isAnyUploadPending && !isAnyValidatePending && !isResolving) {
       handleModalClose()
     }

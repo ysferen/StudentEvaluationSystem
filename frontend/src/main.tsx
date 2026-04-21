@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import { AuthProvider } from './features/auth/hooks/useAuth'
 import { ErrorBoundary } from './shared/components'
+import { RecomputeJobsProvider } from './shared/contexts/RecomputeJobsContext'
 import './index.css'
 
 (globalThis as { __SES_ENV__?: Record<string, string | boolean | undefined> }).__SES_ENV__ = import.meta.env
@@ -31,7 +32,9 @@ ReactDOM.createRoot(rootElement).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <App />
+            <RecomputeJobsProvider>
+              <App />
+            </RecomputeJobsProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
