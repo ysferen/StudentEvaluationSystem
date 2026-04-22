@@ -9,7 +9,7 @@ updates:
       time: "06:00"
     open-pull-requests-limit: 5
     reviewers:
-      - "Erenimo3442"
+      - "ysferen"
     groups:
       react-dependencies:
         patterns:
@@ -31,7 +31,7 @@ updates:
       time: "06:00"
     open-pull-requests-limit: 5
     reviewers:
-      - "Erenimo3442"
+      - "ysferen"
     groups:
       django-dependencies:
         patterns:
