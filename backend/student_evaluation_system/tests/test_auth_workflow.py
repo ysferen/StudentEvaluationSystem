@@ -42,4 +42,31 @@ class TestAuthenticationWorkflows:
 
         response = api_client.post("/api/v1/users/auth/refresh/", {})
         assert response.status_code == status.HTTP_200_OK
-        assert "access" in response.data
+        assert "detail" in response.data
+        assert response.cookies["access_token"].value
+
+    def test_token_refresh_rotation_blacklists_old(self, api_client, fb_user_factory):
+        user = fb_user_factory()
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        refresh = RefreshToken.for_user(user)
+        original_refresh_token = str(refresh)
+        api_client.cookies["refresh_token"] = original_refresh_token
+
+        response = api_client.post("/api/v1/users/auth/refresh/", {})
+        assert response.status_code == status.HTTP_200_OK
+        rotated_refresh_token = response.cookies["refresh_token"].value
+
+        api_client.cookies["refresh_token"] = original_refresh_token
+        response = api_client.post("/api/v1/users/auth/refresh/", {})
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        api_client.cookies["refresh_token"] = rotated_refresh_token
+        response = api_client.post("/api/v1/users/auth/refresh/", {})
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_csrf_endpoint_sets_cookie(self, api_client):
+        response = api_client.get("/api/v1/users/auth/csrf/")
+        assert response.status_code == status.HTTP_200_OK
+        assert "csrftoken" in response.cookies
+        assert response.cookies["csrftoken"].value
