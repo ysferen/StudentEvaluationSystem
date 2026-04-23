@@ -381,3 +381,89 @@ class TestUserModelRelationships:
 
         assert po in user.created_program_outcomes.all()
         assert user == po.created_by
+
+
+@pytest.mark.django_db
+class TestDepartmentHeadRole:
+    def test_department_head_is_valid_role(self, db):
+        from users.models import CustomUser
+
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="department_head")
+        assert user.role == "department_head"
+
+    def test_is_department_head_property_returns_true(self, db):
+        from users.models import CustomUser
+
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="department_head")
+        assert user.is_department_head is True
+
+    def test_is_department_head_property_returns_false_for_other_roles(self, db):
+        from users.models import CustomUser
+
+        student = CustomUser.objects.create_user(username="studenttest", password="pass", role="student")
+        assert student.is_department_head is False
+        instructor = CustomUser.objects.create_user(username="instrtest", password="pass", role="instructor")
+        assert instructor.is_department_head is False
+        admin = CustomUser.objects.create_user(username="admintest", password="pass", role="admin")
+        assert admin.is_department_head is False
+
+
+@pytest.mark.django_db
+class TestDepartmentHeadProfile:
+    @pytest.fixture
+    def setup_data(self, db):
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
+        return {"university": university, "department": dept}
+
+    def test_create_department_head_profile(self, setup_data):
+        from users.models import CustomUser, DepartmentHeadProfile
+
+        dept = setup_data["department"]
+        user = CustomUser.objects.create_user(username="head1", password="pass", role="department_head", department=dept)
+        profile = DepartmentHeadProfile.objects.create(user=user, department=dept)
+        assert profile.user == user
+        assert profile.department == dept
+        assert profile.full_name == user.get_full_name() or user.username
+
+    def test_department_head_profile_str_representation(self, setup_data):
+        from users.models import CustomUser, DepartmentHeadProfile
+
+        dept = setup_data["department"]
+        user = CustomUser.objects.create_user(
+            username="head1", password="pass", role="department_head", first_name="Jane", last_name="Doe", department=dept
+        )
+        profile = DepartmentHeadProfile.objects.create(user=user, department=dept)
+        assert "Jane" in str(profile)
+        assert dept.name in str(profile)
+
+    def test_department_head_profile_validates_role(self, setup_data):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from django.core.exceptions import ValidationError
+
+        dept = setup_data["department"]
+        user = CustomUser.objects.create_user(username="not_head", password="pass", role="instructor")
+        profile = DepartmentHeadProfile(user=user, department=dept)
+        with pytest.raises(ValidationError):
+            profile.clean()
+
+    def test_one_head_per_department_enforced(self, setup_data):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from django.db import IntegrityError
+
+        dept = setup_data["department"]
+        user1 = CustomUser.objects.create_user(username="head1", password="pass", role="department_head", department=dept)
+        DepartmentHeadProfile.objects.create(user=user1, department=dept)
+        user2 = CustomUser.objects.create_user(username="head2", password="pass", role="department_head", department=dept)
+        with pytest.raises(IntegrityError):
+            DepartmentHeadProfile.objects.create(user=user2, department=dept)
+
+    def test_department_head_profile_created_at_auto_set(self, setup_data):
+        from users.models import CustomUser, DepartmentHeadProfile
+
+        dept = setup_data["department"]
+        user = CustomUser.objects.create_user(username="head1", password="pass", role="department_head", department=dept)
+        profile = DepartmentHeadProfile.objects.create(user=user, department=dept)
+        assert profile.created_at is not None

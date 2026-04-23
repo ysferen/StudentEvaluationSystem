@@ -8,9 +8,10 @@ class CustomUser(AbstractUser):
         ("guest", "Guest"),
         ("student", "Student"),
         ("instructor", "Instructor"),
+        ("department_head", "Department Head"),
         ("admin", "Admin"),
     )
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="guest")
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default="guest")
     department = models.ForeignKey("core.Department", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
     university = models.ForeignKey("core.University", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
 
@@ -33,6 +34,11 @@ class CustomUser(AbstractUser):
     def is_admin_user(self):
         """Check if user has admin role."""
         return self.role == "admin"
+
+    @property
+    def is_department_head(self):
+        """Check if user has department_head role."""
+        return self.role == "department_head"
 
     def __str__(self):
         full_name = self.get_full_name()
@@ -99,3 +105,35 @@ class InstructorProfile(models.Model):
         if self.title:
             return f"{self.title} {name}"
         return name
+
+
+class DepartmentHeadProfile(models.Model):
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="department_head_profile",
+        db_index=True,
+    )
+    department = models.ForeignKey(
+        "core.Department",
+        on_delete=models.CASCADE,
+        related_name="head_profile",
+        unique=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Department Head Profile"
+        verbose_name_plural = "Department Head Profiles"
+
+    def clean(self):
+        super().clean()
+        if self.user.role != "department_head":
+            raise ValidationError({"user": "User must have department_head role"})
+
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.username
+
+    def __str__(self):
+        return f"{self.full_name} - {self.department.name}"
