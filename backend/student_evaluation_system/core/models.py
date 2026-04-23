@@ -436,3 +436,50 @@ class StudentProgramOutcomeScore(models.Model):
     def __str__(self) -> str:
         """Return formatted string showing student, outcome, and score."""
         return f"{self.student.username} - {self.program_outcome.code}: {self.score:.2f}"
+
+
+class ResourceArea(models.TextChoices):
+    COURSES = "courses", "Courses"
+    PROGRAMS = "programs", "Programs"
+    LEARNING_OUTCOMES = "learning_outcomes", "Learning Outcomes"
+    PROGRAM_OUTCOMES = "program_outcomes", "Program Outcomes"
+    STUDENTS = "students", "Students"
+    LO_PO_WEIGHTS = "lo_po_weights", "LO-PO Weights"
+    ASSESSMENT_LO_WEIGHTS = "assessment_lo_weights", "Assessment-LO Weights"
+    ASSESSMENTS = "assessments", "Assessments"
+
+
+class PermissionTier(models.TextChoices):
+    VIEW = "view", "View Only"
+    EDIT = "edit", "Edit"
+    FULL = "full", "Full Control"
+
+
+class InstructorPermission(TimeStampedModel):
+    instructor = models.ForeignKey(
+        "users.InstructorProfile",
+        on_delete=models.CASCADE,
+        related_name="permissions",
+    )
+    department_head = models.ForeignKey(
+        "users.DepartmentHeadProfile",
+        on_delete=models.CASCADE,
+        related_name="granted_permissions",
+    )
+    resource_area = models.CharField(
+        max_length=30,
+        choices=ResourceArea.choices,
+    )
+    permission_tier = models.CharField(
+        max_length=10,
+        choices=PermissionTier.choices,
+        default=PermissionTier.VIEW,
+    )
+
+    class Meta:
+        unique_together = ("instructor", "resource_area")
+        verbose_name = "Instructor Permission"
+        verbose_name_plural = "Instructor Permissions"
+
+    def __str__(self):
+        return f"{self.instructor.full_name} - {self.get_resource_area_display()}: {self.get_permission_tier_display()}"

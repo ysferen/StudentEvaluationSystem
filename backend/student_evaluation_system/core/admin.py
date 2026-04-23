@@ -11,6 +11,7 @@ from .models import (
     DegreeLevel,
     StudentLearningOutcomeScore,
     StudentProgramOutcomeScore,
+    InstructorPermission,
 )
 
 
@@ -93,3 +94,10 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ["code", "name"]
     filter_horizontal = ["instructors"]
     inlines = [LearningOutcomeProgramOutcomeMappingInline]
+
+
+@admin.register(InstructorPermission)
+class InstructorPermissionAdmin(admin.ModelAdmin):
+    list_display = ("instructor", "resource_area", "permission_tier", "department_head")
+    list_filter = ("resource_area", "permission_tier")
+    search_fields = ("instructor__user__username", "instructor__user__first_name", "instructor__user__last_name")

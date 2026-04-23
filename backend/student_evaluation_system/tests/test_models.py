@@ -467,3 +467,91 @@ class TestDepartmentHeadProfile:
         user = CustomUser.objects.create_user(username="head1", password="pass", role="department_head", department=dept)
         profile = DepartmentHeadProfile.objects.create(user=user, department=dept)
         assert profile.created_at is not None
+
+
+@pytest.mark.django_db
+class TestInstructorPermission:
+    @pytest.fixture
+    def setup_profiles(self, db):
+        from users.models import CustomUser, InstructorProfile, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
+        instr_user = CustomUser.objects.create_user(username="instr1", password="pass", role="instructor")
+        instr_profile = InstructorProfile.objects.create(user=instr_user, title="Prof")
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        head_profile = DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        return {
+            "department": dept,
+            "instructor_profile": instr_profile,
+            "head_profile": head_profile,
+        }
+
+    def test_create_instructor_permission(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            department_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        assert perm.resource_area == "courses"
+        assert perm.permission_tier == "edit"
+
+    def test_default_permission_tier_is_view(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            department_head=setup_profiles["head_profile"],
+            resource_area="programs",
+        )
+        assert perm.permission_tier == "view"
+
+    def test_unique_together_instructor_resource_area(self, setup_profiles):
+        from core.models import InstructorPermission
+        from django.db import IntegrityError
+
+        InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            department_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        with pytest.raises(IntegrityError):
+            InstructorPermission.objects.create(
+                instructor=setup_profiles["instructor_profile"],
+                department_head=setup_profiles["head_profile"],
+                resource_area="courses",
+                permission_tier="full",
+            )
+
+    def test_all_resource_areas_are_valid(self, setup_profiles):
+        from core.models import ResourceArea, InstructorPermission
+
+        for area in ResourceArea.values:
+            InstructorPermission.objects.create(
+                instructor=setup_profiles["instructor_profile"],
+                department_head=setup_profiles["head_profile"],
+                resource_area=area,
+            )
+            assert InstructorPermission.objects.filter(resource_area=area).exists()
+            InstructorPermission.objects.filter(resource_area=area).delete()
+
+    def test_str_representation(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            department_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        assert "courses" in str(perm).lower() or "Courses" in str(perm)
