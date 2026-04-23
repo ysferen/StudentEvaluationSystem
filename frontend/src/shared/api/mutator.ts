@@ -23,12 +23,12 @@ let failedQueue: Array<{
   reject: (reason?: unknown) => void;
 }> = [];
 
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve();
     }
   });
   failedQueue = [];
@@ -56,6 +56,12 @@ const axiosInstance = Axios.create({
   xsrfHeaderName: 'X-CSRFToken',
 });
 
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/logout', '/auth/refresh', '/auth/csrf'];
+
+const isAuthEndpoint = (url: string): boolean => {
+  return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+};
+
 const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -63,15 +69,39 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
+const bootstrapCsrf = async (): Promise<void> => {
+  await Axios.get(`${API_URL}/api/users/auth/csrf/`, { withCredentials: true });
+};
+
+let csrfBootstrapPromise: Promise<void> | null = null;
+
+const ensureCsrfToken = async (): Promise<string | null> => {
+  let csrfToken = getCookie('csrftoken');
+  if (csrfToken) return csrfToken;
+
+  if (!csrfBootstrapPromise) {
+    csrfBootstrapPromise = bootstrapCsrf().finally(() => {
+      csrfBootstrapPromise = null;
+    });
+  }
+  await csrfBootstrapPromise;
+
+  return getCookie('csrftoken');
+};
+
 // Request interceptor - No Authorization header needed, cookies are sent automatically
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    if (config.method && config.method.toUpperCase() !== 'GET') {
-      const csrfToken = getCookie('csrftoken');
+  async (config: InternalAxiosRequestConfig) => {
+    const method = config.method?.toUpperCase();
+    const url = config.url || '';
+
+    if (method && method !== 'GET' && !isAuthEndpoint(url)) {
+      const csrfToken = await ensureCsrfToken();
       if (csrfToken) {
         config.headers['X-CSRFToken'] = csrfToken;
       }
     }
+
     if (runtimeEnv?.VITE_ENABLE_DEBUG === 'true') {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     }
@@ -98,13 +128,7 @@ axiosInstance.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            if (token) {
-              originalRequest.headers = originalRequest.headers || {};
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return axiosInstance(originalRequest);
-          })
+          .then(() => axiosInstance(originalRequest))
           .catch((err) => Promise.reject(err));
       }
 
@@ -112,12 +136,11 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const newToken = await refreshAccessToken();
-        document.cookie = `access_token=${newToken}; path=/; max-age=3600; samesite=lax`;
-        processQueue(null, newToken);
+        await refreshAccessToken();
+        processQueue(null);
         return axiosInstance(originalRequest);
       } catch {
-        processQueue(null, null);
+        processQueue(error);
         return Promise.reject(error);
       } finally {
         isRefreshing = false;

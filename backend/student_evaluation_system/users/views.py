@@ -1,3 +1,6 @@
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
 from rest_framework import generics, viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
@@ -109,6 +113,7 @@ class CookieTokenRefreshView(APIView):
     exposing tokens to JavaScript (XSS protection).
     """
 
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -116,7 +121,7 @@ class CookieTokenRefreshView(APIView):
         description="Exchange a valid refresh token (from HTTP-only cookie) for a new access token.",
         request=None,
         responses={
-            200: {"type": "object", "properties": {"access": {"type": "string"}}},
+            200: {"type": "object", "properties": {"detail": {"type": "string"}}},
             401: {"type": "object", "properties": {"error": {"type": "string"}}},
         },
         tags=["Authentication"],
@@ -126,12 +131,49 @@ class CookieTokenRefreshView(APIView):
         if not refresh_token:
             return Response({"error": "No refresh token found"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        serializer = TokenRefreshSerializer(data={"refresh": refresh_token})
         try:
-            refresh = RefreshToken(refresh_token)
-            access_token = str(refresh.access_token)
-            return Response({"access": access_token}, status=status.HTTP_200_OK)
+            if not serializer.is_valid():
+                return Response({"error": "Token is invalid or expired"}, status=status.HTTP_401_UNAUTHORIZED)
         except TokenError:
             return Response({"error": "Token is invalid or expired"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        validated_data = serializer.validated_data or {}
+        access_token_raw = validated_data.get("access")
+        refresh_token_raw = validated_data.get("refresh")
+
+        if not isinstance(access_token_raw, str) or not access_token_raw:
+            return Response({"error": "Token is invalid or expired"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        access_token = access_token_raw
+        refresh_token_value = refresh_token_raw if isinstance(refresh_token_raw, str) and refresh_token_raw else None
+
+        secure = not settings.DEBUG
+        same_site = "Strict" if not settings.DEBUG else "Lax"
+        access_max_age = int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds())
+        refresh_max_age = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
+
+        response = Response({"detail": "Token refreshed"}, status=status.HTTP_200_OK)
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=secure,
+            samesite=same_site,
+            max_age=access_max_age,
+            path="/",
+        )
+        if refresh_token_value is not None:
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token_value,
+                httponly=True,
+                secure=secure,
+                samesite=same_site,
+                max_age=refresh_max_age,
+                path="/",
+            )
+        return response
 
 
 @extend_schema(
@@ -144,16 +186,15 @@ class CookieTokenRefreshView(APIView):
 class LogoutView(APIView):
     """Logout endpoint for cookie-based authentication."""
 
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh_token")
         if refresh_token:
             try:
-                # Blacklist current refresh token so it cannot be reused.
                 RefreshToken(refresh_token).blacklist()
             except TokenError:
-                # Token may already be expired/invalid; still clear cookies.
                 pass
 
         response = Response({"detail": "Logged out successfully"}, status=status.HTTP_200_OK)
@@ -172,6 +213,24 @@ class LogoutView(APIView):
         return response
 
 
+@extend_schema(
+    summary="Get CSRF token",
+    description="Bootstrap endpoint that ensures csrftoken cookie is set for SPA usage.",
+    responses={200: {"type": "object", "properties": {"detail": {"type": "string"}}}},
+    tags=["Authentication"],
+)
+class CsrfTokenView(APIView):
+    """CSRF bootstrap endpoint for SPA usage."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        get_token(request)
+        return Response({"detail": "CSRF cookie set"})
+
+
 # Authentication Views
 @extend_schema(
     summary="User login",
@@ -182,7 +241,7 @@ class LogoutView(APIView):
         200: TokenResponseSerializer,
         400: dict,
         401: dict,
-        429: dict,  # Too Many Requests
+        429: dict,
     },
     tags=["Authentication"],
 )
@@ -194,6 +253,7 @@ class LoginView(APIView):
     - Prevents brute force password attacks
     """
 
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
