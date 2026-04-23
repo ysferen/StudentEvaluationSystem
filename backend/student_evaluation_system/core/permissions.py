@@ -401,6 +401,19 @@ class IsAdminOrDepartmentHead(BasePermission):
         return user.is_admin_user or user.is_department_head
 
 
+class IsAdminOrDepartmentHeadOrReadOnly(BasePermission):
+    """
+    Allow read access to anyone, but write access only to admins or department heads.
+    """
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        if request.method in SAFE_METHODS:
+            return True
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.is_admin_user or request.user.is_department_head
+
+
 class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):
     """
     Allow students to read their own enrollments, instructors to manage their courses' enrollments, and admins full access.

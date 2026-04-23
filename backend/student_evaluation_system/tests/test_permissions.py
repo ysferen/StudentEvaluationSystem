@@ -330,3 +330,58 @@ class TestGetInstructorPermissionTier:
             permission_tier="edit",
         )
         assert get_instructor_permission_tier(instr_user, "courses") == "edit"
+
+
+@pytest.mark.django_db
+class TestDepartmentHeadWriteAccess:
+    @pytest.fixture
+    def head_setup(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(
+            name="Test Dept", code="TD", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head_write",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        DepartmentHeadProfile.objects.create(
+            user=head_user, department=dept
+        )
+        return {
+            "client": APIRequestFactory().post("/"),
+            "head_user": head_user,
+            "department": dept,
+        }
+
+    def test_department_head_can_create_program(self, head_setup):
+        from core.models import DegreeLevel
+        from rest_framework.test import APIRequestFactory
+
+        DegreeLevel.objects.create(name="Bachelor")
+        factory = APIRequestFactory()
+        client = APIRequestFactory()
+        from rest_framework.test import APIRequestFactory, force_authenticate
+        from core.views import ProgramViewSet
+
+        request = factory.post(
+            "/api/v1/core/programs/",
+            {
+                "name": "New Program",
+                "code": "NP",
+                "degree_level": DegreeLevel.objects.first().id,
+                "department": head_setup["department"].id,
+            },
+            format="json",
+        )
+        force_authenticate(request, user=head_setup["head_user"])
+        view = ProgramViewSet.as_view({"post": "create"})
+        response = view(request)
+        assert response.status_code in (201, 200)
+
+    def test_department_head_has_permission_flag(self, head_setup):
+        assert head_setup["head_user"].is_department_head is True
