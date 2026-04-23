@@ -55,13 +55,14 @@ const getNavigationForRole = (role: string | null): NavItem[] => {
         ]
     }
 
-    if (role === 'admin' || role === 'head') {
+    if (role === 'admin' || role === 'department_head') {
+        const headPath = '/head'
         return [
             ...baseNavigation,
-            { name: 'Assessments', href: `/${role}/assessments`, icon: DocumentTextIcon, roles: ['admin', 'head'] },
-            { name: 'Outcomes', href: `/${role}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'head'] },
-            { name: 'Students', href: `/${role}/students`, icon: UsersIcon, roles: ['admin', 'head'] },
-            { name: 'Analytics', href: `/${role}/analytics`, icon: ChartBarIcon, roles: ['admin', 'head'] },
+            { name: 'Assessments', href: `${headPath}/assessments`, icon: DocumentTextIcon, roles: ['admin', 'department_head'] },
+            { name: 'Outcomes', href: `${headPath}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
+            { name: 'Students', href: `${headPath}/students`, icon: UsersIcon, roles: ['admin', 'department_head'] },
+            { name: 'Analytics', href: `${headPath}/analytics`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
         ]
     }
 

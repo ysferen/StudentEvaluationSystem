@@ -6,6 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UsersAuthRefreshCreate200 = {
+export type V1UsersAuthCsrfRetrieve200 = {
   detail?: string;
 };

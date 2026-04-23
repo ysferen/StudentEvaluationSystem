@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UsersAuthRefreshCreate200 = {
-  detail?: string;
+export type V1UsersHeadsListParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
 };

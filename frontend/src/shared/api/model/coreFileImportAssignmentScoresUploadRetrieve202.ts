@@ -6,6 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UsersAuthRefreshCreate200 = {
-  detail?: string;
-};
+export type CoreFileImportAssignmentScoresUploadRetrieve202 = { [key: string]: unknown };

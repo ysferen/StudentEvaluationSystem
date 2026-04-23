@@ -8,7 +8,7 @@ const Dashboard = () => {
     return <Navigate to="/" replace />
   }
 
-  const rolePath = user.role === 'student' ? '/student' : user.role === 'instructor' ? '/instructor' : user.role === 'admin' ? '/head' : '/login'
+  const rolePath = user.role === 'student' ? '/student' : user.role === 'instructor' ? '/instructor' : (user.role === 'admin' || user.role === 'department_head') ? '/head' : '/login'
   return <Navigate to={rolePath} replace />
 }
 
