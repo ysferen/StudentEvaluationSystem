@@ -5,6 +5,7 @@ from rest_framework import generics, viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from core.permissions import IsAdmin
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -13,8 +14,8 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
-from .models import CustomUser, StudentProfile, InstructorProfile
-from .serializers import CustomUserSerializer, StudentProfileSerializer, InstructorProfileSerializer
+from .models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
+from .serializers import CustomUserSerializer, StudentProfileSerializer, InstructorProfileSerializer, DepartmentHeadProfileSerializer
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -103,6 +104,14 @@ class InstructorProfileViewSet(viewsets.ModelViewSet):
 
     queryset = InstructorProfile.objects.select_related("user").all()
     serializer_class = InstructorProfileSerializer
+
+
+class DepartmentHeadProfileViewSet(viewsets.ModelViewSet):
+    """CRUD operations for department head profiles."""
+
+    queryset = DepartmentHeadProfile.objects.select_related("user", "department").all()
+    serializer_class = DepartmentHeadProfileSerializer
+    permission_classes = [IsAuthenticated, IsAdmin]
 
 
 class CookieTokenRefreshView(APIView):

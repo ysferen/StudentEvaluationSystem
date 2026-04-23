@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, StudentProfile, InstructorProfile
+from .models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
 from core.models import Department, University
 
 
@@ -98,6 +98,33 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstructorProfile
         fields = ["id", "user", "user_id", "title"]
+
+
+class DepartmentHeadProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        source="user",
+        write_only=True,
+    )
+    department = serializers.StringRelatedField(read_only=True)
+    department_id = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(),
+        source="department",
+        write_only=True,
+    )
+
+    class Meta:
+        model = DepartmentHeadProfile
+        fields = [
+            "id",
+            "user",
+            "user_id",
+            "department",
+            "department_id",
+            "created_at",
+        ]
+        read_only_fields = ["created_at"]
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

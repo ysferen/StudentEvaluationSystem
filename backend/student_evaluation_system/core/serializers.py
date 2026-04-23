@@ -19,7 +19,9 @@ from core.models import (
     LearningOutcomeProgramOutcomeMapping,
     StudentLearningOutcomeScore,
     StudentProgramOutcomeScore,
+    InstructorPermission,
 )
+from users.models import InstructorProfile, DepartmentHeadProfile
 from typing import List, Dict, Any, Optional
 from drf_spectacular.utils import extend_schema_field
 
@@ -418,3 +420,39 @@ class LearningOutcomeAverageSerializer(serializers.Serializer):
     lo_code = serializers.CharField()
     lo_description = serializers.CharField()
     avg_score = serializers.FloatField()
+
+
+class InstructorPermissionSerializer(serializers.ModelSerializer):
+    instructor = serializers.StringRelatedField(read_only=True)
+    instructor_id = serializers.PrimaryKeyRelatedField(
+        queryset=InstructorProfile.objects.all(),
+        source="instructor",
+        write_only=True,
+    )
+    department_head = serializers.StringRelatedField(read_only=True)
+    department_head_id = serializers.PrimaryKeyRelatedField(
+        queryset=DepartmentHeadProfile.objects.all(),
+        source="department_head",
+        write_only=True,
+    )
+    resource_area_display = serializers.CharField(
+        source="get_resource_area_display", read_only=True
+    )
+    permission_tier_display = serializers.CharField(
+        source="get_permission_tier_display", read_only=True
+    )
+
+    class Meta:
+        model = InstructorPermission
+        fields = [
+            "id",
+            "instructor",
+            "instructor_id",
+            "department_head",
+            "department_head_id",
+            "resource_area",
+            "resource_area_display",
+            "permission_tier",
+            "permission_tier_display",
+        ]
+        read_only_fields = ["id"]

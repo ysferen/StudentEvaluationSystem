@@ -465,6 +465,8 @@ class InstructorPermission(TimeStampedModel):
         "users.DepartmentHeadProfile",
         on_delete=models.CASCADE,
         related_name="granted_permissions",
+        null=True,
+        blank=True,
     )
     resource_area = models.CharField(
         max_length=30,

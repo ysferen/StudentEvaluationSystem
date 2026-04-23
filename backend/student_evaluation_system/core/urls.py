@@ -21,6 +21,7 @@ router.register(
     r"file-import/learning-outcomes", views.LearningOutcomesImportViewSet, basename="file-import-learning-outcomes"
 )
 router.register(r"file-import/program-outcomes", views.ProgramOutcomesImportViewSet, basename="file-import-program-outcomes")
+router.register(r"permissions", views.InstructorPermissionViewSet, basename="instructor-permission")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, StudentProfile, InstructorProfile
+from .models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
 
 
 @admin.register(CustomUser)
@@ -22,3 +22,14 @@ class StudentProfileAdmin(admin.ModelAdmin):
 class InstructorProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "title")
     search_fields = ("user__username", "user__first_name", "user__last_name", "title")
+
+
+@admin.register(DepartmentHeadProfile)
+class DepartmentHeadProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "department", "created_at")
+    list_filter = ("department",)
+    search_fields = (
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+    )
