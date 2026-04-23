@@ -22,6 +22,25 @@ from typing import Any
 ViewType = APIView
 
 
+def get_instructor_permission_tier(user, resource_area: str) -> str:
+    """
+    Get the permission tier for an instructor user for a given resource area.
+    Returns 'view' if no permission row exists (default).
+    Returns 'full' if user is not an instructor (admin/head).
+    """
+    if user.is_admin_user or user.is_department_head:
+        return "full"
+    if not user.is_instructor:
+        return "view"
+    try:
+        perm = user.instructor_profile.permissions.get(
+            resource_area=resource_area
+        )
+        return perm.permission_tier
+    except Exception:
+        return "view"
+
+
 class IsAdmin(BasePermission):
     """
     Allow access only to admin users.
@@ -340,28 +359,46 @@ class IsDepartmentHead(BasePermission):
     Allow access to department heads.
 
     Can access all courses and data within their department.
-
-    Note:
-        Currently treats admins as department heads. Future enhancement
-        could add a dedicated 'department_head' role to the user model.
+    Requires the user to have the 'department_head' role.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
-        """
-        Check if user is a department head (currently admin).
-
-        Args:
-            request: The incoming request
-            view: The view being accessed
-
-        Returns:
-            True if user is authenticated admin
-        """
-        if not request.user or not request.user.is_authenticated:
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
             return False
-        # For now, treat admins as department heads
-        # In future, could add a 'department_head' role
-        return request.user.is_admin_user
+        return user.is_department_head
+
+    def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        if not user.is_department_head:
+            return False
+        head_profile = getattr(user, "department_head_profile", None)
+        if head_profile is None:
+            return False
+        from core.models import Department
+        if isinstance(obj, Department):
+            return obj.id == head_profile.department_id
+        obj_department = getattr(obj, "department", None)
+        if obj_department is None:
+            return True
+        return head_profile.department_id == obj_department.id
+
+
+class IsAdminOrDepartmentHead(BasePermission):
+    """
+    Allow access to admins or department heads.
+
+    Admins have system-wide access. Department heads have
+    access scoped to their department.
+    """
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        return user.is_admin_user or user.is_department_head
 
 
 class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):

@@ -11,7 +11,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.views import CourseViewSet, StudentLearningOutcomeScoreViewSet
 from core.models import Course, LearningOutcome, StudentLearningOutcomeScore
-from core.permissions import IsAdmin, IsInstructorOrAdmin
+from core.permissions import IsAdmin, IsInstructorOrAdmin, IsDepartmentHead, IsAdminOrDepartmentHead, get_instructor_permission_tier
 
 User = get_user_model()
 factory = APIRequestFactory()
@@ -149,3 +149,184 @@ class TestPermissionClasses:
         assert permission.has_permission(cast(Request, instructor_request), view) is True
         assert permission.has_permission(cast(Request, admin_request), view) is True
         assert permission.has_permission(cast(Request, student_request), view) is False
+
+
+@pytest.mark.django_db
+class TestIsDepartmentHeadPermission:
+    def test_department_head_has_permission(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(
+            name="Test Dept", code="TD", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        request = factory.get("/api/test/")
+        request.user = head_user
+        perm = IsDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is True
+
+    def test_admin_does_not_pass_department_head_check(self, db, admin_user):
+        request = factory.get("/api/test/")
+        request.user = admin_user
+        perm = IsDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is False
+
+    def test_anonymous_denied(self, db):
+        request = factory.get("/api/test/")
+        perm = IsDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is False
+
+    def test_instructor_denied(self, db, instructor_user):
+        request = factory.get("/api/test/")
+        request.user = instructor_user
+        perm = IsDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is False
+
+    def test_department_head_object_permission_same_department(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(
+            name="Test Dept", code="TD", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        request = factory.get("/api/test/")
+        request.user = head_user
+        perm = IsDepartmentHead()
+        assert perm.has_object_permission(cast(Request, request), None, dept) is True
+
+    def test_department_head_object_permission_different_department(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept1 = Department.objects.create(
+            name="Dept1", code="D1", university=university
+        )
+        dept2 = Department.objects.create(
+            name="Dept2", code="D2", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept1,
+        )
+        DepartmentHeadProfile.objects.create(user=head_user, department=dept1)
+        request = factory.get("/api/test/")
+        request.user = head_user
+        perm = IsDepartmentHead()
+        assert perm.has_object_permission(cast(Request, request), None, dept2) is False
+
+
+@pytest.mark.django_db
+class TestIsAdminOrDepartmentHeadPermission:
+    def test_admin_has_permission(self, db, admin_user):
+        request = factory.get("/api/test/")
+        request.user = admin_user
+        perm = IsAdminOrDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is True
+
+    def test_department_head_has_permission(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(
+            name="Test Dept", code="TD", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        request = factory.get("/api/test/")
+        request.user = head_user
+        perm = IsAdminOrDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is True
+
+    def test_instructor_denied(self, db, instructor_user):
+        request = factory.get("/api/test/")
+        request.user = instructor_user
+        perm = IsAdminOrDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is False
+
+    def test_student_denied(self, db, student_user):
+        request = factory.get("/api/test/")
+        request.user = student_user
+        perm = IsAdminOrDepartmentHead()
+        assert perm.has_permission(cast(Request, request), None) is False
+
+
+@pytest.mark.django_db
+class TestGetInstructorPermissionTier:
+    def test_admin_gets_full(self, db, admin_user):
+        assert get_instructor_permission_tier(admin_user, "courses") == "full"
+
+    def test_department_head_gets_full(self, db):
+        from users.models import CustomUser, DepartmentHeadProfile
+        from core.models import University, Department
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(
+            name="Test Dept", code="TD", university=university
+        )
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        assert get_instructor_permission_tier(head_user, "courses") == "full"
+
+    def test_instructor_without_permission_gets_view(self, db, instructor_user):
+        assert get_instructor_permission_tier(instructor_user, "courses") == "view"
+
+    def test_instructor_with_permission_gets_tier(self, db):
+        from users.models import CustomUser, InstructorProfile, DepartmentHeadProfile
+        from core.models import University, Department, InstructorPermission
+
+        university = University.objects.create(name="Perm Uni")
+        dept = Department.objects.create(
+            name="Perm Dept", code="PD", university=university
+        )
+        instr_user = CustomUser.objects.create_user(
+            username="instrperm", password="pass", role="instructor"
+        )
+        instr_profile = InstructorProfile.objects.create(
+            user=instr_user, title="Prof"
+        )
+        head_user = CustomUser.objects.create_user(
+            username="headperm",
+            password="pass",
+            role="department_head",
+            department=dept,
+        )
+        head_profile = DepartmentHeadProfile.objects.create(
+            user=head_user, department=dept
+        )
+        InstructorPermission.objects.create(
+            instructor=instr_profile,
+            department_head=head_profile,
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        assert get_instructor_permission_tier(instr_user, "courses") == "edit"
