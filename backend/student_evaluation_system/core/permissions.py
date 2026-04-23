@@ -5,7 +5,7 @@ These permissions implement role-based access control (RBAC) ensuring:
 - Students can only access their own data
 - Instructors can only access their course data
 - Admins have full access
-- Department heads can access department-level data
+- Program heads can access program-level data
 
 All permission classes follow DRF's BasePermission interface with
 has_permission() for view-level checks and has_object_permission()
@@ -28,7 +28,7 @@ def get_instructor_permission_tier(user, resource_area: str) -> str:
     Returns 'view' if no permission row exists (default).
     Returns 'full' if user is not an instructor (admin/head).
     """
-    if user.is_admin_user or user.is_department_head:
+    if user.is_admin_user or user.is_program_head:
         return "full"
     if not user.is_instructor:
         return "view"
@@ -354,56 +354,56 @@ class IsInstructorOrAdmin(BasePermission):
         return request.user.is_instructor or request.user.is_admin_user
 
 
-class IsDepartmentHead(BasePermission):
+class IsProgramHead(BasePermission):
     """
-    Allow access to department heads.
+    Allow access to program heads.
 
-    Can access all courses and data within their department.
-    Requires the user to have the 'department_head' role.
+    Can access all courses and data within their program.
+    Requires the user to have the 'program_head' role.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated:
             return False
-        return user.is_department_head
+        return user.is_program_head
 
     def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated:
             return False
-        if not user.is_department_head:
+        if not user.is_program_head:
             return False
-        head_profile = getattr(user, "department_head_profile", None)
-        if head_profile is None:
+        program_head_profile = getattr(user, "program_head_profile", None)
+        if program_head_profile is None:
             return False
-        from core.models import Department
-        if isinstance(obj, Department):
-            return obj.id == head_profile.department_id
-        obj_department = getattr(obj, "department", None)
-        if obj_department is None:
+        from core.models import Program
+        if isinstance(obj, Program):
+            return obj.id == program_head_profile.program_id
+        obj_program = getattr(obj, "program", None)
+        if obj_program is None:
             return True
-        return head_profile.department_id == obj_department.id
+        return program_head_profile.program_id == obj_program.id
 
 
-class IsAdminOrDepartmentHead(BasePermission):
+class IsAdminOrProgramHead(BasePermission):
     """
-    Allow access to admins or department heads.
+    Allow access to admins or program heads.
 
-    Admins have system-wide access. Department heads have
-    access scoped to their department.
+    Admins have system-wide access. Program heads have
+    access scoped to their program.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated:
             return False
-        return user.is_admin_user or user.is_department_head
+        return user.is_admin_user or user.is_program_head
 
 
-class IsAdminOrDepartmentHeadOrReadOnly(BasePermission):
+class IsAdminOrProgramHeadOrReadOnly(BasePermission):
     """
-    Allow read access to anyone, but write access only to admins or department heads.
+    Allow read access to anyone, but write access only to admins or program heads.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
@@ -411,7 +411,7 @@ class IsAdminOrDepartmentHeadOrReadOnly(BasePermission):
             return True
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.is_admin_user or request.user.is_department_head
+        return request.user.is_admin_user or request.user.is_program_head
 
 
 class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):

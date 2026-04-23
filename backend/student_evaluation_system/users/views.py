@@ -14,12 +14,12 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.contrib.auth import authenticate
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
-from .models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
+from .models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
 from .serializers import (
     CustomUserSerializer,
     StudentProfileSerializer,
     InstructorProfileSerializer,
-    DepartmentHeadProfileSerializer,
+    ProgramHeadProfileSerializer,
 )
 
 
@@ -111,11 +111,11 @@ class InstructorProfileViewSet(viewsets.ModelViewSet):
     serializer_class = InstructorProfileSerializer
 
 
-class DepartmentHeadProfileViewSet(viewsets.ModelViewSet):
-    """CRUD operations for department head profiles."""
+class ProgramHeadProfileViewSet(viewsets.ModelViewSet):
+    """CRUD operations for program head profiles."""
 
-    queryset = DepartmentHeadProfile.objects.select_related("user", "department").all()
-    serializer_class = DepartmentHeadProfileSerializer
+    queryset = ProgramHeadProfile.objects.select_related("user", "program").all()
+    serializer_class = ProgramHeadProfileSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
 

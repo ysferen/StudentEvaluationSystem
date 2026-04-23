@@ -11,7 +11,7 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.views import CourseViewSet, StudentLearningOutcomeScoreViewSet
 from core.models import Course, LearningOutcome, StudentLearningOutcomeScore
-from core.permissions import IsAdmin, IsInstructorOrAdmin, IsDepartmentHead, IsAdminOrDepartmentHead, get_instructor_permission_tier
+from core.permissions import IsAdmin, IsInstructorOrAdmin, IsProgramHead, IsAdminOrProgramHead, get_instructor_permission_tier
 
 User = get_user_model()
 factory = APIRequestFactory()
@@ -152,126 +152,132 @@ class TestPermissionClasses:
 
 
 @pytest.mark.django_db
-class TestIsDepartmentHeadPermission:
-    def test_department_head_has_permission(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+class TestIsProgramHeadPermission:
+    def test_program_head_has_permission(self, db):
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
         dept = Department.objects.create(
             name="Test Dept", code="TD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        ProgramHeadProfile.objects.create(user=head_user, program=program)
         request = factory.get("/api/test/")
         request.user = head_user
-        perm = IsDepartmentHead()
+        perm = IsProgramHead()
         assert perm.has_permission(cast(Request, request), None) is True
 
-    def test_admin_does_not_pass_department_head_check(self, db, admin_user):
+    def test_admin_does_not_pass_program_head_check(self, db, admin_user):
         request = factory.get("/api/test/")
         request.user = admin_user
-        perm = IsDepartmentHead()
+        perm = IsProgramHead()
         assert perm.has_permission(cast(Request, request), None) is False
 
     def test_anonymous_denied(self, db):
         request = factory.get("/api/test/")
-        perm = IsDepartmentHead()
+        perm = IsProgramHead()
         assert perm.has_permission(cast(Request, request), None) is False
 
     def test_instructor_denied(self, db, instructor_user):
         request = factory.get("/api/test/")
         request.user = instructor_user
-        perm = IsDepartmentHead()
+        perm = IsProgramHead()
         assert perm.has_permission(cast(Request, request), None) is False
 
-    def test_department_head_object_permission_same_department(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+    def test_program_head_object_permission_same_program(self, db):
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
         dept = Department.objects.create(
             name="Test Dept", code="TD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        ProgramHeadProfile.objects.create(user=head_user, program=program)
         request = factory.get("/api/test/")
         request.user = head_user
-        perm = IsDepartmentHead()
-        assert perm.has_object_permission(cast(Request, request), None, dept) is True
+        perm = IsProgramHead()
+        assert perm.has_object_permission(cast(Request, request), None, program) is True
 
-    def test_department_head_object_permission_different_department(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+    def test_program_head_object_permission_different_program(self, db):
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept1 = Department.objects.create(
+        dept = Department.objects.create(
             name="Dept1", code="D1", university=university
         )
-        dept2 = Department.objects.create(
-            name="Dept2", code="D2", university=university
-        )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program1 = Program.objects.create(name="Program1", code="P1", department=dept, degree_level=degree)
+        program2 = Program.objects.create(name="Program2", code="P2", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
             password="pass",
-            role="department_head",
-            department=dept1,
+            role="program_head",
+            department=dept,
         )
-        DepartmentHeadProfile.objects.create(user=head_user, department=dept1)
+        ProgramHeadProfile.objects.create(user=head_user, program=program1)
         request = factory.get("/api/test/")
         request.user = head_user
-        perm = IsDepartmentHead()
-        assert perm.has_object_permission(cast(Request, request), None, dept2) is False
+        perm = IsProgramHead()
+        assert perm.has_object_permission(cast(Request, request), None, program2) is False
 
 
 @pytest.mark.django_db
-class TestIsAdminOrDepartmentHeadPermission:
+class TestIsAdminOrProgramHeadPermission:
     def test_admin_has_permission(self, db, admin_user):
         request = factory.get("/api/test/")
         request.user = admin_user
-        perm = IsAdminOrDepartmentHead()
+        perm = IsAdminOrProgramHead()
         assert perm.has_permission(cast(Request, request), None) is True
 
-    def test_department_head_has_permission(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+    def test_program_head_has_permission(self, db):
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
         dept = Department.objects.create(
             name="Test Dept", code="TD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        ProgramHeadProfile.objects.create(user=head_user, program=program)
         request = factory.get("/api/test/")
         request.user = head_user
-        perm = IsAdminOrDepartmentHead()
+        perm = IsAdminOrProgramHead()
         assert perm.has_permission(cast(Request, request), None) is True
 
     def test_instructor_denied(self, db, instructor_user):
         request = factory.get("/api/test/")
         request.user = instructor_user
-        perm = IsAdminOrDepartmentHead()
+        perm = IsAdminOrProgramHead()
         assert perm.has_permission(cast(Request, request), None) is False
 
     def test_student_denied(self, db, student_user):
         request = factory.get("/api/test/")
         request.user = student_user
-        perm = IsAdminOrDepartmentHead()
+        perm = IsAdminOrProgramHead()
         assert perm.has_permission(cast(Request, request), None) is False
 
 
@@ -280,34 +286,38 @@ class TestGetInstructorPermissionTier:
     def test_admin_gets_full(self, db, admin_user):
         assert get_instructor_permission_tier(admin_user, "courses") == "full"
 
-    def test_department_head_gets_full(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+    def test_program_head_gets_full(self, db):
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
         dept = Department.objects.create(
             name="Test Dept", code="TD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        DepartmentHeadProfile.objects.create(user=head_user, department=dept)
+        ProgramHeadProfile.objects.create(user=head_user, program=program)
         assert get_instructor_permission_tier(head_user, "courses") == "full"
 
     def test_instructor_without_permission_gets_view(self, db, instructor_user):
         assert get_instructor_permission_tier(instructor_user, "courses") == "view"
 
     def test_instructor_with_permission_gets_tier(self, db):
-        from users.models import CustomUser, InstructorProfile, DepartmentHeadProfile
-        from core.models import University, Department, InstructorPermission
+        from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program, InstructorPermission
 
         university = University.objects.create(name="Perm Uni")
         dept = Department.objects.create(
             name="Perm Dept", code="PD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Perm Program", code="PP", department=dept, degree_level=degree)
         instr_user = CustomUser.objects.create_user(
             username="instrperm", password="pass", role="instructor"
         )
@@ -317,15 +327,15 @@ class TestGetInstructorPermissionTier:
         head_user = CustomUser.objects.create_user(
             username="headperm",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        head_profile = DepartmentHeadProfile.objects.create(
-            user=head_user, department=dept
+        head_profile = ProgramHeadProfile.objects.create(
+            user=head_user, program=program
         )
         InstructorPermission.objects.create(
             instructor=instr_profile,
-            department_head=head_profile,
+            program_head=head_profile,
             resource_area="courses",
             permission_tier="edit",
         )
@@ -333,36 +343,38 @@ class TestGetInstructorPermissionTier:
 
 
 @pytest.mark.django_db
-class TestDepartmentHeadWriteAccess:
+class TestProgramHeadWriteAccess:
     @pytest.fixture
     def head_setup(self, db):
-        from users.models import CustomUser, DepartmentHeadProfile
-        from core.models import University, Department
+        from users.models import CustomUser, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
         dept = Department.objects.create(
             name="Test Dept", code="TD", university=university
         )
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head_write",
             password="pass",
-            role="department_head",
+            role="program_head",
             department=dept,
         )
-        DepartmentHeadProfile.objects.create(
-            user=head_user, department=dept
+        ProgramHeadProfile.objects.create(
+            user=head_user, program=program
         )
         return {
             "client": APIRequestFactory().post("/"),
             "head_user": head_user,
-            "department": dept,
+            "program": program,
         }
 
-    def test_department_head_can_create_program(self, head_setup):
+    def test_program_head_can_create_program(self, head_setup):
         from core.models import DegreeLevel
         from rest_framework.test import APIRequestFactory
 
-        DegreeLevel.objects.create(name="Bachelor")
+        DegreeLevel.objects.create(name="Master")
         factory = APIRequestFactory()
         client = APIRequestFactory()
         from rest_framework.test import APIRequestFactory, force_authenticate
@@ -374,7 +386,7 @@ class TestDepartmentHeadWriteAccess:
                 "name": "New Program",
                 "code": "NP",
                 "degree_level": DegreeLevel.objects.first().id,
-                "department": head_setup["department"].id,
+                "department": head_setup["program"].department.id,
             },
             format="json",
         )
@@ -383,5 +395,5 @@ class TestDepartmentHeadWriteAccess:
         response = view(request)
         assert response.status_code in (201, 200)
 
-    def test_department_head_has_permission_flag(self, head_setup):
-        assert head_setup["head_user"].is_department_head is True
+    def test_program_head_has_permission_flag(self, head_setup):
+        assert head_setup["head_user"].is_program_head is True

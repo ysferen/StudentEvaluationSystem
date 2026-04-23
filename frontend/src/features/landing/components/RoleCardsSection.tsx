@@ -27,7 +27,7 @@ const roles = [
   },
   {
     icon: BuildingLibraryIcon,
-    title: 'Department Heads',
+    title: 'Program Heads',
     description:
       'Oversee program-level outcomes and generate accreditation reports. Make strategic decisions backed by real data.',
     features: ['Program outcome dashboards', 'Cross-course LO analysis', 'Accreditation report generation'],

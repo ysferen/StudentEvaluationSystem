@@ -2,7 +2,7 @@ import random
 import time
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from users.models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
+from users.models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
 from core.models import (
     University,
     Department,
@@ -54,10 +54,10 @@ class Command(BaseCommand):
             terms = self.create_terms()
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
-            # Create department head
+            # Create program head
             step_start = time.time()
-            self.stdout.write("\n[2/8] Creating department head...")
-            head_user, head_profile = self.create_department_head(departments[0], universities[0])
+            self.stdout.write("\n[2/8] Creating program head...")
+            head_user, head_profile = self.create_program_head(programs[0], universities[0])
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create instructor
@@ -258,28 +258,28 @@ class Command(BaseCommand):
 
         return instructors
 
-    def create_department_head(self, department, university):
+    def create_program_head(self, program, university):
         head_user, created = CustomUser.objects.get_or_create(
             username="headuser",
             defaults={
                 "email": "head@example.com",
-                "first_name": "Department",
+                "first_name": "Program",
                 "last_name": "Head",
-                "role": "department_head",
-                "department": department,
+                "role": "program_head",
+                "department": program.department,
                 "university": university,
             },
         )
         if created:
             head_user.set_password("head123")
             head_user.save()
-        head_profile, _ = DepartmentHeadProfile.objects.get_or_create(
+        head_profile, _ = ProgramHeadProfile.objects.get_or_create(
             user=head_user,
-            defaults={"department": department},
+            defaults={"program": program},
         )
         self.stdout.write(
             self.style.SUCCESS(
-                f"  ✓ Department Head: {head_user.get_full_name()} ({department.name})"
+                f"  ✓ Program Head: {head_user.get_full_name()} ({program.name})"
             )
         )
         return head_user, head_profile

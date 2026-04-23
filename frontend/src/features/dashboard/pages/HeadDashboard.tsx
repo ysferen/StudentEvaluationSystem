@@ -60,8 +60,8 @@ const HeadDashboard = () => {
       {/* Welcome Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 p-8 text-white shadow-lg">
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold mb-2">Department Overview</h1>
-          <p className="text-sky-100 text-lg">Computer Science & Engineering Department</p>
+          <h1 className="text-3xl font-bold mb-2">Program Overview</h1>
+          <p className="text-sky-100 text-lg">Program Dashboard</p>
         </div>
         <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-right" />
         <div className="absolute right-20 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-bottom-right" />
@@ -108,7 +108,7 @@ const HeadDashboard = () => {
               <ChartBarIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Dept. Avg GPA</p>
+              <p className="text-sm text-secondary-600 font-medium">Program Avg GPA</p>
               <p className="text-3xl font-bold text-secondary-900">3.15</p>
             </div>
           </div>
@@ -136,7 +136,7 @@ const HeadDashboard = () => {
       {/* Reports Section */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-secondary-900">Department Reports</h2>
+          <h2 className="text-xl font-bold text-secondary-900">Program Reports</h2>
           <button className="text-sky-600 hover:text-sky-700 font-medium text-sm">View All Reports</button>
         </div>
         <div className="space-y-4">

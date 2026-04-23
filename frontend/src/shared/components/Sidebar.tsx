@@ -55,15 +55,15 @@ const getNavigationForRole = (role: string | null): NavItem[] => {
         ]
     }
 
-    if (role === 'admin' || role === 'department_head') {
+    if (role === 'admin' || role === 'program_head') {
         const headPath = '/head'
         return [
             ...baseNavigation,
-            { name: 'Assessments', href: `${headPath}/assessments`, icon: DocumentTextIcon, roles: ['admin', 'department_head'] },
-            { name: 'Outcomes', href: `${headPath}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
-            { name: 'Students', href: `${headPath}/students`, icon: UsersIcon, roles: ['admin', 'department_head'] },
-            { name: 'Analytics', href: `${headPath}/analytics`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
-            { name: 'Permissions', href: `${headPath}/permissions`, icon: ShieldCheckIcon, roles: ['admin', 'department_head'] },
+            { name: 'Assessments', href: `${headPath}/assessments`, icon: DocumentTextIcon, roles: ['admin', 'program_head'] },
+            { name: 'Outcomes', href: `${headPath}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'program_head'] },
+            { name: 'Students', href: `${headPath}/students`, icon: UsersIcon, roles: ['admin', 'program_head'] },
+            { name: 'Analytics', href: `${headPath}/analytics`, icon: ChartBarIcon, roles: ['admin', 'program_head'] },
+            { name: 'Permissions', href: `${headPath}/permissions`, icon: ShieldCheckIcon, roles: ['admin', 'program_head'] },
         ]
     }
 

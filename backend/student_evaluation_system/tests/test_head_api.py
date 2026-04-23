@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
-from users.models import InstructorProfile, DepartmentHeadProfile
+from users.models import InstructorProfile, ProgramHeadProfile
 from core.models import (
     University,
     Department,
@@ -39,11 +39,11 @@ def setup_data(db):
     head_user = User.objects.create_user(
         username="headuser",
         password="headpass123",
-        role="department_head",
+        role="program_head",
         department=dept,
     )
-    head_profile = DepartmentHeadProfile.objects.create(
-        user=head_user, department=dept
+    head_profile = ProgramHeadProfile.objects.create(
+        user=head_user, program=program
     )
 
     instructor_user = User.objects.create_user(
@@ -77,7 +77,7 @@ def setup_data(db):
     }
 
 
-class TestDepartmentHeadAPI:
+class TestProgramHeadAPI:
     def test_admin_can_list_heads(self, api_client, setup_data):
         api_client.force_authenticate(user=setup_data["admin_user"])
         response = api_client.get("/api/v1/users/heads/")
@@ -102,7 +102,7 @@ class TestInstructorPermissionAPI:
     def test_admin_can_list_permissions(self, api_client, setup_data):
         InstructorPermission.objects.create(
             instructor=setup_data["instructor_profile"],
-            department_head=setup_data["head_profile"],
+            program_head=setup_data["head_profile"],
             resource_area=ResourceArea.COURSES,
             permission_tier=PermissionTier.EDIT,
         )
@@ -113,7 +113,7 @@ class TestInstructorPermissionAPI:
     def test_head_can_list_own_permissions(self, api_client, setup_data):
         InstructorPermission.objects.create(
             instructor=setup_data["instructor_profile"],
-            department_head=setup_data["head_profile"],
+            program_head=setup_data["head_profile"],
             resource_area=ResourceArea.COURSES,
             permission_tier=PermissionTier.EDIT,
         )
@@ -126,7 +126,7 @@ class TestInstructorPermissionAPI:
     ):
         InstructorPermission.objects.create(
             instructor=setup_data["instructor_profile"],
-            department_head=setup_data["head_profile"],
+            program_head=setup_data["head_profile"],
             resource_area=ResourceArea.COURSES,
             permission_tier=PermissionTier.EDIT,
         )
@@ -213,11 +213,11 @@ class TestInstructorPermissionAPI:
 
 
 class TestSeedData:
-    def test_seed_command_creates_department_head(self, db):
+    def test_seed_command_creates_program_head(self, db):
         from django.core.management import call_command
         call_command("seed_data")
-        from users.models import CustomUser, DepartmentHeadProfile
+        from users.models import CustomUser, ProgramHeadProfile
         head_user = CustomUser.objects.filter(username="headuser").first()
         assert head_user is not None
-        assert head_user.role == "department_head"
-        assert DepartmentHeadProfile.objects.filter(user=head_user).exists()
+        assert head_user.role == "program_head"
+        assert ProgramHeadProfile.objects.filter(user=head_user).exists()

@@ -42,7 +42,7 @@ describe('LandingPage', () => {
     renderLanding()
     expect(screen.getAllByText('Students')[0]).toBeInTheDocument()
     expect(screen.getAllByText('Instructors')[0]).toBeInTheDocument()
-    expect(screen.getAllByText('Department Heads')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('Program Heads')[0]).toBeInTheDocument()
   })
 
   it('renders the CTA section', () => {

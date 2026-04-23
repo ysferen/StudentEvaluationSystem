@@ -10,7 +10,7 @@ from django.db.models import Avg
 from ..services.file_import import FileImportService
 from ..services.file_import import FileImportError
 from ..services.validation import AssignmentScoreValidator
-from ..permissions import IsAdminOrReadOnly, IsAdminOrDepartmentHeadOrReadOnly
+from ..permissions import IsAdminOrReadOnly, IsAdminOrProgramHeadOrReadOnly
 from rest_framework import serializers
 
 from ..models import (
@@ -89,7 +89,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
 
     queryset = University.objects.all()
     serializer_class = UniversitySerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
 
 @extend_schema_view(
@@ -115,7 +115,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     queryset = Department.objects.select_related("university").all()
     serializer_class = DepartmentSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -136,7 +136,7 @@ class DegreeLevelViewSet(viewsets.ModelViewSet):
 
     queryset = DegreeLevel.objects.all()
     serializer_class = DegreeLevelSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
 
 @extend_schema_view(
@@ -168,7 +168,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
     queryset = Program.objects.select_related("department", "degree_level").all()
     serializer_class = ProgramSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -194,7 +194,7 @@ class TermViewSet(viewsets.ModelViewSet):
 
     queryset = Term.objects.all()
     serializer_class = TermSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     @action(detail=False, methods=["get"])
     def active(self, request):
@@ -238,7 +238,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     queryset = Course.objects.select_related("program", "term").prefetch_related("instructors").all()
     serializer_class = CourseSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         """
@@ -318,7 +318,7 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = ProgramOutcome.objects.select_related("program", "term", "created_by").all()
     serializer_class = ProgramOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -350,7 +350,7 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = LearningOutcome.objects.select_related("course", "created_by").all()
     serializer_class = CoreLearningOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -381,7 +381,7 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         "course", "learning_outcome", "program_outcome"
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
-    permission_classes = [AllowAny, IsAdminOrDepartmentHeadOrReadOnly]
+    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()

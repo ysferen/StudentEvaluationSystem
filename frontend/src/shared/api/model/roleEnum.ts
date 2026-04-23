@@ -10,7 +10,7 @@
  * * `guest` - Guest
 * `student` - Student
 * `instructor` - Instructor
-* `department_head` - Department Head
+* `program_head` - Program Head
 * `admin` - Admin
  */
 export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
@@ -21,6 +21,6 @@ export const RoleEnum = {
   guest: 'guest',
   student: 'student',
   instructor: 'instructor',
-  department_head: 'department_head',
+  program_head: 'program_head',
   admin: 'admin',
 } as const;

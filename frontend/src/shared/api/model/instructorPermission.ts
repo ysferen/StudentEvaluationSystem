@@ -12,8 +12,8 @@ export interface InstructorPermission {
   readonly id: number;
   readonly instructor: string;
   instructor_id: number;
-  readonly department_head: string;
-  department_head_id: number;
+  readonly program_head: string;
+  program_head_id: number;
   resource_area: ResourceAreaEnum;
   readonly resource_area_display: string;
   permission_tier?: PermissionTierEnum;

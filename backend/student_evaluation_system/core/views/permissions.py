@@ -4,12 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.models import InstructorPermission
 from core.serializers import InstructorPermissionSerializer
-from core.permissions import IsAdminOrDepartmentHead
+from core.permissions import IsAdminOrProgramHead
 
 
 class InstructorPermissionViewSet(viewsets.ModelViewSet):
     queryset = InstructorPermission.objects.select_related(
-        "instructor__user", "department_head__user", "department_head__department"
+        "instructor__user", "program_head__user", "program_head__program"
     ).all()
     serializer_class = InstructorPermissionSerializer
 
@@ -17,16 +17,16 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
         if self.action == "my_permissions":
             return [IsAuthenticated()]
         if self.action == "bulk_set":
-            return [IsAuthenticated(), IsAdminOrDepartmentHead()]
-        return [IsAuthenticated(), IsAdminOrDepartmentHead()]
+            return [IsAuthenticated(), IsAdminOrProgramHead()]
+        return [IsAuthenticated(), IsAdminOrProgramHead()]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_admin_user:
             return self.queryset
-        if user.is_department_head:
+        if user.is_program_head:
             return self.queryset.filter(
-                department_head__user=user
+                program_head__user=user
             )
         if user.is_instructor:
             return self.queryset.filter(
@@ -69,16 +69,16 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
             )
 
         if request.user.is_admin_user:
-            department_head = None
+            program_head = None
         else:
-            department_head = request.user.department_head_profile
+            program_head = request.user.program_head_profile
 
         for perm_data in permissions_data:
             InstructorPermission.objects.update_or_create(
                 instructor=instructor,
                 resource_area=perm_data["resource_area"],
                 defaults={
-                    "department_head": department_head,
+                    "program_head": program_head,
                     "permission_tier": perm_data["permission_tier"],
                 },
             )

@@ -21,7 +21,7 @@ from core.models import (
     StudentProgramOutcomeScore,
     InstructorPermission,
 )
-from users.models import InstructorProfile, DepartmentHeadProfile
+from users.models import InstructorProfile, ProgramHeadProfile
 from typing import List, Dict, Any, Optional
 from drf_spectacular.utils import extend_schema_field
 
@@ -429,10 +429,10 @@ class InstructorPermissionSerializer(serializers.ModelSerializer):
         source="instructor",
         write_only=True,
     )
-    department_head = serializers.StringRelatedField(read_only=True)
-    department_head_id = serializers.PrimaryKeyRelatedField(
-        queryset=DepartmentHeadProfile.objects.all(),
-        source="department_head",
+    program_head = serializers.StringRelatedField(read_only=True)
+    program_head_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProgramHeadProfile.objects.all(),
+        source="program_head",
         write_only=True,
     )
     resource_area_display = serializers.CharField(
@@ -448,8 +448,8 @@ class InstructorPermissionSerializer(serializers.ModelSerializer):
             "id",
             "instructor",
             "instructor_id",
-            "department_head",
-            "department_head_id",
+            "program_head",
+            "program_head_id",
             "resource_area",
             "resource_area_display",
             "permission_tier",

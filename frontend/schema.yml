@@ -3821,7 +3821,7 @@ paths:
   /api/users/heads/:
     get:
       operationId: users_heads_list
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - name: page
         required: false
@@ -3838,24 +3838,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedDepartmentHeadProfileList'
+                $ref: '#/components/schemas/PaginatedProgramHeadProfileList'
           description: ''
     post:
       operationId: users_heads_create
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       tags:
       - users
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
         required: true
       security:
       - jwtCookie: []
@@ -3864,18 +3864,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
   /api/users/heads/{id}/:
     get:
       operationId: users_heads_retrieve
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - users
@@ -3886,17 +3886,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     put:
       operationId: users_heads_update
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - users
@@ -3904,13 +3904,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
         required: true
       security:
       - jwtCookie: []
@@ -3919,17 +3919,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     patch:
       operationId: users_heads_partial_update
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - users
@@ -3937,13 +3937,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
       security:
       - jwtCookie: []
       responses:
@@ -3951,17 +3951,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     delete:
       operationId: users_heads_destroy
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - users
@@ -8262,7 +8262,7 @@ paths:
   /api/v1/users/heads/:
     get:
       operationId: v1_users_heads_list
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - name: page
         required: false
@@ -8279,24 +8279,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedDepartmentHeadProfileList'
+                $ref: '#/components/schemas/PaginatedProgramHeadProfileList'
           description: ''
     post:
       operationId: v1_users_heads_create
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       tags:
       - v1
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
         required: true
       security:
       - jwtCookie: []
@@ -8305,18 +8305,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
   /api/v1/users/heads/{id}/:
     get:
       operationId: v1_users_heads_retrieve
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - v1
@@ -8327,17 +8327,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     put:
       operationId: v1_users_heads_update
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - v1
@@ -8345,13 +8345,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/DepartmentHeadProfile'
+              $ref: '#/components/schemas/ProgramHeadProfile'
         required: true
       security:
       - jwtCookie: []
@@ -8360,17 +8360,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     patch:
       operationId: v1_users_heads_partial_update
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - v1
@@ -8378,13 +8378,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedDepartmentHeadProfile'
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
       security:
       - jwtCookie: []
       responses:
@@ -8392,17 +8392,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepartmentHeadProfile'
+                $ref: '#/components/schemas/ProgramHeadProfile'
           description: ''
     delete:
       operationId: v1_users_heads_destroy
-      description: CRUD operations for department head profiles.
+      description: CRUD operations for program head profiles.
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Department Head Profile.
+        description: A unique integer value identifying this Program Head Profile.
         required: true
       tags:
       - v1
@@ -9264,36 +9264,6 @@ components:
       - id
       - name
       - university
-    DepartmentHeadProfile:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        user:
-          allOf:
-          - $ref: '#/components/schemas/User'
-          readOnly: true
-        user_id:
-          type: integer
-          writeOnly: true
-        department:
-          type: string
-          readOnly: true
-        department_id:
-          type: integer
-          writeOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - department
-      - department_id
-      - id
-      - user
-      - user_id
     EvaluationLearningOutcome:
       type: object
       description: Learning Outcome serializer for evaluation app to avoid conflicts
@@ -9348,10 +9318,10 @@ components:
         instructor_id:
           type: integer
           writeOnly: true
-        department_head:
+        program_head:
           type: string
           readOnly: true
-        department_head_id:
+        program_head_id:
           type: integer
           writeOnly: true
         resource_area:
@@ -9365,12 +9335,12 @@ components:
           type: string
           readOnly: true
       required:
-      - department_head
-      - department_head_id
       - id
       - instructor
       - instructor_id
       - permission_tier_display
+      - program_head
+      - program_head_id
       - resource_area
       - resource_area_display
     InstructorProfile:
@@ -9605,29 +9575,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DegreeLevel'
-    PaginatedDepartmentHeadProfileList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/DepartmentHeadProfile'
     PaginatedDepartmentList:
       type: object
       required:
@@ -9720,6 +9667,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
+    PaginatedProgramHeadProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramHeadProfile'
     PaginatedProgramList:
       type: object
       required:
@@ -10197,29 +10167,6 @@ components:
           maxLength: 10
         university:
           type: integer
-    PatchedDepartmentHeadProfile:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        user:
-          allOf:
-          - $ref: '#/components/schemas/User'
-          readOnly: true
-        user_id:
-          type: integer
-          writeOnly: true
-        department:
-          type: string
-          readOnly: true
-        department_id:
-          type: integer
-          writeOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
     PatchedInstructorPermission:
       type: object
       properties:
@@ -10232,10 +10179,10 @@ components:
         instructor_id:
           type: integer
           writeOnly: true
-        department_head:
+        program_head:
           type: string
           readOnly: true
-        department_head_id:
+        program_head_id:
           type: integer
           writeOnly: true
         resource_area:
@@ -10334,6 +10281,29 @@ components:
           type: integer
         degree_level:
           type: integer
+    PatchedProgramHeadProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        program:
+          type: string
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedProgramOutcome:
       type: object
       description: |-
@@ -10501,6 +10471,36 @@ components:
       - department
       - id
       - name
+    ProgramHeadProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        program:
+          type: string
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - program
+      - program_id
+      - user
+      - user_id
     ProgramOutcome:
       type: object
       description: |-
@@ -10574,14 +10574,14 @@ components:
       - guest
       - student
       - instructor
-      - department_head
+      - program_head
       - admin
       type: string
       description: |-
         * `guest` - Guest
         * `student` - Student
         * `instructor` - Instructor
-        * `department_head` - Department Head
+        * `program_head` - Program Head
         * `admin` - Admin
     ScoreRecomputeJob:
       type: object

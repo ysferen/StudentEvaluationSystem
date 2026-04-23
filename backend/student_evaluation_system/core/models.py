@@ -461,8 +461,8 @@ class InstructorPermission(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="permissions",
     )
-    department_head = models.ForeignKey(
-        "users.DepartmentHeadProfile",
+    program_head = models.ForeignKey(
+        "users.ProgramHeadProfile",
         on_delete=models.CASCADE,
         related_name="granted_permissions",
         null=True,

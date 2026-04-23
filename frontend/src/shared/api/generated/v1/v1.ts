@@ -38,7 +38,6 @@ import type {
   CustomUser,
   DegreeLevel,
   Department,
-  DepartmentHeadProfile,
   FileImportResponse,
   InstructorPermission,
   InstructorProfile,
@@ -49,11 +48,11 @@ import type {
   PaginatedCourseList,
   PaginatedCustomUserList,
   PaginatedDegreeLevelList,
-  PaginatedDepartmentHeadProfileList,
   PaginatedDepartmentList,
   PaginatedInstructorPermissionList,
   PaginatedInstructorProfileList,
   PaginatedLearningOutcomeProgramOutcomeMappingList,
+  PaginatedProgramHeadProfileList,
   PaginatedProgramList,
   PaginatedScoreRecomputeJobList,
   PaginatedStudentGradeList,
@@ -67,15 +66,16 @@ import type {
   PatchedCustomUser,
   PatchedDegreeLevel,
   PatchedDepartment,
-  PatchedDepartmentHeadProfile,
   PatchedInstructorPermission,
   PatchedInstructorProfile,
   PatchedLearningOutcomeProgramOutcomeMapping,
   PatchedProgram,
+  PatchedProgramHeadProfile,
   PatchedStudentGradeCreate,
   PatchedStudentProfile,
   PatchedTerm,
   Program,
+  ProgramHeadProfile,
   ScoreRecomputeJob,
   StudentGrade,
   StudentGradeCreate,
@@ -9925,7 +9925,7 @@ export function useV1EvaluationScoreRecomputeJobsRetrieve<TData = Awaited<Return
 
 
 /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsList = (
     params?: V1UsersHeadsListParams,
@@ -9933,7 +9933,7 @@ export const v1UsersHeadsList = (
 ) => {
       
       
-      return customInstance<PaginatedDepartmentHeadProfileList>(
+      return customInstance<PaginatedProgramHeadProfileList>(
       {url: `/api/v1/users/heads/`, method: 'GET',
         params, signal
     },
@@ -10085,18 +10085,18 @@ export function useV1UsersHeadsList<TData = Awaited<ReturnType<typeof v1UsersHea
 
 
 /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsCreate = (
-    departmentHeadProfile: NonReadonly<DepartmentHeadProfile>,
+    programHeadProfile: NonReadonly<ProgramHeadProfile>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<DepartmentHeadProfile>(
+      return customInstance<ProgramHeadProfile>(
       {url: `/api/v1/users/heads/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: departmentHeadProfile, signal
+      data: programHeadProfile, signal
     },
       options);
     }
@@ -10104,8 +10104,8 @@ export const v1UsersHeadsCreate = (
 
 
 export const getV1UsersHeadsCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<DepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<DepartmentHeadProfile>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<ProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<ProgramHeadProfile>}, TContext> => {
 
 const mutationKey = ['v1UsersHeadsCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -10117,7 +10117,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, {data: NonReadonly<DepartmentHeadProfile>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, {data: NonReadonly<ProgramHeadProfile>}> = (props) => {
           const {data} = props ?? {};
 
           return  v1UsersHeadsCreate(data,requestOptions)
@@ -10129,15 +10129,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersHeadsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersHeadsCreate>>>
-    export type V1UsersHeadsCreateMutationBody = NonReadonly<DepartmentHeadProfile>
+    export type V1UsersHeadsCreateMutationBody = NonReadonly<ProgramHeadProfile>
     export type V1UsersHeadsCreateMutationError = unknown
 
     export const useV1UsersHeadsCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<DepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsCreate>>, TError,{data: NonReadonly<ProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersHeadsCreate>>,
         TError,
-        {data: NonReadonly<DepartmentHeadProfile>},
+        {data: NonReadonly<ProgramHeadProfile>},
         TContext
       > => {
 
@@ -10146,7 +10146,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsRetrieve = (
     id: number,
@@ -10154,7 +10154,7 @@ export const v1UsersHeadsRetrieve = (
 ) => {
       
       
-      return customInstance<DepartmentHeadProfile>(
+      return customInstance<ProgramHeadProfile>(
       {url: `/api/v1/users/heads/${id}/`, method: 'GET', signal
     },
       options);
@@ -10305,18 +10305,18 @@ export function useV1UsersHeadsRetrieve<TData = Awaited<ReturnType<typeof v1User
 
 
 /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsUpdate = (
     id: number,
-    departmentHeadProfile: NonReadonly<DepartmentHeadProfile>,
+    programHeadProfile: NonReadonly<ProgramHeadProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
       
       
-      return customInstance<DepartmentHeadProfile>(
+      return customInstance<ProgramHeadProfile>(
       {url: `/api/v1/users/heads/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: departmentHeadProfile
+      data: programHeadProfile
     },
       options);
     }
@@ -10324,8 +10324,8 @@ export const v1UsersHeadsUpdate = (
 
 
 export const getV1UsersHeadsUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<DepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<DepartmentHeadProfile>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<ProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<ProgramHeadProfile>}, TContext> => {
 
 const mutationKey = ['v1UsersHeadsUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -10337,7 +10337,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, {id: number;data: NonReadonly<DepartmentHeadProfile>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, {id: number;data: NonReadonly<ProgramHeadProfile>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  v1UsersHeadsUpdate(id,data,requestOptions)
@@ -10349,15 +10349,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersHeadsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>>
-    export type V1UsersHeadsUpdateMutationBody = NonReadonly<DepartmentHeadProfile>
+    export type V1UsersHeadsUpdateMutationBody = NonReadonly<ProgramHeadProfile>
     export type V1UsersHeadsUpdateMutationError = unknown
 
     export const useV1UsersHeadsUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<DepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsUpdate>>, TError,{id: number;data: NonReadonly<ProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersHeadsUpdate>>,
         TError,
-        {id: number;data: NonReadonly<DepartmentHeadProfile>},
+        {id: number;data: NonReadonly<ProgramHeadProfile>},
         TContext
       > => {
 
@@ -10366,18 +10366,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsPartialUpdate = (
     id: number,
-    patchedDepartmentHeadProfile: NonReadonly<PatchedDepartmentHeadProfile>,
+    patchedProgramHeadProfile: NonReadonly<PatchedProgramHeadProfile>,
  options?: SecondParameter<typeof customInstance>,) => {
       
       
-      return customInstance<DepartmentHeadProfile>(
+      return customInstance<ProgramHeadProfile>(
       {url: `/api/v1/users/heads/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedDepartmentHeadProfile
+      data: patchedProgramHeadProfile
     },
       options);
     }
@@ -10385,8 +10385,8 @@ export const v1UsersHeadsPartialUpdate = (
 
 
 export const getV1UsersHeadsPartialUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedDepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedDepartmentHeadProfile>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramHeadProfile>}, TContext> => {
 
 const mutationKey = ['v1UsersHeadsPartialUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -10398,7 +10398,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, {id: number;data: NonReadonly<PatchedDepartmentHeadProfile>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, {id: number;data: NonReadonly<PatchedProgramHeadProfile>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  v1UsersHeadsPartialUpdate(id,data,requestOptions)
@@ -10410,15 +10410,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersHeadsPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>>
-    export type V1UsersHeadsPartialUpdateMutationBody = NonReadonly<PatchedDepartmentHeadProfile>
+    export type V1UsersHeadsPartialUpdateMutationBody = NonReadonly<PatchedProgramHeadProfile>
     export type V1UsersHeadsPartialUpdateMutationError = unknown
 
     export const useV1UsersHeadsPartialUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedDepartmentHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramHeadProfile>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1UsersHeadsPartialUpdate>>,
         TError,
-        {id: number;data: NonReadonly<PatchedDepartmentHeadProfile>},
+        {id: number;data: NonReadonly<PatchedProgramHeadProfile>},
         TContext
       > => {
 
@@ -10427,7 +10427,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * CRUD operations for department head profiles.
+ * CRUD operations for program head profiles.
  */
 export const v1UsersHeadsDestroy = (
     id: number,
