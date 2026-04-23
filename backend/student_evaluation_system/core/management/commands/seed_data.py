@@ -2,7 +2,7 @@ import random
 import time
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from users.models import CustomUser, StudentProfile, InstructorProfile
+from users.models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
 from core.models import (
     University,
     Department,
@@ -54,28 +54,34 @@ class Command(BaseCommand):
             terms = self.create_terms()
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
+            # Create department head
+            step_start = time.time()
+            self.stdout.write("\n[2/8] Creating department head...")
+            head_user, head_profile = self.create_department_head(departments[0], universities[0])
+            self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
+
             # Create instructor
             step_start = time.time()
-            self.stdout.write("\n[2/8] Creating instructor...")
+            self.stdout.write("\n[3/8] Creating instructor...")
             instructors = self.create_instructors(departments[0], universities[0])
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 12 courses
             step_start = time.time()
-            self.stdout.write("\n[3/8] Creating courses...")
+            self.stdout.write("\n[4/8] Creating courses...")
             courses = self.create_courses(programs[0], terms, instructors[0], count=6)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 10 program outcomes
             step_start = time.time()
-            self.stdout.write("\n[4/8] Creating program outcomes...")
+            self.stdout.write("\n[5/8] Creating program outcomes...")
             program_outcomes = self.create_program_outcomes(programs[0], terms[0], count=11)
             program_outcomes.extend(self.create_program_outcomes(programs[0], terms[2], count=11))
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # For each course: 4 assessments
             step_start = time.time()
-            self.stdout.write("\n[5/8] Creating learning outcomes and assessments...")
+            self.stdout.write("\n[6/8] Creating learning outcomes and assessments...")
             all_assessments = []
             for course_list in courses.values():
                 for i, course in enumerate(course_list, 1):
@@ -96,20 +102,20 @@ class Command(BaseCommand):
 
             # Create 50 students and enroll them
             step_start = time.time()
-            self.stdout.write("\n[6/8] Creating students and enrollments...")
+            self.stdout.write("\n[7/8] Creating students and enrollments...")
             students = self.create_students(departments[0], programs[0], universities[0], terms[0], count=50)
             self.enroll_students(students, courses)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Generate grades for all students
             step_start = time.time()
-            self.stdout.write("\n[7/8] Generating student grades...")
+            self.stdout.write("\n[8/8] Calculating scores and exporting data...")
             self.generate_student_grades(students, all_assessments)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Export credentials to CSV
             step_start = time.time()
-            self.stdout.write("\n[8/8] Calculating scores and exporting data...")
+            self.stdout.write("\n[9/8] Calculating scores and exporting data...")
             self.calculate_all_scores(courses)
             self.export_credentials(students)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
@@ -251,6 +257,32 @@ class Command(BaseCommand):
         instructors.append(user2)
 
         return instructors
+
+    def create_department_head(self, department, university):
+        head_user, created = CustomUser.objects.get_or_create(
+            username="headuser",
+            defaults={
+                "email": "head@example.com",
+                "first_name": "Department",
+                "last_name": "Head",
+                "role": "department_head",
+                "department": department,
+                "university": university,
+            },
+        )
+        if created:
+            head_user.set_password("head123")
+            head_user.save()
+        head_profile, _ = DepartmentHeadProfile.objects.get_or_create(
+            user=head_user,
+            defaults={"department": department},
+        )
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"  ✓ Department Head: {head_user.get_full_name()} ({department.name})"
+            )
+        )
+        return head_user, head_profile
 
     def create_courses(self, program, terms, instructor, count=6):
         courses = {"2025": [], "2026": []}

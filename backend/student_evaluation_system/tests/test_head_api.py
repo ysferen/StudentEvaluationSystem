@@ -210,3 +210,14 @@ class TestInstructorPermissionAPI:
             "/api/v1/core/permissions/my-permissions/"
         )
         assert response.status_code == 403
+
+
+class TestSeedData:
+    def test_seed_command_creates_department_head(self, db):
+        from django.core.management import call_command
+        call_command("seed_data")
+        from users.models import CustomUser, DepartmentHeadProfile
+        head_user = CustomUser.objects.filter(username="headuser").first()
+        assert head_user is not None
+        assert head_user.role == "department_head"
+        assert DepartmentHeadProfile.objects.filter(user=head_user).exists()
