@@ -15,7 +15,12 @@ from django.contrib.auth import authenticate
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from .models import CustomUser, StudentProfile, InstructorProfile, DepartmentHeadProfile
-from .serializers import CustomUserSerializer, StudentProfileSerializer, InstructorProfileSerializer, DepartmentHeadProfileSerializer
+from .serializers import (
+    CustomUserSerializer,
+    StudentProfileSerializer,
+    InstructorProfileSerializer,
+    DepartmentHeadProfileSerializer,
+)
 
 
 class LoginRateThrottle(AnonRateThrottle):

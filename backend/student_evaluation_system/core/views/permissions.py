@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.models import InstructorPermission
 from core.serializers import InstructorPermissionSerializer
-from core.permissions import IsAdmin, IsAdminOrDepartmentHead, IsDepartmentHead
+from core.permissions import IsAdminOrDepartmentHead
 
 
 class InstructorPermissionViewSet(viewsets.ModelViewSet):
