@@ -63,6 +63,7 @@ const getNavigationForRole = (role: string | null): NavItem[] => {
             { name: 'Outcomes', href: `${headPath}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
             { name: 'Students', href: `${headPath}/students`, icon: UsersIcon, roles: ['admin', 'department_head'] },
             { name: 'Analytics', href: `${headPath}/analytics`, icon: ChartBarIcon, roles: ['admin', 'department_head'] },
+            { name: 'Permissions', href: `${headPath}/permissions`, icon: ShieldCheckIcon, roles: ['admin', 'department_head'] },
         ]
     }
 
