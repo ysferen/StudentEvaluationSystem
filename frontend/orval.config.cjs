@@ -54,6 +54,11 @@ module.exports = {
             },
           },
           // Disable infinite queries for analytics endpoints
+          core_analytics_program_stats_retrieve: {
+            query: {
+              useInfinite: false,
+            },
+          },
           core_student_lo_scores_course_averages_retrieve: {
             query: {
               useInfinite: false,

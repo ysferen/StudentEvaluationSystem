@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
 import {
@@ -10,48 +9,55 @@ import {
   ArrowDownTrayIcon,
   DocumentIcon
 } from '@heroicons/react/24/outline'
-import { coreProgramsList } from '../../../shared/api/generated/core/core'
-import type { Program } from '../../../shared/api/model'
+import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 
 const HeadDashboard = () => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['programs'],
-    queryFn: () => coreProgramsList({}),
-  })
+  const { data: statsData, isLoading } = useCoreAnalyticsProgramStatsRetrieve()
 
-  const programs = useMemo(() => data?.results || [], [data])
-  const loading = isLoading
+  const programs = useMemo(() => statsData?.programs || [], [statsData])
 
-  // Mock data for Program Performance (replace with real API call later)
-  const programPerformance = {
-    series: [{
-      name: 'Average GPA',
-      data: [3.2, 2.9, 3.4, 3.1]
-    }],
-    options: {
-      xaxis: {
-        categories: programs.map((p: Program) => p.code) // Use real program codes
-      },
-      colors: ['#0ea5e9']
+  const totalStudents = useMemo(() => programs.reduce((sum, p) => sum + p.total_students, 0), [programs])
+  const totalFaculty = useMemo(() => programs.reduce((sum, p) => sum + p.total_faculty, 0), [programs])
+  const overallAvg = useMemo(() => {
+    const scored = programs.filter(p => p.avg_score !== null)
+    if (scored.length === 0) return null
+    return scored.reduce((sum, p) => sum + (p.avg_score ?? 0), 0) / scored.length
+  }, [programs])
+
+  const programPerformance = useMemo(() => {
+    const data = programs.filter(p => p.avg_score !== null)
+    return {
+      series: [{
+        name: 'Average Score',
+        data: data.map(p => p.avg_score ?? 0)
+      }],
+      options: {
+        xaxis: {
+          categories: data.map(p => p.code)
+        },
+        colors: ['#0ea5e9']
+      }
     }
-  }
+  }, [programs])
 
-  // Mock data for Enrollment Trends (replace with real API call later)
-  const enrollmentTrends = {
-    series: [{
-      name: 'Students',
-      data: [320, 342, 355, 380, 410]
-    }],
-    options: {
-      xaxis: {
-        categories: ['2021', '2022', '2023', '2024', '2025']
-      },
-      stroke: { curve: 'smooth' as const },
-      colors: ['#8b5cf6']
+  const enrollmentTrends = useMemo(() => {
+    const trends = statsData?.enrollment_trends || []
+    return {
+      series: [{
+        name: 'Students',
+        data: trends.map(t => t.student_count)
+      }],
+      options: {
+        xaxis: {
+          categories: trends.map(t => t.term)
+        },
+        stroke: { curve: 'smooth' as const },
+        colors: ['#8b5cf6']
+      }
     }
-  }
+  }, [statsData])
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>
   }
 
@@ -76,7 +82,7 @@ const HeadDashboard = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Students</p>
-              <p className="text-3xl font-bold text-secondary-900">410</p>
+              <p className="text-3xl font-bold text-secondary-900">{totalStudents}</p>
             </div>
           </div>
         </Card>
@@ -87,7 +93,7 @@ const HeadDashboard = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Faculty Members</p>
-              <p className="text-3xl font-bold text-secondary-900">24</p>
+              <p className="text-3xl font-bold text-secondary-900">{totalFaculty}</p>
             </div>
           </div>
         </Card>
@@ -109,7 +115,9 @@ const HeadDashboard = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Program Avg GPA</p>
-              <p className="text-3xl font-bold text-secondary-900">3.15</p>
+              <p className="text-3xl font-bold text-secondary-900">
+                {overallAvg !== null ? overallAvg.toFixed(2) : 'N/A'}
+              </p>
             </div>
           </div>
         </Card>
@@ -119,14 +127,14 @@ const HeadDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartWidget
           title="Program Performance"
-          subtitle="Average GPA by Program"
+          subtitle="Average score by program"
           type="bar"
           series={programPerformance.series}
           options={programPerformance.options}
         />
         <ChartWidget
           title="Enrollment Trends"
-          subtitle="Year-over-year student enrollment"
+          subtitle="Student enrollment over terms"
           type="line"
           series={enrollmentTrends.series}
           options={enrollmentTrends.options}

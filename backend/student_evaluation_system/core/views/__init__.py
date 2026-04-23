@@ -50,6 +50,9 @@ from .file_import import (
 # Permissions
 from .permissions import InstructorPermissionViewSet
 
+# Analytics
+from .analytics import ProgramStatsView
+
 __all__ = [
     # Academic Structure
     "UniversityViewSet",
@@ -78,4 +81,6 @@ __all__ = [
     "FileUploadRateThrottle",
     # Permissions
     "InstructorPermissionViewSet",
+    # Analytics
+    "ProgramStatsView",
 ]

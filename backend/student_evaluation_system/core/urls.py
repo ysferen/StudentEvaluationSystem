@@ -25,6 +25,7 @@ router.register(r"permissions", views.InstructorPermissionViewSet, basename="ins
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("analytics/program-stats/", views.ProgramStatsView.as_view(), name="program-stats"),
     # Legacy endpoints for backward compatibility
     path("students/", views.StudentListView.as_view(), name="student-list-legacy"),
     path("students/<int:pk>/", views.StudentDetailView.as_view(), name="student-detail-legacy"),

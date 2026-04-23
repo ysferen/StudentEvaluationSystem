@@ -76,7 +76,7 @@ const bootstrapCsrf = async (): Promise<void> => {
 let csrfBootstrapPromise: Promise<void> | null = null;
 
 const ensureCsrfToken = async (): Promise<string | null> => {
-  let csrfToken = getCookie('csrftoken');
+  const csrfToken = getCookie('csrftoken');
   if (csrfToken) return csrfToken;
 
   if (!csrfBootstrapPromise) {

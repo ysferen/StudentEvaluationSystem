@@ -158,9 +158,7 @@ class TestIsProgramHeadPermission:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Test Dept", code="TD", university=university
-        )
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
@@ -197,9 +195,7 @@ class TestIsProgramHeadPermission:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Test Dept", code="TD", university=university
-        )
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
@@ -219,9 +215,7 @@ class TestIsProgramHeadPermission:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Dept1", code="D1", university=university
-        )
+        dept = Department.objects.create(name="Dept1", code="D1", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program1 = Program.objects.create(name="Program1", code="P1", department=dept, degree_level=degree)
         program2 = Program.objects.create(name="Program2", code="P2", department=dept, degree_level=degree)
@@ -251,9 +245,7 @@ class TestIsAdminOrProgramHeadPermission:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Test Dept", code="TD", university=university
-        )
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
@@ -291,9 +283,7 @@ class TestGetInstructorPermissionTier:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Test Dept", code="TD", university=university
-        )
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
@@ -313,26 +303,18 @@ class TestGetInstructorPermissionTier:
         from core.models import University, Department, DegreeLevel, Program, InstructorPermission
 
         university = University.objects.create(name="Perm Uni")
-        dept = Department.objects.create(
-            name="Perm Dept", code="PD", university=university
-        )
+        dept = Department.objects.create(name="Perm Dept", code="PD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Perm Program", code="PP", department=dept, degree_level=degree)
-        instr_user = CustomUser.objects.create_user(
-            username="instrperm", password="pass", role="instructor"
-        )
-        instr_profile = InstructorProfile.objects.create(
-            user=instr_user, title="Prof"
-        )
+        instr_user = CustomUser.objects.create_user(username="instrperm", password="pass", role="instructor")
+        instr_profile = InstructorProfile.objects.create(user=instr_user, title="Prof")
         head_user = CustomUser.objects.create_user(
             username="headperm",
             password="pass",
             role="program_head",
             department=dept,
         )
-        head_profile = ProgramHeadProfile.objects.create(
-            user=head_user, program=program
-        )
+        head_profile = ProgramHeadProfile.objects.create(user=head_user, program=program)
         InstructorPermission.objects.create(
             instructor=instr_profile,
             program_head=head_profile,
@@ -350,9 +332,7 @@ class TestProgramHeadWriteAccess:
         from core.models import University, Department, DegreeLevel, Program
 
         university = University.objects.create(name="Test Uni")
-        dept = Department.objects.create(
-            name="Test Dept", code="TD", university=university
-        )
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
@@ -361,9 +341,7 @@ class TestProgramHeadWriteAccess:
             role="program_head",
             department=dept,
         )
-        ProgramHeadProfile.objects.create(
-            user=head_user, program=program
-        )
+        ProgramHeadProfile.objects.create(user=head_user, program=program)
         return {
             "client": APIRequestFactory().post("/"),
             "head_user": head_user,
@@ -376,7 +354,6 @@ class TestProgramHeadWriteAccess:
 
         DegreeLevel.objects.create(name="Master")
         factory = APIRequestFactory()
-        client = APIRequestFactory()
         from rest_framework.test import APIRequestFactory, force_authenticate
         from core.views import ProgramViewSet
 
@@ -397,3 +374,195 @@ class TestProgramHeadWriteAccess:
 
     def test_program_head_has_permission_flag(self, head_setup):
         assert head_setup["head_user"].is_program_head is True
+
+
+@pytest.mark.django_db
+class TestInstructorPermissionMixin:
+    """Test InstructorPermissionMixin for tiered access control."""
+
+    @pytest.fixture
+    def setup_data(self, db):
+        from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program, Term, Course, InstructorPermission
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(name="Test Dept", code="TDM", university=university)
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
+        term = Term.objects.create(name="Fall 2025")
+
+        admin = CustomUser.objects.create_user(username="admin_perm", password="pass", role="admin")
+
+        head_user = CustomUser.objects.create_user(username="head_perm", password="pass", role="program_head", department=dept)
+        head_profile = ProgramHeadProfile.objects.create(user=head_user, program=program)
+
+        instr_view = CustomUser.objects.create_user(username="instr_view", password="pass", role="instructor")
+        instr_view_profile = InstructorProfile.objects.create(user=instr_view, title="Dr.")
+        InstructorPermission.objects.create(
+            instructor=instr_view_profile,
+            program_head=head_profile,
+            resource_area="courses",
+            permission_tier="view",
+        )
+
+        instr_edit = CustomUser.objects.create_user(username="instr_edit", password="pass", role="instructor")
+        instr_edit_profile = InstructorProfile.objects.create(user=instr_edit, title="Dr.")
+        InstructorPermission.objects.create(
+            instructor=instr_edit_profile,
+            program_head=head_profile,
+            resource_area="courses",
+            permission_tier="edit",
+        )
+
+        instr_full = CustomUser.objects.create_user(username="instr_full", password="pass", role="instructor")
+        instr_full_profile = InstructorProfile.objects.create(user=instr_full, title="Dr.")
+        InstructorPermission.objects.create(
+            instructor=instr_full_profile,
+            program_head=head_profile,
+            resource_area="courses",
+            permission_tier="full",
+        )
+
+        instr_none = CustomUser.objects.create_user(username="instr_none", password="pass", role="instructor")
+        InstructorProfile.objects.create(user=instr_none, title="Dr.")
+
+        course = Course.objects.create(name="Perm Course", code="PC101", credits=3, program=program, term=term)
+        course.instructors.add(instr_view, instr_edit, instr_full)
+
+        return {
+            "admin": admin,
+            "head_user": head_user,
+            "instr_view": instr_view,
+            "instr_edit": instr_edit,
+            "instr_full": instr_full,
+            "instr_none": instr_none,
+            "course": course,
+            "program": program,
+        }
+
+    def test_safe_methods_allowed_for_all_authenticated(self, setup_data):
+        """GET requests should be allowed for all authenticated users."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+        view = type("View", (), {"action": "list", "resource_area": "courses"})()
+
+        for user_key in ["admin", "head_user", "instr_view", "instr_edit", "instr_full", "instr_none"]:
+            request = factory.get("/api/core/courses/")
+            request.user = setup_data[user_key]
+            assert perm.has_permission(request, view) is True
+
+    def test_unauthenticated_denied(self, setup_data):
+        """Unauthenticated users should be denied for write operations."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+        view = type("View", (), {"action": "create", "resource_area": "courses"})()
+
+        from django.contrib.auth.models import AnonymousUser
+
+        request = factory.post("/api/core/courses/")
+        request.user = AnonymousUser()
+        assert perm.has_permission(request, view) is False
+
+    def test_admin_always_passes(self, setup_data):
+        """Admins should pass all permission checks."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["create", "destroy", "update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.post("/api/core/courses/")
+            request.user = setup_data["admin"]
+            assert perm.has_permission(request, view) is True
+
+    def test_program_head_always_passes(self, setup_data):
+        """Program heads should pass all permission checks."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["create", "destroy", "update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.post("/api/core/courses/")
+            request.user = setup_data["head_user"]
+            assert perm.has_permission(request, view) is True
+
+    def test_view_tier_cannot_write(self, setup_data):
+        """Instructors with 'view' tier should be denied all write operations."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["create", "destroy", "update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.post("/api/core/courses/")
+            request.user = setup_data["instr_view"]
+            assert perm.has_permission(request, view) is False
+
+    def test_edit_tier_can_edit_but_not_create_or_delete(self, setup_data):
+        """Instructors with 'edit' tier can PUT/PATCH but not POST/DELETE."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.put("/api/core/courses/1/")
+            request.user = setup_data["instr_edit"]
+            assert perm.has_permission(request, view) is True
+
+        for action in ["create", "destroy"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.delete("/api/core/courses/1/")
+            request.user = setup_data["instr_edit"]
+            assert perm.has_permission(request, view) is False
+
+    def test_full_tier_can_do_everything(self, setup_data):
+        """Instructors with 'full' tier should pass all write operations."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["create", "destroy", "update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.post("/api/core/courses/")
+            request.user = setup_data["instr_full"]
+            assert perm.has_permission(request, view) is True
+
+    def test_no_permission_entry_defaults_to_view(self, setup_data):
+        """Instructors without a permission entry default to 'view' tier."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        perm.resource_area = "courses"
+
+        for action in ["create", "destroy", "update", "partial_update"]:
+            view = type("View", (), {"action": action, "resource_area": "courses"})()
+            request = factory.post("/api/core/courses/")
+            request.user = setup_data["instr_none"]
+            assert perm.has_permission(request, view) is False

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import { Badge } from '../../../shared/components/ui/Badge'
@@ -7,6 +7,8 @@ import {
   PencilIcon,
   CheckIcon,
   XMarkIcon,
+  MagnifyingGlassIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import {
   corePermissionsList,
@@ -30,9 +32,9 @@ const RESOURCE_AREAS = [
 ]
 
 const PERMISSION_TIERS = [
-  { value: PermissionTierEnum.view, label: 'View Only' },
-  { value: PermissionTierEnum.edit, label: 'Edit' },
-  { value: PermissionTierEnum.full, label: 'Full Control' },
+  { value: PermissionTierEnum.view, label: 'View Only', color: 'secondary' as const },
+  { value: PermissionTierEnum.edit, label: 'Edit', color: 'warning' as const },
+  { value: PermissionTierEnum.full, label: 'Full Control', color: 'primary' as const },
 ]
 
 const HeadPermissionsPage = () => {
@@ -40,6 +42,9 @@ const HeadPermissionsPage = () => {
   const [selectedInstructors, setSelectedInstructors] = useState<number[]>([])
   const [editMode, setEditMode] = useState(false)
   const [pendingChanges, setPendingChanges] = useState<Record<string, PermissionTierEnum>>({})
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['permissions'],
@@ -53,8 +58,21 @@ const HeadPermissionsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['permissions'] })
       setEditMode(false)
       setPendingChanges({})
+      setShowConfirmDialog(false)
+      setErrorMessage(null)
+    },
+    onError: (error: Error) => {
+      setErrorMessage(error.message || 'Failed to save permissions. Please try again.')
+      setShowConfirmDialog(false)
     },
   })
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [errorMessage])
 
   const permissions = useMemo(() => data?.results || [], [data])
 
@@ -77,11 +95,19 @@ const HeadPermissionsPage = () => {
     })
   }, [permissions])
 
+  const filteredInstructors = useMemo(() => {
+    if (!searchQuery.trim()) return uniqueInstructors
+    const query = searchQuery.toLowerCase()
+    return uniqueInstructors.filter((p) =>
+      p.instructor?.toLowerCase().includes(query)
+    )
+  }, [uniqueInstructors, searchQuery])
+
   const handleSelectAll = () => {
-    if (selectedInstructors.length === uniqueInstructors.length) {
+    if (selectedInstructors.length === filteredInstructors.length) {
       setSelectedInstructors([])
     } else {
-      setSelectedInstructors(uniqueInstructors.map((p) => p.instructor_id))
+      setSelectedInstructors(filteredInstructors.map((p) => p.instructor_id))
     }
   }
 
@@ -99,11 +125,13 @@ const HeadPermissionsPage = () => {
     })
     setPendingChanges(changes)
     setEditMode(true)
+    setErrorMessage(null)
   }
 
   const handleCancelEdit = () => {
     setEditMode(false)
     setPendingChanges({})
+    setErrorMessage(null)
   }
 
   const handlePermissionChange = (
@@ -116,6 +144,10 @@ const HeadPermissionsPage = () => {
   }
 
   const handleSaveBulk = () => {
+    setShowConfirmDialog(true)
+  }
+
+  const handleConfirmSave = () => {
     const updates: InstructorPermission[] = []
     Object.entries(pendingChanges).forEach(([key, tier]) => {
       const [instructorId, resourceArea] = key.split('-')
@@ -146,6 +178,11 @@ const HeadPermissionsPage = () => {
       default:
         return 'secondary'
     }
+  }
+
+  const getPermissionTierLabel = (tier?: PermissionTierEnum) => {
+    const found = PERMISSION_TIERS.find((t) => t.value === tier)
+    return found ? found.label : 'None'
   }
 
   if (isLoading) {
@@ -200,6 +237,47 @@ const HeadPermissionsPage = () => {
         </div>
       </div>
 
+      {/* Error toast */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+          <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+          <p className="text-red-700 text-sm">{errorMessage}</p>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="ml-auto text-red-500 hover:text-red-700"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-secondary-900 mb-2">Confirm Permission Changes</h3>
+            <p className="text-secondary-600 mb-6">
+              You are about to update {Object.keys(pendingChanges).length} permission{Object.keys(pendingChanges).length !== 1 ? 's' : ''}. This action will override the existing permission tiers for the selected instructors and resource areas.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                disabled={bulkUpdateMutation.isPending}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              >
+                {bulkUpdateMutation.isPending ? 'Saving...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card variant="flat" className="bg-primary-50 border-primary-200">
@@ -248,12 +326,23 @@ const HeadPermissionsPage = () => {
             <div>
               <p className="text-sm text-secondary-600 font-medium">Full Access</p>
               <p className="text-3xl font-bold text-cyan-700">
-                {permissions.filter((p) => p.permission_tier === PermissionTierEnum.full)
-                  .length}
+                {permissions.filter((p) => p.permission_tier === PermissionTierEnum.full).length}
               </p>
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Search input */}
+      <div className="relative">
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
+        <input
+          type="text"
+          placeholder="Search instructors..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+        />
       </div>
 
       {/* Permissions Table */}
@@ -264,7 +353,7 @@ const HeadPermissionsPage = () => {
             <label className="flex items-center space-x-2 text-sm text-secondary-600">
               <input
                 type="checkbox"
-                checked={selectedInstructors.length === uniqueInstructors.length}
+                checked={selectedInstructors.length === filteredInstructors.length && filteredInstructors.length > 0}
                 onChange={handleSelectAll}
                 className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
               />
@@ -292,7 +381,7 @@ const HeadPermissionsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {uniqueInstructors.map((instructor) => (
+                {filteredInstructors.map((instructor) => (
                   <tr
                     key={instructor.instructor_id}
                     className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors"
@@ -302,9 +391,7 @@ const HeadPermissionsPage = () => {
                         <input
                           type="checkbox"
                           checked={selectedInstructors.includes(instructor.instructor_id)}
-                          onChange={() =>
-                            handleSelectInstructor(instructor.instructor_id)
-                          }
+                          onChange={() => handleSelectInstructor(instructor.instructor_id)}
                           className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
                         />
                         <div>
@@ -346,16 +433,10 @@ const HeadPermissionsPage = () => {
                             </select>
                           ) : (
                             <Badge
-                              variant={getPermissionTierBadgeVariant(
-                                currentTier as PermissionTierEnum
-                              )}
+                              variant={getPermissionTierBadgeVariant(currentTier as PermissionTierEnum)}
                               className="text-xs"
                             >
-                              {currentTier
-                                ? PERMISSION_TIERS.find(
-                                    (t) => t.value === currentTier
-                                  )?.label || currentTier
-                                : 'None'}
+                              {getPermissionTierLabel(currentTier as PermissionTierEnum)}
                             </Badge>
                           )}
                         </td>
@@ -372,8 +453,11 @@ const HeadPermissionsPage = () => {
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">
               No permissions found
             </h3>
-            <p className="text-secondary-500">
+            <p className="text-secondary-500 mb-4">
               No instructor permissions have been configured yet.
+            </p>
+            <p className="text-sm text-secondary-400">
+              Use the management interface to add instructor permissions, or contact an administrator.
             </p>
           </div>
         )}

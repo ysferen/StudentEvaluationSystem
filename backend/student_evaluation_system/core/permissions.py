@@ -33,9 +33,7 @@ def get_instructor_permission_tier(user, resource_area: str) -> str:
     if not user.is_instructor:
         return "view"
     try:
-        perm = user.instructor_profile.permissions.get(
-            resource_area=resource_area
-        )
+        perm = user.instructor_profile.permissions.get(resource_area=resource_area)
         return perm.permission_tier
     except Exception:
         return "view"
@@ -363,13 +361,13 @@ class IsProgramHead(BasePermission):
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
             return False
         return user.is_program_head
 
     def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
             return False
         if not user.is_program_head:
@@ -378,6 +376,7 @@ class IsProgramHead(BasePermission):
         if program_head_profile is None:
             return False
         from core.models import Program
+
         if isinstance(obj, Program):
             return obj.id == program_head_profile.program_id
         obj_program = getattr(obj, "program", None)
@@ -395,7 +394,7 @@ class IsAdminOrProgramHead(BasePermission):
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
             return False
         return user.is_admin_user or user.is_program_head
@@ -487,7 +486,6 @@ class CanAccessStudentData(BasePermission):
         # Get student from object
         student = getattr(obj, "student", None)
         if not student and hasattr(obj, "user"):
-            # Object might be the student profile itself
             student = obj
 
         if not student:
@@ -508,4 +506,57 @@ class CanAccessStudentData(BasePermission):
             student_user = getattr(student, "user", student)
             return CourseEnrollment.objects.filter(student=student_user, course_id__in=instructor_course_ids).exists()
 
+        return False
+
+
+class InstructorPermissionMixin(BasePermission):
+    """
+    Permission mixin that checks instructor permission tiers for write access.
+
+    On SAFE_METHODS (GET, HEAD, OPTIONS): allows all authenticated users.
+    On write: checks get_instructor_permission_tier(user, resource_area) against a mapping:
+      - POST/DELETE → requires 'full' tier
+      - PUT/PATCH → requires 'edit' or 'full' tier
+    Admin/department_head always pass.
+    """
+
+    resource_area = None
+
+    TIER_MAP = {
+        "create": "full",
+        "destroy": "full",
+        "update": "edit",
+        "partial_update": "edit",
+    }
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        if request.method in SAFE_METHODS:
+            return True
+
+        if user.is_admin_user or user.is_program_head:
+            return True
+
+        resource_area = getattr(self, "resource_area", None)
+        if resource_area is None:
+            resource_area = getattr(view, "resource_area", None)
+        if resource_area is None:
+            return False
+
+        action = getattr(view, "action", None)
+        required_tier = self.TIER_MAP.get(action)
+
+        if required_tier is None:
+            return False
+
+        tier = get_instructor_permission_tier(user, resource_area)
+
+        if required_tier == "full":
+            return tier == "full"
+        elif required_tier == "edit":
+            return tier in ("edit", "full")
         return False

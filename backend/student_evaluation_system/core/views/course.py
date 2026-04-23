@@ -27,7 +27,7 @@ from ..serializers import (
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
 )
-from ..permissions import IsAdminOrReadOnly
+from ..permissions import InstructorPermissionMixin
 
 
 @extend_schema_view(
@@ -62,7 +62,8 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     queryset = Course.objects.select_related("program", "term").prefetch_related("instructors").all()
     serializer_class = CourseSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "courses"
 
     def get_permissions(self):
         """
@@ -148,7 +149,8 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = ProgramOutcome.objects.select_related("program", "term", "created_by").all()
     serializer_class = ProgramOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "program_outcomes"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -183,7 +185,8 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = LearningOutcome.objects.select_related("course", "created_by").all()
     serializer_class = CoreLearningOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "learning_outcomes"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -202,4 +205,5 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         "learning_outcome", "program_outcome", "course"
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "lo_po_weights"

@@ -4,6 +4,24 @@ info:
   version: 1.0.0
   description: Outcome-based assessment system for academic programs
 paths:
+  /api/core/analytics/program-stats/:
+    get:
+      operationId: core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
   /api/core/courses/:
     get:
       operationId: core_courses_list
@@ -4447,6 +4465,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomUser'
+          description: ''
+  /api/v1/core/analytics/program-stats/:
+    get:
+      operationId: v1_core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
           description: ''
   /api/v1/core/courses/:
     get:
@@ -9264,6 +9300,16 @@ components:
       - id
       - name
       - university
+    EnrollmentTrend:
+      type: object
+      properties:
+        term:
+          type: string
+        student_count:
+          type: integer
+      required:
+      - student_count
+      - term
     EvaluationLearningOutcome:
       type: object
       description: Learning Outcome serializer for evaluation app to avoid conflicts
@@ -10549,6 +10595,50 @@ components:
       - id
       - program
       - term
+    ProgramStat:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        total_students:
+          type: integer
+        total_faculty:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+        lo_count:
+          type: integer
+        po_count:
+          type: integer
+      required:
+      - avg_score
+      - code
+      - id
+      - lo_count
+      - name
+      - po_count
+      - total_faculty
+      - total_students
+    ProgramStatsResponse:
+      type: object
+      properties:
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramStat'
+        enrollment_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrollmentTrend'
+      required:
+      - enrollment_trends
+      - programs
     ResourceAreaEnum:
       enum:
       - courses

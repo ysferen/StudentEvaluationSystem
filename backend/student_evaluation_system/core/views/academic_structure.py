@@ -10,7 +10,7 @@ from django.db.models import Avg
 from ..services.file_import import FileImportService
 from ..services.file_import import FileImportError
 from ..services.validation import AssignmentScoreValidator
-from ..permissions import IsAdminOrReadOnly, IsAdminOrProgramHeadOrReadOnly
+from ..permissions import IsAdminOrProgramHeadOrReadOnly, InstructorPermissionMixin
 from rest_framework import serializers
 
 from ..models import (
@@ -168,7 +168,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
     queryset = Program.objects.select_related("department", "degree_level").all()
     serializer_class = ProgramSerializer
-    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "programs"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -318,7 +319,8 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = ProgramOutcome.objects.select_related("program", "term", "created_by").all()
     serializer_class = ProgramOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "program_outcomes"
 
     def get_queryset(self):
         queryset = super().get_queryset()
