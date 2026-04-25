@@ -42,6 +42,12 @@ class Term(models.Model):
 
     name = models.CharField(max_length=100, help_text="e.g., Fall 2025")
     is_active = models.BooleanField(default=False, db_index=True)
+    academic_year = models.IntegerField(
+        null=True, blank=True, help_text="The calendar year the academic year starts (e.g., 2024 for AY 2024-2025)"
+    )
+    semester = models.CharField(
+        max_length=10, choices=[("fall", "Fall"), ("spring", "Spring"), ("summer", "Summer")], default="fall"
+    )
 
     class Meta:
         ordering = ["-is_active", "-name"]
@@ -190,6 +196,9 @@ class Program(models.Model):
     code = models.CharField(max_length=10, unique=True, db_index=True)
     degree_level = models.ForeignKey(DegreeLevel, on_delete=models.CASCADE, related_name="programs", db_index=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="programs", db_index=True)
+    duration_years = models.PositiveIntegerField(
+        default=4, help_text="Program duration in years, used to cap year-level calculations"
+    )
 
     class Meta:
         ordering = ["code"]
