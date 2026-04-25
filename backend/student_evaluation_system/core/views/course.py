@@ -111,6 +111,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         department_id = self.request.query_params.get("department", None)
         term_id = self.request.query_params.get("term", None)
         instructor_id = self.request.query_params.get("instructor", None)
+        program_id = self.request.query_params.get("program", None)
 
         if department_id:
             queryset = queryset.filter(program__department_id=department_id)
@@ -118,6 +119,8 @@ class CourseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(term_id=term_id)
         if instructor_id:
             queryset = queryset.filter(instructors__id=instructor_id)
+        if program_id:
+            queryset = queryset.filter(program_id=program_id)
 
         return queryset.distinct()
 
