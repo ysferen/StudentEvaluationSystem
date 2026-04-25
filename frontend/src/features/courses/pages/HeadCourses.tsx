@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useQueries } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import { Badge } from '../../../shared/components/ui/Badge'
 import {
@@ -11,38 +10,26 @@ import {
   EyeIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline'
-import { coreCoursesList, coreProgramsList } from '../../../shared/api/generated/core/core'
+import { useCoreCoursesList } from '../../../shared/api/generated/core/core'
+import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 
 const HeadCourses = () => {
-  const [selectedProgram, setSelectedProgram] = React.useState<string>('all')
+  const { data: statsData, isLoading: statsLoading } = useCoreAnalyticsProgramStatsRetrieve()
+  const userProgramId = statsData?.programs?.[0]?.id
 
-  const results = useQueries({
-    queries: [
-      {
-        queryKey: ['courses'],
-        queryFn: () => coreCoursesList({}),
-      },
-      {
-        queryKey: ['programs'],
-        queryFn: () => coreProgramsList({}),
-      },
-    ],
-  })
+  const { data: coursesData, isLoading: coursesLoading } = useCoreCoursesList(
+    { program: userProgramId },
+    { query: { enabled: !!userProgramId } }
+  )
 
-  const [coursesQuery, programsQuery] = results
-  const loading = results.some(q => q.isLoading)
+  const loading = statsLoading || coursesLoading
 
-  const courses = useMemo(() => coursesQuery.data?.results || [], [coursesQuery.data])
-  const programs = useMemo(() => programsQuery.data?.results || [], [programsQuery.data])
+  const courses = useMemo(() => coursesData?.results || [], [coursesData])
 
-  const filteredCourses = useMemo(() => {
-    if (selectedProgram === 'all') return courses
-    return courses.filter(course => course.program?.id === parseInt(selectedProgram))
-  }, [courses, selectedProgram])
-
-  const totalStudents = useMemo(() => {
-    return courses.reduce((sum) => sum + Math.floor(Math.random() * 60) + 15, 0)
-  }, [courses])
+  const totalStudents = useMemo(
+    () => statsData?.programs?.[0]?.total_students ?? 0,
+    [statsData]
+  )
 
   const totalInstructors = useMemo(() => {
     const instructorIds = new Set<number>()
@@ -69,29 +56,13 @@ const HeadCourses = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Department Courses</h1>
-          <p className="text-secondary-500 mt-1">Overview of all courses in the department</p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedProgram}
-            onChange={(e) => setSelectedProgram(e.target.value)}
-            className="px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-secondary-900"
-          >
-            <option value="all">All Programs</option>
-            {programs.map((program) => (
-              <option key={program.id} value={program.id.toString()}>
-                {program.code} - {program.name}
-              </option>
-            ))}
-          </select>
+          <h1 className="text-3xl font-bold text-secondary-900">Program Courses</h1>
+          <p className="text-secondary-500 mt-1">Overview of courses in your program</p>
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
@@ -100,7 +71,7 @@ const HeadCourses = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Courses</p>
-              <p className="text-3xl font-bold text-primary-700">{filteredCourses.length}</p>
+              <p className="text-3xl font-bold text-primary-700">{courses.length}</p>
             </div>
           </div>
         </Card>
@@ -142,7 +113,6 @@ const HeadCourses = () => {
         </Card>
       </div>
 
-      {/* Courses Table */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-secondary-900">Course List</h2>
@@ -154,7 +124,7 @@ const HeadCourses = () => {
           </div>
         </div>
 
-        {filteredCourses.length > 0 ? (
+        {courses.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -162,17 +132,13 @@ const HeadCourses = () => {
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Course</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Program</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Instructor</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Students</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Credits</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Term</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-900">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCourses.map((course) => {
-                  const program = programs.find(p => p.id === course.program?.id)
-                  const studentCount = Math.floor(Math.random() * 60) + 15 // Mock data
-
+                {courses.map((course) => {
                   return (
                     <tr key={course.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
                       <td className="py-3 px-4">
@@ -183,7 +149,7 @@ const HeadCourses = () => {
                       </td>
                       <td className="py-3 px-4">
                         <Badge variant="secondary" className="text-xs">
-                          {program?.code || 'N/A'}
+                          {course.program?.code || 'N/A'}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
@@ -192,12 +158,6 @@ const HeadCourses = () => {
                             ? `${course.instructors[0].first_name} ${course.instructors[0].last_name}`
                             : 'Not assigned'
                           }
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-2">
-                          <UsersIcon className="h-4 w-4 text-secondary-400" />
-                          <span className="text-sm text-secondary-900">{studentCount}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -229,10 +189,7 @@ const HeadCourses = () => {
             <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses found</h3>
             <p className="text-secondary-500">
-              {selectedProgram === 'all'
-                ? 'No courses are available in the department.'
-                : 'No courses found for the selected program.'
-              }
+              No courses are available in your program.
             </p>
           </div>
         )}
