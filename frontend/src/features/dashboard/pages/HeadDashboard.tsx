@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Card } from '../../../shared/components/ui/Card'
 import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
 import {
-  BuildingOfficeIcon,
   UserGroupIcon,
   BookOpenIcon,
   ChartBarIcon,
@@ -17,28 +16,29 @@ const HeadDashboard = () => {
   const programs = useMemo(() => statsData?.programs || [], [statsData])
 
   const totalStudents = useMemo(() => programs.reduce((sum, p) => sum + p.total_students, 0), [programs])
-  const totalFaculty = useMemo(() => programs.reduce((sum, p) => sum + p.total_faculty, 0), [programs])
+  const totalCourses = useMemo(() => programs.reduce((sum, p) => sum + p.total_courses, 0), [programs])
   const overallAvg = useMemo(() => {
     const scored = programs.filter(p => p.avg_score !== null)
     if (scored.length === 0) return null
     return scored.reduce((sum, p) => sum + (p.avg_score ?? 0), 0) / scored.length
   }, [programs])
 
-  const programPerformance = useMemo(() => {
-    const data = programs.filter(p => p.avg_score !== null)
+  const yearLevelBreakdown = useMemo(() => statsData?.year_level_breakdown || [], [statsData])
+
+  const yearLevelData = useMemo(() => {
     return {
       series: [{
-        name: 'Average Score',
-        data: data.map(p => p.avg_score ?? 0)
+        name: 'Students',
+        data: yearLevelBreakdown.map(y => y.student_count)
       }],
       options: {
         xaxis: {
-          categories: data.map(p => p.code)
+          categories: ['1st Year', '2nd Year', '3rd Year', '4th Year']
         },
         colors: ['#0ea5e9']
       }
     }
-  }, [programs])
+  }, [yearLevelBreakdown])
 
   const enrollmentTrends = useMemo(() => {
     const trends = statsData?.enrollment_trends || []
@@ -74,7 +74,7 @@ const HeadDashboard = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-sky-100 rounded-xl">
@@ -89,22 +89,11 @@ const HeadDashboard = () => {
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-indigo-100 rounded-xl">
-              <BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />
+              <BookOpenIcon className="h-8 w-8 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Faculty Members</p>
-              <p className="text-3xl font-bold text-secondary-900">{totalFaculty}</p>
-            </div>
-          </div>
-        </Card>
-        <Card variant="flat" className="bg-white border-secondary-200">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-fuchsia-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-fuchsia-600" />
-            </div>
-            <div>
-              <p className="text-sm text-secondary-600 font-medium">Active Programs</p>
-              <p className="text-3xl font-bold text-secondary-900">{programs.length}</p>
+              <p className="text-sm text-secondary-600 font-medium">Total Courses</p>
+              <p className="text-3xl font-bold text-secondary-900">{totalCourses}</p>
             </div>
           </div>
         </Card>
@@ -126,11 +115,11 @@ const HeadDashboard = () => {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartWidget
-          title="Program Performance"
-          subtitle="Average score by program"
+          title="Year-Level Breakdown"
+          subtitle="Student count by year level"
           type="bar"
-          series={programPerformance.series}
-          options={programPerformance.options}
+          series={yearLevelData.series}
+          options={yearLevelData.options}
         />
         <ChartWidget
           title="Enrollment Trends"
