@@ -17,6 +17,7 @@ from drf_spectacular.types import OpenApiTypes
 
 from ..models import (
     Course,
+    Program,
     ProgramOutcome,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
@@ -47,6 +48,12 @@ from ..permissions import InstructorPermissionMixin
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 description="Filter courses by instructor ID",
+            ),
+            OpenApiParameter(
+                name="program",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter courses by program ID",
             ),
         ]
     )
@@ -94,6 +101,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
                 enrolled_course_ids = CourseEnrollment.objects.filter(student=user).values_list("course_id", flat=True)
                 queryset = queryset.filter(id__in=enrolled_course_ids)
+            elif hasattr(user, "program_head_profile"):
+                programs = Program.objects.filter(pk=user.program_head_profile.program_id)
+                queryset = queryset.filter(program__in=programs)
             else:
                 queryset = queryset.none()
 

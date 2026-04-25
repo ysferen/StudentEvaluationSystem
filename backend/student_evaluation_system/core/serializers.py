@@ -91,7 +91,7 @@ class TermSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Term
-        fields = ["id", "name", "is_active"]
+        fields = ["id", "name", "is_active", "academic_year", "semester"]
 
 
 class DegreeLevelSerializer(serializers.ModelSerializer):
@@ -123,7 +123,7 @@ class ProgramSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Program
-        fields = ["id", "name", "code", "department", "degree_level"]
+        fields = ["id", "name", "code", "department", "degree_level", "duration_years"]
 
 
 class ProgramOutcomeSerializer(serializers.ModelSerializer):
@@ -435,12 +435,8 @@ class InstructorPermissionSerializer(serializers.ModelSerializer):
         source="program_head",
         write_only=True,
     )
-    resource_area_display = serializers.CharField(
-        source="get_resource_area_display", read_only=True
-    )
-    permission_tier_display = serializers.CharField(
-        source="get_permission_tier_display", read_only=True
-    )
+    resource_area_display = serializers.CharField(source="get_resource_area_display", read_only=True)
+    permission_tier_display = serializers.CharField(source="get_permission_tier_display", read_only=True)
 
     class Meta:
         model = InstructorPermission
