@@ -6,14 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProgramStat {
-  id: number;
-  code: string;
-  name: string;
-  total_students: number;
-  total_courses: number;
+export interface YearLevelBreakdown {
+  year: number;
+  student_count: number;
   /** @nullable */
   avg_score: number | null;
-  lo_count: number;
-  po_count: number;
 }

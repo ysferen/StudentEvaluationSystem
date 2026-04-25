@@ -49,6 +49,11 @@ paths:
         schema:
           type: integer
       - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
+      - in: query
         name: term
         schema:
           type: integer
@@ -4510,6 +4515,11 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
       - in: query
         name: term
         schema:
@@ -10327,6 +10337,12 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
       properties:
@@ -10455,6 +10471,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
     PatchedUniversity:
       type: object
       description: |-
@@ -10511,6 +10537,12 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
       required:
       - code
       - degree_level
@@ -10606,7 +10638,7 @@ components:
           type: string
         total_students:
           type: integer
-        total_faculty:
+        total_courses:
           type: integer
         avg_score:
           type: number
@@ -10623,7 +10655,7 @@ components:
       - lo_count
       - name
       - po_count
-      - total_faculty
+      - total_courses
       - total_students
     ProgramStatsResponse:
       type: object
@@ -10636,9 +10668,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EnrollmentTrend'
+        year_level_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearLevelBreakdown'
       required:
       - enrollment_trends
       - programs
+      - year_level_breakdown
     ResourceAreaEnum:
       enum:
       - courses
@@ -10714,6 +10751,16 @@ components:
       - created_at
       - id
       - updated_at
+    SemesterEnum:
+      enum:
+      - fall
+      - spring
+      - summer
+      type: string
+      description: |-
+        * `fall` - Fall
+        * `spring` - Spring
+        * `summer` - Summer
     StatusEnum:
       enum:
       - pending
@@ -10901,6 +10948,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
       required:
       - id
       - name
@@ -10969,6 +11026,21 @@ components:
       required:
       - id
       - username
+    YearLevelBreakdown:
+      type: object
+      properties:
+        year:
+          type: integer
+        student_count:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - avg_score
+      - student_count
+      - year
   securitySchemes:
     jwtCookie:
       type: apiKey

@@ -7,8 +7,10 @@
  */
 import type { ProgramStat } from './programStat';
 import type { EnrollmentTrend } from './enrollmentTrend';
+import type { YearLevelBreakdown } from './yearLevelBreakdown';
 
 export interface ProgramStatsResponse {
   programs: ProgramStat[];
   enrollment_trends: EnrollmentTrend[];
+  year_level_breakdown: YearLevelBreakdown[];
 }
