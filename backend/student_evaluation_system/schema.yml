@@ -4,6 +4,24 @@ info:
   version: 1.0.0
   description: Outcome-based assessment system for academic programs
 paths:
+  /api/core/analytics/program-stats/:
+    get:
+      operationId: core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
   /api/core/courses/:
     get:
       operationId: core_courses_list
@@ -30,6 +48,11 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
       - in: query
         name: term
         schema:
@@ -4448,6 +4471,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/CustomUser'
           description: ''
+  /api/v1/core/analytics/program-stats/:
+    get:
+      operationId: v1_core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
   /api/v1/core/courses/:
     get:
       operationId: v1_core_courses_list
@@ -4474,6 +4515,11 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
       - in: query
         name: term
         schema:
@@ -9264,6 +9310,16 @@ components:
       - id
       - name
       - university
+    EnrollmentTrend:
+      type: object
+      properties:
+        term:
+          type: string
+        student_count:
+          type: integer
+      required:
+      - student_count
+      - term
     EvaluationLearningOutcome:
       type: object
       description: Learning Outcome serializer for evaluation app to avoid conflicts
@@ -10281,6 +10337,12 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
       properties:
@@ -10409,6 +10471,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
     PatchedUniversity:
       type: object
       description: |-
@@ -10465,6 +10537,12 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
       required:
       - code
       - degree_level
@@ -10549,6 +10627,55 @@ components:
       - id
       - program
       - term
+    ProgramStat:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        total_students:
+          type: integer
+        total_courses:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+        lo_count:
+          type: integer
+        po_count:
+          type: integer
+      required:
+      - avg_score
+      - code
+      - id
+      - lo_count
+      - name
+      - po_count
+      - total_courses
+      - total_students
+    ProgramStatsResponse:
+      type: object
+      properties:
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramStat'
+        enrollment_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrollmentTrend'
+        year_level_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearLevelBreakdown'
+      required:
+      - enrollment_trends
+      - programs
+      - year_level_breakdown
     ResourceAreaEnum:
       enum:
       - courses
@@ -10624,6 +10751,16 @@ components:
       - created_at
       - id
       - updated_at
+    SemesterEnum:
+      enum:
+      - fall
+      - spring
+      - summer
+      type: string
+      description: |-
+        * `fall` - Fall
+        * `spring` - Spring
+        * `summer` - Summer
     StatusEnum:
       enum:
       - pending
@@ -10811,6 +10948,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
       required:
       - id
       - name
@@ -10879,6 +11026,21 @@ components:
       required:
       - id
       - username
+    YearLevelBreakdown:
+      type: object
+      properties:
+        year:
+          type: integer
+        student_count:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - avg_score
+      - student_count
+      - year
   securitySchemes:
     jwtCookie:
       type: apiKey
