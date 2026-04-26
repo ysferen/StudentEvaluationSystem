@@ -10,11 +10,6 @@ from core.models import Program, StudentLearningOutcomeScore, StudentProgramOutc
 from evaluation.models import CourseEnrollment
 
 
-class EnrollmentTrendSerializer(drf_serializers.Serializer):
-    term = drf_serializers.CharField()
-    student_count = drf_serializers.IntegerField()
-
-
 class ProgramStatSerializer(drf_serializers.Serializer):
     id = drf_serializers.IntegerField()
     code = drf_serializers.CharField()
@@ -34,7 +29,6 @@ class YearLevelBreakdownSerializer(drf_serializers.Serializer):
 
 class ProgramStatsResponseSerializer(drf_serializers.Serializer):
     programs = ProgramStatSerializer(many=True)
-    enrollment_trends = EnrollmentTrendSerializer(many=True)
     year_level_breakdown = YearLevelBreakdownSerializer(many=True)
 
 
@@ -48,14 +42,18 @@ def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years):
             year_level_breakdown.append({"year": year_num, "student_count": 0, "avg_score": None})
         return year_level_breakdown
 
-    enrolled_students = (
+    # .order_by() clears the model Meta.ordering so that .distinct() only
+    # considers the columns in .values(), preventing overcounting when a
+    # student is enrolled in multiple courses.
+    enrolled_students = list(
         CourseEnrollment.objects.filter(course_id__in=prog_course_ids, status="active")
-        .select_related("student__student_profile__enrollment_term")
+        .order_by()
         .values("student_id", "student__student_profile__enrollment_term__academic_year")
         .distinct()
     )
 
     year_buckets = {year_num: {"student_count": 0} for year_num in range(1, duration_years + 1)}
+    students_by_year = {year_num: [] for year_num in range(1, duration_years + 1)}
 
     for enrollment in enrolled_students:
         enrollment_ay = enrollment.get("student__student_profile__enrollment_term__academic_year")
@@ -64,20 +62,14 @@ def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years):
         year_level = active_term.academic_year - enrollment_ay + 1
         if 1 <= year_level <= duration_years:
             year_buckets[year_level]["student_count"] += 1
+            students_by_year[year_level].append(enrollment["student_id"])
 
     for year_num in range(1, duration_years + 1):
-        students_in_year = [
-            enrollment["student_id"]
-            for enrollment in enrolled_students
-            if enrollment.get("student__student_profile__enrollment_term__academic_year") is not None
-            and active_term.academic_year - enrollment["student__student_profile__enrollment_term__academic_year"] + 1
-            == year_num
-        ]
         avg_score = None
-        if students_in_year and po_ids:
+        if students_by_year[year_num] and po_ids:
             avg = StudentProgramOutcomeScore.objects.filter(
                 program_outcome_id__in=po_ids,
-                student_id__in=students_in_year,
+                student_id__in=students_by_year[year_num],
             ).aggregate(avg_score=Avg("score"))["avg_score"]
             avg_score = round(avg, 2) if avg is not None else None
 
@@ -117,14 +109,14 @@ class ProgramStatsView(APIView):
                 return Response({"detail": "No program head profile found."}, status=403)
             programs = Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
 
-        program_ids = list(programs.values_list("id", flat=True))
-
         program_stats = []
-        po_ids = []
-        prog_course_ids = []
+        all_course_ids = []
+        all_po_ids = []
+        max_duration_years = 4
         for program in programs:
             prog_courses = Course.objects.filter(program=program)
             prog_course_ids = list(prog_courses.values_list("id", flat=True))
+            all_course_ids.extend(prog_course_ids)
 
             total_students = (
                 CourseEnrollment.objects.filter(course_id__in=prog_course_ids).values("student_id").distinct().count()
@@ -132,14 +124,17 @@ class ProgramStatsView(APIView):
 
             total_courses = Course.objects.filter(program=program).count()
 
-            po_ids = list(ProgramOutcome.objects.filter(program=program).values_list("id", flat=True))
-            po_avg = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=po_ids).aggregate(
+            prog_po_ids = list(ProgramOutcome.objects.filter(program=program).values_list("id", flat=True))
+            all_po_ids.extend(prog_po_ids)
+            po_avg = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=prog_po_ids).aggregate(
                 avg_score=Avg("score")
             )["avg_score"]
 
             lo_count = StudentLearningOutcomeScore.objects.filter(learning_outcome__course_id__in=prog_course_ids).count()
 
-            po_count = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=po_ids).count()
+            po_count = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=prog_po_ids).count()
+
+            max_duration_years = max(max_duration_years, program.duration_years)
 
             program_stats.append(
                 {
@@ -154,32 +149,11 @@ class ProgramStatsView(APIView):
                 }
             )
 
-        terms = Term.objects.all().order_by("-name")[:5]
-        enrollment_trends = []
-        for term in terms:
-            count = (
-                CourseEnrollment.objects.filter(
-                    course__program_id__in=program_ids,
-                    course__term=term,
-                )
-                .values("student_id")
-                .distinct()
-                .count()
-            )
-            enrollment_trends.append(
-                {
-                    "term": term.name,
-                    "student_count": count,
-                }
-            )
-
-        duration_years = program.duration_years if hasattr(program, "duration_years") else 4
-        year_level_breakdown = _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years)
+        year_level_breakdown = _calculate_year_level_breakdown(all_course_ids, all_po_ids, max_duration_years)
 
         return Response(
             {
                 "programs": program_stats,
-                "enrollment_trends": enrollment_trends,
                 "year_level_breakdown": year_level_breakdown,
             }
         )
