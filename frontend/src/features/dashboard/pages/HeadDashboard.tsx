@@ -5,8 +5,6 @@ import {
   UserGroupIcon,
   BookOpenIcon,
   ChartBarIcon,
-  ArrowDownTrayIcon,
-  DocumentIcon
 } from '@heroicons/react/24/outline'
 import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 
@@ -24,38 +22,6 @@ const HeadDashboard = () => {
   }, [programs])
 
   const yearLevelBreakdown = useMemo(() => statsData?.year_level_breakdown || [], [statsData])
-
-  const yearLevelData = useMemo(() => {
-    return {
-      series: [{
-        name: 'Students',
-        data: yearLevelBreakdown.map(y => y.student_count)
-      }],
-      options: {
-        xaxis: {
-          categories: ['1st Year', '2nd Year', '3rd Year', '4th Year']
-        },
-        colors: ['#0ea5e9']
-      }
-    }
-  }, [yearLevelBreakdown])
-
-  const enrollmentTrends = useMemo(() => {
-    const trends = statsData?.enrollment_trends || []
-    return {
-      series: [{
-        name: 'Students',
-        data: trends.map(t => t.student_count)
-      }],
-      options: {
-        xaxis: {
-          categories: trends.map(t => t.term)
-        },
-        stroke: { curve: 'smooth' as const },
-        colors: ['#8b5cf6']
-      }
-    }
-  }, [statsData])
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>
@@ -116,52 +82,35 @@ const HeadDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartWidget
           title="Year-Level Breakdown"
-          subtitle="Student count by year level"
-          type="bar"
-          series={yearLevelData.series}
-          options={yearLevelData.options}
+          subtitle="Student distribution by year"
+          type="pie"
+          series={yearLevelBreakdown.map(y => y.student_count)}
+          options={{
+            labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length),
+            colors: ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981'],
+          }}
         />
         <ChartWidget
-          title="Enrollment Trends"
-          subtitle="Student enrollment over terms"
-          type="line"
-          series={enrollmentTrends.series}
-          options={enrollmentTrends.options}
+          title="Score Averages by Year"
+          subtitle="Average program outcome score per year level"
+          type="bar"
+          series={[{
+            name: 'Avg Score',
+            data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
+          }]}
+          options={{
+            xaxis: {
+              categories: ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length),
+            },
+            colors: ['#8b5cf6'],
+            yaxis: {
+              min: 0,
+              max: 100,
+            },
+          }}
         />
       </div>
 
-      {/* Reports Section */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-secondary-900">Program Reports</h2>
-          <button className="text-sky-600 hover:text-sky-700 font-medium text-sm">View All Reports</button>
-        </div>
-        <div className="space-y-4">
-          {[
-            { name: 'Fall 2025 Accreditation Report', type: 'PDF', size: '2.4 MB', date: 'Nov 20, 2025' },
-            { name: 'Faculty Evaluation Summary', type: 'Excel', size: '1.1 MB', date: 'Nov 15, 2025' },
-            { name: 'Student Outcome Assessment', type: 'PDF', size: '3.8 MB', date: 'Nov 10, 2025' },
-          ].map((report, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-secondary-50 rounded-xl hover:bg-secondary-100 transition-colors group cursor-pointer">
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                  <DocumentIcon className="h-6 w-6 text-secondary-500 group-hover:text-sky-600 transition-colors" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-secondary-900">{report.name}</h4>
-                  <p className="text-sm text-secondary-500">{report.type} • {report.size}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-secondary-500">{report.date}</span>
-                <button className="p-2 text-secondary-400 hover:text-sky-600 transition-colors">
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   )
 }
