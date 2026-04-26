@@ -9310,16 +9310,6 @@ components:
       - id
       - name
       - university
-    EnrollmentTrend:
-      type: object
-      properties:
-        term:
-          type: string
-        student_count:
-          type: integer
-      required:
-      - student_count
-      - term
     EvaluationLearningOutcome:
       type: object
       description: Learning Outcome serializer for evaluation app to avoid conflicts
@@ -10664,16 +10654,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProgramStat'
-        enrollment_trends:
-          type: array
-          items:
-            $ref: '#/components/schemas/EnrollmentTrend'
         year_level_breakdown:
           type: array
           items:
             $ref: '#/components/schemas/YearLevelBreakdown'
       required:
-      - enrollment_trends
       - programs
       - year_level_breakdown
     ResourceAreaEnum:

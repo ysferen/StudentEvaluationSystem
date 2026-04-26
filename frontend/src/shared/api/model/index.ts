@@ -79,7 +79,6 @@ export * from './customUser';
 export * from './degreeLevel';
 export * from './department';
 export * from './departmentHeadProfile';
-export * from './enrollmentTrend';
 export * from './evaluationAssessmentLoMappingsListParams';
 export * from './evaluationAssessmentsListParams';
 export * from './evaluationEnrollmentsListParams';
