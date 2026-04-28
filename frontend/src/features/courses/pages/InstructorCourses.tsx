@@ -17,6 +17,10 @@ import {
   coreCoursesList
 } from '../../../shared/api/generated/core/core'
 import {
+  corePermissionsMyPermissionsRetrieve
+} from '../../../shared/api/generated/core/core'
+import { PermissionTierEnum } from '../../../shared/api/model'
+import {
   evaluationGradesCourseAveragesRetrieve
 } from '../../../shared/api/generated/evaluation/evaluation'
 
@@ -51,6 +55,20 @@ const InstructorCourses = () => {
     },
     enabled: !!user?.id
   })
+
+  const { data: permissionsData } = useQuery({
+    queryKey: ['my-permissions'],
+    queryFn: () => corePermissionsMyPermissionsRetrieve(),
+    enabled: !!user?.id
+  })
+
+  const canCreateCourse = useMemo(() => {
+    if (!Array.isArray(permissionsData)) return false
+    return permissionsData.some(
+      (p: { resource_area?: string; permission_tier?: string }) =>
+        p.resource_area === 'courses' && p.permission_tier === PermissionTierEnum.full
+    )
+  }, [permissionsData])
 
   // Combined query for both student counts and average scores using grade averages API
   const courseStatsQueries = useQueries({
@@ -124,10 +142,12 @@ if (isLoadingData) {
           <p className="text-secondary-500 mt-1">Courses you are teaching this semester</p>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
-            <PlusIcon className="h-5 w-5" />
-            <span>New Course</span>
-          </button>
+          {canCreateCourse && (
+            <button className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
+              <PlusIcon className="h-5 w-5" />
+              <span>New Course</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -253,10 +273,12 @@ if (isLoadingData) {
           <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
           <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses assigned</h3>
           <p className="text-secondary-500 mb-6">You haven't been assigned to any courses yet.</p>
-          <button className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors">
-            <PlusIcon className="h-5 w-5" />
-            <span>Create Course</span>
-          </button>
+          {canCreateCourse && (
+            <button className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors">
+              <PlusIcon className="h-5 w-5" />
+              <span>Create Course</span>
+            </button>
+          )}
         </Card>
       )}
     </div>

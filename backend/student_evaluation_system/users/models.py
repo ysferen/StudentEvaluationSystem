@@ -114,7 +114,7 @@ class ProgramHeadProfile(models.Model):
         related_name="program_head_profile",
         db_index=True,
     )
-    program = models.ForeignKey(
+    program = models.OneToOneField(
         "core.Program",
         on_delete=models.CASCADE,
         related_name="program_head_profile",

@@ -75,8 +75,8 @@ class Command(BaseCommand):
             # Create 10 program outcomes
             step_start = time.time()
             self.stdout.write("\n[5/8] Creating program outcomes...")
-            program_outcomes = self.create_program_outcomes(programs[0], terms[0], count=11)
-            program_outcomes.extend(self.create_program_outcomes(programs[0], terms[2], count=11))
+            program_outcomes = self.create_program_outcomes(programs[0], terms[0], head_user, count=11)
+            program_outcomes.extend(self.create_program_outcomes(programs[0], terms[2], head_user, count=11))
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # For each course: 4 assessments
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             for course_list in courses.values():
                 for i, course in enumerate(course_list, 1):
                     self.stdout.write(f"  → Course {i}/{len(course_list)}: {course.code}")
-                    learning_outcomes = self.create_learning_outcomes(course)
+                    learning_outcomes = self.create_learning_outcomes(course, head_user)
 
                     # Map LOs to POs with random weights (sum=1.0)
                     self.create_lo_po_mappings(learning_outcomes, program_outcomes)
@@ -206,10 +206,18 @@ class Command(BaseCommand):
         return programs
 
     def create_terms(self):
-        term1, _ = Term.objects.get_or_create(name="Spring 2026", defaults={"is_active": True})
-        term2, _ = Term.objects.get_or_create(name="Fall 2025", defaults={"is_active": False})
-        term3, _ = Term.objects.get_or_create(name="Spring 2025", defaults={"is_active": False})
-        term4, _ = Term.objects.get_or_create(name="Fall 2024", defaults={"is_active": False})
+        term1, _ = Term.objects.get_or_create(
+            name="Spring 2026", defaults={"is_active": True}, academic_year=2026, semester="spring"
+        )
+        term2, _ = Term.objects.get_or_create(
+            name="Fall 2025", defaults={"is_active": False}, academic_year=2025, semester="fall"
+        )
+        term3, _ = Term.objects.get_or_create(
+            name="Spring 2025", defaults={"is_active": False}, academic_year=2025, semester="spring"
+        )
+        term4, _ = Term.objects.get_or_create(
+            name="Fall 2024", defaults={"is_active": False}, academic_year=2024, semester="fall"
+        )
         self.stdout.write(f"  ✓ Term: {term1.name}")
         self.stdout.write(f"  ✓ Term: {term2.name}")
         self.stdout.write(f"  ✓ Term: {term3.name}")
@@ -277,11 +285,7 @@ class Command(BaseCommand):
             user=head_user,
             defaults={"program": program},
         )
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"  ✓ Program Head: {head_user.get_full_name()} ({program.name})"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"  ✓ Program Head: {head_user.get_full_name()} ({program.name})"))
         return head_user, head_profile
 
     def create_courses(self, program, terms, instructor, count=6):
@@ -316,13 +320,14 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Courses: {len(courses['2025']) + len(courses['2026'])} created")
         return courses
 
-    def create_program_outcomes(self, program, term, count=10):
+    def create_program_outcomes(self, program, term, head_user, count=10):
         outcomes = []
         for i in range(0, count):
             po, _ = ProgramOutcome.objects.get_or_create(
                 code=f"PO{i}",
                 program=program,
                 term=term,
+                created_by=head_user,
                 defaults={
                     "description": data.PROGRAM_OUTCOME_DESCRIPTIONS[i]
                     if i < len(data.PROGRAM_OUTCOME_DESCRIPTIONS)
@@ -334,7 +339,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Program Outcomes: {len(outcomes)} created")
         return outcomes
 
-    def create_learning_outcomes(self, course):
+    def create_learning_outcomes(self, course, head_user):
         outcomes = []
         descriptions = data.LEARNING_OUTCOMES.get(course.name, [])
 
@@ -349,7 +354,9 @@ class Command(BaseCommand):
             ]
 
         for i, description in enumerate(descriptions, start=1):
-            lo, _ = LearningOutcome.objects.get_or_create(code=f"LO{i}", course=course, defaults={"description": description})
+            lo, _ = LearningOutcome.objects.get_or_create(
+                code=f"LO{i}", course=course, created_by=self.user, defaults={"description": description}
+            )
             outcomes.append(lo)
 
         return outcomes
