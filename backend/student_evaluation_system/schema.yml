@@ -22,6 +22,647 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProgramStatsResponse'
           description: ''
+  /api/core/course-template-assessment-lo-mappings/:
+    get:
+      operationId: core_course_template_assessment_lo_mappings_list
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateAssessmentLOMappingList'
+          description: ''
+    post:
+      operationId: core_course_template_assessment_lo_mappings_create
+      description: CRUD for template assessment-to-LO mappings.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+  /api/core/course-template-assessment-lo-mappings/{id}/:
+    get:
+      operationId: core_course_template_assessment_lo_mappings_retrieve
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    put:
+      operationId: core_course_template_assessment_lo_mappings_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    patch:
+      operationId: core_course_template_assessment_lo_mappings_partial_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    delete:
+      operationId: core_course_template_assessment_lo_mappings_destroy
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-template-lo-po-mappings/:
+    get:
+      operationId: core_course_template_lo_po_mappings_list
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateLOPOMappingList'
+          description: ''
+    post:
+      operationId: core_course_template_lo_po_mappings_create
+      description: CRUD for template LO-to-PO mappings.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+  /api/core/course-template-lo-po-mappings/{id}/:
+    get:
+      operationId: core_course_template_lo_po_mappings_retrieve
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    put:
+      operationId: core_course_template_lo_po_mappings_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    patch:
+      operationId: core_course_template_lo_po_mappings_partial_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    delete:
+      operationId: core_course_template_lo_po_mappings_destroy
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-templates/:
+    get:
+      operationId: core_course_templates_list
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter templates by program ID
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateList'
+          description: ''
+    post:
+      operationId: core_course_templates_create
+      description: CRUD operations for course templates, plus instantiate action.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/core/course-templates/{id}/:
+    get:
+      operationId: core_course_templates_retrieve
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    put:
+      operationId: core_course_templates_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    patch:
+      operationId: core_course_templates_partial_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    delete:
+      operationId: core_course_templates_destroy
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-templates/{id}/assessments/:
+    get:
+      operationId: core_course_templates_assessments_retrieve
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: core_course_templates_assessments_create
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/core/course-templates/{id}/instantiate/:
+    post:
+      operationId: core_course_templates_instantiate_create
+      description: Create a new Course by cloning all template data into the given
+        term.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          type:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+          properties:
+            schema:
+              term_id:
+                type: integer
+          required:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
+  /api/core/course-templates/{id}/learning-outcomes/:
+    get:
+      operationId: core_course_templates_learning_outcomes_retrieve
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: core_course_templates_learning_outcomes_create
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
   /api/core/courses/:
     get:
       operationId: core_courses_list
@@ -4488,6 +5129,647 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
+  /api/v1/core/course-template-assessment-lo-mappings/:
+    get:
+      operationId: v1_core_course_template_assessment_lo_mappings_list
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateAssessmentLOMappingList'
+          description: ''
+    post:
+      operationId: v1_core_course_template_assessment_lo_mappings_create
+      description: CRUD for template assessment-to-LO mappings.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+  /api/v1/core/course-template-assessment-lo-mappings/{id}/:
+    get:
+      operationId: v1_core_course_template_assessment_lo_mappings_retrieve
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    put:
+      operationId: v1_core_course_template_assessment_lo_mappings_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    patch:
+      operationId: v1_core_course_template_assessment_lo_mappings_partial_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    delete:
+      operationId: v1_core_course_template_assessment_lo_mappings_destroy
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-template-lo-po-mappings/:
+    get:
+      operationId: v1_core_course_template_lo_po_mappings_list
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateLOPOMappingList'
+          description: ''
+    post:
+      operationId: v1_core_course_template_lo_po_mappings_create
+      description: CRUD for template LO-to-PO mappings.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+  /api/v1/core/course-template-lo-po-mappings/{id}/:
+    get:
+      operationId: v1_core_course_template_lo_po_mappings_retrieve
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    put:
+      operationId: v1_core_course_template_lo_po_mappings_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    patch:
+      operationId: v1_core_course_template_lo_po_mappings_partial_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    delete:
+      operationId: v1_core_course_template_lo_po_mappings_destroy
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-templates/:
+    get:
+      operationId: v1_core_course_templates_list
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter templates by program ID
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateList'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_create
+      description: CRUD operations for course templates, plus instantiate action.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/v1/core/course-templates/{id}/:
+    get:
+      operationId: v1_core_course_templates_retrieve
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    put:
+      operationId: v1_core_course_templates_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    patch:
+      operationId: v1_core_course_templates_partial_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    delete:
+      operationId: v1_core_course_templates_destroy
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-templates/{id}/assessments/:
+    get:
+      operationId: v1_core_course_templates_assessments_retrieve
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_assessments_create
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/v1/core/course-templates/{id}/instantiate/:
+    post:
+      operationId: v1_core_course_templates_instantiate_create
+      description: Create a new Course by cloning all template data into the given
+        term.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          type:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+          properties:
+            schema:
+              term_id:
+                type: integer
+          required:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
+  /api/v1/core/course-templates/{id}/learning-outcomes/:
+    get:
+      operationId: v1_core_course_templates_learning_outcomes_retrieve
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_learning_outcomes_create
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
           description: ''
   /api/v1/core/courses/:
     get:
@@ -9198,6 +10480,100 @@ components:
       - enrolled_at
       - id
       - student
+    CourseTemplate:
+      type: object
+      description: |-
+        Serializer for CourseTemplate model.
+
+        Provides bidirectional serialization with nested read representation
+        and flat write representation for the program FK.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 255
+        credits:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          description: Return the number of Courses instantiated from this template.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - instance_count
+      - name
+      - program
+      - program_id
+      - updated_at
+    CourseTemplateAssessmentLOMapping:
+      type: object
+      description: Serializer for CourseTemplateAssessmentLOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_assessment:
+          type: integer
+        template_learning_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+      required:
+      - id
+      - template_assessment
+      - template_learning_outcome
+      - weight
+    CourseTemplateLOPOMapping:
+      type: object
+      description: Serializer for CourseTemplateLOPOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_learning_outcome:
+          type: integer
+        program_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+      required:
+      - id
+      - program_outcome
+      - template_learning_outcome
+      - weight
     CustomUser:
       type: object
       description: Full user serializer with all fields.
@@ -9363,13 +10739,11 @@ components:
           readOnly: true
         instructor_id:
           type: integer
-          writeOnly: true
         program_head:
           type: string
           readOnly: true
         program_head_id:
           type: integer
-          writeOnly: true
         resource_area:
           $ref: '#/components/schemas/ResourceAreaEnum'
         resource_area_display:
@@ -9575,6 +10949,75 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Course'
+    PaginatedCourseTemplateAssessmentLOMappingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+    PaginatedCourseTemplateLOPOMappingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+    PaginatedCourseTemplateList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplate'
     PaginatedCustomUserList:
       type: object
       required:
@@ -10115,6 +11558,81 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedCourseTemplate:
+      type: object
+      description: |-
+        Serializer for CourseTemplate model.
+
+        Provides bidirectional serialization with nested read representation
+        and flat write representation for the program FK.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 255
+        credits:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          description: Return the number of Courses instantiated from this template.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCourseTemplateAssessmentLOMapping:
+      type: object
+      description: Serializer for CourseTemplateAssessmentLOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_assessment:
+          type: integer
+        template_learning_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+    PatchedCourseTemplateLOPOMapping:
+      type: object
+      description: Serializer for CourseTemplateLOPOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_learning_outcome:
+          type: integer
+        program_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
     PatchedCustomUser:
       type: object
       description: Full user serializer with all fields.
@@ -10224,13 +11742,11 @@ components:
           readOnly: true
         instructor_id:
           type: integer
-          writeOnly: true
         program_head:
           type: string
           readOnly: true
         program_head_id:
           type: integer
-          writeOnly: true
         resource_area:
           $ref: '#/components/schemas/ResourceAreaEnum'
         resource_area_display:
@@ -10671,6 +12187,7 @@ components:
       - lo_po_weights
       - assessment_lo_weights
       - assessments
+      - course_templates
       type: string
       description: |-
         * `courses` - Courses
@@ -10681,6 +12198,7 @@ components:
         * `lo_po_weights` - LO-PO Weights
         * `assessment_lo_weights` - Assessment-LO Weights
         * `assessments` - Assessments
+        * `course_templates` - Course Templates
     RoleEnum:
       enum:
       - guest

@@ -86,7 +86,9 @@ class Command(BaseCommand):
 
             # ── Program outcomes ──
             self.stdout.write("\n[5/9] Creating program outcomes...")
-            pos = self._create_program_outcomes(program, terms[0], head_user)
+            pos = []
+            for term in terms:
+                pos.extend(self._create_program_outcomes(program, term, head_user))
 
             # ── LOs, assessments, mappings ──
             self.stdout.write("\n[6/9] Creating learning outcomes, assessments, and mappings...")

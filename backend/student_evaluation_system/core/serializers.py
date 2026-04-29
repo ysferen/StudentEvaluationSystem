@@ -432,13 +432,11 @@ class InstructorPermissionSerializer(serializers.ModelSerializer):
     instructor_id = serializers.PrimaryKeyRelatedField(
         queryset=InstructorProfile.objects.all(),
         source="instructor",
-        write_only=True,
     )
     program_head = serializers.StringRelatedField(read_only=True)
     program_head_id = serializers.PrimaryKeyRelatedField(
         queryset=ProgramHeadProfile.objects.all(),
         source="program_head",
-        write_only=True,
     )
     resource_area_display = serializers.CharField(source="get_resource_area_display", read_only=True)
     permission_tier_display = serializers.CharField(source="get_permission_tier_display", read_only=True)
