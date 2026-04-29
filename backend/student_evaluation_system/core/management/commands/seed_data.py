@@ -4,6 +4,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from users.models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
 from core.models import (
+    InstructorPermission,
+    PermissionTier,
+    ResourceArea,
     University,
     Department,
     DegreeLevel,
@@ -22,6 +25,18 @@ from . import data
 class Command(BaseCommand):
     help = "Seed database with sample data (50 students, courses, assessments, etc.)"
 
+    RESOURCE_AREAS = (
+        ResourceArea.COURSES,
+        ResourceArea.PROGRAMS,
+        ResourceArea.LEARNING_OUTCOMES,
+        ResourceArea.PROGRAM_OUTCOMES,
+        ResourceArea.STUDENTS,
+        ResourceArea.LO_PO_WEIGHTS,
+        ResourceArea.ASSESSMENT_LO_WEIGHTS,
+        ResourceArea.ASSESSMENTS,
+        ResourceArea.COURSE_TEMPLATES,
+    )
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--clear",
@@ -30,6 +45,26 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Configuration constants
+        UNIVERSITIES_DATA = [
+            {"name": "Acıbadem University"},
+            {"name": "Istanbul University"},
+        ]
+        DEPARTMENTS_DATA = [
+            {"name": "Engineering and Natural Sciences", "code": "ENS"},
+            {"name": "Medicine", "code": "MED"},
+        ]
+        DEGREE_LEVELS_DATA = [
+            {"name": "Bachelor"},
+            {"name": "Master"},
+        ]
+        PROGRAMS_DATA = [
+            {"name": "Computer Engineering", "code": "CSE"},
+            {"name": "Biomedical Engineering", "code": "BME"},
+        ]
+        ASSESSMENT_TYPES = ["midterm", "final", "attendance", "project"]
+        ASSESSMENT_WEIGHTS = [0.25, 0.35, 0.15, 0.25]
+
         start_time = time.time()
 
         if options["clear"]:
@@ -46,78 +81,81 @@ class Command(BaseCommand):
         with transaction.atomic():
             # Create basic structure
             step_start = time.time()
-            self.stdout.write("\n[1/8] Creating academic structure...")
-            universities = self.create_universities()
-            departments = self.create_departments(universities[0])
-            degree_levels = self.create_degree_levels()
-            programs = self.create_programs(departments[0], degree_levels[0])
+            self.stdout.write("\n[1/9] Creating academic structure...")
+            universities = self._create_entities(University, UNIVERSITIES_DATA, "University")
+            departments = self._create_departments(universities[0], DEPARTMENTS_DATA)
+            degree_levels = self._create_entities(DegreeLevel, DEGREE_LEVELS_DATA, "Degree Level")
+            programs = self._create_programs(departments[0], degree_levels[0], PROGRAMS_DATA)
             terms = self.create_terms()
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create program head
             step_start = time.time()
-            self.stdout.write("\n[2/8] Creating program head...")
-            head_user, head_profile = self.create_program_head(programs[0], universities[0])
+            self.stdout.write("\n[2/9] Creating program head...")
+            head_user, head_profile = self._create_program_head(programs[0], universities[0])
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create instructor
             step_start = time.time()
-            self.stdout.write("\n[3/8] Creating instructor...")
-            instructors = self.create_instructors(departments[0], universities[0])
+            self.stdout.write("\n[3/9] Creating instructor...")
+            instructors = self._create_instructors(departments[0], universities[0])
+            self._create_instructor_permissions(instructors, head_profile)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 12 courses
             step_start = time.time()
-            self.stdout.write("\n[4/8] Creating courses...")
-            courses = self.create_courses(programs[0], terms, instructors[0], count=6)
+            self.stdout.write("\n[4/9] Creating courses...")
+            courses = self._create_courses(programs[0], terms, instructors[0], count=6)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 10 program outcomes
             step_start = time.time()
-            self.stdout.write("\n[5/8] Creating program outcomes...")
-            program_outcomes = self.create_program_outcomes(programs[0], terms[0], head_user, count=11)
-            program_outcomes.extend(self.create_program_outcomes(programs[0], terms[2], head_user, count=11))
+            self.stdout.write("\n[5/9] Creating program outcomes...")
+            program_outcomes = self._create_program_outcomes(programs[0], terms[0], head_user, count=11)
+            program_outcomes.extend(self._create_program_outcomes(programs[0], terms[2], head_user, count=11))
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # For each course: 4 assessments
             step_start = time.time()
-            self.stdout.write("\n[6/8] Creating learning outcomes and assessments...")
+            self.stdout.write("\n[6/9] Creating learning outcomes and assessments...")
             all_assessments = []
             for course_list in courses.values():
                 for i, course in enumerate(course_list, 1):
                     self.stdout.write(f"  → Course {i}/{len(course_list)}: {course.code}")
-                    learning_outcomes = self.create_learning_outcomes(course, head_user)
+                    learning_outcomes = self._create_learning_outcomes(course, head_user)
 
                     # Map LOs to POs with random weights (sum=1.0)
-                    self.create_lo_po_mappings(learning_outcomes, program_outcomes)
+                    self._create_lo_po_mappings(learning_outcomes, program_outcomes)
 
                     # Create 4 assessments
-                    assessments = self.create_assessments(course, count=4)
+                    assessments = self._create_assessments(
+                        course, assessment_types=ASSESSMENT_TYPES, weights=ASSESSMENT_WEIGHTS, count=4
+                    )
                     all_assessments.extend(assessments)
 
                     # Map assessments to LOs with random weights (sum=1.0)
                     for assessment in assessments:
-                        self.create_assessment_lo_mappings(assessment, learning_outcomes)
+                        self._create_assessment_lo_mappings(assessment, learning_outcomes)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Create 50 students and enroll them
             step_start = time.time()
-            self.stdout.write("\n[7/8] Creating students and enrollments...")
-            students = self.create_students(departments[0], programs[0], universities[0], terms[0], count=50)
-            self.enroll_students(students, courses)
+            self.stdout.write("\n[7/9] Creating students and enrollments...")
+            students = self._create_students(departments[0], programs[0], universities[0], terms[0], count=50)
+            self._enroll_students(students, courses)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Generate grades for all students
             step_start = time.time()
-            self.stdout.write("\n[8/8] Calculating scores and exporting data...")
-            self.generate_student_grades(students, all_assessments)
+            self.stdout.write("\n[8/9] Calculating scores and exporting data...")
+            self._generate_student_grades(students, all_assessments)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
             # Export credentials to CSV
             step_start = time.time()
-            self.stdout.write("\n[9/8] Calculating scores and exporting data...")
-            self.calculate_all_scores(courses)
-            self.export_credentials(students)
+            self.stdout.write("\n[9/9] Calculating scores and exporting data...")
+            self._calculate_all_scores(courses)
+            # self._export_credentials(students)
             self.stdout.write(f"  ⏱ Completed in {time.time() - step_start:.2f}s")
 
         total_time = time.time() - start_time
@@ -159,53 +197,35 @@ class Command(BaseCommand):
         else:
             self.stdout.write("✓ Superuser already exists: admin")
 
-    def create_universities(self):
-        universities = []
-        university1, _ = University.objects.get_or_create(name="Acıbadem University")
-        university2, _ = University.objects.get_or_create(name="Istanbul University")
-        universities.append(university1)
-        universities.append(university2)
-        self.stdout.write(f"  ✓ University: {university1.name}")
-        self.stdout.write(f"  ✓ University: {university2.name}")
-        return universities
+    def _create_entities(self, model, data_list, entity_type):
+        """Generic helper to create entities and log them."""
+        entities = []
+        for entity_data in data_list:
+            entity, _ = model.objects.get_or_create(**entity_data)
+            entities.append(entity)
+            self.stdout.write(f"  ✓ {entity_type}: {entity.name}")
+        return entities
 
-    def create_departments(self, university):
+    def _create_departments(self, university, departments_data):
+        """Create departments linked to a university."""
         departments = []
-        department1, _ = Department.objects.get_or_create(
-            name="Engineering and Natural Sciences", code="ENS", university=university
-        )
-        department2, _ = Department.objects.get_or_create(name="Medicine", code="MED", university=university)
-        departments.append(department1)
-        departments.append(department2)
-        self.stdout.write(f"  ✓ Department: {department1.name}")
-        self.stdout.write(f"  ✓ Department: {department2.name}")
+        for department_data in departments_data:
+            dept, _ = Department.objects.get_or_create(**department_data, university=university)
+            departments.append(dept)
+            self.stdout.write(f"  ✓ Department: {dept.name}")
         return departments
 
-    def create_degree_levels(self):
-        degrees = []
-        degree_level1, _ = DegreeLevel.objects.get_or_create(name="Bachelor")
-        degree_level2, _ = DegreeLevel.objects.get_or_create(name="Master")
-        degrees.append(degree_level1)
-        degrees.append(degree_level2)
-        self.stdout.write(f"  ✓ Degree Level: {degree_level1.name}")
-        self.stdout.write(f"  ✓ Degree Level: {degree_level2.name}")
-        return degrees
-
-    def create_programs(self, department, degree_level):
+    def _create_programs(self, department, degree_level, programs_data):
+        """Create programs linked to a department and degree level."""
         programs = []
-        program1, _ = Program.objects.get_or_create(
-            name="Computer Engineering", code="CSE", department=department, degree_level=degree_level
-        )
-        program2, _ = Program.objects.get_or_create(
-            name="Biomedical Engineering", code="BME", department=department, degree_level=degree_level
-        )
-        programs.append(program1)
-        programs.append(program2)
-        self.stdout.write(f"  ✓ Program: {program1.name}")
-        self.stdout.write(f"  ✓ Program: {program2.name}")
+        for program_data in programs_data:
+            program, _ = Program.objects.get_or_create(**program_data, department=department, degree_level=degree_level)
+            programs.append(program)
+            self.stdout.write(f"  ✓ Program: {program.name}")
         return programs
 
     def create_terms(self):
+        """Create academic terms."""
         term1, _ = Term.objects.get_or_create(
             name="Spring 2026", defaults={"is_active": True}, academic_year=2026, semester="spring"
         )
@@ -224,49 +244,66 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Term: {term4.name}")
         return term1, term2, term3, term4
 
-    def create_instructors(self, department, university):
-        instructors = []
-        user1, created1 = CustomUser.objects.get_or_create(
-            username="instructor1",
-            defaults={
+    def _create_instructors(self, department, university):
+        """Create instructors with predefined credentials."""
+        instructors_data = [
+            {
+                "username": "instructor1",
                 "email": "instructor@example.com",
                 "first_name": "John",
                 "last_name": "Doe",
-                "role": "instructor",
-                "department": department,
-                "university": university,
+                "password": "instructor123",
+                "title": "Professor",
             },
-        )
-        if created1:
-            user1.set_password("instructor123")
-            user1.save()
-
-        profile1, _ = InstructorProfile.objects.get_or_create(user=user1, defaults={"title": "Professor"})
-        self.stdout.write(f"  ✓ Instructor: {user1.get_full_name()}")
-        instructors.append(user1)
-
-        user2, created2 = CustomUser.objects.get_or_create(
-            username="instructor2",
-            defaults={
+            {
+                "username": "instructor2",
                 "email": "instructor2@example.com",
                 "first_name": "Jane",
                 "last_name": "Smith",
-                "role": "instructor",
-                "department": department,
-                "university": university,
+                "password": "instructor234",
+                "title": "Associate Professor",
             },
-        )
-        if created2:
-            user2.set_password("instructor234")
-            user2.save()
-
-        profile2, _ = InstructorProfile.objects.get_or_create(user=user2, defaults={"title": "Associate Professor"})
-        self.stdout.write(f"  ✓ Instructor: {user2.get_full_name()}")
-        instructors.append(user2)
-
+        ]
+        instructors = []
+        for instructor_data in instructors_data:
+            instructor = self._create_user(
+                instructor_data["username"],
+                instructor_data["email"],
+                instructor_data["first_name"],
+                instructor_data["last_name"],
+                instructor_data["password"],
+                "instructor",
+                department,
+                university,
+            )
+            InstructorProfile.objects.get_or_create(user=instructor, defaults={"title": instructor_data["title"]})
+            self.stdout.write(f"  ✓ Instructor: {instructor.get_full_name()}")
+            instructors.append(instructor)
         return instructors
 
-    def create_program_head(self, program, university):
+    def _create_instructor_permissions(self, instructors, program_head):
+        """Create default instructor permissions for the seeded instructors."""
+        created_count = 0
+
+        for instructor in instructors:
+            instructor_profile = getattr(instructor, "instructor_profile", None)
+            if instructor_profile is None:
+                continue
+
+            for resource_area in self.RESOURCE_AREAS:
+                _, created = InstructorPermission.objects.get_or_create(
+                    instructor=instructor_profile,
+                    program_head=program_head,
+                    resource_area=resource_area,
+                    defaults={"permission_tier": PermissionTier.VIEW},
+                )
+                if created:
+                    created_count += 1
+
+        self.stdout.write(f"  ✓ Instructor permissions: {created_count} created")
+
+    def _create_program_head(self, program, university):
+        """Create the program head user and profile."""
         head_user, created = CustomUser.objects.get_or_create(
             username="headuser",
             defaults={
@@ -288,7 +325,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"  ✓ Program Head: {head_user.get_full_name()} ({program.name})"))
         return head_user, head_profile
 
-    def create_courses(self, program, terms, instructor, count=6):
+    def _create_courses(self, program, terms, instructor, count=6):
+        """Create courses for different academic years."""
         courses = {"2025": [], "2026": []}
 
         for i in range(count):
@@ -320,18 +358,19 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Courses: {len(courses['2025']) + len(courses['2026'])} created")
         return courses
 
-    def create_program_outcomes(self, program, term, head_user, count=10):
+    def _create_program_outcomes(self, program, term, head_user, count=10):
+        """Create program outcomes for a given program and term."""
         outcomes = []
         for i in range(0, count):
             po, _ = ProgramOutcome.objects.get_or_create(
                 code=f"PO{i}",
                 program=program,
                 term=term,
-                created_by=head_user,
                 defaults={
                     "description": data.PROGRAM_OUTCOME_DESCRIPTIONS[i]
                     if i < len(data.PROGRAM_OUTCOME_DESCRIPTIONS)
-                    else f"Program Outcome {i}: Sample description for PO{i}"
+                    else f"Program Outcome {i}: Sample description for PO{i}",
+                    "created_by": head_user,
                 },
             )
             outcomes.append(po)
@@ -339,7 +378,8 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Program Outcomes: {len(outcomes)} created")
         return outcomes
 
-    def create_learning_outcomes(self, course, head_user):
+    def _create_learning_outcomes(self, course, head_user):
+        """Create learning outcomes for a course."""
         outcomes = []
         descriptions = data.LEARNING_OUTCOMES.get(course.name, [])
 
@@ -348,20 +388,22 @@ class Command(BaseCommand):
                 self.style.WARNING(f"  ! No LO template found for '{course.name}'. Using generic learning outcomes.")
             )
             descriptions = [
-                f"Demonstrate foundational understanding of {course.name} concepts.",
-                f"Apply {course.name} methods to solve practical problems.",
-                f"Evaluate and communicate solutions in the context of {course.name}.",
+                f"Demonstrate foundational understanding of {course.name}.",
+                f"Apply {course.name} methods to solve problems.",
+                f"Evaluate and communicate solutions in {course.name}.",
             ]
 
         for i, description in enumerate(descriptions, start=1):
             lo, _ = LearningOutcome.objects.get_or_create(
-                code=f"LO{i}", course=course, created_by=self.user, defaults={"description": description}
+                code=f"LO{i}",
+                course=course,
+                defaults={"description": description, "created_by": head_user},
             )
             outcomes.append(lo)
 
         return outcomes
 
-    def create_lo_po_mappings(self, learning_outcomes, program_outcomes):
+    def _create_lo_po_mappings(self, learning_outcomes, program_outcomes):
         """Map each LO to 2-3 random POs with weights summing to 1.0"""
         for lo in learning_outcomes:
             # Select 2-3 random POs
@@ -378,12 +420,9 @@ class Command(BaseCommand):
                     defaults={"weight": round(weight, 3)},  # ← weight only used on INSERT
                 )
 
-    def create_assessments(self, course, count=4):
-        assessment_types = ["midterm", "final", "attendance", "project"]
+    def _create_assessments(self, course, assessment_types, weights, count=4):
+        """Create assessments for a course."""
         assessments = []
-
-        # Weights must sum to 1.0
-        weights = [0.25, 0.35, 0.15, 0.25]  # Midterm, Final, Attendance, Project
 
         for i in range(count):
             assessment, _ = Assessment.objects.get_or_create(
@@ -391,7 +430,7 @@ class Command(BaseCommand):
                 course=course,
                 defaults={
                     "assessment_type": assessment_types[i],
-                    "date": f"2025-{10 + i // 4}-{1 + (i % 4) * 7:02d}",
+                    "date": f"2025-{10 + (i // 4)}-{1 + ((i % 4) * 7):02d}",
                     "total_score": 100,
                     "weight": weights[i],
                 },
@@ -400,7 +439,7 @@ class Command(BaseCommand):
 
         return assessments
 
-    def create_assessment_lo_mappings(self, assessment, learning_outcomes):
+    def _create_assessment_lo_mappings(self, assessment, learning_outcomes):
         """Map assessment to all LOs with equal weights (sum=1.0)"""
         if not learning_outcomes:
             self.stdout.write(
@@ -417,7 +456,8 @@ class Command(BaseCommand):
                 assessment=assessment, learning_outcome=lo, defaults={"weight": round(weight_per_lo, 3)}
             )
 
-    def create_students(self, department, program, university, term, count=50):
+    def _create_students(self, department, program, university, term, count=50):
+        """Create student users and profiles."""
         students = []
 
         for i in range(0, count):
@@ -429,9 +469,7 @@ class Command(BaseCommand):
                 defaults={
                     "email": f"{username}@example.com",
                     "first_name": data.NAMES[i % len(data.NAMES)],
-                    "last_name": data.SURNAMES[
-                        i % len(data.SURNAMES) if i < len(data.SURNAMES) else (i + 1) % len(data.SURNAMES)
-                    ],
+                    "last_name": data.SURNAMES[i % len(data.SURNAMES)],
                     "role": "student",
                     "department": department,
                     "university": university,
@@ -456,7 +494,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ Students: {len(students)} created")
         return students
 
-    def enroll_students(self, students, courses):
+    def _enroll_students(self, students, courses):
         """Enroll half of the students in all courses, and the other half in a random subset of courses"""
         enrollments_count = 0
         for i, student_data in enumerate(students):
@@ -471,7 +509,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f"  ✓ Enrollments: {enrollments_count} created")
 
-    def generate_student_grades(self, students, assessments):
+    def _generate_student_grades(self, students, assessments):
         """Generate random grades for all students in all assessments"""
 
         grades_to_create = []
@@ -497,7 +535,7 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"  ✓ Generated {len(grades_to_create)} student grades")
 
-    def calculate_all_scores(self, courses):
+    def _calculate_all_scores(self, courses):
         """Calculate LO and PO scores for all courses"""
         self.stdout.write(f"  → Calculating outcome scores for {len(courses)} courses...")
 
@@ -513,7 +551,7 @@ class Command(BaseCommand):
 
             self.stdout.write("  ✓ Score calculation completed")
 
-    def export_credentials(self, students):
+    def _export_credentials(self, students):
         """Export student credentials to CSV"""
         import csv
 
@@ -529,3 +567,21 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write("  ✓ Credentials exported to student_credentials.csv")
+
+    def _create_user(self, username, email, first_name, last_name, password, role, department, university):
+        """Helper to create a user with credentials."""
+        user, created = CustomUser.objects.get_or_create(
+            username=username,
+            defaults={
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "role": role,
+                "department": department,
+                "university": university,
+            },
+        )
+        if created:
+            user.set_password(password)
+            user.save()
+        return user

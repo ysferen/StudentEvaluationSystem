@@ -24,9 +24,7 @@ def api_client():
 @pytest.fixture
 def setup_data(db):
     university = University.objects.create(name="Test University")
-    dept = Department.objects.create(
-        name="Engineering", code="ENG", university=university
-    )
+    dept = Department.objects.create(name="Engineering", code="ENG", university=university)
     degree = DegreeLevel.objects.create(name="Bachelor")
     program = Program.objects.create(
         name="Computer Engineering",
@@ -42,9 +40,7 @@ def setup_data(db):
         role="program_head",
         department=dept,
     )
-    head_profile = ProgramHeadProfile.objects.create(
-        user=head_user, program=program
-    )
+    head_profile = ProgramHeadProfile.objects.create(user=head_user, program=program)
 
     instructor_user = User.objects.create_user(
         username="instruser",
@@ -53,9 +49,7 @@ def setup_data(db):
         department=dept,
         university=university,
     )
-    instructor_profile = InstructorProfile.objects.create(
-        user=instructor_user, title="Professor"
-    )
+    instructor_profile = InstructorProfile.objects.create(user=instructor_user, title="Professor")
 
     admin_user = User.objects.create_user(
         username="adminuser",
@@ -121,9 +115,7 @@ class TestInstructorPermissionAPI:
         response = api_client.get("/api/v1/core/permissions/")
         assert response.status_code == 200
 
-    def test_instructor_can_view_own_permissions(
-        self, api_client, setup_data
-    ):
+    def test_instructor_can_view_own_permissions(self, api_client, setup_data):
         InstructorPermission.objects.create(
             instructor=setup_data["instructor_profile"],
             program_head=setup_data["head_profile"],
@@ -131,9 +123,7 @@ class TestInstructorPermissionAPI:
             permission_tier=PermissionTier.EDIT,
         )
         api_client.force_authenticate(user=setup_data["instructor_user"])
-        response = api_client.get(
-            "/api/v1/core/permissions/my-permissions/"
-        )
+        response = api_client.get("/api/v1/core/permissions/my-permissions/")
         assert response.status_code == 200
 
     def test_instructor_cannot_create_permission(self, api_client, setup_data):
@@ -154,9 +144,7 @@ class TestInstructorPermissionAPI:
         response = api_client.put(
             "/api/v1/core/permissions/bulk/",
             {
-                "instructor_id": setup_data[
-                    "instructor_profile"
-                ].id,
+                "instructor_id": setup_data["instructor_profile"].id,
                 "permissions": [
                     {
                         "resource_area": "courses",
@@ -177,9 +165,7 @@ class TestInstructorPermissionAPI:
         response = api_client.put(
             "/api/v1/core/permissions/bulk/",
             {
-                "instructor_id": setup_data[
-                    "instructor_profile"
-                ].id,
+                "instructor_id": setup_data["instructor_profile"].id,
                 "permissions": [
                     {
                         "resource_area": "courses",
@@ -191,9 +177,7 @@ class TestInstructorPermissionAPI:
         )
         assert response.status_code == 200
 
-    def test_bulk_set_requires_instructor_id(
-        self, api_client, setup_data
-    ):
+    def test_bulk_set_requires_instructor_id(self, api_client, setup_data):
         api_client.force_authenticate(user=setup_data["admin_user"])
         response = api_client.put(
             "/api/v1/core/permissions/bulk/",
@@ -202,22 +186,34 @@ class TestInstructorPermissionAPI:
         )
         assert response.status_code == 400
 
-    def test_my_permissions_returns_forbidden_for_non_instructor(
-        self, api_client, setup_data
-    ):
+    def test_my_permissions_returns_forbidden_for_non_instructor(self, api_client, setup_data):
         api_client.force_authenticate(user=setup_data["head_user"])
-        response = api_client.get(
-            "/api/v1/core/permissions/my-permissions/"
-        )
+        response = api_client.get("/api/v1/core/permissions/my-permissions/")
         assert response.status_code == 403
 
 
 class TestSeedData:
     def test_seed_command_creates_program_head(self, db):
         from django.core.management import call_command
+
         call_command("seed_data")
-        from users.models import CustomUser, ProgramHeadProfile
+        from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
+
         head_user = CustomUser.objects.filter(username="headuser").first()
         assert head_user is not None
         assert head_user.role == "program_head"
         assert ProgramHeadProfile.objects.filter(user=head_user).exists()
+
+        instructor_profiles = InstructorProfile.objects.select_related("user").filter(
+            user__username__in=["instructor1", "instructor2"]
+        )
+        assert instructor_profiles.count() == 2
+
+        expected_permission_count = len(ResourceArea.values) * instructor_profiles.count()
+        assert (
+            InstructorPermission.objects.filter(
+                instructor__in=instructor_profiles,
+                permission_tier=PermissionTier.VIEW,
+            ).count()
+            == expected_permission_count
+        )

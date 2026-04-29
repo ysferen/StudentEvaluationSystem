@@ -276,6 +276,14 @@ class Course(TimeStampedModel):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=10, db_index=True)
     credits = models.PositiveIntegerField(default=3)
+    course_template = models.ForeignKey(
+        "CourseTemplate",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="instances",
+        help_text="Template this course was cloned from (if any)",
+    )
     program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="courses", db_index=True)
     term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name="courses", db_index=True)
     instructors = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="taught_courses", blank=True)
@@ -313,6 +321,143 @@ class Course(TimeStampedModel):
     def __str__(self) -> str:
         """Return formatted string with course code and name."""
         return f"{self.code}: {self.name}"
+
+
+class CourseTemplate(TimeStampedModel):
+    """
+    Canonical course definition shared across terms.
+
+    Defines the stable attributes of a course (name, code, credits,
+    program) along with template-level learning outcomes, assessments,
+    and outcome mappings that are cloned when creating a per-term
+    Course instance via the instantiate API.
+    """
+
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=10, db_index=True)
+    credits = models.PositiveIntegerField(default=3)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="course_templates", db_index=True)
+
+    class Meta:
+        ordering = ["code"]
+        constraints = [models.UniqueConstraint(fields=["code", "program"], name="unique_course_template_per_program")]
+        verbose_name = "Course Template"
+        verbose_name_plural = "Course Templates"
+
+    def __str__(self):
+        return f"{self.code}: {self.name} (Template)"
+
+
+class CourseTemplateLearningOutcome(TimeStampedModel):
+    """
+    Template-level learning outcome, cloned into LearningOutcome
+    when a Course is instantiated from this template.
+    """
+
+    description = models.TextField()
+    code = models.CharField(max_length=10)
+    course_template = models.ForeignKey(CourseTemplate, on_delete=models.CASCADE, related_name="learning_outcomes")
+
+    class Meta:
+        ordering = ["code"]
+        constraints = [models.UniqueConstraint(fields=["code", "course_template"], name="unique_template_lo_code")]
+        verbose_name = "Course Template Learning Outcome"
+        verbose_name_plural = "Course Template Learning Outcomes"
+
+    def __str__(self):
+        return f"{self.code}: {self.description[:50]}"
+
+
+class CourseTemplateAssessment(TimeStampedModel):
+    """
+    Template-level assessment, cloned into Assessment when a Course
+    is instantiated from this template.
+    """
+
+    ASSESSMENT_TYPES = [
+        ("midterm", "Midterm"),
+        ("final", "Final Exam"),
+        ("homework", "Homework"),
+        ("project", "Project"),
+        ("quiz", "Quiz"),
+        ("attendance", "Attendance"),
+        ("other", "Other"),
+    ]
+
+    name = models.CharField(max_length=255)
+    assessment_type = models.CharField(max_length=20, choices=ASSESSMENT_TYPES, default="homework")
+    total_score = models.PositiveIntegerField(default=100)
+    weight = models.FloatField(
+        help_text="0.0 to 1.0",
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        default=0.0,
+    )
+    course_template = models.ForeignKey(CourseTemplate, on_delete=models.CASCADE, related_name="assessments")
+
+    class Meta:
+        verbose_name = "Course Template Assessment"
+        verbose_name_plural = "Course Template Assessments"
+
+    def __str__(self):
+        return f"{self.name} ({self.get_assessment_type_display()})"
+
+
+class CourseTemplateAssessmentLOMapping(models.Model):
+    """
+    Maps template assessments to template learning outcomes.
+    Cloned into AssessmentLearningOutcomeMapping on instantiation.
+    """
+
+    template_assessment = models.ForeignKey(CourseTemplateAssessment, on_delete=models.CASCADE, related_name="lo_mappings")
+    template_learning_outcome = models.ForeignKey(
+        CourseTemplateLearningOutcome, on_delete=models.CASCADE, related_name="assessment_mappings"
+    )
+    weight = models.FloatField(
+        help_text="0.0 to 1.0",
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["template_assessment", "template_learning_outcome"],
+                name="unique_template_assessment_lo",
+            )
+        ]
+        verbose_name = "Course Template Assessment-LO Mapping"
+        verbose_name_plural = "Course Template Assessment-LO Mappings"
+
+    def clean(self):
+        super().clean()
+        if self.template_assessment_id and self.template_learning_outcome_id:
+            if self.template_assessment.course_template_id != self.template_learning_outcome.course_template_id:
+                raise ValidationError("Assessment and Learning Outcome must belong to the same course template")
+
+
+class CourseTemplateLOPOMapping(models.Model):
+    """
+    Maps template learning outcomes to program outcomes.
+    Cloned into LearningOutcomeProgramOutcomeMapping on instantiation.
+    """
+
+    template_learning_outcome = models.ForeignKey(
+        CourseTemplateLearningOutcome, on_delete=models.CASCADE, related_name="po_mappings"
+    )
+    program_outcome = models.ForeignKey(ProgramOutcome, on_delete=models.CASCADE, related_name="template_lo_mappings")
+    weight = models.FloatField(
+        help_text="0.0 to 1.0",
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["template_learning_outcome", "program_outcome"],
+                name="unique_template_lo_po_mapping",
+            )
+        ]
+        verbose_name = "Course Template LO-PO Mapping"
+        verbose_name_plural = "Course Template LO-PO Mappings"
 
 
 class LearningOutcome(TimeStampedModel):
@@ -456,6 +601,7 @@ class ResourceArea(models.TextChoices):
     LO_PO_WEIGHTS = "lo_po_weights", "LO-PO Weights"
     ASSESSMENT_LO_WEIGHTS = "assessment_lo_weights", "Assessment-LO Weights"
     ASSESSMENTS = "assessments", "Assessments"
+    COURSE_TEMPLATES = "course_templates", "Course Templates"
 
 
 class PermissionTier(models.TextChoices):
