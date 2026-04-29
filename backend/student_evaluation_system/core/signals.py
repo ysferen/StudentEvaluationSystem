@@ -4,20 +4,33 @@ from django.dispatch import receiver
 from core.models import Course, InstructorPermission, ResourceArea, PermissionTier
 
 
-RESOURCE_AREAS = [
+# Resource areas where course instructors get full CRUD access (since they teach the course).
+COURSE_LEVEL_FULL_AREAS = [
     ResourceArea.COURSES,
-    ResourceArea.PROGRAMS,
     ResourceArea.LEARNING_OUTCOMES,
-    ResourceArea.PROGRAM_OUTCOMES,
-    ResourceArea.STUDENTS,
     ResourceArea.LO_PO_WEIGHTS,
     ResourceArea.ASSESSMENT_LO_WEIGHTS,
     ResourceArea.ASSESSMENTS,
+    ResourceArea.COURSE_TEMPLATES,
+]
+
+# Resource areas where course instructors get view-only access.
+VIEW_ONLY_AREAS = [
+    ResourceArea.PROGRAMS,
+    ResourceArea.PROGRAM_OUTCOMES,
+    ResourceArea.STUDENTS,
 ]
 
 
 def _ensure_permissions(instructor_profile, program_head):
-    for area in RESOURCE_AREAS:
+    for area in COURSE_LEVEL_FULL_AREAS:
+        InstructorPermission.objects.get_or_create(
+            instructor=instructor_profile,
+            program_head=program_head,
+            resource_area=area,
+            defaults={"permission_tier": PermissionTier.FULL},
+        )
+    for area in VIEW_ONLY_AREAS:
         InstructorPermission.objects.get_or_create(
             instructor=instructor_profile,
             program_head=program_head,
@@ -35,10 +48,11 @@ def create_instructor_permissions_on_course_add(sender, instance, action, pk_set
     if not course.program_id:
         return
 
+    program_head = None
     try:
         program_head = course.program.program_head_profile
     except Exception:
-        return
+        pass
 
     from users.models import InstructorProfile
 
