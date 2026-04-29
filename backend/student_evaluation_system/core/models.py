@@ -530,6 +530,10 @@ class LearningOutcomeProgramOutcomeMapping(models.Model):
         super().clean()
         if self.learning_outcome.course != self.course:
             raise ValidationError({"learning_outcome": "Learning outcome must belong to the selected course"})
+        if self.learning_outcome.course.term != self.program_outcome.term:
+            raise ValidationError(
+                {"program_outcome": "Program outcome must belong to the same term as the learning outcome's course"}
+            )
 
 
 class StudentLearningOutcomeScore(models.Model):

@@ -315,8 +315,15 @@ class Command(BaseCommand):
         return outcomes
 
     def _create_lo_po_mappings(self, learning_outcomes, program_outcomes):
+        """Map each LO to 2-4 POs from the SAME TERM as the course."""
         for lo in learning_outcomes:
-            selected = random.sample(program_outcomes, k=random.randint(2, 4))
+            course_term = lo.course.term
+            # Only consider POs belonging to this course's term
+            term_pos = [po for po in program_outcomes if po.term_id == course_term.id]
+            if not term_pos:
+                continue
+            k = min(random.randint(2, 4), len(term_pos))
+            selected = random.sample(term_pos, k=k)
             weights = [random.random() for _ in selected]
             total = sum(weights)
             for po, w in zip(selected, [round(x / total, 3) for x in weights]):
