@@ -196,7 +196,7 @@ class Command(BaseCommand):
     def _create_instructors(self, department, university):
         instructors = []
         for inst_data in data.INSTRUCTORS:
-            user, _ = CustomUser.objects.get_or_create(
+            user, created = CustomUser.objects.get_or_create(
                 username=inst_data["username"],
                 defaults={
                     "email": inst_data["email"],
@@ -207,11 +207,10 @@ class Command(BaseCommand):
                     "university": university,
                 },
             )
-            if not hasattr(user, "instructor_profile") or getattr(user, "instructor_profile", None) is None:
-                InstructorProfile.objects.get_or_create(user=user, defaults={"title": inst_data["title"]})
-            else:
+            if created:
                 user.set_password(inst_data["password"])
                 user.save()
+            InstructorProfile.objects.get_or_create(user=user, defaults={"title": inst_data["title"]})
             instructors.append(user)
         return instructors
 
