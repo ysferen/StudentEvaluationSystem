@@ -9,6 +9,11 @@ to a specific model and defines how it is serialized/deserialized.
 from rest_framework import serializers
 from core.models import (
     Course,
+    CourseTemplate,
+    CourseTemplateAssessment,
+    CourseTemplateAssessmentLOMapping,
+    CourseTemplateLearningOutcome,
+    CourseTemplateLOPOMapping,
     ProgramOutcome,
     Department,
     University,
@@ -452,3 +457,77 @@ class InstructorPermissionSerializer(serializers.ModelSerializer):
             "permission_tier_display",
         ]
         read_only_fields = ["id"]
+
+
+class CourseTemplateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for CourseTemplate model.
+
+    Provides bidirectional serialization with nested read representation
+    and flat write representation for the program FK.
+    """
+
+    program = ProgramSerializer(read_only=True)
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
+    instance_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourseTemplate
+        fields = [
+            "id",
+            "code",
+            "name",
+            "credits",
+            "program",
+            "program_id",
+            "instance_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_instance_count(self, obj: CourseTemplate) -> int:
+        """Return the number of Courses instantiated from this template."""
+        return obj.instances.count()
+
+
+class CourseTemplateLearningOutcomeSerializer(serializers.ModelSerializer):
+    """Serializer for CourseTemplateLearningOutcome."""
+
+    class Meta:
+        model = CourseTemplateLearningOutcome
+        fields = ["id", "code", "description", "course_template", "created_at", "updated_at"]
+        read_only_fields = ["id", "course_template", "created_at", "updated_at"]
+
+
+class CourseTemplateAssessmentSerializer(serializers.ModelSerializer):
+    """Serializer for CourseTemplateAssessment."""
+
+    class Meta:
+        model = CourseTemplateAssessment
+        fields = [
+            "id",
+            "name",
+            "assessment_type",
+            "total_score",
+            "weight",
+            "course_template",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class CourseTemplateAssessmentLOMappingSerializer(serializers.ModelSerializer):
+    """Serializer for CourseTemplateAssessmentLOMapping."""
+
+    class Meta:
+        model = CourseTemplateAssessmentLOMapping
+        fields = ["id", "template_assessment", "template_learning_outcome", "weight"]
+
+
+class CourseTemplateLOPOMappingSerializer(serializers.ModelSerializer):
+    """Serializer for CourseTemplateLOPOMapping."""
+
+    class Meta:
+        model = CourseTemplateLOPOMapping
+        fields = ["id", "template_learning_outcome", "program_outcome", "weight"]

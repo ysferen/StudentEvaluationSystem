@@ -33,6 +33,13 @@ from .course import (
     LearningOutcomeProgramOutcomeMappingViewSet,
 )
 
+# Course Templates
+from .course_templates import (
+    CourseTemplateViewSet,
+    CourseTemplateAssessmentLOMappingViewSet,
+    CourseTemplateLOPOMappingViewSet,
+)
+
 # Scores
 from .scores import (
     StudentLearningOutcomeScoreViewSet,
@@ -71,6 +78,10 @@ __all__ = [
     "ProgramOutcomeViewSet",
     "LearningOutcomeViewSet",
     "LearningOutcomeProgramOutcomeMappingViewSet",
+    # Course Templates
+    "CourseTemplateViewSet",
+    "CourseTemplateAssessmentLOMappingViewSet",
+    "CourseTemplateLOPOMappingViewSet",
     # Scores
     "StudentLearningOutcomeScoreViewSet",
     "StudentProgramOutcomeScoreViewSet",

@@ -10,6 +10,17 @@ router.register(r"programs", views.ProgramViewSet, basename="program")
 router.register(r"terms", views.TermViewSet, basename="term")
 router.register(r"courses", views.CourseViewSet, basename="course")
 router.register(r"program-outcomes", views.ProgramOutcomeViewSet, basename="program-outcome")
+router.register(r"course-templates", views.CourseTemplateViewSet, basename="course-template")
+router.register(
+    r"course-template-assessment-lo-mappings",
+    views.CourseTemplateAssessmentLOMappingViewSet,
+    basename="course-template-assessment-lo-mapping",
+)
+router.register(
+    r"course-template-lo-po-mappings",
+    views.CourseTemplateLOPOMappingViewSet,
+    basename="course-template-lo-po-mapping",
+)
 router.register(r"learning-outcomes", views.LearningOutcomeViewSet, basename="learning-outcome")
 router.register(r"lo-po-mappings", views.LearningOutcomeProgramOutcomeMappingViewSet, basename="lo-po-mapping")
 router.register(r"student-lo-scores", views.StudentLearningOutcomeScoreViewSet, basename="student-lo-score")

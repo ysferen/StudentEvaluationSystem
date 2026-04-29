@@ -532,11 +532,11 @@ class InstructorPermissionMixin(BasePermission):
     def has_permission(self, request: Request, view: ViewType) -> bool:
         user = request.user
 
-        if not user or not user.is_authenticated:
-            return False
-
         if request.method in SAFE_METHODS:
             return True
+
+        if not user or not user.is_authenticated:
+            return False
 
         if user.is_admin_user or user.is_program_head:
             return True
