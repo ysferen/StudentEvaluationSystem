@@ -27,12 +27,7 @@ const StudentDashboard = () => {
       },
       {
         queryKey: ['poScores', user?.id],
-        queryFn: () => {
-          if (!userId) {
-            throw new Error('User is required')
-          }
-          return coreStudentPoScoresList({ student: userId })
-        },
+        queryFn: () => coreStudentPoScoresList(),
         enabled: !!userId,
       },
       {
