@@ -25,13 +25,9 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
         if user.is_admin_user:
             return self.queryset
         if user.is_program_head:
-            return self.queryset.filter(
-                program_head__user=user
-            )
+            return self.queryset.filter(program_head__user=user)
         if user.is_instructor:
-            return self.queryset.filter(
-                instructor__user=user
-            )
+            return self.queryset.filter(instructor__user=user)
         return self.queryset.none()
 
     @action(detail=False, methods=["get"], url_path="my-permissions")
@@ -41,9 +37,7 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
                 {"detail": "Only instructors can view their permissions."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        perms = self.queryset.filter(
-            instructor__user=request.user
-        )
+        perms = self.queryset.filter(instructor__user=request.user)
         serializer = self.get_serializer(perms, many=True)
         return Response(serializer.data)
 
