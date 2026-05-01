@@ -24,6 +24,9 @@ def seeded(django_db_blocker):
 
     with django_db_blocker.unblock():
         call_command("seed_data", skip_students=True)
+    yield
+    with django_db_blocker.unblock():
+        call_command("flush", "--noinput")
 
 
 class TestSeedAcademicStructure:
