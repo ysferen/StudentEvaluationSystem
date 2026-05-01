@@ -454,15 +454,16 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
                 avg_result = lo_scores_query.aggregate(avg_score=Avg("score"))
                 avg_score = avg_result["avg_score"]
 
-                # Check if scores are in decimal format (0-1) and convert to percentage
-                # Assuming scores > 1 are already percentages
-                if avg_score is not None and avg_score <= 1:
-                    avg_score = avg_score * 100
+                # Scores are always stored and returned as percentages (0-100)
             else:
                 avg_score = None
 
             course_averages.append(
-                {"course_id": cid, "weighted_average": round(avg_score, 2) if avg_score is not None else None}
+                {
+                    "course_id": cid,
+                    "weighted_average": round(avg_score, 2) if avg_score is not None else None,
+                    "score_format": "percentage",
+                }
             )
 
         return Response(course_averages)
@@ -515,15 +516,14 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         result = []
         for item in lo_averages:
             avg_score = item["avg_score"]
-            # Convert to percentage if in decimal format
-            if avg_score is not None and avg_score <= 1:
-                avg_score = avg_score * 100
+            # Scores are always stored and returned as percentages (0-100)
 
             result.append(
                 {
                     "lo_code": item["learning_outcome__code"],
                     "lo_description": item["learning_outcome__description"],
                     "avg_score": round(avg_score, 2) if avg_score is not None else 0,
+                    "score_format": "percentage",
                 }
             )
 
