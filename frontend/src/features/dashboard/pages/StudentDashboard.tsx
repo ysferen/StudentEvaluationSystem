@@ -27,7 +27,12 @@ const StudentDashboard = () => {
       },
       {
         queryKey: ['poScores', user?.id],
-        queryFn: () => coreStudentPoScoresList(),
+        queryFn: () => {
+          if (!userId) {
+            throw new Error('User is required')
+          }
+          return coreStudentPoScoresList({ student: userId })
+        },
         enabled: !!userId,
       },
       {
@@ -61,9 +66,8 @@ const StudentDashboard = () => {
     return '-'
   }
 
-  // Check if scores are already in percentage (0-100) or decimal (0-1) format
-  const scoreMultiplier =
-    poScores.length > 0 && poScores[0].score !== undefined && poScores[0].score <= 1 ? 100 : 1
+  // Scores are always returned as percentages (0-100) by the backend
+  const scoreMultiplier = 1
 
   // Program Outcomes Radar Chart
   const poRadarData = useMemo(() => ({

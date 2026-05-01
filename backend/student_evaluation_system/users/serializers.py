@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
-from core.models import Department, Program, University
+from core.models import Department, Program, Term, University
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -72,14 +72,14 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     program = serializers.StringRelatedField(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), source="user", write_only=True)
     enrollment_term_id = serializers.PrimaryKeyRelatedField(
-        queryset=__import__("core.models", fromlist=["Term"]).Term.objects.all(),
+        queryset=Term.objects.all(),
         source="enrollment_term",
         write_only=True,
         required=False,
         allow_null=True,
     )
     program_id = serializers.PrimaryKeyRelatedField(
-        queryset=__import__("core.models", fromlist=["Program"]).Program.objects.all(),
+        queryset=Program.objects.all(),
         source="program",
         write_only=True,
         required=False,
