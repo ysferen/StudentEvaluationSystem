@@ -44,21 +44,25 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--clear", action="store_true", help="Clear existing data before seeding")
+        parser.add_argument("--skip-students", action="store_true", help="Skip student/grades/scores (steps 7-9)")
 
     def handle(self, *args, **options):
         start_time = time.time()
+        skip_students = options["skip_students"]
 
         if options["clear"]:
             self.stdout.write("Clearing existing data...")
             self.clear_data()
 
-        self.stdout.write(self.style.WARNING("\n=== Starting Data Seeding ===\n"))
+        step_count = "[6/6]" if skip_students else "[9/9]"
+        self.stdout.write(self.style.WARNING(f"\n=== Starting Data Seeding ({'light' if skip_students else 'full'}) ===\n"))
 
         self.create_superuser()
 
+        all_students = []
         with transaction.atomic():
             # ── Academic structure ──
-            self.stdout.write("\n[1/9] Creating academic structure...")
+            self.stdout.write(f"\n[1/{step_count}] Creating academic structure...")
             uni = University.objects.get_or_create(name="Acıbadem University")[0]
             dept = Department.objects.get_or_create(
                 name="Mühendislik ve Doğa Bilimleri Fakültesi", code="ENS", university=uni
@@ -71,27 +75,27 @@ class Command(BaseCommand):
             self.stdout.write(f"  ✓ {len(terms)} terms created")
 
             # ── Program head ──
-            self.stdout.write("\n[2/9] Creating program head...")
+            self.stdout.write(f"\n[2/{step_count}] Creating program head...")
             head_user, head_profile = self._create_program_head(program, uni, dept)
 
             # ── Instructors ──
-            self.stdout.write("\n[3/9] Creating instructors...")
+            self.stdout.write(f"\n[3/{step_count}] Creating instructors...")
             instructors = self._create_instructors(dept, uni)
             self._create_instructor_permissions(instructors, head_profile)
             self.stdout.write(f"  ✓ {len(instructors)} instructors with full permissions")
 
             # ── Course templates + instantiate into terms ──
-            self.stdout.write("\n[4/9] Creating CourseTemplates and instantiating courses...")
+            self.stdout.write(f"\n[4/{step_count}] Creating CourseTemplates and instantiating courses...")
             all_courses = self._build_curriculum(program, terms, instructors, head_user)
 
             # ── Program outcomes ──
-            self.stdout.write("\n[5/9] Creating program outcomes...")
+            self.stdout.write(f"\n[5/{step_count}] Creating program outcomes...")
             pos = []
             for term in terms:
                 pos.extend(self._create_program_outcomes(program, term, head_user))
 
             # ── LOs, assessments, mappings ──
-            self.stdout.write("\n[6/9] Creating learning outcomes, assessments, and mappings...")
+            self.stdout.write(f"\n[6/{step_count}] Creating learning outcomes, assessments, and mappings...")
             all_assessments = []
             for course in all_courses:
                 template = course.course_template
@@ -113,25 +117,24 @@ class Command(BaseCommand):
 
             self.stdout.write(f"  ✓ {len(all_assessments)} assessments mapped")
 
-            # ── Students (4 cohorts × 20) ──
-            self.stdout.write("\n[7/9] Creating students and enrollments...")
-            all_students = self._create_student_cohorts(dept, program, uni, terms, all_courses)
+            if not skip_students:
+                # ── Students (4 cohorts × 20) ──
+                self.stdout.write("\n[7/9] Creating students and enrollments...")
+                all_students = self._create_student_cohorts(dept, program, uni, terms, all_courses)
 
-            # ── Grades ──
-            self.stdout.write("\n[8/9] Generating grades...")
-            self._generate_student_grades(all_students, all_assessments)
+                # ── Grades ──
+                self.stdout.write("\n[8/9] Generating grades...")
+                self._generate_student_grades(all_students, all_assessments)
 
-            # ── Scores ──
-            self.stdout.write("\n[9/9] Calculating scores...")
-            self._calculate_all_scores(all_courses)
+                # ── Scores ──
+                self.stdout.write("\n[9/9] Calculating scores...")
+                self._calculate_all_scores(all_courses)
 
         total = time.time() - start_time
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"\n=== ✓ Done in {total:.1f}s — {len(all_students)} students, "
-                f"{len(all_courses)} courses, {len(all_assessments)} assessments ==="
-            )
-        )
+        summary_parts = [f"{len(all_courses)} courses", f"{len(all_assessments)} assessments"]
+        if all_students:
+            summary_parts.insert(0, f"{len(all_students)} students")
+        self.stdout.write(self.style.SUCCESS(f"\n=== ✓ Done in {total:.1f}s — {', '.join(summary_parts)} ==="))
 
     # ── helpers ──────────────────────────────────────────────────────
 

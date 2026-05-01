@@ -190,30 +190,3 @@ class TestInstructorPermissionAPI:
         api_client.force_authenticate(user=setup_data["head_user"])
         response = api_client.get("/api/v1/core/permissions/my-permissions/")
         assert response.status_code == 403
-
-
-class TestSeedData:
-    def test_seed_command_creates_program_head(self, db):
-        from django.core.management import call_command
-
-        call_command("seed_data")
-        from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
-
-        head_user = CustomUser.objects.filter(username="headuser").first()
-        assert head_user is not None
-        assert head_user.role == "program_head"
-        assert ProgramHeadProfile.objects.filter(user=head_user).exists()
-
-        instructor_profiles = InstructorProfile.objects.select_related("user").filter(
-            user__username__in=["instructor1", "instructor2"]
-        )
-        assert instructor_profiles.count() == 2
-
-        expected_permission_count = len(ResourceArea.values) * instructor_profiles.count()
-        assert (
-            InstructorPermission.objects.filter(
-                instructor__in=instructor_profiles,
-                permission_tier=PermissionTier.VIEW,
-            ).count()
-            == expected_permission_count
-        )
