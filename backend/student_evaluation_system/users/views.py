@@ -90,6 +90,7 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
 
     queryset = StudentProfile.objects.select_related("user", "enrollment_term", "program", "program__department").all()
     serializer_class = StudentProfileSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
