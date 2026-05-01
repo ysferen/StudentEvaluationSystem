@@ -424,7 +424,9 @@ class TestProgramHeadProfile:
         from users.models import CustomUser, ProgramHeadProfile
 
         program = setup_data["program"]
-        user = CustomUser.objects.create_user(username="head1", password="pass", role="program_head", department=program.department)
+        user = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
         profile = ProgramHeadProfile.objects.create(user=user, program=program)
         assert profile.user == user
         assert profile.program == program
@@ -435,7 +437,12 @@ class TestProgramHeadProfile:
 
         program = setup_data["program"]
         user = CustomUser.objects.create_user(
-            username="head1", password="pass", role="program_head", first_name="Jane", last_name="Doe", department=program.department
+            username="head1",
+            password="pass",
+            role="program_head",
+            first_name="Jane",
+            last_name="Doe",
+            department=program.department,
         )
         profile = ProgramHeadProfile.objects.create(user=user, program=program)
         assert "Jane" in str(profile)
@@ -456,9 +463,13 @@ class TestProgramHeadProfile:
         from django.db import IntegrityError
 
         program = setup_data["program"]
-        user1 = CustomUser.objects.create_user(username="head1", password="pass", role="program_head", department=program.department)
+        user1 = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
         ProgramHeadProfile.objects.create(user=user1, program=program)
-        user2 = CustomUser.objects.create_user(username="head2", password="pass", role="program_head", department=program.department)
+        user2 = CustomUser.objects.create_user(
+            username="head2", password="pass", role="program_head", department=program.department
+        )
         with pytest.raises(IntegrityError):
             ProgramHeadProfile.objects.create(user=user2, program=program)
 
@@ -466,7 +477,9 @@ class TestProgramHeadProfile:
         from users.models import CustomUser, ProgramHeadProfile
 
         program = setup_data["program"]
-        user = CustomUser.objects.create_user(username="head1", password="pass", role="program_head", department=program.department)
+        user = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
         profile = ProgramHeadProfile.objects.create(user=user, program=program)
         assert profile.created_at is not None
 
