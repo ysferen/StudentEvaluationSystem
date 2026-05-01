@@ -1,0 +1,64 @@
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+from core.models import Course, InstructorPermission, ResourceArea, PermissionTier
+
+
+# Resource areas where course instructors get full CRUD access (since they teach the course).
+COURSE_LEVEL_FULL_AREAS = [
+    ResourceArea.COURSES,
+    ResourceArea.LEARNING_OUTCOMES,
+    ResourceArea.LO_PO_WEIGHTS,
+    ResourceArea.ASSESSMENT_LO_WEIGHTS,
+    ResourceArea.ASSESSMENTS,
+    ResourceArea.COURSE_TEMPLATES,
+]
+
+# Resource areas where course instructors get view-only access.
+VIEW_ONLY_AREAS = [
+    ResourceArea.PROGRAMS,
+    ResourceArea.PROGRAM_OUTCOMES,
+    ResourceArea.STUDENTS,
+]
+
+
+def _ensure_permissions(instructor_profile, program_head):
+    for area in COURSE_LEVEL_FULL_AREAS:
+        InstructorPermission.objects.get_or_create(
+            instructor=instructor_profile,
+            program_head=program_head,
+            resource_area=area,
+            defaults={"permission_tier": PermissionTier.FULL},
+        )
+    for area in VIEW_ONLY_AREAS:
+        InstructorPermission.objects.get_or_create(
+            instructor=instructor_profile,
+            program_head=program_head,
+            resource_area=area,
+            defaults={"permission_tier": PermissionTier.VIEW},
+        )
+
+
+@receiver(m2m_changed, sender=Course.instructors.through)
+def create_instructor_permissions_on_course_add(sender, instance, action, pk_set, **kwargs):
+    if action != "post_add":
+        return
+
+    course = instance
+    if not course.program_id:
+        return
+
+    program_head = None
+    try:
+        program_head = course.program.program_head_profile
+    except Exception:
+        pass
+
+    from users.models import InstructorProfile
+
+    for user_id in pk_set:
+        try:
+            instructor_profile = InstructorProfile.objects.get(user_id=user_id)
+        except InstructorProfile.DoesNotExist:
+            continue
+        _ensure_permissions(instructor_profile, program_head)

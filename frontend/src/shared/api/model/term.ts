@@ -5,6 +5,7 @@
  * Outcome-based assessment system for academic programs
  * OpenAPI spec version: 1.0.0
  */
+import type { SemesterEnum } from './semesterEnum';
 
 /**
  * Serializer for Term (academic semester) model.
@@ -22,4 +23,12 @@ export interface Term {
    */
   name: string;
   is_active?: boolean;
+  /**
+   * The calendar year the academic year starts (e.g., 2024 for AY 2024-2025)
+   * @minimum -9223372036854776000
+   * @maximum 9223372036854776000
+   * @nullable
+   */
+  academic_year?: number | null;
+  semester?: SemesterEnum;
 }

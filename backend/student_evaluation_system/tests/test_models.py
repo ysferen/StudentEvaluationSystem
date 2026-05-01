@@ -381,3 +381,194 @@ class TestUserModelRelationships:
 
         assert po in user.created_program_outcomes.all()
         assert user == po.created_by
+
+
+@pytest.mark.django_db
+class TestProgramHeadRole:
+    def test_program_head_is_valid_role(self, db):
+        from users.models import CustomUser
+
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")
+        assert user.role == "program_head"
+
+    def test_is_program_head_property_returns_true(self, db):
+        from users.models import CustomUser
+
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")
+        assert user.is_program_head is True
+
+    def test_is_program_head_property_returns_false_for_other_roles(self, db):
+        from users.models import CustomUser
+
+        student = CustomUser.objects.create_user(username="studenttest", password="pass", role="student")
+        assert student.is_program_head is False
+        instructor = CustomUser.objects.create_user(username="instrtest", password="pass", role="instructor")
+        assert instructor.is_program_head is False
+        admin = CustomUser.objects.create_user(username="admintest", password="pass", role="admin")
+        assert admin.is_program_head is False
+
+
+@pytest.mark.django_db
+class TestProgramHeadProfile:
+    @pytest.fixture
+    def setup_data(self, db):
+        from core.models import University, Department, DegreeLevel, Program
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
+        return {"university": university, "department": dept, "program": program}
+
+    def test_create_program_head_profile(self, setup_data):
+        from users.models import CustomUser, ProgramHeadProfile
+
+        program = setup_data["program"]
+        user = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
+        profile = ProgramHeadProfile.objects.create(user=user, program=program)
+        assert profile.user == user
+        assert profile.program == program
+        assert profile.full_name == user.get_full_name() or user.username
+
+    def test_program_head_profile_str_representation(self, setup_data):
+        from users.models import CustomUser, ProgramHeadProfile
+
+        program = setup_data["program"]
+        user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="program_head",
+            first_name="Jane",
+            last_name="Doe",
+            department=program.department,
+        )
+        profile = ProgramHeadProfile.objects.create(user=user, program=program)
+        assert "Jane" in str(profile)
+        assert program.name in str(profile)
+
+    def test_program_head_profile_validates_role(self, setup_data):
+        from users.models import CustomUser, ProgramHeadProfile
+        from django.core.exceptions import ValidationError
+
+        program = setup_data["program"]
+        user = CustomUser.objects.create_user(username="not_head", password="pass", role="instructor")
+        profile = ProgramHeadProfile(user=user, program=program)
+        with pytest.raises(ValidationError):
+            profile.clean()
+
+    def test_one_head_per_program_enforced(self, setup_data):
+        from users.models import CustomUser, ProgramHeadProfile
+        from django.db import IntegrityError
+
+        program = setup_data["program"]
+        user1 = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
+        ProgramHeadProfile.objects.create(user=user1, program=program)
+        user2 = CustomUser.objects.create_user(
+            username="head2", password="pass", role="program_head", department=program.department
+        )
+        with pytest.raises(IntegrityError):
+            ProgramHeadProfile.objects.create(user=user2, program=program)
+
+    def test_program_head_profile_created_at_auto_set(self, setup_data):
+        from users.models import CustomUser, ProgramHeadProfile
+
+        program = setup_data["program"]
+        user = CustomUser.objects.create_user(
+            username="head1", password="pass", role="program_head", department=program.department
+        )
+        profile = ProgramHeadProfile.objects.create(user=user, program=program)
+        assert profile.created_at is not None
+
+
+@pytest.mark.django_db
+class TestInstructorPermission:
+    @pytest.fixture
+    def setup_profiles(self, db):
+        from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
+        from core.models import University, Department, DegreeLevel, Program
+
+        university = University.objects.create(name="Test Uni")
+        dept = Department.objects.create(name="Test Dept", code="TD", university=university)
+        degree = DegreeLevel.objects.create(name="Bachelor")
+        program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
+        instr_user = CustomUser.objects.create_user(username="instr1", password="pass", role="instructor")
+        instr_profile = InstructorProfile.objects.create(user=instr_user, title="Prof")
+        head_user = CustomUser.objects.create_user(
+            username="head1",
+            password="pass",
+            role="program_head",
+            department=dept,
+        )
+        head_profile = ProgramHeadProfile.objects.create(user=head_user, program=program)
+        return {
+            "program": program,
+            "instructor_profile": instr_profile,
+            "head_profile": head_profile,
+        }
+
+    def test_create_instructor_permission(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            program_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        assert perm.resource_area == "courses"
+        assert perm.permission_tier == "edit"
+
+    def test_default_permission_tier_is_view(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            program_head=setup_profiles["head_profile"],
+            resource_area="programs",
+        )
+        assert perm.permission_tier == "view"
+
+    def test_unique_together_instructor_resource_area(self, setup_profiles):
+        from core.models import InstructorPermission
+        from django.db import IntegrityError
+
+        InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            program_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        with pytest.raises(IntegrityError):
+            InstructorPermission.objects.create(
+                instructor=setup_profiles["instructor_profile"],
+                program_head=setup_profiles["head_profile"],
+                resource_area="courses",
+                permission_tier="full",
+            )
+
+    def test_all_resource_areas_are_valid(self, setup_profiles):
+        from core.models import ResourceArea, InstructorPermission
+
+        for area in ResourceArea.values:
+            InstructorPermission.objects.create(
+                instructor=setup_profiles["instructor_profile"],
+                program_head=setup_profiles["head_profile"],
+                resource_area=area,
+            )
+            assert InstructorPermission.objects.filter(resource_area=area).exists()
+            InstructorPermission.objects.filter(resource_area=area).delete()
+
+    def test_str_representation(self, setup_profiles):
+        from core.models import InstructorPermission
+
+        perm = InstructorPermission.objects.create(
+            instructor=setup_profiles["instructor_profile"],
+            program_head=setup_profiles["head_profile"],
+            resource_area="courses",
+            permission_tier="edit",
+        )
+        assert "courses" in str(perm).lower() or "Courses" in str(perm)

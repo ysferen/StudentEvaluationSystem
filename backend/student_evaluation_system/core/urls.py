@@ -10,6 +10,17 @@ router.register(r"programs", views.ProgramViewSet, basename="program")
 router.register(r"terms", views.TermViewSet, basename="term")
 router.register(r"courses", views.CourseViewSet, basename="course")
 router.register(r"program-outcomes", views.ProgramOutcomeViewSet, basename="program-outcome")
+router.register(r"course-templates", views.CourseTemplateViewSet, basename="course-template")
+router.register(
+    r"course-template-assessment-lo-mappings",
+    views.CourseTemplateAssessmentLOMappingViewSet,
+    basename="course-template-assessment-lo-mapping",
+)
+router.register(
+    r"course-template-lo-po-mappings",
+    views.CourseTemplateLOPOMappingViewSet,
+    basename="course-template-lo-po-mapping",
+)
 router.register(r"learning-outcomes", views.LearningOutcomeViewSet, basename="learning-outcome")
 router.register(r"lo-po-mappings", views.LearningOutcomeProgramOutcomeMappingViewSet, basename="lo-po-mapping")
 router.register(r"student-lo-scores", views.StudentLearningOutcomeScoreViewSet, basename="student-lo-score")
@@ -21,9 +32,11 @@ router.register(
     r"file-import/learning-outcomes", views.LearningOutcomesImportViewSet, basename="file-import-learning-outcomes"
 )
 router.register(r"file-import/program-outcomes", views.ProgramOutcomesImportViewSet, basename="file-import-program-outcomes")
+router.register(r"permissions", views.InstructorPermissionViewSet, basename="instructor-permission")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("analytics/program-stats/", views.ProgramStatsView.as_view(), name="program-stats"),
     # Legacy endpoints for backward compatibility
     path("students/", views.StudentListView.as_view(), name="student-list-legacy"),
     path("students/<int:pk>/", views.StudentDetailView.as_view(), name="student-detail-legacy"),

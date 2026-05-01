@@ -6,11 +6,17 @@ from .models import (
     University,
     ProgramOutcome,
     Course,
+    CourseTemplate,
+    CourseTemplateAssessment,
+    CourseTemplateAssessmentLOMapping,
+    CourseTemplateLearningOutcome,
+    CourseTemplateLOPOMapping,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     DegreeLevel,
     StudentLearningOutcomeScore,
     StudentProgramOutcomeScore,
+    InstructorPermission,
 )
 
 
@@ -93,3 +99,43 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ["code", "name"]
     filter_horizontal = ["instructors"]
     inlines = [LearningOutcomeProgramOutcomeMappingInline]
+
+
+@admin.register(InstructorPermission)
+class InstructorPermissionAdmin(admin.ModelAdmin):
+    list_display = ("instructor", "resource_area", "permission_tier", "program_head")
+    list_filter = ("resource_area", "permission_tier")
+    search_fields = ("instructor__user__username", "instructor__user__first_name", "instructor__user__last_name")
+
+
+@admin.register(CourseTemplate)
+class CourseTemplateAdmin(admin.ModelAdmin):
+    list_display = ["code", "name", "credits", "program"]
+    list_filter = ["program"]
+    search_fields = ["code", "name"]
+
+
+@admin.register(CourseTemplateLearningOutcome)
+class CourseTemplateLearningOutcomeAdmin(admin.ModelAdmin):
+    list_display = ["code", "description", "course_template"]
+    list_filter = ["course_template__program"]
+    search_fields = ["code", "description"]
+
+
+@admin.register(CourseTemplateAssessment)
+class CourseTemplateAssessmentAdmin(admin.ModelAdmin):
+    list_display = ["name", "assessment_type", "total_score", "weight", "course_template"]
+    list_filter = ["assessment_type", "course_template"]
+    search_fields = ["name"]
+
+
+@admin.register(CourseTemplateAssessmentLOMapping)
+class CourseTemplateAssessmentLOMappingAdmin(admin.ModelAdmin):
+    list_display = ["template_assessment", "template_learning_outcome", "weight"]
+    list_filter = ["template_assessment__course_template"]
+
+
+@admin.register(CourseTemplateLOPOMapping)
+class CourseTemplateLOPOMappingAdmin(admin.ModelAdmin):
+    list_display = ["template_learning_outcome", "program_outcome", "weight"]
+    list_filter = ["template_learning_outcome__course_template"]

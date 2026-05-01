@@ -51,15 +51,15 @@ export const coreStudentLoScoresList = (
     params?: CoreStudentLoScoresListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<PaginatedStudentLearningOutcomeScoreList>(
       {url: `/api/core/student-lo-scores/`, method: 'GET',
         params, signal
     },
       options);
     }
-
+  
 
 
 
@@ -75,7 +75,7 @@ export const getCoreStudentLoScoresListQueryKey = (params?: CoreStudentLoScoresL
     ] as const;
     }
 
-
+    
 export const getCoreStudentLoScoresListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -83,13 +83,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresListInfiniteQueryKey(params);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresList>>, QueryKey, CoreStudentLoScoresListParams['page']> = ({ signal, pageParam }) => coreStudentLoScoresList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -125,7 +125,7 @@ export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<
 
 export function useCoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresList>>, CoreStudentLoScoresListParams['page']>, TError = unknown>(
  params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData, QueryKey, CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresListInfiniteQueryOptions(params,options)
@@ -147,13 +147,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresListQueryKey(params);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresList>>> = ({ signal }) => coreStudentLoScoresList(params, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -189,7 +189,7 @@ export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof cor
 
 export function useCoreStudentLoScoresList<TData = Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError = unknown>(
  params?: CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresListQueryOptions(params,options)
@@ -216,14 +216,14 @@ export const coreStudentLoScoresRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<StudentLearningOutcomeScore>(
       {url: `/api/core/student-lo-scores/${id}/`, method: 'GET', signal
     },
       options);
     }
-
+  
 
 
 
@@ -239,7 +239,7 @@ export const getCoreStudentLoScoresRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-
+    
 export const getCoreStudentLoScoresRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -247,13 +247,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresRetrieveInfiniteQueryKey(id);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>> = ({ signal }) => coreStudentLoScoresRetrieve(id, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -289,7 +289,7 @@ export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awai
 
 export function useCoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresRetrieveInfiniteQueryOptions(id,options)
@@ -311,13 +311,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresRetrieveQueryKey(id);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>> = ({ signal }) => coreStudentLoScoresRetrieve(id, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -353,7 +353,7 @@ export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof
 
 export function useCoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresRetrieveQueryOptions(id,options)
@@ -380,15 +380,15 @@ export const v1CoreStudentLoScoresList = (
     params?: V1CoreStudentLoScoresListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<PaginatedStudentLearningOutcomeScoreList>(
       {url: `/api/v1/core/student-lo-scores/`, method: 'GET',
         params, signal
     },
       options);
     }
-
+  
 
 
 
@@ -404,7 +404,7 @@ export const getV1CoreStudentLoScoresListQueryKey = (params?: V1CoreStudentLoSco
     ] as const;
     }
 
-
+    
 export const getV1CoreStudentLoScoresListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, V1CoreStudentLoScoresListParams['page']>, TError = unknown>(params?: V1CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError, TData, QueryKey, V1CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -412,13 +412,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentLoScoresListInfiniteQueryKey(params);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, QueryKey, V1CoreStudentLoScoresListParams['page']> = ({ signal, pageParam }) => v1CoreStudentLoScoresList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError, TData, QueryKey, V1CoreStudentLoScoresListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -454,7 +454,7 @@ export function useV1CoreStudentLoScoresListInfinite<TData = InfiniteData<Awaite
 
 export function useV1CoreStudentLoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, V1CoreStudentLoScoresListParams['page']>, TError = unknown>(
  params?: V1CoreStudentLoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError, TData, QueryKey, V1CoreStudentLoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1CoreStudentLoScoresListInfiniteQueryOptions(params,options)
@@ -476,13 +476,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentLoScoresListQueryKey(params);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>> = ({ signal }) => v1CoreStudentLoScoresList(params, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -518,7 +518,7 @@ export function useV1CoreStudentLoScoresList<TData = Awaited<ReturnType<typeof v
 
 export function useV1CoreStudentLoScoresList<TData = Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError = unknown>(
  params?: V1CoreStudentLoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1CoreStudentLoScoresListQueryOptions(params,options)
@@ -545,14 +545,14 @@ export const v1CoreStudentLoScoresRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<StudentLearningOutcomeScore>(
       {url: `/api/v1/core/student-lo-scores/${id}/`, method: 'GET', signal
     },
       options);
     }
-
+  
 
 
 
@@ -568,7 +568,7 @@ export const getV1CoreStudentLoScoresRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-
+    
 export const getV1CoreStudentLoScoresRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -576,13 +576,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentLoScoresRetrieveInfiniteQueryKey(id);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>> = ({ signal }) => v1CoreStudentLoScoresRetrieve(id, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -618,7 +618,7 @@ export function useV1CoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Aw
 
 export function useV1CoreStudentLoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1CoreStudentLoScoresRetrieveInfiniteQueryOptions(id,options)
@@ -640,13 +640,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentLoScoresRetrieveQueryKey(id);
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>> = ({ signal }) => v1CoreStudentLoScoresRetrieve(id, requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -682,7 +682,7 @@ export function useV1CoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<type
 
 export function useV1CoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentLoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1CoreStudentLoScoresRetrieveQueryOptions(id,options)
@@ -693,3 +693,7 @@ export function useV1CoreStudentLoScoresRetrieve<TData = Awaited<ReturnType<type
 
   return query;
 }
+
+
+
+

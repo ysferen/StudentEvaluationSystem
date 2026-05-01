@@ -20,6 +20,10 @@ instructor?: number;
  */
 page?: number;
 /**
+ * Filter courses by program ID
+ */
+program?: number;
+/**
  * Filter courses by term ID
  */
 term?: number;

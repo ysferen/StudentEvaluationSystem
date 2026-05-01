@@ -9,6 +9,7 @@ const StudentDashboardPage = lazy(() => import('./features/dashboard/pages/Stude
 const StudentCourseDetailPage = lazy(() => import('./features/courses/pages/StudentCourseDetail'))
 const InstructorDashboardPage = lazy(() => import('./features/dashboard/pages/InstructorDashboard'))
 const HeadDashboardPage = lazy(() => import('./features/dashboard/pages/HeadDashboard'))
+const HeadPermissionsPage = lazy(() => import('./features/dashboard/pages/HeadPermissionsPage'))
 const StudentCoursesPage = lazy(() => import('./features/courses/pages/StudentCourses'))
 const InstructorCoursesPage = lazy(() => import('./features/courses/pages/InstructorCourses'))
 const HeadCoursesPage = lazy(() => import('./features/courses/pages/HeadCourses'))
@@ -56,6 +57,7 @@ function App() {
       <Route path="/head" element={<Layout showOnlyCoreItems={true} />}>
         <Route index element={<HeadDashboardPage />} />
         <Route path="courses" element={<HeadCoursesPage />} />
+        <Route path="permissions" element={<HeadPermissionsPage />} />
       </Route>
       <Route path="/head/course/:id" element={<Layout showOnlyCoreItems={false} />}>
         <Route index element={<CourseDetailPage />} />

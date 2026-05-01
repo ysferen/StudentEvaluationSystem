@@ -8,9 +8,10 @@ class CustomUser(AbstractUser):
         ("guest", "Guest"),
         ("student", "Student"),
         ("instructor", "Instructor"),
+        ("program_head", "Program Head"),
         ("admin", "Admin"),
     )
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="guest")
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default="guest")
     department = models.ForeignKey("core.Department", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
     university = models.ForeignKey("core.University", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
 
@@ -33,6 +34,11 @@ class CustomUser(AbstractUser):
     def is_admin_user(self):
         """Check if user has admin role."""
         return self.role == "admin"
+
+    @property
+    def is_program_head(self):
+        """Check if user has program_head role."""
+        return self.role == "program_head"
 
     def __str__(self):
         full_name = self.get_full_name()
@@ -99,3 +105,35 @@ class InstructorProfile(models.Model):
         if self.title:
             return f"{self.title} {name}"
         return name
+
+
+class ProgramHeadProfile(models.Model):
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="program_head_profile",
+        db_index=True,
+    )
+    program = models.OneToOneField(
+        "core.Program",
+        on_delete=models.CASCADE,
+        related_name="program_head_profile",
+        unique=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Program Head Profile"
+        verbose_name_plural = "Program Head Profiles"
+
+    def clean(self):
+        super().clean()
+        if self.user.role != "program_head":
+            raise ValidationError({"user": "User must have program_head role"})
+
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.username
+
+    def __str__(self):
+        return f"{self.full_name} - {self.program.name}"

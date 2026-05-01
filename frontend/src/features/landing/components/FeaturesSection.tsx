@@ -29,7 +29,7 @@ const features = [
   {
     icon: UserGroupIcon,
     title: 'Multi-Role Access',
-    description: 'Tailored views for students, instructors, and department heads — one system, three perspectives.',
+    description: 'Tailored views for students, instructors, and program heads — one system, three perspectives.',
     accent: 'pink',
   },
   {

@@ -5,7 +5,7 @@ These permissions implement role-based access control (RBAC) ensuring:
 - Students can only access their own data
 - Instructors can only access their course data
 - Admins have full access
-- Department heads can access department-level data
+- Program heads can access program-level data
 
 All permission classes follow DRF's BasePermission interface with
 has_permission() for view-level checks and has_object_permission()
@@ -20,6 +20,23 @@ from typing import Any
 
 # Type alias for view type
 ViewType = APIView
+
+
+def get_instructor_permission_tier(user, resource_area: str) -> str:
+    """
+    Get the permission tier for an instructor user for a given resource area.
+    Returns 'view' if no permission row exists (default).
+    Returns 'full' if user is not an instructor (admin/head).
+    """
+    if user.is_admin_user or user.is_program_head:
+        return "full"
+    if not user.is_instructor:
+        return "view"
+    try:
+        perm = user.instructor_profile.permissions.get(resource_area=resource_area)
+        return perm.permission_tier
+    except Exception:
+        return "view"
 
 
 class IsAdmin(BasePermission):
@@ -335,33 +352,65 @@ class IsInstructorOrAdmin(BasePermission):
         return request.user.is_instructor or request.user.is_admin_user
 
 
-class IsDepartmentHead(BasePermission):
+class IsProgramHead(BasePermission):
     """
-    Allow access to department heads.
+    Allow access to program heads.
 
-    Can access all courses and data within their department.
-
-    Note:
-        Currently treats admins as department heads. Future enhancement
-        could add a dedicated 'department_head' role to the user model.
+    Can access all courses and data within their program.
+    Requires the user to have the 'program_head' role.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
-        """
-        Check if user is a department head (currently admin).
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return False
+        return user.is_program_head
 
-        Args:
-            request: The incoming request
-            view: The view being accessed
+    def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return False
+        if not user.is_program_head:
+            return False
+        program_head_profile = getattr(user, "program_head_profile", None)
+        if program_head_profile is None:
+            return False
+        from core.models import Program
 
-        Returns:
-            True if user is authenticated admin
-        """
+        if isinstance(obj, Program):
+            return obj.id == program_head_profile.program_id
+        obj_program = getattr(obj, "program", None)
+        if obj_program is None:
+            return True
+        return program_head_profile.program_id == obj_program.id
+
+
+class IsAdminOrProgramHead(BasePermission):
+    """
+    Allow access to admins or program heads.
+
+    Admins have system-wide access. Program heads have
+    access scoped to their program.
+    """
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return False
+        return user.is_admin_user or user.is_program_head
+
+
+class IsAdminOrProgramHeadOrReadOnly(BasePermission):
+    """
+    Allow read access to anyone, but write access only to admins or program heads.
+    """
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        if request.method in SAFE_METHODS:
+            return True
         if not request.user or not request.user.is_authenticated:
             return False
-        # For now, treat admins as department heads
-        # In future, could add a 'department_head' role
-        return request.user.is_admin_user
+        return request.user.is_admin_user or request.user.is_program_head
 
 
 class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):
@@ -437,7 +486,6 @@ class CanAccessStudentData(BasePermission):
         # Get student from object
         student = getattr(obj, "student", None)
         if not student and hasattr(obj, "user"):
-            # Object might be the student profile itself
             student = obj
 
         if not student:
@@ -458,4 +506,57 @@ class CanAccessStudentData(BasePermission):
             student_user = getattr(student, "user", student)
             return CourseEnrollment.objects.filter(student=student_user, course_id__in=instructor_course_ids).exists()
 
+        return False
+
+
+class InstructorPermissionMixin(BasePermission):
+    """
+    Permission mixin that checks instructor permission tiers for write access.
+
+    On SAFE_METHODS (GET, HEAD, OPTIONS): allows all authenticated users.
+    On write: checks get_instructor_permission_tier(user, resource_area) against a mapping:
+      - POST/DELETE → requires 'full' tier
+      - PUT/PATCH → requires 'edit' or 'full' tier
+    Admin/department_head always pass.
+    """
+
+    resource_area = None
+
+    TIER_MAP = {
+        "create": "full",
+        "destroy": "full",
+        "update": "edit",
+        "partial_update": "edit",
+    }
+
+    def has_permission(self, request: Request, view: ViewType) -> bool:
+        user = request.user
+
+        if request.method in SAFE_METHODS:
+            return True
+
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.is_admin_user or user.is_program_head:
+            return True
+
+        resource_area = getattr(self, "resource_area", None)
+        if resource_area is None:
+            resource_area = getattr(view, "resource_area", None)
+        if resource_area is None:
+            return False
+
+        action = getattr(view, "action", None)
+        required_tier = self.TIER_MAP.get(action)
+
+        if required_tier is None:
+            return False
+
+        tier = get_instructor_permission_tier(user, resource_area)
+
+        if required_tier == "full":
+            return tier == "full"
+        elif required_tier == "edit":
+            return tier in ("edit", "full")
         return False

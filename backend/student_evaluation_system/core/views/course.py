@@ -17,6 +17,7 @@ from drf_spectacular.types import OpenApiTypes
 
 from ..models import (
     Course,
+    Program,
     ProgramOutcome,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
@@ -27,7 +28,7 @@ from ..serializers import (
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
 )
-from ..permissions import IsAdminOrReadOnly
+from ..permissions import InstructorPermissionMixin
 
 
 @extend_schema_view(
@@ -48,6 +49,12 @@ from ..permissions import IsAdminOrReadOnly
                 location=OpenApiParameter.QUERY,
                 description="Filter courses by instructor ID",
             ),
+            OpenApiParameter(
+                name="program",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter courses by program ID",
+            ),
         ]
     )
 )
@@ -62,7 +69,8 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     queryset = Course.objects.select_related("program", "term").prefetch_related("instructors").all()
     serializer_class = CourseSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "courses"
 
     def get_permissions(self):
         """
@@ -93,6 +101,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
                 enrolled_course_ids = CourseEnrollment.objects.filter(student=user).values_list("course_id", flat=True)
                 queryset = queryset.filter(id__in=enrolled_course_ids)
+            elif hasattr(user, "program_head_profile"):
+                programs = Program.objects.filter(pk=user.program_head_profile.program_id)
+                queryset = queryset.filter(program__in=programs)
             else:
                 queryset = queryset.none()
 
@@ -100,6 +111,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         department_id = self.request.query_params.get("department", None)
         term_id = self.request.query_params.get("term", None)
         instructor_id = self.request.query_params.get("instructor", None)
+        program_id = self.request.query_params.get("program", None)
 
         if department_id:
             queryset = queryset.filter(program__department_id=department_id)
@@ -107,6 +119,8 @@ class CourseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(term_id=term_id)
         if instructor_id:
             queryset = queryset.filter(instructors__id=instructor_id)
+        if program_id:
+            queryset = queryset.filter(program_id=program_id)
 
         return queryset.distinct()
 
@@ -148,7 +162,8 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = ProgramOutcome.objects.select_related("program", "term", "created_by").all()
     serializer_class = ProgramOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "program_outcomes"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -183,7 +198,8 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = LearningOutcome.objects.select_related("course", "created_by").all()
     serializer_class = CoreLearningOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "learning_outcomes"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -202,4 +218,5 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         "learning_outcome", "program_outcome", "course"
     ).all()
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
-    permission_classes = [AllowAny, IsAdminOrReadOnly]
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "lo_po_weights"

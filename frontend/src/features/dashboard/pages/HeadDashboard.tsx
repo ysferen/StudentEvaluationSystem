@@ -1,57 +1,29 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
 import {
-  BuildingOfficeIcon,
   UserGroupIcon,
   BookOpenIcon,
   ChartBarIcon,
-  ArrowDownTrayIcon,
-  DocumentIcon
 } from '@heroicons/react/24/outline'
-import { coreProgramsList } from '../../../shared/api/generated/core/core'
-import type { Program } from '../../../shared/api/model'
+import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 
 const HeadDashboard = () => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['programs'],
-    queryFn: () => coreProgramsList({}),
-  })
+  const { data: statsData, isLoading } = useCoreAnalyticsProgramStatsRetrieve()
 
-  const programs = useMemo(() => data?.results || [], [data])
-  const loading = isLoading
+  const programs = useMemo(() => statsData?.programs || [], [statsData])
 
-  // Mock data for Program Performance (replace with real API call later)
-  const programPerformance = {
-    series: [{
-      name: 'Average GPA',
-      data: [3.2, 2.9, 3.4, 3.1]
-    }],
-    options: {
-      xaxis: {
-        categories: programs.map((p: Program) => p.code) // Use real program codes
-      },
-      colors: ['#0ea5e9']
-    }
-  }
+  const totalStudents = useMemo(() => programs.reduce((sum, p) => sum + p.total_students, 0), [programs])
+  const totalCourses = useMemo(() => programs.reduce((sum, p) => sum + p.total_courses, 0), [programs])
+  const overallAvg = useMemo(() => {
+    const scored = programs.filter(p => p.avg_score !== null)
+    if (scored.length === 0) return null
+    return scored.reduce((sum, p) => sum + (p.avg_score ?? 0), 0) / scored.length
+  }, [programs])
 
-  // Mock data for Enrollment Trends (replace with real API call later)
-  const enrollmentTrends = {
-    series: [{
-      name: 'Students',
-      data: [320, 342, 355, 380, 410]
-    }],
-    options: {
-      xaxis: {
-        categories: ['2021', '2022', '2023', '2024', '2025']
-      },
-      stroke: { curve: 'smooth' as const },
-      colors: ['#8b5cf6']
-    }
-  }
+  const yearLevelBreakdown = useMemo(() => statsData?.year_level_breakdown || [], [statsData])
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>
   }
 
@@ -60,15 +32,15 @@ const HeadDashboard = () => {
       {/* Welcome Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 p-8 text-white shadow-lg">
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold mb-2">Department Overview</h1>
-          <p className="text-sky-100 text-lg">Computer Science & Engineering Department</p>
+          <h1 className="text-3xl font-bold mb-2">Program Overview</h1>
+          <p className="text-sky-100 text-lg">Program Dashboard</p>
         </div>
         <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-right" />
         <div className="absolute right-20 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-bottom-right" />
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-sky-100 rounded-xl">
@@ -76,29 +48,18 @@ const HeadDashboard = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Students</p>
-              <p className="text-3xl font-bold text-secondary-900">410</p>
+              <p className="text-3xl font-bold text-secondary-900">{totalStudents}</p>
             </div>
           </div>
         </Card>
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-indigo-100 rounded-xl">
-              <BuildingOfficeIcon className="h-8 w-8 text-indigo-600" />
+              <BookOpenIcon className="h-8 w-8 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Faculty Members</p>
-              <p className="text-3xl font-bold text-secondary-900">24</p>
-            </div>
-          </div>
-        </Card>
-        <Card variant="flat" className="bg-white border-secondary-200">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-fuchsia-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-fuchsia-600" />
-            </div>
-            <div>
-              <p className="text-sm text-secondary-600 font-medium">Active Programs</p>
-              <p className="text-3xl font-bold text-secondary-900">{programs.length}</p>
+              <p className="text-sm text-secondary-600 font-medium">Total Courses</p>
+              <p className="text-3xl font-bold text-secondary-900">{totalCourses}</p>
             </div>
           </div>
         </Card>
@@ -108,8 +69,10 @@ const HeadDashboard = () => {
               <ChartBarIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Dept. Avg GPA</p>
-              <p className="text-3xl font-bold text-secondary-900">3.15</p>
+              <p className="text-sm text-secondary-600 font-medium">Program Avg GPA</p>
+              <p className="text-3xl font-bold text-secondary-900">
+                {overallAvg !== null ? overallAvg.toFixed(2) : 'N/A'}
+              </p>
             </div>
           </div>
         </Card>
@@ -118,53 +81,36 @@ const HeadDashboard = () => {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <ChartWidget
-          title="Program Performance"
-          subtitle="Average GPA by Program"
-          type="bar"
-          series={programPerformance.series}
-          options={programPerformance.options}
+          title="Year-Level Breakdown"
+          subtitle="Student distribution by year"
+          type="pie"
+          series={yearLevelBreakdown.map(y => y.student_count)}
+          options={{
+            labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length),
+            colors: ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981'],
+          }}
         />
         <ChartWidget
-          title="Enrollment Trends"
-          subtitle="Year-over-year student enrollment"
-          type="line"
-          series={enrollmentTrends.series}
-          options={enrollmentTrends.options}
+          title="Score Averages by Year"
+          subtitle="Average program outcome score per year level"
+          type="bar"
+          series={[{
+            name: 'Avg Score',
+            data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
+          }]}
+          options={{
+            xaxis: {
+              categories: ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length),
+            },
+            colors: ['#8b5cf6'],
+            yaxis: {
+              min: 0,
+              max: 100,
+            },
+          }}
         />
       </div>
 
-      {/* Reports Section */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-secondary-900">Department Reports</h2>
-          <button className="text-sky-600 hover:text-sky-700 font-medium text-sm">View All Reports</button>
-        </div>
-        <div className="space-y-4">
-          {[
-            { name: 'Fall 2025 Accreditation Report', type: 'PDF', size: '2.4 MB', date: 'Nov 20, 2025' },
-            { name: 'Faculty Evaluation Summary', type: 'Excel', size: '1.1 MB', date: 'Nov 15, 2025' },
-            { name: 'Student Outcome Assessment', type: 'PDF', size: '3.8 MB', date: 'Nov 10, 2025' },
-          ].map((report, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-secondary-50 rounded-xl hover:bg-secondary-100 transition-colors group cursor-pointer">
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                  <DocumentIcon className="h-6 w-6 text-secondary-500 group-hover:text-sky-600 transition-colors" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-secondary-900">{report.name}</h4>
-                  <p className="text-sm text-secondary-500">{report.type} • {report.size}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-secondary-500">{report.date}</span>
-                <button className="p-2 text-secondary-400 hover:text-sky-600 transition-colors">
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   )
 }

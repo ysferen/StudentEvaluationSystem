@@ -7,12 +7,14 @@ import {
     ChartBarIcon,
     UsersIcon,
     Cog6ToothIcon,
-
     ClipboardDocumentListIcon,
     ChartPieIcon,
     ShieldCheckIcon,
+    BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
+
+type Role = 'student' | 'instructor' | 'program_head' | 'admin' | 'guest'
 
 interface SidebarProps {
     isOpen: boolean
@@ -24,60 +26,51 @@ interface NavItem {
     name: string
     href: string
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-    roles?: string[]
+}
+
+const roleConfig: Record<Role, NavItem[]> = {
+    student: [
+        { name: 'Analytics', href: '/student/analytics', icon: ChartBarIcon },
+        { name: 'Assignments', href: '/student/assignments', icon: ClipboardDocumentListIcon },
+        { name: 'Outcomes', href: '/student/outcomes', icon: ChartPieIcon },
+    ],
+    instructor: [
+        { name: 'Assessments', href: '/instructor/assessments', icon: DocumentTextIcon },
+        { name: 'Outcomes', href: '/instructor/outcomes', icon: ChartBarIcon },
+        { name: 'Students', href: '/instructor/students', icon: UsersIcon },
+        { name: 'Analytics', href: '/instructor/analytics', icon: ChartBarIcon },
+    ],
+    program_head: [
+        { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
+        { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
+        { name: 'Students', href: '/head/students', icon: UsersIcon },
+        { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+        { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+        { name: 'My Department', href: '/head/analytics', icon: BuildingOfficeIcon },
+    ],
+    admin: [
+        { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
+        { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
+        { name: 'Students', href: '/head/students', icon: UsersIcon },
+        { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+        { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+        { name: 'All Departments', href: '/head/analytics', icon: BuildingOfficeIcon },
+    ],
+    guest: [],
 }
 
 const getNavigationForRole = (role: string | null): NavItem[] => {
-    if (!role) {
-        return [
-            { name: 'Dashboard', href: '/', icon: HomeIcon },
-        ]
-    }
-
-    const baseNavigation: NavItem[] = []
-
-    if (role === 'student') {
-        return [
-            ...baseNavigation,
-            { name: 'Analytics', href: `/${role}/analytics`, icon: ChartBarIcon, roles: ['student'] },
-            { name: 'Assignments', href: `/${role}/assignments`, icon: ClipboardDocumentListIcon, roles: ['student'] },
-            { name: 'Outcomes', href: `/${role}/outcomes`, icon: ChartPieIcon, roles: ['student'] },
-        ]
-    }
-
-    if (role === 'instructor') {
-        return [
-            ...baseNavigation,
-            { name: 'Assessments', href: `/${role}/assessments`, icon: DocumentTextIcon, roles: ['instructor'] },
-            { name: 'Outcomes', href: `/${role}/outcomes`, icon: ChartBarIcon, roles: ['instructor'] },
-            { name: 'Students', href: `/${role}/students`, icon: UsersIcon, roles: ['instructor'] },
-            { name: 'Analytics', href: `/${role}/analytics`, icon: ChartBarIcon, roles: ['instructor'] },
-        ]
-    }
-
-    if (role === 'admin' || role === 'head') {
-        return [
-            ...baseNavigation,
-            { name: 'Assessments', href: `/${role}/assessments`, icon: DocumentTextIcon, roles: ['admin', 'head'] },
-            { name: 'Outcomes', href: `/${role}/outcomes`, icon: ChartBarIcon, roles: ['admin', 'head'] },
-            { name: 'Students', href: `/${role}/students`, icon: UsersIcon, roles: ['admin', 'head'] },
-            { name: 'Analytics', href: `/${role}/analytics`, icon: ChartBarIcon, roles: ['admin', 'head'] },
-        ]
-    }
-
-    return baseNavigation
+    if (!role) return [{ name: 'Dashboard', href: '/', icon: HomeIcon }]
+    return roleConfig[role as Role] ?? []
 }
 
 export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: SidebarProps) => {
     const { user } = useAuth()
     const location = useLocation()
-    // const navigate = useNavigate() // Available for future use
 
     let navigation: NavItem[] = []
     navigation = showOnlyCoreItems ? [] : getNavigationForRole(user?.role || null)
 
-    // Add a global Settings nav item for authenticated users,
-    // but when inside settings/security show the focused account/security sidebar
     const inAccountArea = location.pathname.startsWith('/settings') || location.pathname.startsWith('/security')
     if (inAccountArea) {
         navigation = [
@@ -90,7 +83,6 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
             navigation.push({ name: 'Settings', href: '/settings', icon: Cog6ToothIcon })
         }
     }
-
 
     return (
         <>
@@ -112,9 +104,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
                     {/* Navigation */}
                     <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-0">
                         {navigation.map((item: NavItem) => {
-                            // Check if this is a hash link (for student course detail)
                             const isHashLink = item.href.startsWith('#')
-                            // For hash links, check against window.location.hash
                             const isActive = isHashLink
                                 ? window.location.hash === item.href
                                 : location.pathname === item.href

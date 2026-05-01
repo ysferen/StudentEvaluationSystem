@@ -24,4 +24,10 @@ export interface Program {
   code: string;
   department: number;
   degree_level: number;
+  /**
+   * Program duration in years, used to cap year-level calculations
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  duration_years?: number;
 }

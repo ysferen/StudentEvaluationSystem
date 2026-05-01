@@ -32,6 +32,7 @@ import type {
 import type {
   CustomUser,
   TokenResponse,
+  UsersAuthCsrfRetrieve200,
   UsersAuthLoginCreate400,
   UsersAuthLoginCreate401,
   UsersAuthLoginCreate429,
@@ -42,6 +43,7 @@ import type {
   UsersChangePasswordCreate200,
   UsersChangePasswordCreate400,
   UsersChangePasswordCreate401,
+  V1UsersAuthCsrfRetrieve200,
   V1UsersAuthLoginCreate400,
   V1UsersAuthLoginCreate401,
   V1UsersAuthLoginCreate429,
@@ -89,6 +91,172 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Bootstrap endpoint that ensures csrftoken cookie is set for SPA usage.
+ * @summary Get CSRF token
+ */
+export const usersAuthCsrfRetrieve = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UsersAuthCsrfRetrieve200>(
+      {url: `/api/users/auth/csrf/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getUsersAuthCsrfRetrieveInfiniteQueryKey = () => {
+    return [
+    'infinite', `/api/users/auth/csrf/`
+    ] as const;
+    }
+
+export const getUsersAuthCsrfRetrieveQueryKey = () => {
+    return [
+    `/api/users/auth/csrf/`
+    ] as const;
+    }
+
+    
+export const getUsersAuthCsrfRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAuthCsrfRetrieveInfiniteQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>> = ({ signal }) => usersAuthCsrfRetrieve(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAuthCsrfRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>
+export type UsersAuthCsrfRetrieveInfiniteQueryError = unknown
+
+
+export function useUsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>, TError = unknown>(
+  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get CSRF token
+ */
+
+export function useUsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAuthCsrfRetrieveInfiniteQueryOptions(options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getUsersAuthCsrfRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAuthCsrfRetrieveQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>> = ({ signal }) => usersAuthCsrfRetrieve(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAuthCsrfRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>>
+export type UsersAuthCsrfRetrieveQueryError = unknown
+
+
+export function useUsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get CSRF token
+ */
+
+export function useUsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAuthCsrfRetrieveQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Authenticate user and return JWT tokens with user data. Rate limited to 5 attempts per minute per IP to prevent brute force attacks.
  * @summary User login
  */
@@ -96,8 +264,8 @@ export const usersAuthLoginCreate = (
     customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<TokenResponse>(
       {url: `/api/users/auth/login/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -105,7 +273,7 @@ export const usersAuthLoginCreate = (
     },
       options);
     }
-
+  
 
 
 export const getUsersAuthLoginCreateMutationOptions = <TError = UsersAuthLoginCreate400 | UsersAuthLoginCreate401 | UsersAuthLoginCreate429,
@@ -119,7 +287,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthLoginCreate>>, {data: NonReadonly<CustomUser>}> = (props) => {
@@ -128,7 +296,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersAuthLoginCreate(data,requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -158,17 +326,17 @@ export const useUsersAuthLoginCreate = <TError = UsersAuthLoginCreate400 | Users
  * @summary User logout
  */
 export const usersAuthLogoutCreate = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<UsersAuthLogoutCreate200>(
       {url: `/api/users/auth/logout/`, method: 'POST', signal
     },
       options);
     }
-
+  
 
 
 export const getUsersAuthLogoutCreateMutationOptions = <TError = unknown,
@@ -182,22 +350,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthLogoutCreate>>, void> = () => {
-
+          
 
           return  usersAuthLogoutCreate(requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersAuthLogoutCreateMutationResult = NonNullable<Awaited<ReturnType<typeof usersAuthLogoutCreate>>>
-
+    
     export type UsersAuthLogoutCreateMutationError = unknown
 
     /**
@@ -221,17 +389,17 @@ export const useUsersAuthLogoutCreate = <TError = unknown,
  * @summary Get current user
  */
 export const usersAuthMeRetrieve = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<CustomUser>(
       {url: `/api/users/auth/me/`, method: 'GET', signal
     },
       options);
     }
-
+  
 
 
 
@@ -247,7 +415,7 @@ export const getUsersAuthMeRetrieveQueryKey = () => {
     ] as const;
     }
 
-
+    
 export const getUsersAuthMeRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof usersAuthMeRetrieve>>>, TError = UsersAuthMeRetrieve401>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -255,13 +423,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersAuthMeRetrieveInfiniteQueryKey();
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthMeRetrieve>>> = ({ signal }) => usersAuthMeRetrieve(requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -300,7 +468,7 @@ export function useUsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<Retu
 
 export function useUsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof usersAuthMeRetrieve>>>, TError = UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersAuthMeRetrieveInfiniteQueryOptions(options)
@@ -322,13 +490,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getUsersAuthMeRetrieveQueryKey();
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAuthMeRetrieve>>> = ({ signal }) => usersAuthMeRetrieve(requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -367,7 +535,7 @@ export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAu
 
 export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError = UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersAuthMeRetrieveQueryOptions(options)
@@ -387,17 +555,17 @@ export function useUsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof usersAu
  * @summary Refresh access token
  */
 export const usersAuthRefreshCreate = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<UsersAuthRefreshCreate200>(
       {url: `/api/users/auth/refresh/`, method: 'POST', signal
     },
       options);
     }
-
+  
 
 
 export const getUsersAuthRefreshCreateMutationOptions = <TError = UsersAuthRefreshCreate401,
@@ -411,22 +579,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAuthRefreshCreate>>, void> = () => {
-
+          
 
           return  usersAuthRefreshCreate(requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof usersAuthRefreshCreate>>>
-
+    
     export type UsersAuthRefreshCreateMutationError = UsersAuthRefreshCreate401
 
     /**
@@ -453,8 +621,8 @@ export const usersChangePasswordCreate = (
     usersChangePasswordCreateBody: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<UsersChangePasswordCreate200>(
       {url: `/api/users/change_password/`, method: 'POST',
       headers: {'Content-Type': 'current_password', },
@@ -462,7 +630,7 @@ export const usersChangePasswordCreate = (
     },
       options);
     }
-
+  
 
 
 export const getUsersChangePasswordCreateMutationOptions = <TError = UsersChangePasswordCreate400 | UsersChangePasswordCreate401,
@@ -476,7 +644,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersChangePasswordCreate>>, {data: string}> = (props) => {
@@ -485,7 +653,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  usersChangePasswordCreate(data,requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -511,6 +679,172 @@ export const useUsersChangePasswordCreate = <TError = UsersChangePasswordCreate4
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Bootstrap endpoint that ensures csrftoken cookie is set for SPA usage.
+ * @summary Get CSRF token
+ */
+export const v1UsersAuthCsrfRetrieve = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<V1UsersAuthCsrfRetrieve200>(
+      {url: `/api/v1/users/auth/csrf/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getV1UsersAuthCsrfRetrieveInfiniteQueryKey = () => {
+    return [
+    'infinite', `/api/v1/users/auth/csrf/`
+    ] as const;
+    }
+
+export const getV1UsersAuthCsrfRetrieveQueryKey = () => {
+    return [
+    `/api/v1/users/auth/csrf/`
+    ] as const;
+    }
+
+    
+export const getV1UsersAuthCsrfRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersAuthCsrfRetrieveInfiniteQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>> = ({ signal }) => v1UsersAuthCsrfRetrieve(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1UsersAuthCsrfRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>
+export type V1UsersAuthCsrfRetrieveInfiniteQueryError = unknown
+
+
+export function useV1UsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>, TError = unknown>(
+  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1UsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1UsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get CSRF token
+ */
+
+export function useV1UsersAuthCsrfRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1UsersAuthCsrfRetrieveInfiniteQueryOptions(options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1UsersAuthCsrfRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1UsersAuthCsrfRetrieveQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>> = ({ signal }) => v1UsersAuthCsrfRetrieve(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1UsersAuthCsrfRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>>
+export type V1UsersAuthCsrfRetrieveQueryError = unknown
+
+
+export function useV1UsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1UsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1UsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get CSRF token
+ */
+
+export function useV1UsersAuthCsrfRetrieve<TData = Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthCsrfRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1UsersAuthCsrfRetrieveQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Authenticate user and return JWT tokens with user data. Rate limited to 5 attempts per minute per IP to prevent brute force attacks.
  * @summary User login
  */
@@ -518,8 +852,8 @@ export const v1UsersAuthLoginCreate = (
     customUser: NonReadonly<CustomUser>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<TokenResponse>(
       {url: `/api/v1/users/auth/login/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -527,7 +861,7 @@ export const v1UsersAuthLoginCreate = (
     },
       options);
     }
-
+  
 
 
 export const getV1UsersAuthLoginCreateMutationOptions = <TError = V1UsersAuthLoginCreate400 | V1UsersAuthLoginCreate401 | V1UsersAuthLoginCreate429,
@@ -541,7 +875,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthLoginCreate>>, {data: NonReadonly<CustomUser>}> = (props) => {
@@ -550,7 +884,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  v1UsersAuthLoginCreate(data,requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -580,17 +914,17 @@ export const useV1UsersAuthLoginCreate = <TError = V1UsersAuthLoginCreate400 | V
  * @summary User logout
  */
 export const v1UsersAuthLogoutCreate = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<V1UsersAuthLogoutCreate200>(
       {url: `/api/v1/users/auth/logout/`, method: 'POST', signal
     },
       options);
     }
-
+  
 
 
 export const getV1UsersAuthLogoutCreateMutationOptions = <TError = unknown,
@@ -604,22 +938,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>, void> = () => {
-
+          
 
           return  v1UsersAuthLogoutCreate(requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersAuthLogoutCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthLogoutCreate>>>
-
+    
     export type V1UsersAuthLogoutCreateMutationError = unknown
 
     /**
@@ -643,17 +977,17 @@ export const useV1UsersAuthLogoutCreate = <TError = unknown,
  * @summary Get current user
  */
 export const v1UsersAuthMeRetrieve = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<CustomUser>(
       {url: `/api/v1/users/auth/me/`, method: 'GET', signal
     },
       options);
     }
-
+  
 
 
 
@@ -669,7 +1003,7 @@ export const getV1UsersAuthMeRetrieveQueryKey = () => {
     ] as const;
     }
 
-
+    
 export const getV1UsersAuthMeRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>>, TError = V1UsersAuthMeRetrieve401>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -677,13 +1011,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1UsersAuthMeRetrieveInfiniteQueryKey();
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>> = ({ signal }) => v1UsersAuthMeRetrieve(requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -722,7 +1056,7 @@ export function useV1UsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<Re
 
 export function useV1UsersAuthMeRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>>, TError = V1UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1UsersAuthMeRetrieveInfiniteQueryOptions(options)
@@ -744,13 +1078,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getV1UsersAuthMeRetrieveQueryKey();
 
-
+  
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>> = ({ signal }) => v1UsersAuthMeRetrieve(requestOptions, signal);
 
+      
 
-
-
+      
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -789,7 +1123,7 @@ export function useV1UsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof v1Use
 
 export function useV1UsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError = V1UsersAuthMeRetrieve401>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1UsersAuthMeRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
+ , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1UsersAuthMeRetrieveQueryOptions(options)
@@ -809,17 +1143,17 @@ export function useV1UsersAuthMeRetrieve<TData = Awaited<ReturnType<typeof v1Use
  * @summary Refresh access token
  */
 export const v1UsersAuthRefreshCreate = (
-
+    
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<V1UsersAuthRefreshCreate200>(
       {url: `/api/v1/users/auth/refresh/`, method: 'POST', signal
     },
       options);
     }
-
+  
 
 
 export const getV1UsersAuthRefreshCreateMutationOptions = <TError = V1UsersAuthRefreshCreate401,
@@ -833,22 +1167,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>, void> = () => {
-
+          
 
           return  v1UsersAuthRefreshCreate(requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type V1UsersAuthRefreshCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1UsersAuthRefreshCreate>>>
-
+    
     export type V1UsersAuthRefreshCreateMutationError = V1UsersAuthRefreshCreate401
 
     /**
@@ -875,8 +1209,8 @@ export const v1UsersChangePasswordCreate = (
     v1UsersChangePasswordCreateBody: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-
-
+      
+      
       return customInstance<V1UsersChangePasswordCreate200>(
       {url: `/api/v1/users/change_password/`, method: 'POST',
       headers: {'Content-Type': 'current_password', },
@@ -884,7 +1218,7 @@ export const v1UsersChangePasswordCreate = (
     },
       options);
     }
-
+  
 
 
 export const getV1UsersChangePasswordCreateMutationOptions = <TError = V1UsersChangePasswordCreate400 | V1UsersChangePasswordCreate401,
@@ -898,7 +1232,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-
+      
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1UsersChangePasswordCreate>>, {data: string}> = (props) => {
@@ -907,7 +1241,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  v1UsersChangePasswordCreate(data,requestOptions)
         }
 
-
+        
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -932,3 +1266,4 @@ export const useV1UsersChangePasswordCreate = <TError = V1UsersChangePasswordCre
 
       return useMutation(mutationOptions, queryClient);
     }
+    

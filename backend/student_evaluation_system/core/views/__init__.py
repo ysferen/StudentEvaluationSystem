@@ -33,6 +33,13 @@ from .course import (
     LearningOutcomeProgramOutcomeMappingViewSet,
 )
 
+# Course Templates
+from .course_templates import (
+    CourseTemplateViewSet,
+    CourseTemplateAssessmentLOMappingViewSet,
+    CourseTemplateLOPOMappingViewSet,
+)
+
 # Scores
 from .scores import (
     StudentLearningOutcomeScoreViewSet,
@@ -46,6 +53,12 @@ from .file_import import (
     ProgramOutcomesImportViewSet,
     FileUploadRateThrottle,
 )
+
+# Permissions
+from .permissions import InstructorPermissionViewSet
+
+# Analytics
+from .analytics import ProgramStatsView
 
 __all__ = [
     # Academic Structure
@@ -65,6 +78,10 @@ __all__ = [
     "ProgramOutcomeViewSet",
     "LearningOutcomeViewSet",
     "LearningOutcomeProgramOutcomeMappingViewSet",
+    # Course Templates
+    "CourseTemplateViewSet",
+    "CourseTemplateAssessmentLOMappingViewSet",
+    "CourseTemplateLOPOMappingViewSet",
     # Scores
     "StudentLearningOutcomeScoreViewSet",
     "StudentProgramOutcomeScoreViewSet",
@@ -73,4 +90,8 @@ __all__ = [
     "LearningOutcomesImportViewSet",
     "ProgramOutcomesImportViewSet",
     "FileUploadRateThrottle",
+    # Permissions
+    "InstructorPermissionViewSet",
+    # Analytics
+    "ProgramStatsView",
 ]

@@ -42,9 +42,11 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                     { to: '/instructor/courses', label: 'Courses' }
                 ]
             case 'admin':
+            case 'program_head':
                 return [
                     { to: '/head', label: 'Homepage' },
-                    { to: '/head/courses', label: 'Courses' }
+                    { to: '/head/courses', label: 'Courses' },
+                    { to: '/head/permissions', label: 'Permissions' }
                 ]
             default:
                 return []

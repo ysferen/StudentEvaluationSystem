@@ -19,6 +19,11 @@ from core.models import (
     Program,
     Term,
     Course,
+    CourseTemplate,
+    CourseTemplateAssessment,
+    CourseTemplateAssessmentLOMapping,
+    CourseTemplateLearningOutcome,
+    CourseTemplateLOPOMapping,
     LearningOutcome,
     ProgramOutcome,
     LearningOutcomeProgramOutcomeMapping,
@@ -196,6 +201,72 @@ class CourseFactory(DjangoModelFactory):
         if not create or not extracted:
             return
         self.instructors.add(extracted)
+
+
+class CourseTemplateFactory(DjangoModelFactory):
+    """Factory for creating CourseTemplate instances."""
+
+    class Meta:
+        model = CourseTemplate
+
+    name = factory.Faker("catch_phrase")
+    code = factory.Sequence(lambda n: f"CS{n:03d}")
+    credits = factory.Iterator([3, 4, 5])
+    program = factory.SubFactory(ProgramFactory)
+
+
+class CourseTemplateLearningOutcomeFactory(DjangoModelFactory):
+    """Factory for creating CourseTemplateLearningOutcome instances."""
+
+    class Meta:
+        model = CourseTemplateLearningOutcome
+
+    description = factory.Faker("sentence")
+    code = factory.Sequence(lambda n: f"LO{n}")
+    course_template = factory.SubFactory(CourseTemplateFactory)
+
+
+class CourseTemplateAssessmentFactory(DjangoModelFactory):
+    """Factory for creating CourseTemplateAssessment instances."""
+
+    class Meta:
+        model = CourseTemplateAssessment
+
+    name = factory.Faker("word")
+    assessment_type = factory.Iterator(["midterm", "final", "homework", "quiz", "project"])
+    total_score = 100
+    weight = factory.LazyFunction(lambda: round(1.0 / 5, 3))
+    course_template = factory.SubFactory(CourseTemplateFactory)
+
+
+class CourseTemplateAssessmentLOMappingFactory(DjangoModelFactory):
+    """Factory for creating CourseTemplateAssessmentLOMapping instances.
+
+    Note: Users of this factory should ensure the assessment and LO belong
+    to the same template (pass the same course_template to both
+    sub-factories). The sub-factories create independent templates by
+    default which will fail the clean() validation. This factory is a
+    convenience for simple cases — complex tests should set up template
+    data manually.
+    """
+
+    class Meta:
+        model = CourseTemplateAssessmentLOMapping
+
+    template_assessment = factory.SubFactory(CourseTemplateAssessmentFactory)
+    template_learning_outcome = factory.SubFactory(CourseTemplateLearningOutcomeFactory)
+    weight = 0.5
+
+
+class CourseTemplateLOPOMappingFactory(DjangoModelFactory):
+    """Factory for creating CourseTemplateLOPOMapping instances."""
+
+    class Meta:
+        model = CourseTemplateLOPOMapping
+
+    template_learning_outcome = factory.SubFactory(CourseTemplateLearningOutcomeFactory)
+    program_outcome = factory.SubFactory("tests.factories.ProgramOutcomeFactory")
+    weight = 0.5
 
 
 class LearningOutcomeFactory(DjangoModelFactory):

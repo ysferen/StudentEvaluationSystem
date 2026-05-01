@@ -4,6 +4,665 @@ info:
   version: 1.0.0
   description: Outcome-based assessment system for academic programs
 paths:
+  /api/core/analytics/program-stats/:
+    get:
+      operationId: core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
+  /api/core/course-template-assessment-lo-mappings/:
+    get:
+      operationId: core_course_template_assessment_lo_mappings_list
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateAssessmentLOMappingList'
+          description: ''
+    post:
+      operationId: core_course_template_assessment_lo_mappings_create
+      description: CRUD for template assessment-to-LO mappings.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+  /api/core/course-template-assessment-lo-mappings/{id}/:
+    get:
+      operationId: core_course_template_assessment_lo_mappings_retrieve
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    put:
+      operationId: core_course_template_assessment_lo_mappings_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    patch:
+      operationId: core_course_template_assessment_lo_mappings_partial_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    delete:
+      operationId: core_course_template_assessment_lo_mappings_destroy
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-template-lo-po-mappings/:
+    get:
+      operationId: core_course_template_lo_po_mappings_list
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateLOPOMappingList'
+          description: ''
+    post:
+      operationId: core_course_template_lo_po_mappings_create
+      description: CRUD for template LO-to-PO mappings.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+  /api/core/course-template-lo-po-mappings/{id}/:
+    get:
+      operationId: core_course_template_lo_po_mappings_retrieve
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    put:
+      operationId: core_course_template_lo_po_mappings_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    patch:
+      operationId: core_course_template_lo_po_mappings_partial_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    delete:
+      operationId: core_course_template_lo_po_mappings_destroy
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-templates/:
+    get:
+      operationId: core_course_templates_list
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter templates by program ID
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateList'
+          description: ''
+    post:
+      operationId: core_course_templates_create
+      description: CRUD operations for course templates, plus instantiate action.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/core/course-templates/{id}/:
+    get:
+      operationId: core_course_templates_retrieve
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    put:
+      operationId: core_course_templates_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    patch:
+      operationId: core_course_templates_partial_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    delete:
+      operationId: core_course_templates_destroy
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/core/course-templates/{id}/assessments/:
+    get:
+      operationId: core_course_templates_assessments_retrieve
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: core_course_templates_assessments_create
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/core/course-templates/{id}/instantiate/:
+    post:
+      operationId: core_course_templates_instantiate_create
+      description: Create a new Course by cloning all template data into the given
+        term.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          type:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+          properties:
+            schema:
+              term_id:
+                type: integer
+          required:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
+  /api/core/course-templates/{id}/learning-outcomes/:
+    get:
+      operationId: core_course_templates_learning_outcomes_retrieve
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: core_course_templates_learning_outcomes_create
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
   /api/core/courses/:
     get:
       operationId: core_courses_list
@@ -31,6 +690,11 @@ paths:
         schema:
           type: integer
       - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
+      - in: query
         name: term
         schema:
           type: integer
@@ -39,7 +703,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -72,7 +735,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -101,7 +763,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -141,7 +802,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -180,7 +840,6 @@ paths:
               $ref: '#/components/schemas/PatchedCourse'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -208,7 +867,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -228,7 +886,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -257,7 +914,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -290,7 +946,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -319,7 +974,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -359,7 +1013,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -398,7 +1051,6 @@ paths:
               $ref: '#/components/schemas/PatchedDegreeLevel'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -426,7 +1078,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -456,7 +1107,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -489,7 +1139,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -518,7 +1167,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -558,7 +1206,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -597,7 +1244,6 @@ paths:
               $ref: '#/components/schemas/PatchedDepartment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -625,7 +1271,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -661,7 +1306,6 @@ paths:
                   description: JSON string of ResolutionChoices
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -674,43 +1318,108 @@ paths:
     get:
       operationId: core_file_import_assignment_scores_upload_retrieve
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
     post:
       operationId: core_file_import_assignment_scores_upload_create
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - core
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/core/file-import/assignment-scores/validate/:
     post:
@@ -742,7 +1451,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -791,7 +1499,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -871,7 +1578,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -939,7 +1645,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -969,7 +1674,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1049,7 +1753,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1117,7 +1820,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1146,7 +1848,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1174,7 +1875,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -1198,7 +1898,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1233,7 +1932,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1267,7 +1965,6 @@ paths:
               $ref: '#/components/schemas/PatchedCoreLearningOutcome'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1290,7 +1987,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -1310,7 +2006,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1338,7 +2033,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -1363,7 +2057,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1399,7 +2092,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1434,7 +2126,6 @@ paths:
               $ref: '#/components/schemas/PatchedLearningOutcomeProgramOutcomeMapping'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1458,11 +2149,196 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
           description: No response body
+  /api/core/permissions/:
+    get:
+      operationId: core_permissions_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+    post:
+      operationId: core_permissions_create
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+  /api/core/permissions/{id}/:
+    get:
+      operationId: core_permissions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    put:
+      operationId: core_permissions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    patch:
+      operationId: core_permissions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    delete:
+      operationId: core_permissions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
+  /api/core/permissions/bulk/:
+    put:
+      operationId: core_permissions_bulk_update
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+  /api/core/permissions/my-permissions/:
+    get:
+      operationId: core_permissions_my_permissions_retrieve
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
   /api/core/program-outcomes/:
     get:
       operationId: core_program_outcomes_list
@@ -1488,7 +2364,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1516,7 +2391,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -1540,7 +2414,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1575,7 +2448,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1609,7 +2481,6 @@ paths:
               $ref: '#/components/schemas/PatchedProgramOutcome'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1632,7 +2503,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -1667,7 +2537,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1700,7 +2569,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -1729,7 +2597,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1769,7 +2636,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1808,7 +2674,6 @@ paths:
               $ref: '#/components/schemas/PatchedProgram'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1836,7 +2701,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -1872,7 +2736,6 @@ paths:
       - Scores
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1903,7 +2766,6 @@ paths:
       - Scores
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1920,7 +2782,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1937,7 +2798,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1967,7 +2827,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -1998,7 +2857,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2021,7 +2879,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2043,7 +2900,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2072,7 +2928,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2105,7 +2960,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -2134,7 +2988,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2174,7 +3027,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2213,7 +3065,6 @@ paths:
               $ref: '#/components/schemas/PatchedTerm'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2241,7 +3092,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -2254,7 +3104,6 @@ paths:
       - core
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2283,7 +3132,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2316,7 +3164,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -2345,7 +3192,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2385,7 +3231,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2424,7 +3269,6 @@ paths:
               $ref: '#/components/schemas/PatchedUniversity'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -2452,7 +3296,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -2482,7 +3325,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2514,7 +3356,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2543,7 +3384,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2583,7 +3423,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2622,7 +3461,6 @@ paths:
               $ref: '#/components/schemas/PatchedAssessmentLearningOutcomeMapping'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2650,7 +3488,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2685,7 +3522,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2717,7 +3553,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2745,7 +3580,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2784,7 +3618,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2822,7 +3655,6 @@ paths:
               $ref: '#/components/schemas/PatchedAssessmentCreate'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2849,7 +3681,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2868,7 +3699,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2891,7 +3721,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2929,7 +3758,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2960,7 +3788,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2988,7 +3815,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3026,7 +3852,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3064,7 +3889,6 @@ paths:
               $ref: '#/components/schemas/PatchedCourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3091,7 +3915,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -3114,7 +3937,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3137,7 +3959,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3160,7 +3981,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3189,7 +4009,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -3232,7 +4051,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3264,7 +4082,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -3292,7 +4109,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3331,7 +4147,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3369,7 +4184,6 @@ paths:
               $ref: '#/components/schemas/PatchedStudentGradeCreate'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3396,7 +4210,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -3426,7 +4239,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3459,7 +4271,6 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3482,13 +4293,32 @@ paths:
       - evaluation
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScoreRecomputeJob'
+          description: ''
+  /api/users/auth/csrf/:
+    get:
+      operationId: users_auth_csrf_retrieve
+      description: Bootstrap endpoint that ensures csrftoken cookie is set for SPA
+        usage.
+      summary: Get CSRF token
+      tags:
+      - Authentication
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
           description: ''
   /api/users/auth/login/:
     post:
@@ -3511,8 +4341,6 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3551,8 +4379,6 @@ paths:
       tags:
       - Authentication
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3573,7 +4399,6 @@ paths:
       - Authentication
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3597,8 +4422,6 @@ paths:
       tags:
       - Authentication
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3607,7 +4430,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  access:
+                  detail:
                     type: string
           description: ''
         '401':
@@ -3637,7 +4460,6 @@ paths:
               type: string
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3660,6 +4482,158 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/users/heads/:
+    get:
+      operationId: users_heads_list
+      description: CRUD operations for program head profiles.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - users
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProgramHeadProfileList'
+          description: ''
+    post:
+      operationId: users_heads_create
+      description: CRUD operations for program head profiles.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+  /api/users/heads/{id}/:
+    get:
+      operationId: users_heads_retrieve
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    put:
+      operationId: users_heads_update
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    patch:
+      operationId: users_heads_partial_update
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    delete:
+      operationId: users_heads_destroy
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
   /api/users/instructors/:
     get:
       operationId: users_instructors_list
@@ -3675,7 +4649,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3703,7 +4676,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -3726,7 +4698,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3761,7 +4732,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3794,7 +4764,6 @@ paths:
               $ref: '#/components/schemas/PatchedInstructorProfile'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3816,7 +4785,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -3835,7 +4803,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3863,7 +4830,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -3886,7 +4852,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -3921,7 +4886,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3954,7 +4918,6 @@ paths:
               $ref: '#/components/schemas/PatchedStudentProfile'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -3976,7 +4939,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -3995,7 +4957,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4023,7 +4984,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -4046,7 +5006,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4081,7 +5040,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -4114,7 +5072,6 @@ paths:
               $ref: '#/components/schemas/PatchedCustomUser'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -4136,7 +5093,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -4148,7 +5104,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4156,6 +5111,665 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomUser'
+          description: ''
+  /api/v1/core/analytics/program-stats/:
+    get:
+      operationId: v1_core_analytics_program_stats_retrieve
+      description: |-
+        Return aggregated statistics scoped to the user's programs.
+
+        Admins see all programs. Program heads see only their program.
+      tags:
+      - Analytics
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramStatsResponse'
+          description: ''
+  /api/v1/core/course-template-assessment-lo-mappings/:
+    get:
+      operationId: v1_core_course_template_assessment_lo_mappings_list
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateAssessmentLOMappingList'
+          description: ''
+    post:
+      operationId: v1_core_course_template_assessment_lo_mappings_create
+      description: CRUD for template assessment-to-LO mappings.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+  /api/v1/core/course-template-assessment-lo-mappings/{id}/:
+    get:
+      operationId: v1_core_course_template_assessment_lo_mappings_retrieve
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    put:
+      operationId: v1_core_course_template_assessment_lo_mappings_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    patch:
+      operationId: v1_core_course_template_assessment_lo_mappings_partial_update
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateAssessmentLOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+          description: ''
+    delete:
+      operationId: v1_core_course_template_assessment_lo_mappings_destroy
+      description: CRUD for template assessment-to-LO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template Assessment-LO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-template-lo-po-mappings/:
+    get:
+      operationId: v1_core_course_template_lo_po_mappings_list
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateLOPOMappingList'
+          description: ''
+    post:
+      operationId: v1_core_course_template_lo_po_mappings_create
+      description: CRUD for template LO-to-PO mappings.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+  /api/v1/core/course-template-lo-po-mappings/{id}/:
+    get:
+      operationId: v1_core_course_template_lo_po_mappings_retrieve
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    put:
+      operationId: v1_core_course_template_lo_po_mappings_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    patch:
+      operationId: v1_core_course_template_lo_po_mappings_partial_update
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplateLOPOMapping'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+          description: ''
+    delete:
+      operationId: v1_core_course_template_lo_po_mappings_destroy
+      description: CRUD for template LO-to-PO mappings.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template LO-PO
+          Mapping.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-templates/:
+    get:
+      operationId: v1_core_course_templates_list
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter templates by program ID
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseTemplateList'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_create
+      description: CRUD operations for course templates, plus instantiate action.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/v1/core/course-templates/{id}/:
+    get:
+      operationId: v1_core_course_templates_retrieve
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    put:
+      operationId: v1_core_course_templates_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    patch:
+      operationId: v1_core_course_templates_partial_update
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCourseTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    delete:
+      operationId: v1_core_course_templates_destroy
+      description: CRUD operations for course templates, plus instantiate action.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/course-templates/{id}/assessments/:
+    get:
+      operationId: v1_core_course_templates_assessments_retrieve
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_assessments_create
+      description: GET/POST assessments for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+  /api/v1/core/course-templates/{id}/instantiate/:
+    post:
+      operationId: v1_core_course_templates_instantiate_create
+      description: Create a new Course by cloning all template data into the given
+        term.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          type:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+          properties:
+            schema:
+              term_id:
+                type: integer
+          required:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
+  /api/v1/core/course-templates/{id}/learning-outcomes/:
+    get:
+      operationId: v1_core_course_templates_learning_outcomes_retrieve
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
+          description: ''
+    post:
+      operationId: v1_core_course_templates_learning_outcomes_create
+      description: GET/POST learning outcomes for this template.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseTemplate'
           description: ''
   /api/v1/core/courses/:
     get:
@@ -4184,6 +5798,11 @@ paths:
         schema:
           type: integer
       - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter courses by program ID
+      - in: query
         name: term
         schema:
           type: integer
@@ -4192,7 +5811,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -4224,7 +5842,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -4253,7 +5870,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -4292,7 +5908,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4331,7 +5946,6 @@ paths:
               $ref: '#/components/schemas/PatchedCourse'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4359,7 +5973,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -4379,7 +5992,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -4407,7 +6019,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4440,7 +6051,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -4469,7 +6079,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4509,7 +6118,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4548,7 +6156,6 @@ paths:
               $ref: '#/components/schemas/PatchedDegreeLevel'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4576,7 +6183,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -4606,7 +6212,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4639,7 +6244,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -4668,7 +6272,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4708,7 +6311,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4747,7 +6349,6 @@ paths:
               $ref: '#/components/schemas/PatchedDepartment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4775,7 +6376,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -4811,7 +6411,6 @@ paths:
                   description: JSON string of ResolutionChoices
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4824,43 +6423,108 @@ paths:
     get:
       operationId: v1_core_file_import_assignment_scores_upload_retrieve
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
     post:
       operationId: v1_core_file_import_assignment_scores_upload_create
       description: Upload and import assignment scores. Always validates before importing.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
       tags:
       - v1
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FileImportResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FileImportResponse'
-        required: true
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                resolution_policy:
+                  type: string
+                  description: JSON string of resolution policy flags
+              required:
+              - file
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileImportResponse'
+                type: object
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
           description: ''
   /api/v1/core/file-import/assignment-scores/validate/:
     post:
@@ -4892,7 +6556,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -4941,7 +6604,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5021,7 +6683,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5089,7 +6750,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5119,7 +6779,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5199,7 +6858,6 @@ paths:
                   format: binary
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5267,7 +6925,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5296,7 +6953,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5324,7 +6980,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -5348,7 +7003,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5383,7 +7037,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5417,7 +7070,6 @@ paths:
               $ref: '#/components/schemas/PatchedCoreLearningOutcome'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5440,7 +7092,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -5460,7 +7111,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5488,7 +7138,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -5513,7 +7162,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5549,7 +7197,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5584,7 +7231,6 @@ paths:
               $ref: '#/components/schemas/PatchedLearningOutcomeProgramOutcomeMapping'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5608,11 +7254,196 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
           description: No response body
+  /api/v1/core/permissions/:
+    get:
+      operationId: v1_core_permissions_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+    post:
+      operationId: v1_core_permissions_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+  /api/v1/core/permissions/{id}/:
+    get:
+      operationId: v1_core_permissions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    put:
+      operationId: v1_core_permissions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    patch:
+      operationId: v1_core_permissions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstructorPermission'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+    delete:
+      operationId: v1_core_permissions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instructor Permission.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/core/permissions/bulk/:
+    put:
+      operationId: v1_core_permissions_bulk_update
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstructorPermission'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
+  /api/v1/core/permissions/my-permissions/:
+    get:
+      operationId: v1_core_permissions_my_permissions_retrieve
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorPermission'
+          description: ''
   /api/v1/core/program-outcomes/:
     get:
       operationId: v1_core_program_outcomes_list
@@ -5638,7 +7469,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5666,7 +7496,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -5690,7 +7519,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5725,7 +7553,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5759,7 +7586,6 @@ paths:
               $ref: '#/components/schemas/PatchedProgramOutcome'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5782,7 +7608,6 @@ paths:
       - Outcomes
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -5817,7 +7642,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5850,7 +7674,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -5879,7 +7702,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5919,7 +7741,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5958,7 +7779,6 @@ paths:
               $ref: '#/components/schemas/PatchedProgram'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -5986,7 +7806,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -6022,7 +7841,6 @@ paths:
       - Scores
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6053,7 +7871,6 @@ paths:
       - Scores
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6070,7 +7887,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6087,7 +7903,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6117,7 +7932,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6148,7 +7962,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6171,7 +7984,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6193,7 +8005,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6222,7 +8033,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6255,7 +8065,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -6284,7 +8093,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6324,7 +8132,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6363,7 +8170,6 @@ paths:
               $ref: '#/components/schemas/PatchedTerm'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6391,7 +8197,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -6404,7 +8209,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6433,7 +8237,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6466,7 +8269,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -6495,7 +8297,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6535,7 +8336,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6574,7 +8374,6 @@ paths:
               $ref: '#/components/schemas/PatchedUniversity'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -6602,7 +8401,6 @@ paths:
       - Academic Structure
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '204':
@@ -6632,7 +8430,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6664,7 +8461,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -6693,7 +8489,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6733,7 +8528,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6772,7 +8566,6 @@ paths:
               $ref: '#/components/schemas/PatchedAssessmentLearningOutcomeMapping'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6800,7 +8593,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -6835,7 +8627,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6867,7 +8658,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -6895,7 +8685,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6934,7 +8723,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6972,7 +8760,6 @@ paths:
               $ref: '#/components/schemas/PatchedAssessmentCreate'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -6999,7 +8786,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -7018,7 +8804,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7041,7 +8826,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7079,7 +8863,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7110,7 +8893,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -7138,7 +8920,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7176,7 +8957,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7214,7 +8994,6 @@ paths:
               $ref: '#/components/schemas/PatchedCourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7241,7 +9020,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -7264,7 +9042,6 @@ paths:
               $ref: '#/components/schemas/CourseEnrollment'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7287,7 +9064,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7310,7 +9086,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7339,7 +9114,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -7382,7 +9156,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7414,7 +9187,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -7442,7 +9214,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7481,7 +9252,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7519,7 +9289,6 @@ paths:
               $ref: '#/components/schemas/PatchedStudentGradeCreate'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7546,7 +9315,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -7576,7 +9344,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7609,7 +9376,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7632,13 +9398,32 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScoreRecomputeJob'
+          description: ''
+  /api/v1/users/auth/csrf/:
+    get:
+      operationId: v1_users_auth_csrf_retrieve
+      description: Bootstrap endpoint that ensures csrftoken cookie is set for SPA
+        usage.
+      summary: Get CSRF token
+      tags:
+      - Authentication
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
           description: ''
   /api/v1/users/auth/login/:
     post:
@@ -7661,8 +9446,6 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7701,8 +9484,6 @@ paths:
       tags:
       - Authentication
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7723,7 +9504,6 @@ paths:
       - Authentication
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7747,8 +9527,6 @@ paths:
       tags:
       - Authentication
       security:
-      - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7757,7 +9535,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  access:
+                  detail:
                     type: string
           description: ''
         '401':
@@ -7787,7 +9565,6 @@ paths:
               type: string
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7810,6 +9587,158 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/v1/users/heads/:
+    get:
+      operationId: v1_users_heads_list
+      description: CRUD operations for program head profiles.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProgramHeadProfileList'
+          description: ''
+    post:
+      operationId: v1_users_heads_create
+      description: CRUD operations for program head profiles.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+  /api/v1/users/heads/{id}/:
+    get:
+      operationId: v1_users_heads_retrieve
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    put:
+      operationId: v1_users_heads_update
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramHeadProfile'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    patch:
+      operationId: v1_users_heads_partial_update
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramHeadProfile'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramHeadProfile'
+          description: ''
+    delete:
+      operationId: v1_users_heads_destroy
+      description: CRUD operations for program head profiles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Head Profile.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/users/instructors/:
     get:
       operationId: v1_users_instructors_list
@@ -7825,7 +9754,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7853,7 +9781,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -7876,7 +9803,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -7911,7 +9837,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7944,7 +9869,6 @@ paths:
               $ref: '#/components/schemas/PatchedInstructorProfile'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -7966,7 +9890,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -7985,7 +9908,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -8013,7 +9935,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -8036,7 +9957,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -8071,7 +9991,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -8104,7 +10023,6 @@ paths:
               $ref: '#/components/schemas/PatchedStudentProfile'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -8126,7 +10044,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -8145,7 +10062,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -8173,7 +10089,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '201':
           content:
@@ -8196,7 +10111,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -8231,7 +10145,6 @@ paths:
         required: true
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -8264,7 +10177,6 @@ paths:
               $ref: '#/components/schemas/PatchedCustomUser'
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '200':
           content:
@@ -8286,7 +10198,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -8298,7 +10209,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - cookieAuth: []
       - {}
       responses:
         '200':
@@ -8570,6 +10480,100 @@ components:
       - enrolled_at
       - id
       - student
+    CourseTemplate:
+      type: object
+      description: |-
+        Serializer for CourseTemplate model.
+
+        Provides bidirectional serialization with nested read representation
+        and flat write representation for the program FK.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 255
+        credits:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          description: Return the number of Courses instantiated from this template.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - instance_count
+      - name
+      - program
+      - program_id
+      - updated_at
+    CourseTemplateAssessmentLOMapping:
+      type: object
+      description: Serializer for CourseTemplateAssessmentLOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_assessment:
+          type: integer
+        template_learning_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+      required:
+      - id
+      - template_assessment
+      - template_learning_outcome
+      - weight
+    CourseTemplateLOPOMapping:
+      type: object
+      description: Serializer for CourseTemplateLOPOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_learning_outcome:
+          type: integer
+        program_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+      required:
+      - id
+      - program_outcome
+      - template_learning_outcome
+      - weight
     CustomUser:
       type: object
       description: Full user serializer with all fields.
@@ -8724,6 +10728,41 @@ components:
       required:
       - message
       - results
+    InstructorPermission:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        instructor:
+          type: string
+          readOnly: true
+        instructor_id:
+          type: integer
+        program_head:
+          type: string
+          readOnly: true
+        program_head_id:
+          type: integer
+        resource_area:
+          $ref: '#/components/schemas/ResourceAreaEnum'
+        resource_area_display:
+          type: string
+          readOnly: true
+        permission_tier:
+          $ref: '#/components/schemas/PermissionTierEnum'
+        permission_tier_display:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - instructor
+      - instructor_id
+      - permission_tier_display
+      - program_head
+      - program_head_id
+      - resource_area
+      - resource_area_display
     InstructorProfile:
       type: object
       properties:
@@ -8910,6 +10949,75 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Course'
+    PaginatedCourseTemplateAssessmentLOMappingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplateAssessmentLOMapping'
+    PaginatedCourseTemplateLOPOMappingList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplateLOPOMapping'
+    PaginatedCourseTemplateList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseTemplate'
     PaginatedCustomUserList:
       type: object
       required:
@@ -8979,6 +11087,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Department'
+    PaginatedInstructorPermissionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstructorPermission'
     PaginatedInstructorProfileList:
       type: object
       required:
@@ -9025,6 +11156,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
+    PaginatedProgramHeadProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramHeadProfile'
     PaginatedProgramList:
       type: object
       required:
@@ -9404,6 +11558,81 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedCourseTemplate:
+      type: object
+      description: |-
+        Serializer for CourseTemplate model.
+
+        Provides bidirectional serialization with nested read representation
+        and flat write representation for the program FK.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 255
+        credits:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          description: Return the number of Courses instantiated from this template.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCourseTemplateAssessmentLOMapping:
+      type: object
+      description: Serializer for CourseTemplateAssessmentLOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_assessment:
+          type: integer
+        template_learning_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+    PatchedCourseTemplateLOPOMapping:
+      type: object
+      description: Serializer for CourseTemplateLOPOMapping.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template_learning_outcome:
+          type: integer
+        program_outcome:
+          type: integer
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
     PatchedCustomUser:
       type: object
       description: Full user serializer with all fields.
@@ -9502,6 +11731,32 @@ components:
           maxLength: 10
         university:
           type: integer
+    PatchedInstructorPermission:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        instructor:
+          type: string
+          readOnly: true
+        instructor_id:
+          type: integer
+        program_head:
+          type: string
+          readOnly: true
+        program_head_id:
+          type: integer
+        resource_area:
+          $ref: '#/components/schemas/ResourceAreaEnum'
+        resource_area_display:
+          type: string
+          readOnly: true
+        permission_tier:
+          $ref: '#/components/schemas/PermissionTierEnum'
+        permission_tier_display:
+          type: string
+          readOnly: true
     PatchedInstructorProfile:
       type: object
       properties:
@@ -9588,6 +11843,35 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
+    PatchedProgramHeadProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        program:
+          type: string
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedProgramOutcome:
       type: object
       description: |-
@@ -9693,6 +11977,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
     PatchedUniversity:
       type: object
       description: |-
@@ -9714,6 +12008,16 @@ components:
         code:
           type: string
           maxLength: 10
+    PermissionTierEnum:
+      enum:
+      - view
+      - edit
+      - full
+      type: string
+      description: |-
+        * `view` - View Only
+        * `edit` - Edit
+        * `full` - Full Control
     Program:
       type: object
       description: |-
@@ -9739,12 +12043,48 @@ components:
           type: integer
         degree_level:
           type: integer
+        duration_years:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Program duration in years, used to cap year-level calculations
       required:
       - code
       - degree_level
       - department
       - id
       - name
+    ProgramHeadProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_id:
+          type: integer
+          writeOnly: true
+        program:
+          type: string
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - program
+      - program_id
+      - user
+      - user_id
     ProgramOutcome:
       type: object
       description: |-
@@ -9793,17 +12133,85 @@ components:
       - id
       - program
       - term
+    ProgramStat:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        total_students:
+          type: integer
+        total_courses:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+        lo_count:
+          type: integer
+        po_count:
+          type: integer
+      required:
+      - avg_score
+      - code
+      - id
+      - lo_count
+      - name
+      - po_count
+      - total_courses
+      - total_students
+    ProgramStatsResponse:
+      type: object
+      properties:
+        programs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramStat'
+        year_level_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearLevelBreakdown'
+      required:
+      - programs
+      - year_level_breakdown
+    ResourceAreaEnum:
+      enum:
+      - courses
+      - programs
+      - learning_outcomes
+      - program_outcomes
+      - students
+      - lo_po_weights
+      - assessment_lo_weights
+      - assessments
+      - course_templates
+      type: string
+      description: |-
+        * `courses` - Courses
+        * `programs` - Programs
+        * `learning_outcomes` - Learning Outcomes
+        * `program_outcomes` - Program Outcomes
+        * `students` - Students
+        * `lo_po_weights` - LO-PO Weights
+        * `assessment_lo_weights` - Assessment-LO Weights
+        * `assessments` - Assessments
+        * `course_templates` - Course Templates
     RoleEnum:
       enum:
       - guest
       - student
       - instructor
+      - program_head
       - admin
       type: string
       description: |-
         * `guest` - Guest
         * `student` - Student
         * `instructor` - Instructor
+        * `program_head` - Program Head
         * `admin` - Admin
     ScoreRecomputeJob:
       type: object
@@ -9846,6 +12254,16 @@ components:
       - created_at
       - id
       - updated_at
+    SemesterEnum:
+      enum:
+      - fall
+      - spring
+      - summer
+      type: string
+      description: |-
+        * `fall` - Fall
+        * `spring` - Spring
+        * `summer` - Summer
     StatusEnum:
       enum:
       - pending
@@ -10033,6 +12451,16 @@ components:
           maxLength: 100
         is_active:
           type: boolean
+        academic_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+          description: The calendar year the academic year starts (e.g., 2024 for
+            AY 2024-2025)
+        semester:
+          $ref: '#/components/schemas/SemesterEnum'
       required:
       - id
       - name
@@ -10101,11 +12529,22 @@ components:
       required:
       - id
       - username
+    YearLevelBreakdown:
+      type: object
+      properties:
+        year:
+          type: integer
+        student_count:
+          type: integer
+        avg_score:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - avg_score
+      - student_count
+      - year
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid
     jwtCookie:
       type: apiKey
       in: cookie

@@ -7,5 +7,5 @@
  */
 
 export type UsersAuthRefreshCreate200 = {
-  access?: string;
+  detail?: string;
 };

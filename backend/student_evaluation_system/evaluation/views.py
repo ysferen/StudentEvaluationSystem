@@ -19,7 +19,12 @@ from .serializers import (
 )
 from .services import calculate_course_scores, calculate_student_po_scores
 from core.models import StudentLearningOutcomeScore
-from core.permissions import IsInstructorOfCourse, IsOwnerOrInstructorOrAdmin, IsEnrolledStudentOrInstructorOrAdmin
+from core.permissions import (
+    IsInstructorOfCourse,
+    IsOwnerOrInstructorOrAdmin,
+    IsEnrolledStudentOrInstructorOrAdmin,
+    InstructorPermissionMixin,
+)
 
 
 @extend_schema_view(
@@ -50,7 +55,8 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Assessment.objects.select_related("course", "created_by").all()
-    permission_classes = [IsAuthenticated, IsInstructorOfCourse]
+    permission_classes = [IsAuthenticated, IsInstructorOfCourse, InstructorPermissionMixin]
+    resource_area = "assessments"
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
