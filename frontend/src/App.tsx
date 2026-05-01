@@ -40,7 +40,7 @@ function App() {
         <Route index element={<StudentDashboardPage />} />
         <Route path="courses" element={<StudentCoursesPage />} />
       </Route>
-      <Route path="/student/courses/:id" element={<Layout showOnlyCoreItems={false} />}>
+      <Route path="/student/courses/:id" element={<Layout showOnlyCoreItems={false} requireAuth={false} />}>
         <Route index element={<StudentCourseDetailPage />} />
       </Route>
 
@@ -49,7 +49,7 @@ function App() {
         <Route index element={<InstructorDashboardPage />} />
         <Route path="courses" element={<InstructorCoursesPage />} />
       </Route>
-      <Route path="/instructor/course/:id" element={<Layout showOnlyCoreItems={false} />}>
+      <Route path="/instructor/course/:id" element={<Layout showOnlyCoreItems={false} requireAuth={false} />}>
         <Route index element={<CourseDetailPage />} />
       </Route>
 
@@ -59,7 +59,7 @@ function App() {
         <Route path="courses" element={<HeadCoursesPage />} />
         <Route path="permissions" element={<HeadPermissionsPage />} />
       </Route>
-      <Route path="/head/course/:id" element={<Layout showOnlyCoreItems={false} />}>
+      <Route path="/head/course/:id" element={<Layout showOnlyCoreItems={false} requireAuth={false} />}>
         <Route index element={<CourseDetailPage />} />
       </Route>
 

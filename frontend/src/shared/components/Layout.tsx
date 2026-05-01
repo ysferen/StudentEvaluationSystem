@@ -6,14 +6,15 @@ import { Sidebar } from './Sidebar'
 
 interface LayoutProps {
   showOnlyCoreItems?: boolean
+  requireAuth?: boolean
   children?: React.ReactNode
 }
 
-const Layout: React.FC<LayoutProps> = ({ showOnlyCoreItems = false, children }) => {
+const Layout: React.FC<LayoutProps> = ({ showOnlyCoreItems = false, requireAuth = true, children }) => {
   const { isLoading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  if (isLoading) {
+  if (requireAuth && isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary-50">
         <div className="text-center">

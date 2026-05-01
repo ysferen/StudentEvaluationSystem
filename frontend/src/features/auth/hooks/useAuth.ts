@@ -63,6 +63,7 @@ export const useAuth = (): AuthContextType => {
  */
 interface AuthProviderProps {
   children: ReactNode
+  requireAuth?: boolean
 }
 
 /**
@@ -85,7 +86,7 @@ to all child components. Handles:
  * @param {AuthProviderProps} props - Component props
  * @returns {JSX.Element} Provider component with auth context
  */
-export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
+export const AuthProvider = ({ children, requireAuth = true }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<CustomUser | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const queryClient = useQueryClient()
@@ -99,7 +100,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     query: {
       retry: false,
       // Don't run this query on the login page to avoid unnecessary 401s
-      enabled: typeof window !== 'undefined' && window.location.pathname !== '/login'
+      enabled: requireAuth || (typeof window !== 'undefined' && window.location.pathname !== '/login')
     }
   })
 
@@ -200,9 +201,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     user,
     login,
     logout,
-    isLoading: isLoading || loginMutation.isPending,
+    isLoading: requireAuth ? (isLoading || loginMutation.isPending) : false,
     isAuthenticated: !!user,
-  }), [user, login, logout, isLoading, loginMutation.isPending])
+  }), [user, login, logout, isLoading, loginMutation.isPending, requireAuth])
 
   return React.createElement(AuthContext.Provider, { value }, children)
 }
