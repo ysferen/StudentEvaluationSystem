@@ -18,11 +18,6 @@ from .academic_structure import (
     ProgramViewSet,
     TermViewSet,
     StudentListView,
-    StudentDetailView,
-    CourseListView,
-    CourseDetailView,
-    ProgramOutcomeListView,
-    ProgramOutcomeDetailView,
 )
 
 # Course & Outcomes
@@ -68,11 +63,6 @@ __all__ = [
     "ProgramViewSet",
     "TermViewSet",
     "StudentListView",
-    "StudentDetailView",
-    "CourseListView",
-    "CourseDetailView",
-    "ProgramOutcomeListView",
-    "ProgramOutcomeDetailView",
     # Course & Outcomes
     "CourseViewSet",
     "ProgramOutcomeViewSet",

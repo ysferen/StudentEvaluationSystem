@@ -32,7 +32,6 @@ from ..serializers import (
     DegreeLevelSerializer,
     ProgramSerializer,
     TermSerializer,
-    CourseSerializer,
     ProgramOutcomeSerializer,
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
@@ -604,31 +603,6 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
 class StudentListView(generics.ListAPIView):
     queryset = StudentProfile.objects.select_related("user", "enrollment_term", "program").all()
     serializer_class = StudentProfileSerializer
-
-
-class StudentDetailView(generics.RetrieveAPIView):
-    queryset = StudentProfile.objects.select_related("user", "enrollment_term", "program").all()
-    serializer_class = StudentProfileSerializer
-
-
-class CourseListView(generics.ListAPIView):
-    queryset = Course.objects.select_related("department", "term").prefetch_related("instructors").all()
-    serializer_class = CourseSerializer
-
-
-class CourseDetailView(generics.RetrieveAPIView):
-    queryset = Course.objects.select_related("department", "term").prefetch_related("instructors").all()
-    serializer_class = CourseSerializer
-
-
-class ProgramOutcomeListView(generics.ListAPIView):
-    queryset = ProgramOutcome.objects.select_related("department", "term", "created_by").all()
-    serializer_class = ProgramOutcomeSerializer
-
-
-class ProgramOutcomeDetailView(generics.RetrieveAPIView):
-    queryset = ProgramOutcome.objects.select_related("department", "term", "created_by").all()
-    serializer_class = ProgramOutcomeSerializer
 
 
 class BaseFileImportViewSet(viewsets.GenericViewSet):
