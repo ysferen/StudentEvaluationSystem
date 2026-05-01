@@ -80,34 +80,24 @@ const InstructorDashboard = () => {
   const analyticsQueries = useQueries({
     queries: courses.map((course: Course) => ({
       queryKey: ['course-analytics', course.id],
-      queryFn: async () => {
-        try {
-          // Use orval's raw functions (not hooks) inside queryFn
-          const [loAveragesRes, gradeAveragesRes] = await Promise.all([
-            coreStudentLoScoresLoAveragesRetrieve({ params: { course: course.id } }),
-            evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
-          ])
-
-          const loAverages = toLoAverages(loAveragesRes)
-          const gradeAverages = Array.isArray(gradeAveragesRes) ? gradeAveragesRes : []
-
-          return {
-            courseId: course.id,
-            loAverages,
-            gradeAverages
-          }
-        } catch (error) {
-          console.error(`Error fetching analytics for course ${course.id}:`, error)
-          return {
-            courseId: course.id,
-            loAverages: [],
-            gradeAverages: []
-          }
+      queryFn: async (): Promise<CourseAnalytics> => {
+        const [loAveragesRes, gradeAveragesRes] = await Promise.all([
+          coreStudentLoScoresLoAveragesRetrieve({ params: { course: course.id } }),
+          evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
+        ])
+        return {
+          courseId: course.id,
+          loAverages: toLoAverages(loAveragesRes),
+          gradeAverages: Array.isArray(gradeAveragesRes) ? gradeAveragesRes : []
         }
       },
+      retry: 1,
       enabled: !!courses.length
     }))
   })
+
+  const currentAnalytics = analyticsQueries[currentIndex]
+  const analyticsError = currentAnalytics?.isError ?? false
 
   // Helper functions to process API data
   const calculateGradeDistribution = (gradeAverages: Array<{ weighted_average: number | null }>) => {
@@ -379,6 +369,16 @@ const InstructorDashboard = () => {
 
           {/* Chart Display */}
           <div className="p-6">
+            {analyticsError && (
+              <Card className="bg-danger-50 border border-danger-200 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-danger-600" />
+                  <p className="text-danger-800 text-sm font-medium">
+                    Failed to load analytics for this course
+                  </p>
+                </div>
+              </Card>
+            )}
             {currentCourseAnalyticsLoading ? (
               <div className="h-80 flex items-center justify-center">
                 <div className="text-center">
