@@ -188,16 +188,15 @@ class Command(BaseCommand):
         return (acad_year, sem)
 
     def _create_terms(self):
-        """Create terms covering all cohorts' complete 8-semester curriculum.
+        """Create terms from the oldest cohort's sem1 up to the active term.
 
-        Terms span from the oldest cohort's sem1 to the newest cohort's sem8.
-        The active term is Spring of the freshman cohort's first year,
-        ensuring year_level = 1 for freshmen and 4 for seniors.
+        No future terms are created — the active term is the boundary.
+        Year levels: 4/3/2/1 for senior/junior/sophomore/freshman.
         """
         oldest_start = data.FIRST_COHORT_START_YEAR - (data.NUM_COHORTS - 1)
         min_acad_year = oldest_start + 1  # oldest cohort's sem1 academic_year
-        max_acad_year = data.FIRST_COHORT_START_YEAR + 4  # newest cohort's sem8
         active_acad_year = data.FIRST_COHORT_START_YEAR + 1
+        max_acad_year = active_acad_year  # stop at the active term
 
         terms = []
         for year in range(min_acad_year, max_acad_year + 1):
