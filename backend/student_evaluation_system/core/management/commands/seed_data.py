@@ -1,7 +1,7 @@
 import random
 import time
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from users.models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
 from core.models import (
     InstructorPermission,
@@ -86,7 +86,7 @@ class Command(BaseCommand):
 
             # ── Course templates + instantiate into terms ──
             self.stdout.write(f"\n[4/{step_count}] Creating CourseTemplates and instantiating courses...")
-            all_courses = self._build_curriculum(program, terms, instructors, head_user)
+            all_courses, courses_by_sem_cohort = self._build_curriculum(program, terms, instructors, head_user)
 
             # ── Program outcomes ──
             self.stdout.write(f"\n[5/{step_count}] Creating program outcomes...")
@@ -120,7 +120,7 @@ class Command(BaseCommand):
             if not skip_students:
                 # ── Students (4 cohorts × 20) ──
                 self.stdout.write("\n[7/9] Creating students and enrollments...")
-                all_students = self._create_student_cohorts(dept, program, uni, terms, all_courses)
+                all_students = self._create_student_cohorts(dept, program, uni, terms, all_courses, courses_by_sem_cohort)
 
                 # ── Grades ──
                 self.stdout.write("\n[8/9] Generating grades...")
@@ -167,16 +167,53 @@ class Command(BaseCommand):
             admin.save()
             self.stdout.write(self.style.SUCCESS("✓ Superuser: admin / admin"))
 
+    @staticmethod
+    def _semester_to_term_key(cohort_start_cal_year, semester_num):
+        """
+        Map a cohort's semester number to the (academic_year, semester) key
+        used to look up Term objects created by _create_terms.
+
+        Args:
+            cohort_start_cal_year: Calendar year the cohort began (e.g., 2024).
+            semester_num: 1-8, where 1 = first fall, 2 = first spring, etc.
+
+        Returns:
+            Tuple of (academic_year, semester) matching Term fields.
+        """
+        offset = (semester_num - 1) // 2
+        is_fall = (semester_num % 2) == 1
+        cal_year = cohort_start_cal_year + offset + (0 if is_fall else 1)
+        acad_year = cal_year + 1 if is_fall else cal_year
+        sem = "fall" if is_fall else "spring"
+        return (acad_year, sem)
+
     def _create_terms(self):
-        """Create 8 terms (4 years, Fall + Spring)"""
+        """Create terms covering all cohorts' complete 8-semester curriculum.
+
+        Terms span from the oldest cohort's sem1 to the newest cohort's sem8.
+        The active term is Spring of the freshman cohort's first year,
+        ensuring year_level = 1 for freshmen and 4 for seniors.
+        """
+        oldest_start = data.FIRST_COHORT_START_YEAR - (data.NUM_COHORTS - 1)
+        min_acad_year = oldest_start + 1  # oldest cohort's sem1 academic_year
+        max_acad_year = data.FIRST_COHORT_START_YEAR + 4  # newest cohort's sem8
+        active_acad_year = data.FIRST_COHORT_START_YEAR + 1
+
         terms = []
-        for year in [2024, 2025, 2026, 2027]:
+        for year in range(min_acad_year, max_acad_year + 1):
             for sem, name in [("fall", f"Güz {year - 1}-{year}"), ("spring", f"Bahar {year - 1}-{year}")]:
                 t, _ = Term.objects.get_or_create(
                     name=name,
-                    defaults={"is_active": (year == 2027 and sem == "spring"), "academic_year": year, "semester": sem},
+                    defaults={"is_active": False, "academic_year": year, "semester": sem},
                 )
                 terms.append(t)
+
+        # Ensure exactly one active term (handles re-runs)
+        active_term = next(t for t in terms if t.academic_year == active_acad_year and t.semester == "spring")
+        if not active_term.is_active:
+            active_term.is_active = True
+            active_term.save()  # Term.save() auto-deactivates all others
+
         return terms
 
     def _create_program_head(self, program, university, department):
@@ -236,73 +273,86 @@ class Command(BaseCommand):
                     created += 1
         self.stdout.write(f"  ✓ {created} permissions")
 
-    def _build_curriculum(self, program, terms, instructors, head_user):
-        """Create CourseTemplates from CURRICULUM, instantiate into appropriate terms."""
-        all_courses = []
-        semester_keys = sorted(data.CURRICULUM.keys())
-        # Map: semester index → which terms to instantiate into
-        semester_term_map = {
-            0: terms[0],  # sem1 → Fall 2024
-            1: terms[1],  # sem2 → Spring 2025
-            2: terms[2],  # sem3 → Fall 2025
-            3: terms[3],  # sem4 → Spring 2026
-            4: terms[4],  # sem5 → Fall 2026
-            5: terms[5],  # sem6 → Spring 2027
-            6: terms[6],  # sem7 → Fall 2027
-            7: terms[7],  # sem8 → Spring 2028
-        }
+    @staticmethod
+    def _ensure_template_data(template, los, assessments):
+        """Create template LOs and assessments if not already present."""
+        if template.learning_outcomes.count() == 0:
+            for i, lo_desc in enumerate(los, 1):
+                CourseTemplateLearningOutcome.objects.get_or_create(
+                    code=f"LO{i}",
+                    course_template=template,
+                    defaults={"description": lo_desc},
+                )
 
-        for idx, sem_key in enumerate(semester_keys):
-            term = semester_term_map[idx]
+        if template.assessments.count() == 0:
+            for i, (aname, weight) in enumerate(assessments):
+                atypes = ["midterm", "final", "project", "quiz", "homework"]
+                atype = atypes[i % len(atypes)] if i < 4 else "other"
+                ta = CourseTemplateAssessment.objects.create(
+                    name=aname,
+                    assessment_type=atype,
+                    total_score=100,
+                    weight=weight,
+                    course_template=template,
+                )
+                for tlo in template.learning_outcomes.all():
+                    CourseTemplateAssessmentLOMapping.objects.get_or_create(
+                        template_assessment=ta,
+                        template_learning_outcome=tlo,
+                        defaults={"weight": round(1.0 / template.learning_outcomes.count(), 3)},
+                    )
+
+    def _build_curriculum(self, program, terms, instructors, head_user):
+        """Create CourseTemplates from CURRICULUM, clone into every term
+        where ANY cohort takes that semester."""
+        all_courses = []
+        courses_by_sem_cohort = {}  # (semester_num, cohort_start) -> list of Course
+        semester_keys = sorted(data.CURRICULUM.keys())
+        terms_by_key = {(t.academic_year, t.semester): t for t in terms}
+
+        for sem_idx, sem_key in enumerate(semester_keys):
+            semester_num = sem_idx + 1  # 1-8
+
             for course_info in data.CURRICULUM[sem_key]:
                 code, name, credits, ctype, los, assessments = course_info
 
-                # Create or get CourseTemplate
                 template, _ = CourseTemplate.objects.get_or_create(
                     code=code,
                     program=program,
                     defaults={"name": name, "credits": credits},
                 )
+                self._ensure_template_data(template, los, assessments)
 
-                # Add template LOs if missing
-                if template.learning_outcomes.count() == 0:
-                    for i, lo_desc in enumerate(los, 1):
-                        CourseTemplateLearningOutcome.objects.get_or_create(
-                            code=f"LO{i}",
-                            course_template=template,
-                            defaults={"description": lo_desc},
-                        )
+                # Clone into each cohort's term for this semester
+                for cohort_idx in range(data.NUM_COHORTS):
+                    cohort_start = data.FIRST_COHORT_START_YEAR - (data.NUM_COHORTS - 1 - cohort_idx)
+                    key = self._semester_to_term_key(cohort_start, semester_num)
+                    term = terms_by_key.get(key)
+                    if term is None:
+                        continue
 
-                # Add template assessments if missing
-                if template.assessments.count() == 0:
-                    for i, (aname, weight) in enumerate(assessments):
-                        atypes = ["midterm", "final", "project", "quiz", "homework"]
-                        atype = atypes[i % len(atypes)] if i < 4 else "other"
-                        ta = CourseTemplateAssessment.objects.create(
-                            name=aname,
-                            assessment_type=atype,
-                            total_score=100,
-                            weight=weight,
-                            course_template=template,
-                        )
-                        # Map to all template LOs
-                        for tlo in template.learning_outcomes.all():
-                            CourseTemplateAssessmentLOMapping.objects.get_or_create(
-                                template_assessment=ta,
-                                template_learning_outcome=tlo,
-                                defaults={"weight": round(1.0 / template.learning_outcomes.count(), 3)},
-                            )
+                    existing = Course.objects.filter(code=code, program=program, term=term).first()
+                    if existing is not None:
+                        course = existing
+                    else:
+                        try:
+                            course = clone_course_from_template(template, term, user=head_user)
+                        except IntegrityError:
+                            course = Course.objects.get(code=code, program=program, term=term)
 
-                # Clone into this term
-                instructor = random.choice(instructors)
-                course = clone_course_from_template(template, term, user=head_user)
-                course.instructors.add(instructor)
-                all_courses.append(course)
+                    instructor = random.choice(instructors)
+                    course.instructors.add(instructor)
+                    sem_cohort_key = (semester_num, cohort_start)
+                    courses_by_sem_cohort.setdefault(sem_cohort_key, []).append(course)
+                    if course not in all_courses:
+                        all_courses.append(course)
 
-                self.stdout.write(f"  ✓ {code} — {name} ({term.name})")
+                    self.stdout.write(f"  ✓ {code} — {name} ({term.name})")
 
-        self.stdout.write(f"  ✓ {len(all_courses)} courses instantiated")
-        return all_courses
+            self.stdout.write(f"  ✓ Semester {semester_num}: cloned into {data.NUM_COHORTS} terms")
+
+        self.stdout.write(f"  ✓ {len(all_courses)} total course instances")
+        return all_courses, courses_by_sem_cohort
 
     def _create_program_outcomes(self, program, term, head_user):
         outcomes = []
@@ -348,22 +398,38 @@ class Command(BaseCommand):
                 defaults={"weight": w},
             )
 
-    def _create_student_cohorts(self, department, program, university, terms, all_courses):
-        """Create 4 cohorts of 20 students, each starting in a different year."""
+    def _create_student_cohorts(self, department, program, university, terms, all_courses, courses_by_sem_cohort):
+        """Create cohorts and enroll each student in courses matching their
+        actual semester progress up to the active term snapshot."""
         all_students = []
+        terms_by_key = {(t.academic_year, t.semester): t for t in terms}
+        active_term = next(t for t in terms if t.is_active)
 
-        # Cohort definitions: (start_year, which terms their courses cover)
-        cohorts = [
-            ("2021", terms[0:8], "4. Sınıf"),  # Seniors — enrolled Fall 2021, take all 8 terms
-            ("2022", terms[2:8], "3. Sınıf"),  # Juniors — enrolled Fall 2022, take sem3-8
-            ("2023", terms[4:8], "2. Sınıf"),  # Sophomores — enrolled Fall 2023, take sem5-8
-            ("2024", terms[6:8], "1. Sınıf"),  # Freshmen — enrolled Fall 2024, take sem7-8
-        ]
+        for cohort_idx in range(data.NUM_COHORTS):
+            # cohort_idx 0 = oldest, NUM_COHORTS-1 = newest (freshman)
+            cohort_start = data.FIRST_COHORT_START_YEAR - (data.NUM_COHORTS - 1 - cohort_idx)
+            label = f"{data.NUM_COHORTS - cohort_idx}. Sınıf"
 
-        offset = 0
-        for start_year, cohort_terms, label in cohorts:
-            for i in range(20):
-                idx = offset + i
+            # Build list of terms this cohort participates in
+            # (sem1 through whichever semester falls in the active term)
+            cohort_terms = []
+            for sem_num in range(1, 9):
+                key = self._semester_to_term_key(cohort_start, sem_num)
+                term = terms_by_key.get(key)
+                if term is None:
+                    continue
+                cohort_terms.append(term)
+                if term.pk == active_term.pk:
+                    break  # stop at active term (snapshot boundary)
+
+            # The cohort's actual first term (used for enrollment_term on profile)
+            enrollment_key = self._semester_to_term_key(cohort_start, 1)
+            enrollment_term = terms_by_key.get(enrollment_key)
+
+            cohort_total_enrolled = 0
+
+            for i in range(data.STUDENTS_PER_COHORT):
+                idx = cohort_idx * data.STUDENTS_PER_COHORT + i
                 username = f"student{idx:03d}"
                 password = f"pass{idx:03d}"
 
@@ -385,23 +451,33 @@ class Command(BaseCommand):
                 profile, _ = StudentProfile.objects.get_or_create(
                     user=user,
                     defaults={
-                        "student_id": f"{start_year}{i + 1:04d}",
+                        "student_id": f"{cohort_start}{i + 1:04d}",
                         "program": program,
-                        "enrollment_term": cohort_terms[0] if cohort_terms else terms[0],
+                        "enrollment_term": enrollment_term,
                     },
                 )
 
-                # Enroll in courses that belong to this cohort's terms
+                # Enroll only in courses belonging to this cohort's semesters
                 enrolled = 0
-                for course in all_courses:
-                    if course.term in cohort_terms:
+                for sem_num in range(1, len(cohort_terms) + 1):
+                    key = (sem_num, cohort_start)
+                    for course in courses_by_sem_cohort.get(key, []):
                         CourseEnrollment.objects.get_or_create(student=user, course=course)
                         enrolled += 1
 
-                all_students.append({"user": user, "profile": profile, "password": password})
+                cohort_total_enrolled += enrolled
+                all_students.append(
+                    {
+                        "user": user,
+                        "profile": profile,
+                        "password": password,
+                    }
+                )
 
-            self.stdout.write(f"  ✓ {label} ({start_year}): 20 students, {enrolled} enrollments each")
-            offset += 20
+            per_student = cohort_total_enrolled // data.STUDENTS_PER_COHORT
+            self.stdout.write(
+                f"  ✓ {label} (start {cohort_start}): {data.STUDENTS_PER_COHORT} students, ~{per_student} enrollments each"
+            )
 
         return all_students
 

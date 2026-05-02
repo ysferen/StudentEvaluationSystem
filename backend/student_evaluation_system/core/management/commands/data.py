@@ -551,3 +551,16 @@ PROGRAM_OUTCOME_DESCRIPTIONS = [
         "farkındalık."
     ),
 ]
+
+# ── Seed configuration ──────────────────────────────────────────────────
+
+# Calendar year when the newest (first-year) cohort starts their first fall
+# semester. All term generation and cohort offsets are derived from this.
+FIRST_COHORT_START_YEAR = 2024
+
+# Number of cohorts to generate. Cohorts are spaced one year apart; the
+# oldest cohort starts (NUM_COHORTS - 1) calendar years before
+# FIRST_COHORT_START_YEAR.
+NUM_COHORTS = 4
+
+STUDENTS_PER_COHORT = 20
