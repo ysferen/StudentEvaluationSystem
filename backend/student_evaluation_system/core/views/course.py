@@ -125,10 +125,14 @@ class CourseViewSet(viewsets.ModelViewSet):
         if program_id:
             queryset = queryset.filter(program_id=program_id)
 
-        # Auto-scope instructors to the active term unless they explicitly
-        # filter by a specific term (so the dashboard shows current courses
-        # by default, but the courses page can look at history).
-        if getattr(user, "is_authenticated", False) and getattr(user, "is_instructor", False) and not term_id:
+        # Auto-scope instructors and program heads to the active term unless
+        # they explicitly filter by a specific term (so the dashboard shows
+        # current courses by default, but the courses page can look at history).
+        if (
+            getattr(user, "is_authenticated", False)
+            and (getattr(user, "is_instructor", False) or hasattr(user, "program_head_profile"))
+            and not term_id
+        ):
             active_term = Term.objects.filter(is_active=True).first()
             if active_term:
                 queryset = queryset.filter(term=active_term)

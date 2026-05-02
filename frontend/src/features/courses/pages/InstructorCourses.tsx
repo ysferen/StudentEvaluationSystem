@@ -1,17 +1,13 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '../../../shared/components/ui/Card'
-import { Badge } from '../../../shared/components/ui/Badge'
 import {
   BookOpenIcon,
   AcademicCapIcon,
   UsersIcon,
-  ChartBarIcon,
-  CalendarIcon,
   PlusIcon,
-  Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 import {
   coreCoursesList,
@@ -43,16 +39,28 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
 const getStudentId = (value: unknown): number | null => {
-  if (!isRecord(value)) {
-    return null
-  }
-
+  if (!isRecord(value)) return null
   const maybeId = value.student_id
   return typeof maybeId === 'number' ? maybeId : null
 }
 
+const getScoreColor = (score: number | null): string => {
+  if (score === null) return '#d1d5db'
+  if (score >= 70) return '#10b981'
+  if (score >= 50) return '#f59e0b'
+  return '#ef4444'
+}
+
+const getScoreTextColor = (score: number | null): string => {
+  if (score === null) return 'text-secondary-400'
+  if (score >= 70) return 'text-emerald-700 font-semibold'
+  if (score >= 50) return 'text-amber-700 font-semibold'
+  return 'text-red-700 font-semibold'
+}
+
 const InstructorCourses = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
 
@@ -64,7 +72,6 @@ const InstructorCourses = () => {
     }
   })
 
-  // Default to active term when terms load
   useEffect(() => {
     if (termsData && !selectedTermId) {
       const active = termsData.find(t => t.is_active)
@@ -98,13 +105,11 @@ const InstructorCourses = () => {
     )
   }, [permissionsData])
 
-  // Combined query for both student counts and average scores using grade averages API
   const courseStatsQueries = useQueries({
     queries: (coursesData || []).map((course) => ({
       queryKey: ['course-stats', course.id],
       queryFn: async () => {
         const response = await evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
-        // response is an array of student grade averages with student_id
         if (Array.isArray(response) && response.length > 0) {
           const validAverages = response
             .map(r => r.weighted_average)
@@ -112,30 +117,17 @@ const InstructorCourses = () => {
           const courseAvg = validAverages.length > 0
             ? validAverages.reduce((sum, avg) => sum + avg, 0) / validAverages.length
             : null
-          // Extract student IDs from the response (each entry has student_id)
           const studentIds = response
             .map((r) => getStudentId(r))
             .filter((id): id is number => id != null)
-
-          return {
-            courseId: course.id,
-            studentCount: studentIds.length,
-            studentIds,
-            average: courseAvg
-          } as CourseStatsData
+          return { courseId: course.id, studentCount: studentIds.length, studentIds, average: courseAvg } as CourseStatsData
         }
-        return {
-          courseId: course.id,
-          studentCount: 0,
-          studentIds: [],
-          average: null
-        } as CourseStatsData
+        return { courseId: course.id, studentCount: 0, studentIds: [], average: null } as CourseStatsData
       },
       enabled: !!coursesData?.length
     }))
   })
 
-  // Calculate total UNIQUE students from all course stats
   const totalStudents = useMemo(() => {
     const allStudentIds = new Set<number>()
     courseStatsQueries.forEach(query => {
@@ -146,29 +138,28 @@ const InstructorCourses = () => {
     return allStudentIds.size
   }, [courseStatsQueries])
 
-    const totalCredits = coursesData?.reduce((sum, course) => sum + (course.credits || 0), 0) || 0
+  const totalCredits = coursesData?.reduce((sum, course) => sum + (course.credits || 0), 0) || 0
 
   const isLoadingData = coursesLoading || courseStatsQueries.some(q => q.isLoading)
 
-if (isLoadingData) {
-  return (
-    <div className="flex justify-center items-center min-h-96">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mx-auto"></div>
-        <p className="mt-4 text-secondary-600 font-medium">Loading your courses...</p>
+  if (isLoadingData) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-secondary-600 font-medium">Loading your courses...</p>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-secondary-900">My Courses</h1>
           <p className="text-secondary-500 mt-1">
-            {termsData?.find((t) => String(t.id) === selectedTermId)?.name || 'Loading...'}
+            {termsData?.find((t) => String(t.id) === selectedTermId)?.name || '—'}
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -200,7 +191,6 @@ if (isLoadingData) {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
@@ -209,7 +199,7 @@ if (isLoadingData) {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Active Courses</p>
-              <p className="text-3xl font-bold text-primary-700">{  coursesData?.length || 0}</p>
+              <p className="text-3xl font-bold text-primary-700">{coursesData?.length || 0}</p>
             </div>
           </div>
         </Card>
@@ -239,83 +229,72 @@ if (isLoadingData) {
         </Card>
       </div>
 
-      {/* Courses Grid */}
       {coursesData && coursesData.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coursesData.map((course, index) => {
-            // Get real data from combined query
-            const statsData = courseStatsQueries[index]?.data
-            const studentCount = statsData?.studentCount ?? 0
-            const avgScore = statsData?.average ? Math.round(statsData.average) : null
+        <div className="bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-secondary-200">
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Code</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Course</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Students</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Avg Score</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Credits</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {coursesData.map((course, index) => {
+                const statsData = courseStatsQueries[index]?.data
+                const studentCount = statsData?.studentCount ?? 0
+                const avgScore = statsData?.average ? Math.round(statsData.average) : null
 
-            return (
-              <Card key={course.id} variant="hover" className="group relative">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-12 w-12 rounded-xl bg-primary-600 flex items-center justify-center text-white font-bold shadow-lg">
-                      {course.code?.slice(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                        {course.code}
-                      </h3>
-                      <p className="text-xs text-secondary-500 flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" />
-                        {course.term?.name || 'Current Term'}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="primary" className="text-xs">
-                    {course.credits} CR
-                  </Badge>
-                </div>
-
-                <h4 className="font-medium text-secondary-900 mb-3 line-clamp-2">
-                  {course.name}
-                </h4>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-secondary-600">Students</span>
-                    {courseStatsQueries[index]?.isLoading ? (
-                      <span className="text-secondary-400 animate-pulse">Loading...</span>
-                    ) : (
-                      <span className="font-medium text-secondary-900">{studentCount}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-secondary-600">Avg Score</span>
-                    {courseStatsQueries[index]?.isLoading ? (
-                      <span className="text-secondary-400 animate-pulse">Loading...</span>
-                    ) : avgScore !== null ? (
-                      <span className="font-medium text-secondary-900">{avgScore}</span>
-                    ) : (
-                      <span className="text-secondary-400">No data</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-secondary-600">Credits</span>
-                    <span className="font-medium text-secondary-900">{course.credits}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-secondary-100">
-                  <div className="flex items-center justify-between">
-                    <Link
-                      to={`/instructor/course/${course.id}`}
-                      className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
-                    >
-                      <ChartBarIcon className="h-4 w-4" />
-                      View Details
-                    </Link>
-                    <button className="text-secondary-400 hover:text-secondary-600 transition-colors">
-                      <Cog6ToothIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
+                return (
+                  <tr
+                    key={course.id}
+                    className="border-b border-secondary-100 last:border-0 hover:bg-secondary-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/instructor/course/${course.id}`)}
+                  >
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-primary-600">{course.code}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-secondary-900">{course.name}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {courseStatsQueries[index]?.isLoading ? (
+                        <span className="text-secondary-400">—</span>
+                      ) : (
+                        <span className="text-secondary-900">{studentCount}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-secondary-100 rounded-full h-1.5">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${avgScore ?? 0}%`, backgroundColor: getScoreColor(avgScore) }}
+                          />
+                        </div>
+                        <span className={getScoreTextColor(avgScore)}>{avgScore ?? '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-secondary-900">{course.credits}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Link
+                        to={`/instructor/course/${course.id}`}
+                        className="text-primary-600 hover:text-primary-700"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        →
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         <Card className="text-center py-16">
