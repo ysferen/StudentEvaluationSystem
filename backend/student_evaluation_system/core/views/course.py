@@ -128,8 +128,11 @@ class CourseViewSet(viewsets.ModelViewSet):
         # Auto-scope instructors and program heads to the active term unless
         # they explicitly filter by a specific term (so the dashboard shows
         # current courses by default, but the courses page can look at history).
+        # We only apply this default scope on list views, not retrieve/detail views,
+        # so that users can still view older courses via direct links (like CourseDetail).
         if (
-            getattr(user, "is_authenticated", False)
+            self.action == "list"
+            and getattr(user, "is_authenticated", False)
             and (getattr(user, "is_instructor", False) or hasattr(user, "program_head_profile"))
             and not term_id
         ):

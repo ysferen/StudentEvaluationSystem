@@ -23,6 +23,7 @@ import {
 
 interface LoAverageItem {
   lo_code: string
+  lo_description?: string
   avg_score: number
 }
 
@@ -40,6 +41,11 @@ const toLoAverages = (value: unknown): LoAverageItem[] => {
       && typeof item.lo_code === 'string'
       && typeof item.avg_score === 'number'
     ))
+    .map(item => ({
+      lo_code: item.lo_code,
+      lo_description: typeof item.lo_description === 'string' ? item.lo_description : '',
+      avg_score: item.avg_score
+    }))
 }
 
 interface CourseWithAnalytics extends Course {
@@ -47,7 +53,7 @@ interface CourseWithAnalytics extends Course {
   avgScore?: number
   studentsAtRisk?: number
   weight?: number
-  loScores?: Array<{ lo: string; score: number }>
+  loScores?: Array<{ lo: string; description: string; score: number }>
   gradeDistribution?: Array<{ grade: string; count: number; color: string }>
 }
 
@@ -173,6 +179,7 @@ const InstructorDashboard = () => {
     // Format LO averages for radar chart
     const aggregatedLOScores = analytics.loAverages.map((lo) => ({
       lo: lo.lo_code,
+      description: lo.lo_description || '',
       score: Math.round(lo.avg_score)
     }))
 
@@ -387,41 +394,70 @@ const InstructorDashboard = () => {
                 </div>
               </div>
             ) : activeChart === 'radar' ? (
-              <ChartWidget
-                key={`radar-chart-${course.id}`}
-                title=""
-                type="radar"
-                series={[{
-                  name: 'Score',
-                  data: (course.loScores || []).map(lo => lo.score)
-                }]}
-                options={{
-                  xaxis: {
-                    categories: (course.loScores || []).map(lo => lo.lo)
-                  },
-                  yaxis: {
-                    show : false,
-                    min: 0,
-                    max: 100
-                  },
-                  fill: {
-                    opacity: 0.4
-                  },
-                  colors: ['#6366f1'],
-                  markers: {
-                    size: 4
-                  },
-                  dataLabels: {
-                    enabled: true,
-                    background: {
+              <>
+                <ChartWidget
+                  key={`radar-chart-${course.id}`}
+                  title=""
+                  type="radar"
+                  series={[{
+                    name: 'Score',
+                    data: (course.loScores || []).map(lo => lo.score)
+                  }]}
+                  options={{
+                    xaxis: {
+                      categories: (course.loScores || []).map(lo => lo.lo)
+                    },
+                    yaxis: {
+                      show : false,
+                      min: 0,
+                      max: 100
+                    },
+                    fill: {
+                      opacity: 0.3,
+                      colors: ['#6366f1']
+                    },
+                    stroke: {
+                      colors: ['#6366f1']
+                    },
+                    colors: ['#6366f1'],
+                    markers: {
+                      size: 4
+                    },
+                    dataLabels: {
                       enabled: true,
-                      borderRadius:2,
+                      background: {
+                        enabled: true,
+                        borderRadius:2,
+                      }
+                    },
+                    plotOptions: {
+                      radar: {
+                        polygons: {
+                          strokeColors: '#e5e7eb',
+                          connectorColors: '#e5e7eb',
+                        }
+                      }
                     }
-                  }
-                }}
-                height={320}
-                className="shadow-none border-0 p-0"
-              />
+                  }}
+                  height={320}
+                  className="shadow-none border-0 p-0 [&>div]:p-0"
+                />
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(course.loScores || []).map((lo, idx) => (
+                    <div key={idx} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.lo}</span>
+                        <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                          lo.score >= 80 ? 'bg-emerald-100 text-emerald-700' : lo.score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {lo.score}%
+                        </span>
+                      </div>
+                      <span className="text-secondary-700 text-sm leading-snug">{lo.description || 'No description available'}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : activeChart === 'bar' || activeChart === 'pie' ? (
               <ChartWidget
                 key={`bar-chart-${course.id}`}

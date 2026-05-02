@@ -69,7 +69,7 @@ const HeadDashboard = () => {
               <ChartBarIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Program Avg GPA</p>
+              <p className="text-sm text-secondary-600 font-medium">Program Average</p>
               <p className="text-3xl font-bold text-secondary-900">
                 {overallAvg !== null ? overallAvg.toFixed(2) : 'N/A'}
               </p>
