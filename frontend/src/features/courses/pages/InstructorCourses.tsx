@@ -172,11 +172,18 @@ if (isLoadingData) {
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <Select value={selectedTermId} onValueChange={(value) => setSelectedTermId(value || '')}>
+          <Select
+            value={selectedTermId}
+            onValueChange={(value) => setSelectedTermId(value || '')}
+            items={termsData?.reduce<Record<string, React.ReactNode>>((acc, term) => {
+              acc[String(term.id)] = term.name
+              return acc
+            }, {}) ?? {}}
+          >
             <SelectTrigger className="w-52">
               <SelectValue placeholder="Select term..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent alignItemWithTrigger={false}>
               {termsData?.map((term) => (
                 <SelectItem key={term.id} value={String(term.id)}>
                   {term.name}
