@@ -21,6 +21,7 @@ from ..models import (
     ProgramOutcome,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
+    Term,
 )
 from ..serializers import (
     CourseSerializer,
@@ -81,33 +82,35 @@ class CourseViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         return [permission() for permission in self.permission_classes]
 
+    def _apply_role_filters(self, queryset, user):
+        """Scope courses by user role. Instructors see only their courses, etc."""
+        if not getattr(user, "is_authenticated", False):
+            return queryset
+        if getattr(user, "is_admin_user", False):
+            return queryset
+        if getattr(user, "is_instructor", False):
+            return queryset.filter(instructors=user)
+        if getattr(user, "is_student", False):
+            from evaluation.models import CourseEnrollment
+
+            enrolled_course_ids = CourseEnrollment.objects.filter(student=user).values_list("course_id", flat=True)
+            return queryset.filter(id__in=enrolled_course_ids)
+        if hasattr(user, "program_head_profile"):
+            programs = Program.objects.filter(pk=user.program_head_profile.program_id)
+            return queryset.filter(program__in=programs)
+        return queryset.none()
+
     def get_queryset(self):
         """
         Filter courses based on user role:
-        - Instructors: only courses they teach
+        - Instructors: only courses they teach (auto-scoped to active term)
         - Admins: all courses
         """
         user = self.request.user
         queryset = super().get_queryset()
+        queryset = self._apply_role_filters(queryset, user)
 
-        # Role-based visibility for authenticated users
-        if getattr(user, "is_authenticated", False):
-            if getattr(user, "is_admin_user", False):
-                pass
-            elif getattr(user, "is_instructor", False):
-                queryset = queryset.filter(instructors=user)
-            elif getattr(user, "is_student", False):
-                from evaluation.models import CourseEnrollment
-
-                enrolled_course_ids = CourseEnrollment.objects.filter(student=user).values_list("course_id", flat=True)
-                queryset = queryset.filter(id__in=enrolled_course_ids)
-            elif hasattr(user, "program_head_profile"):
-                programs = Program.objects.filter(pk=user.program_head_profile.program_id)
-                queryset = queryset.filter(program__in=programs)
-            else:
-                queryset = queryset.none()
-
-        # Apply query filters
+        # Apply query params
         department_id = self.request.query_params.get("department", None)
         term_id = self.request.query_params.get("term", None)
         instructor_id = self.request.query_params.get("instructor", None)
@@ -121,6 +124,14 @@ class CourseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(instructors__id=instructor_id)
         if program_id:
             queryset = queryset.filter(program_id=program_id)
+
+        # Auto-scope instructors to the active term unless they explicitly
+        # filter by a specific term (so the dashboard shows current courses
+        # by default, but the courses page can look at history).
+        if getattr(user, "is_authenticated", False) and getattr(user, "is_instructor", False) and not term_id:
+            active_term = Term.objects.filter(is_active=True).first()
+            if active_term:
+                queryset = queryset.filter(term=active_term)
 
         return queryset.distinct()
 
