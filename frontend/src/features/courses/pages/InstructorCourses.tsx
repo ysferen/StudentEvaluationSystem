@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
@@ -14,7 +14,8 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 import {
-  coreCoursesList
+  coreCoursesList,
+  coreTermsList,
 } from '../../../shared/api/generated/core/core'
 import {
   corePermissionsMyPermissionsRetrieve
@@ -23,6 +24,13 @@ import { PermissionTierEnum } from '../../../shared/api/model'
 import {
   evaluationGradesCourseAveragesRetrieve
 } from '../../../shared/api/generated/evaluation/evaluation'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface CourseStatsData {
   courseId: number
@@ -46,11 +54,31 @@ const getStudentId = (value: unknown): number | null => {
 const InstructorCourses = () => {
   const { user } = useAuth()
 
-  const { data: coursesData, isLoading: coursesLoading } = useQuery({
-    queryKey: ['instructor-courses', user?.id],
+  const [selectedTermId, setSelectedTermId] = useState<string>('')
+
+  const { data: termsData } = useQuery({
+    queryKey: ['terms'],
     queryFn: async () => {
-      // instructor parameter is now typed in CoreCoursesListParams (from OpenAPI schema)
-      const response = await coreCoursesList({ instructor: user?.id })
+      const response = await coreTermsList()
+      return response.results || []
+    }
+  })
+
+  // Default to active term when terms load
+  useEffect(() => {
+    if (termsData && !selectedTermId) {
+      const active = termsData.find(t => t.is_active)
+      if (active) setSelectedTermId(String(active.id))
+    }
+  }, [termsData, selectedTermId])
+
+  const { data: coursesData, isLoading: coursesLoading } = useQuery({
+    queryKey: ['instructor-courses', user?.id, selectedTermId],
+    queryFn: async () => {
+      const response = await coreCoursesList({
+        instructor: user?.id,
+        ...(selectedTermId ? { term: Number(selectedTermId) } : {}),
+      })
       return response.results || []
     },
     enabled: !!user?.id
@@ -139,9 +167,23 @@ if (isLoadingData) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-secondary-900">My Courses</h1>
-          <p className="text-secondary-500 mt-1">Courses you are teaching this semester</p>
+          <p className="text-secondary-500 mt-1">
+            {termsData?.find((t) => String(t.id) === selectedTermId)?.name || 'Loading...'}
+          </p>
         </div>
         <div className="flex items-center space-x-4">
+          <Select value={selectedTermId} onValueChange={(value) => setSelectedTermId(value || '')}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Select term..." />
+            </SelectTrigger>
+            <SelectContent>
+              {termsData?.map((term) => (
+                <SelectItem key={term.id} value={String(term.id)}>
+                  {term.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {canCreateCourse && (
             <button className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
               <PlusIcon className="h-5 w-5" />
