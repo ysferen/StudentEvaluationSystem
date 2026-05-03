@@ -17,6 +17,7 @@ from core.models import (
     ProgramOutcome,
     Department,
     University,
+    WeightSuggestionJob,
     Term,
     Program,
     DegreeLevel,
@@ -529,3 +530,34 @@ class CourseTemplateLOPOMappingSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseTemplateLOPOMapping
         fields = ["id", "template_learning_outcome", "program_outcome", "weight"]
+
+
+class WeightSuggestionJobSerializer(serializers.ModelSerializer):
+    """Serializer for WeightSuggestionJob."""
+
+    class Meta:
+        model = WeightSuggestionJob
+        fields = [
+            "id",
+            "course",
+            "triggered_by",
+            "status",
+            "celery_task_id",
+            "result",
+            "error",
+            "started_at",
+            "finished_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "status",
+            "celery_task_id",
+            "result",
+            "error",
+            "started_at",
+            "finished_at",
+            "created_at",
+            "updated_at",
+        ]

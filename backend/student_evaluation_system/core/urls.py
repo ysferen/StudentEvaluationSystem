@@ -33,6 +33,7 @@ router.register(
 )
 router.register(r"file-import/program-outcomes", views.ProgramOutcomesImportViewSet, basename="file-import-program-outcomes")
 router.register(r"permissions", views.InstructorPermissionViewSet, basename="instructor-permission")
+router.register(r"weight-suggestion", views.WeightSuggestionViewSet, basename="weightsuggestion")
 
 urlpatterns = [
     path("", include(router.urls)),

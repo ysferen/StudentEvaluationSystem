@@ -52,6 +52,9 @@ from .file_import import (
 # Permissions
 from .permissions import InstructorPermissionViewSet
 
+# Weight Suggestion
+from .weight_suggestion import WeightSuggestionViewSet
+
 # Analytics
 from .analytics import ProgramStatsView
 
@@ -82,6 +85,8 @@ __all__ = [
     "FileUploadRateThrottle",
     # Permissions
     "InstructorPermissionViewSet",
+    # Weight Suggestion
+    "WeightSuggestionViewSet",
     # Analytics
     "ProgramStatsView",
 ]
