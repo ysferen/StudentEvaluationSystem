@@ -644,3 +644,49 @@ class InstructorPermission(TimeStampedModel):
 
     def __str__(self):
         return f"{self.instructor.full_name} - {self.get_resource_area_display()}: {self.get_permission_tier_display()}"
+
+
+class WeightSuggestionJob(TimeStampedModel):
+    """Tracks async weight suggestion tasks run via Celery."""
+
+    STATUS_PENDING = "pending"
+    STATUS_RUNNING = "running"
+    STATUS_SUCCESS = "success"
+    STATUS_FAILED = "failed"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_RUNNING, "Running"),
+        (STATUS_SUCCESS, "Success"),
+        (STATUS_FAILED, "Failed"),
+    )
+
+    course = models.ForeignKey(
+        "Course",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="weight_suggestion_jobs",
+    )
+    triggered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="triggered_weight_suggestion_jobs",
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    celery_task_id = models.CharField(max_length=255, blank=True)
+    result = models.JSONField(null=True, blank=True)
+    error = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Weight Suggestion Job"
+        verbose_name_plural = "Weight Suggestion Jobs"
+
+    def __str__(self):
+        course_id = self.course_id if self.course_id is not None else "-"
+        return f"WeightSuggestionJob {self.id}: course={course_id} status={self.status}"
