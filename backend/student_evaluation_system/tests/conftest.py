@@ -490,6 +490,45 @@ def program_factory(db):
 
 
 # Add this at the end of your conftest.py to ensure Django is setup
+@pytest.fixture
+def weight_suggestion_job_factory(db):
+    """Factory for WeightSuggestionJob records."""
+    from core.models import WeightSuggestionJob
+
+    def _create_job(**kwargs):
+        defaults = {
+            "status": WeightSuggestionJob.STATUS_PENDING,
+        }
+        defaults.update(kwargs)
+        return WeightSuggestionJob.objects.create(**defaults)
+
+    return _create_job
+
+
+@pytest.fixture
+def course_with_los(db_setup):
+    """Creates a course with 3 learning outcomes (no assessments)."""
+    from core.models import LearningOutcome
+
+    course = db_setup["course"]
+    lo1 = LearningOutcome.objects.create(
+        code="LO1",
+        description="Explains operating system components",
+        course=course,
+    )
+    lo2 = LearningOutcome.objects.create(
+        code="LO2",
+        description="Compares process management algorithms",
+        course=course,
+    )
+    lo3 = LearningOutcome.objects.create(
+        code="LO3",
+        description="Analyzes memory management techniques",
+        course=course,
+    )
+    return {"course": course, "los": [lo1, lo2, lo3]}
+
+
 def pytest_configure():
     """Configure Django for pytest."""
     import os
