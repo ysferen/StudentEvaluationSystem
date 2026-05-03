@@ -58,7 +58,18 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assessment
-        fields = ["id", "name", "course", "date", "total_score", "weight", "lo_mappings", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "assessment_type",
+            "description",
+            "course",
+            "date",
+            "total_score",
+            "weight",
+            "lo_mappings",
+            "created_at",
+        ]
 
 
 class AssessmentCreateSerializer(serializers.ModelSerializer):
@@ -69,7 +80,7 @@ class AssessmentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assessment
-        fields = ["id", "name", "course", "date", "total_score", "weight", "assessment_type"]
+        fields = ["id", "name", "course", "date", "total_score", "weight", "assessment_type", "description"]
 
 
 class StudentGradeSerializer(serializers.ModelSerializer):
