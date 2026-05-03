@@ -6,6 +6,7 @@ SentenceTransformer model once at startup via worker_process_init,
 so subsequent invocations are instant (no 8s reload).
 """
 
+import logging
 import os
 
 from celery import shared_task
@@ -15,6 +16,8 @@ from sentence_transformers import SentenceTransformer
 
 from core.services.weight_suggestion import WeightSuggester
 
+logger = logging.getLogger(__name__)
+
 # Module-level suggester --- loaded once per worker process
 _suggester = None
 
@@ -23,9 +26,12 @@ _suggester = None
 def _init_weight_suggester(**kwargs):
     """Load the embedding model once when the Celery worker starts."""
     global _suggester
-    model_name = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
-    model = SentenceTransformer(model_name)
-    _suggester = WeightSuggester(encoder=model)
+    try:
+        model_name = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
+        model = SentenceTransformer(model_name)
+        _suggester = WeightSuggester(encoder=model)
+    except Exception as exc:
+        logger.error("Failed to initialize weight suggester: %s", exc)
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
@@ -61,6 +67,9 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
         los = list(course.learning_outcomes.values_list("description", flat=True))
         assessments = course.assessments.all()
         assessment_texts = [f"{a.name}: {a.get_assessment_type_display()}" for a in assessments]
+
+        if _suggester is None:
+            raise RuntimeError("Weight suggester not initialized — worker may have failed to load the model")
 
         result = _suggester.suggest_assessment_lo(
             course_name=course.name,

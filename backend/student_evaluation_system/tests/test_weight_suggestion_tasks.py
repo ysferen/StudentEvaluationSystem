@@ -29,9 +29,9 @@ class TestSuggestAssessmentLOTask:
 
         mock_course = MagicMock()
         mock_course.name = "Test Course"
-        mock_course.learning_outcomes.all.return_value = [
-            MagicMock(description="LO1: desc a"),
-            MagicMock(description="LO2: desc b"),
+        mock_course.learning_outcomes.values_list.return_value = [
+            "LO1: desc a",
+            "LO2: desc b",
         ]
         mock_course.assessments.all.return_value = []
 
@@ -59,9 +59,9 @@ class TestSuggestAssessmentLOTask:
 
         mock_course = MagicMock()
         mock_course.name = "Test Course"
-        mock_course.learning_outcomes.all.return_value = [
-            MagicMock(description="LO1: desc a"),
-            MagicMock(description="LO2: desc b"),
+        mock_course.learning_outcomes.values_list.return_value = [
+            "LO1: desc a",
+            "LO2: desc b",
         ]
         mock_course.assessments.all.return_value = []
 
@@ -72,13 +72,18 @@ class TestSuggestAssessmentLOTask:
             patch("core.tasks.timezone") as mock_tz,
         ):
             mock_course_model.objects.get.return_value = mock_course
-            mock_job_model.objects.filter.return_value = MagicMock()
+            mock_filter = MagicMock()
+            mock_job_model.objects.filter.return_value = mock_filter
             mock_tz.now.return_value = "2025-01-01T00:00:00Z"
 
             suggest_assessment_lo_weights_task(course_id=42, job_id=99)
 
-            # Verify job was updated to running at start
-            mock_job_model.objects.filter.assert_any_call(id=99)
+            # Verify the last update call set status=success, result, and finished_at
+            last_update = mock_filter.update.call_args_list[-1]
+            last_kwargs = last_update[1]
+            assert last_kwargs["status"] == mock_job_model.STATUS_SUCCESS
+            assert last_kwargs["result"] == {"assessment_lo": {"Midterm": {"LO1": 3, "LO2": 4}}}
+            assert last_kwargs["finished_at"] == "2025-01-01T00:00:00Z"
 
     def test_task_updates_job_on_failure(self):
         """Task should mark job as failed on exception."""
@@ -89,8 +94,8 @@ class TestSuggestAssessmentLOTask:
 
         mock_course = MagicMock()
         mock_course.name = "Test Course"
-        mock_course.learning_outcomes.all.return_value = [
-            MagicMock(description="LO1: desc a"),
+        mock_course.learning_outcomes.values_list.return_value = [
+            "LO1: desc a",
         ]
         mock_course.assessments.all.return_value = []
 
@@ -115,12 +120,12 @@ class TestSuggestAssessmentLOTask:
     def test_task_handles_missing_course(self):
         """Task should raise Course.DoesNotExist if course not found."""
         from core.tasks import suggest_assessment_lo_weights_task
-        from django.core.exceptions import ObjectDoesNotExist
+        from core.models import Course as CourseModel
 
         with patch("core.models.Course") as mock_course_model:
-            mock_course_model.objects.get.side_effect = ObjectDoesNotExist("no course")
+            mock_course_model.objects.get.side_effect = CourseModel.DoesNotExist("no course")
 
-            with pytest.raises(ObjectDoesNotExist):
+            with pytest.raises(CourseModel.DoesNotExist):
                 suggest_assessment_lo_weights_task(course_id=99999)
 
     def test_task_handles_no_los(self):
@@ -132,10 +137,10 @@ class TestSuggestAssessmentLOTask:
 
         mock_course = MagicMock()
         mock_course.name = "Test Course"
-        mock_course.learning_outcomes.all.return_value = []
-        mock_course.assessments.all.return_value = [
-            MagicMock(name="Midterm", assessment_type="midterm"),
-        ]
+        mock_course.learning_outcomes.values_list.return_value = []
+        mock_a = MagicMock(name="Midterm", assessment_type="midterm")
+        mock_a.get_assessment_type_display.return_value = "Midterm"
+        mock_course.assessments.all.return_value = [mock_a]
 
         with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
             mock_course_model.objects.get.return_value = mock_course
@@ -145,6 +150,21 @@ class TestSuggestAssessmentLOTask:
             assert result == {"assessment_lo": {}}
             call_kwargs = mock_suggester.suggest_assessment_lo.call_args[1]
             assert call_kwargs["los"] == []
+
+    def test_task_raises_when_suggester_not_initialized(self):
+        """Task should raise RuntimeError when _suggester is None."""
+        from core.tasks import suggest_assessment_lo_weights_task
+
+        mock_course = MagicMock()
+        mock_course.name = "Test Course"
+        mock_course.learning_outcomes.values_list.return_value = []
+        mock_course.assessments.all.return_value = []
+
+        with patch("core.tasks._suggester", None), patch("core.models.Course") as mock_course_model:
+            mock_course_model.objects.get.return_value = mock_course
+
+            with pytest.raises(RuntimeError, match="Weight suggester not initialized"):
+                suggest_assessment_lo_weights_task(course_id=42)
 
 
 class TestWorkerInit:
