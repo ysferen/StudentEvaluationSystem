@@ -8,13 +8,11 @@ so subsequent invocations are instant (no 8s reload).
 
 import logging
 import os
+import time
 
 from celery import shared_task
 from celery.signals import worker_process_init
 from django.utils import timezone
-from sentence_transformers import SentenceTransformer
-
-from core.services.weight_suggestion import WeightSuggester
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +25,9 @@ def _init_weight_suggester(**kwargs):
     """Load the embedding model once when the Celery worker starts."""
     global _suggester
     try:
+        from sentence_transformers import SentenceTransformer
+        from core.services.weight_suggestion import WeightSuggester
+
         model_name = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
         model = SentenceTransformer(model_name)
         _suggester = WeightSuggester(encoder=model)
@@ -52,6 +53,7 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
     """
     from core.models import Course, WeightSuggestionJob
 
+    logger.info(f"TASK STARTED AT: {time.time()}")
     # Update job status to running
     if job_id:
         WeightSuggestionJob.objects.filter(id=job_id).update(
@@ -66,7 +68,11 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
 
         los = list(course.learning_outcomes.values_list("description", flat=True))
         assessments = course.assessments.all()
-        assessment_texts = [f"{a.name}: {a.get_assessment_type_display()}" for a in assessments]
+        assessment_names = [a.name for a in assessments]
+        assessment_texts = [
+            f"{a.name}: {a.description}" if a.description else f"{a.name}: {a.get_assessment_type_display()}"
+            for a in assessments
+        ]
 
         if _suggester is None:
             _init_weight_suggester()
@@ -77,6 +83,7 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             course_name=course.name,
             los=los,
             assessments=assessment_texts,
+            assessment_keys=assessment_names,
         )
 
     except Exception as exc:
@@ -95,4 +102,5 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             result=result,
         )
 
+    logger.info(f"TASK SENT AT: {time.time()}")
     return result

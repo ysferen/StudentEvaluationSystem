@@ -541,3 +541,16 @@ def pytest_configure():
     # Configure Django if not already configured
     if not settings.configured:
         django.setup()
+
+
+@pytest.fixture(autouse=True)
+def _test_settings(settings):
+    """Override settings so tests don't need Redis or a Celery broker."""
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "test-cache",
+        }
+    }
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = False

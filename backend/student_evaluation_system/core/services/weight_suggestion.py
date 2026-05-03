@@ -9,10 +9,7 @@ Weights are derived from sentence-embedding cosine similarity.
 """
 
 import os
-
 import numpy as np
-
-from .embedding_service import get_model
 
 
 class WeightSuggester:
@@ -27,13 +24,13 @@ class WeightSuggester:
             encoder: Optional encoder instance for testing.
         """
         self.model_name = model_name or "all-MiniLM-L6-v2"
-        self.encoder = encoder or get_model()
+        self.encoder = encoder
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def suggest_assessment_lo(self, course_name, los, assessments):
+    def suggest_assessment_lo(self, course_name, los, assessments, assessment_keys=None):
         """
         Suggest weights mapping assessment methods to learning outcomes.
 
@@ -41,22 +38,26 @@ class WeightSuggester:
             course_name: Name of the course (e.g. "Operating Systems").
             los: List of learning outcome descriptions.
                  e.g. ["LO1: Explains OS components.", "LO2: Compares algorithms."]
-            assessments: List of assessment method names.
-                         e.g. ["Midterm", "Final", "Project"]
+            assessments: List of assessment descriptive texts used for
+                         embedding similarity (e.g. "Midterm: tests theory").
+            assessment_keys: Optional list of short names for response keys.
+                             If None, uses `assessments` as the keys.
+                             e.g. ["Midterm", "Final", "Project"]
 
         Returns:
-            dict with shape: {"assessment_lo": {Assessment: {LO: weight}}}
+            dict with shape: {"assessment_lo": {key: {LO_key: weight}}}
         """
         if not assessments:
             return {"assessment_lo": {}}
 
+        keys = assessment_keys if assessment_keys is not None else assessments
         lo_keys = [f"LO{i + 1}" for i in range(len(los))]
         weights = self._similarity_weights(assessments, los)
 
         return {
             "assessment_lo": {
-                assessment: {lo_key: weights[row_index][col_index] for col_index, lo_key in enumerate(lo_keys)}
-                for row_index, assessment in enumerate(assessments)
+                keys[row_index]: {lo_key: weights[row_index][col_index] for col_index, lo_key in enumerate(lo_keys)}
+                for row_index in range(len(keys))
             }
         }
 

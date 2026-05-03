@@ -74,6 +74,14 @@ def main():
     for lo in course.learning_outcomes.all():
         print(f"  {lo.code}: {lo.description}")
     print(f"Assessments in DB: {course.assessments.count()}")
+    descriptive_texts = {
+        "Midterm": "teorik bilgileri ölçer",
+        "Final": "comprehensive evaluation",
+        "Project": "practical implementation",
+    }
+    for a in course.assessments.all():
+        desc = descriptive_texts.get(a.name) or f"({a.get_assessment_type_display()})"
+        print(f"  {a.name}: {desc}")
     print("=" * 70)
 
     # --- Queue the Celery task ---

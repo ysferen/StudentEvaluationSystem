@@ -236,3 +236,43 @@ def test_suggester_handles_empty_assessments(sample_course_name, sample_los, dum
     )
 
     assert result == {"assessment_lo": {}}
+
+
+def test_assessment_keys_separates_descriptions_from_response_keys(
+    sample_course_name,
+    sample_los,
+    dummy_encoder,
+):
+    """Response keys should use assessment_keys when provided, not assessment texts."""
+    from core.services.weight_suggestion import WeightSuggester
+
+    descriptive_texts = [
+        "Midterm: tests theoretical understanding",
+        "Final: comprehensive evaluation",
+        "Project: practical implementation",
+    ]
+    short_keys = ["Midterm", "Final", "Project"]
+
+    embeddings = {
+        descriptive_texts[0]: [1.0, 0.0],
+        descriptive_texts[1]: [0.8, 0.2],
+        descriptive_texts[2]: [0.0, 1.0],
+        sample_los[0]: [1.0, 0.0],
+        sample_los[1]: [0.0, 1.0],
+    }
+    suggester = WeightSuggester(encoder=dummy_encoder(embeddings))
+    result = suggester.suggest_assessment_lo(
+        course_name=sample_course_name,
+        los=sample_los,
+        assessments=descriptive_texts,
+        assessment_keys=short_keys,
+    )
+
+    assert len(result["assessment_lo"]) == 3
+    # Keys should be the short names, not the descriptive texts
+    for key in short_keys:
+        assert key in result["assessment_lo"], f"Missing key '{key}'"
+    # No descriptive text should appear as a key
+    for text in descriptive_texts:
+        if text not in short_keys:
+            assert text not in result["assessment_lo"], f"Descriptive text '{text}' leaked into response key"

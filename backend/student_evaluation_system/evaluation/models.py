@@ -31,6 +31,10 @@ class Assessment(TimeStampedModel):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="created_assessments"
     )
+    description = models.TextField(
+        blank=True,
+        help_text="Single-sentence description of what this assessment evaluates, used for AI weight correlation",
+    )
 
     class Meta:
         ordering = ["course", "date"]

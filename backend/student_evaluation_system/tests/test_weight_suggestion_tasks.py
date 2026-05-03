@@ -139,7 +139,9 @@ class TestSuggestAssessmentLOTask:
         mock_course.name = "Test Course"
         mock_course.learning_outcomes.values_list.return_value = []
         mock_a = MagicMock(name="Midterm", assessment_type="midterm")
-        mock_a.get_assessment_type_display.return_value = "Midterm"
+        mock_a.name = "Midterm"
+        mock_a.description = "tests theoretical knowledge"
+        del mock_a.get_assessment_type_display  # force use of description path
         mock_course.assessments.all.return_value = [mock_a]
 
         with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
@@ -150,6 +152,41 @@ class TestSuggestAssessmentLOTask:
             assert result == {"assessment_lo": {}}
             call_kwargs = mock_suggester.suggest_assessment_lo.call_args[1]
             assert call_kwargs["los"] == []
+            assert call_kwargs["assessments"] == ["Midterm: tests theoretical knowledge"]
+            assert call_kwargs["assessment_keys"] == ["Midterm"]
+
+    def test_task_uses_description_when_present(self):
+        """Task should use assessment.description for embedding text, name for key."""
+        from core.tasks import suggest_assessment_lo_weights_task
+
+        mock_suggester = MagicMock()
+        mock_suggester.suggest_assessment_lo.return_value = {"assessment_lo": {"Midterm": {"LO1": 3}}}
+
+        mock_course = MagicMock()
+        mock_course.name = "Test Course"
+        mock_course.learning_outcomes.values_list.return_value = ["LO1: desc"]
+        # Assessment with description
+        mock_a = MagicMock()
+        mock_a.name = "Midterm"
+        mock_a.description = "tests theoretical knowledge"
+        # Assessment without description (falls back to type)
+        mock_b = MagicMock()
+        mock_b.name = "Final"
+        mock_b.description = ""
+        mock_b.get_assessment_type_display.return_value = "Final Exam"
+        mock_course.assessments.all.return_value = [mock_a, mock_b]
+
+        with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
+            mock_course_model.objects.get.return_value = mock_course
+
+            suggest_assessment_lo_weights_task(course_id=42)
+
+            call_kwargs = mock_suggester.suggest_assessment_lo.call_args[1]
+            assert call_kwargs["assessments"] == [
+                "Midterm: tests theoretical knowledge",
+                "Final: Final Exam",
+            ]
+            assert call_kwargs["assessment_keys"] == ["Midterm", "Final"]
 
     def test_task_raises_when_suggester_not_initialized(self):
         """Task should raise RuntimeError when _suggester stays None after init."""
@@ -179,8 +216,8 @@ class TestWorkerInit:
         import core.tasks as tasks_module
 
         with (
-            patch.object(tasks_module, "SentenceTransformer") as mock_st,
-            patch.object(tasks_module, "WeightSuggester") as mock_ws_cls,
+            patch("sentence_transformers.SentenceTransformer") as mock_st,
+            patch("core.services.weight_suggestion.WeightSuggester") as mock_ws_cls,
             patch.object(tasks_module, "os") as mock_os,
         ):
             mock_os.getenv.return_value = "test-model"
@@ -198,8 +235,8 @@ class TestWorkerInit:
         import core.tasks as tasks_module
 
         with (
-            patch.object(tasks_module, "SentenceTransformer") as mock_st,
-            patch.object(tasks_module, "WeightSuggester"),
+            patch("sentence_transformers.SentenceTransformer") as mock_st,
+            patch("core.services.weight_suggestion.WeightSuggester"),
             patch.object(tasks_module, "os") as mock_os,
         ):
             mock_os.getenv = lambda key, default=None: default
