@@ -152,7 +152,7 @@ class TestSuggestAssessmentLOTask:
             assert call_kwargs["los"] == []
 
     def test_task_raises_when_suggester_not_initialized(self):
-        """Task should raise RuntimeError when _suggester is None."""
+        """Task should raise RuntimeError when _suggester stays None after init."""
         from core.tasks import suggest_assessment_lo_weights_task
 
         mock_course = MagicMock()
@@ -160,7 +160,11 @@ class TestSuggestAssessmentLOTask:
         mock_course.learning_outcomes.values_list.return_value = []
         mock_course.assessments.all.return_value = []
 
-        with patch("core.tasks._suggester", None), patch("core.models.Course") as mock_course_model:
+        with (
+            patch("core.tasks._suggester", None),
+            patch("core.tasks._init_weight_suggester"),
+            patch("core.models.Course") as mock_course_model,
+        ):
             mock_course_model.objects.get.return_value = mock_course
 
             with pytest.raises(RuntimeError, match="Weight suggester not initialized"):

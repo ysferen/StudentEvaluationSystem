@@ -69,7 +69,9 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
         assessment_texts = [f"{a.name}: {a.get_assessment_type_display()}" for a in assessments]
 
         if _suggester is None:
-            raise RuntimeError("Weight suggester not initialized — worker may have failed to load the model")
+            _init_weight_suggester()
+        if _suggester is None:
+            raise RuntimeError("Weight suggester not initialized — model failed to load")
 
         result = _suggester.suggest_assessment_lo(
             course_name=course.name,
