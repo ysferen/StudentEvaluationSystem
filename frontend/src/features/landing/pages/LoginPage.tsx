@@ -99,19 +99,24 @@ const LoginPage = () => {
             <p className="font-medium mb-2">Demo Accounts:</p>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <span className="font-semibold">Admin:</span>
+                <span className="font-semibold">Head:</span>
                 <br />
-                admin / admin
+                headuser / head123
               </div>
               <div>
-                <span className="font-semibold">Lecturer:</span>
+                <span className="font-semibold">Lecturer 1:</span>
                 <br />
-                lecturer / lecturer
+                ahmetbulut / instructor123
+              </div>
+              <div>
+                <span className="font-semibold">Lecturer 2:</span>
+                <br />
+                serkanapaydin / instructor123
               </div>
               <div>
                 <span className="font-semibold">Student:</span>
                 <br />
-                student / student
+                student000 / student000
               </div>
             </div>
           </div>

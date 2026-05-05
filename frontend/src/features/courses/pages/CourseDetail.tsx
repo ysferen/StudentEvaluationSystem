@@ -767,6 +767,7 @@ const CourseDetail = () => {
           >
             <MappingEditor
               courseId={Number(courseId)}
+              termId={data.course.term.id}
               onClose={() => setIsMappingEditorOpen(false)}
             />
           </div>

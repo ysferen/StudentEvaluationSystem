@@ -99,6 +99,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 
 interface MappingEditorProps {
   courseId: number
+  termId: number
   onClose?: () => void
 }
 
@@ -321,13 +322,13 @@ const WeightModal = ({
 }
 
 // Main Component
-const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
+const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const queryClient = useQueryClient()
 
   // Data fetching
   const assessmentsQuery = useEvaluationAssessmentsList({ course: courseId })
   const losQuery = useCoreCoursesLearningOutcomesRetrieve(courseId)
-  const posQuery = useCoreProgramOutcomesList()
+  const posQuery = useCoreProgramOutcomesList({ term: termId })
   const aloQuery = useEvaluationAssessmentLoMappingsList(undefined, {
     request: { params: { course: courseId } },
   })
@@ -704,7 +705,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
             </div>
             <div className="space-y-2 overflow-y-auto flex-1 pr-2">
               {assessments.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No assessments found</p>
+                <p className="text-sm text-gray-500 text-center py-4">No assessments are defined for this course</p>
               ) : (
                 assessments.map((assessment) => {
                   const isMapped = assessmentLOMappings.some(m => m.assessment === assessment.id)
@@ -767,7 +768,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
             </div>
             <div className="space-y-3 overflow-y-auto flex-1 pr-2">
               {learningOutcomes.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No learning outcomes found</p>
+                <p className="text-sm text-gray-500 text-center py-4">No learning outcomes are defined for this course</p>
               ) : (
                 learningOutcomes.map((lo) => (
                   <DroppableZone
@@ -946,7 +947,7 @@ const MappingEditor = ({ courseId, onClose }: MappingEditorProps) => {
             </div>
             <div className="space-y-2 overflow-y-auto flex-1 pr-2">
               {programOutcomes.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No program outcomes found</p>
+                <p className="text-sm text-gray-500 text-center py-4">No program outcomes are defined for this course</p>
               ) : (
                 programOutcomes.map((po) => (
                   <DroppableZone
