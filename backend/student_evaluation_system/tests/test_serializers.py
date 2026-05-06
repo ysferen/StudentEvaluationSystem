@@ -276,3 +276,47 @@ class TestAssessmentLearningOutcomeMappingSerializer:
         serializer = AssessmentLearningOutcomeMappingSerializer(mapping1, data=data, partial=True)
         assert not serializer.is_valid()
         assert "weight" in serializer.errors
+
+    def test_list_serializer_validates_weight_sum(self, fb_assessment_factory, fb_learning_outcome_factory):
+        """Bulk create with many=True validates total weight sums to 1.0."""
+        assessment = fb_assessment_factory()
+        lo1 = fb_learning_outcome_factory(course=assessment.course)
+        lo2 = fb_learning_outcome_factory(course=assessment.course)
+
+        # Weights don't sum to 1.0
+        data = [
+            {"assessment_id": assessment.id, "learning_outcome_id": lo1.id, "weight": 0.4},
+            {"assessment_id": assessment.id, "learning_outcome_id": lo2.id, "weight": 0.4},
+        ]
+        serializer = AssessmentLearningOutcomeMappingSerializer(data=data, many=True)
+        assert not serializer.is_valid()
+        assert "weights" in serializer.errors
+
+    def test_list_serializer_passes_valid_sum(self, fb_assessment_factory, fb_learning_outcome_factory):
+        """Bulk create with valid total weight sum should pass."""
+        assessment = fb_assessment_factory()
+        lo1 = fb_learning_outcome_factory(course=assessment.course)
+        lo2 = fb_learning_outcome_factory(course=assessment.course)
+
+        data = [
+            {"assessment_id": assessment.id, "learning_outcome_id": lo1.id, "weight": 0.6},
+            {"assessment_id": assessment.id, "learning_outcome_id": lo2.id, "weight": 0.4},
+        ]
+        serializer = AssessmentLearningOutcomeMappingSerializer(data=data, many=True)
+        assert serializer.is_valid(), serializer.errors
+
+    def test_list_serializer_validates_per_assessment(self, fb_assessment_factory, fb_learning_outcome_factory):
+        """Different assessments in same batch are validated independently."""
+        assessment1 = fb_assessment_factory()
+        assessment2 = fb_assessment_factory()
+
+        lo1 = fb_learning_outcome_factory(course=assessment1.course)
+        lo2 = fb_learning_outcome_factory(course=assessment2.course)
+
+        # Each assessment's weights sum to 1.0 individually
+        data = [
+            {"assessment_id": assessment1.id, "learning_outcome_id": lo1.id, "weight": 1.0},
+            {"assessment_id": assessment2.id, "learning_outcome_id": lo2.id, "weight": 1.0},
+        ]
+        serializer = AssessmentLearningOutcomeMappingSerializer(data=data, many=True)
+        assert serializer.is_valid(), serializer.errors

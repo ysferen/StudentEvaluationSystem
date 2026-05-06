@@ -17,22 +17,32 @@ class EvaluationLearningOutcomeSerializer(serializers.ModelSerializer):
 
 class AssessmentLearningOutcomeMappingListSerializer(serializers.ListSerializer):
     """
-    Custom ListSerializer to validate that weights sum to 1.0
-    This is called when many=True is used
+    Custom ListSerializer to validate that weights sum to 1.0 per assessment.
+    Called when many=True is used.
     """
 
     def validate(self, attrs):
-        # Calculate total weight
-        total_weight = sum(item.get("weight", 0) for item in attrs)
+        # Group by assessment
+        by_assessment = {}
+        for item in attrs:
+            ass_id = item.get("assessment_id") or (item.get("assessment") and item["assessment"].id)
+            if ass_id is None:
+                continue
+            if ass_id not in by_assessment:
+                by_assessment[ass_id] = []
+            by_assessment[ass_id].append(item.get("weight", 0))
 
-        # Allow 1% tolerance for floating point arithmetic
-        if not (0.99 <= total_weight <= 1.01):
-            raise serializers.ValidationError(
-                {
-                    "weights": f"Learning Outcome weights must sum to 1.0, but got {total_weight:.4f}. "
-                    f"Please adjust the weights so they total exactly 1.0."
-                }
-            )
+        for ass_id, weights in by_assessment.items():
+            total_weight = sum(weights)
+            if not (0.99 <= total_weight <= 1.01):
+                raise serializers.ValidationError(
+                    {
+                        "weights": (
+                            f"Learning Outcome weights for assessment {ass_id} must sum to 1.0, "
+                            f"but got {total_weight:.4f}. Please adjust the weights so they total exactly 1.0."
+                        )
+                    }
+                )
         return attrs
 
 
@@ -51,6 +61,7 @@ class AssessmentLearningOutcomeMappingSerializer(serializers.ModelSerializer):
         model = AssessmentLearningOutcomeMapping
         fields = ["id", "assessment", "assessment_id", "learning_outcome", "learning_outcome_id", "weight"]
         read_only_fields = ["assessment"]
+        list_serializer_class = AssessmentLearningOutcomeMappingListSerializer
 
     def validate(self, data):
         instance = self.instance
