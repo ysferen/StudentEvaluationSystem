@@ -175,8 +175,6 @@ const WeightModal = ({
   title,
   fromLabel,
   toLabel,
-  maxWeight = 1,
-  usedWeight = 0,
   editMode = false,
   initialWeight = 0,
 }: {
@@ -186,48 +184,31 @@ const WeightModal = ({
   title: string
   fromLabel: string
   toLabel: string
-  maxWeight?: number
-  usedWeight?: number
   editMode?: boolean
   initialWeight?: number
 }) => {
-  // In edit mode, exclude current mapping from used weight calculation
-  const effectiveUsedWeight = editMode ? usedWeight - initialWeight : usedWeight
-  // Fix floating point precision issues by rounding to 2 decimal places
-  const remainingWeight = Math.round(Math.max(0, maxWeight - effectiveUsedWeight) * 100) / 100
   const [weight, setWeight] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Slider step and max allowed - remainingWeight already accounts for edit mode
-  const step = 0.05
-  const maxAllowedWeight = Math.max(0, Math.min(maxWeight, remainingWeight))
-  // Clamp max to proper step value (round to nearest step)
-  const maxSliderValue = Math.round(maxAllowedWeight / step) * step
+  const step = 1
+  const maxAllowedWeight = 5
 
-  // Reset weight when modal opens with new remaining weight
+  // Reset weight when modal opens
   useEffect(() => {
     if (isOpen && !isInitialized) {
       if (editMode && initialWeight > 0) {
-        // In edit mode, start with current weight
-        const roundedWeight = Math.round(initialWeight / step) * step
-        setWeight(roundedWeight)
+        setWeight(Math.round(initialWeight))
       } else {
-        // Set initial weight to half of remaining, rounded to step
-        const defaultWeight = Math.min(0.5, maxSliderValue)
-        const roundedWeight = Math.round(defaultWeight / step) * step
-        setWeight(roundedWeight)
+        setWeight(1)
       }
       setIsInitialized(true)
     }
     if (!isOpen) {
       setIsInitialized(false)
     }
-  }, [isOpen, maxSliderValue, isInitialized, editMode, initialWeight])
+  }, [isOpen, isInitialized, editMode, initialWeight])
 
   if (!isOpen) return null
-
-  // Check if weight exceeds allowed maximum (with small tolerance for floating point precision)
-  const isOverLimit = weight > maxSliderValue + 0.001
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -240,26 +221,6 @@ const WeightModal = ({
             <span className="font-medium">{toLabel}</span>
           </div>
 
-          {/* Weight budget info */}
-          <div className="p-3 bg-gray-50 rounded-lg text-sm">
-            <div className="flex justify-between text-gray-600">
-              <span>Already allocated{editMode ? ' (excluding this)' : ''}:</span>
-              <span className="font-medium">{(effectiveUsedWeight * 100).toFixed(0)}%</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Available before edit:</span>
-              <span className={`font-medium ${remainingWeight <= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {(remainingWeight * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Total after save:</span>
-              <span className="font-medium">
-                {((effectiveUsedWeight + weight) * 100).toFixed(0)}%
-              </span>
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Weight for this mapping
@@ -268,33 +229,24 @@ const WeightModal = ({
               id="weight-slider"
               type="range"
               min="0"
-              max={maxSliderValue}
+              max={maxAllowedWeight}
               step={step}
-              value={Math.min(Math.max(0, weight), maxSliderValue)}
+              value={Math.min(Math.max(0, weight), maxAllowedWeight)}
               onChange={(e) => {
-                const raw = parseFloat(e.target.value)
-                const rounded = Math.round(raw / step) * step
-                const clamped = Math.min(Math.max(0, rounded), maxSliderValue)
-                setWeight(clamped)
+                const raw = parseInt(e.target.value, 10)
+                setWeight(raw)
               }}
               className="w-full"
-              aria-label="Weight percentage"
-              disabled={!editMode && remainingWeight <= 0}
+              aria-label="Weight"
             />
             <div className="flex justify-between text-sm text-gray-500 mt-1">
-              <span>0%</span>
-              <span className={`font-bold ${isOverLimit ? 'text-red-600' : 'text-primary-600'}`}>
-                {(weight * 100).toFixed(0)}%
+              <span>0</span>
+              <span className="font-bold text-primary-600">
+                {weight}
               </span>
-              <span>{(maxSliderValue * 100).toFixed(0)}%</span>
+              <span>{maxAllowedWeight}</span>
             </div>
           </div>
-
-          {remainingWeight <= 0 && !editMode && (
-            <p className="text-sm text-red-600">
-              No remaining weight available. Total weight is already at 100%.
-            </p>
-          )}
 
           <div className="flex gap-3 mt-6">
             <button
@@ -305,8 +257,7 @@ const WeightModal = ({
             </button>
             <button
               onClick={() => {
-                // Ensure weight does not exceed maxAllowedWeight
-                const finalWeight = Math.min(weight, maxSliderValue)
+                const finalWeight = weight
                 onConfirm(finalWeight)
               }}
               disabled={weight <= 0}
@@ -388,7 +339,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     toId: number
     fromLabel: string
     toLabel: string
-    usedWeight: number
     editMode?: boolean
     mappingId?: number
     initialWeight?: number
@@ -429,11 +379,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         (m) => m.assessment === assessmentId && m.learning_outcome?.id === loId
       )
 
-      // Calculate already used weight for this LO (sum of all assessment mappings for this LO)
-      const usedWeight = assessmentLOMappings
-        .filter((m) => m.learning_outcome?.id === loId)
-        .reduce((sum, m) => sum + (m.weight || 0), 0)
-
       if (existingMapping) {
         // Edit existing mapping
         setWeightModal({
@@ -443,7 +388,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           toId: loId,
           fromLabel: assessment?.name || '',
           toLabel: lo?.code || '',
-          usedWeight,
           editMode: true,
           mappingId: existingMapping.id,
           initialWeight: existingMapping.weight,
@@ -457,7 +401,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           toId: loId,
           fromLabel: assessment?.name || '',
           toLabel: lo?.code || '',
-          usedWeight,
         })
       }
     }
@@ -474,11 +417,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         (m) => m.learning_outcome?.id === loId && m.program_outcome?.id === poId
       )
 
-      // Calculate already used weight for this PO (sum of all LO mappings for this PO)
-      const usedWeight = loPOMappings
-        .filter((m) => m.program_outcome?.id === poId)
-        .reduce((sum, m) => sum + m.weight, 0)
-
       if (existingMapping) {
         // Edit existing mapping
         setWeightModal({
@@ -488,7 +426,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           toId: poId,
           fromLabel: lo?.code || '',
           toLabel: po?.code || '',
-          usedWeight,
           editMode: true,
           mappingId: existingMapping.id,
           initialWeight: existingMapping.weight,
@@ -502,7 +439,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           toId: poId,
           fromLabel: lo?.code || '',
           toLabel: po?.code || '',
-          usedWeight,
         })
       }
     }
@@ -788,21 +724,15 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                             {lo.code}
                           </span>
                           {(() => {
-                            const totalWeight = getAssessmentMappingsForLO(lo.id).reduce((sum, m) => sum + m.weight, 0)
-                            const percentage = Math.round(totalWeight * 100)
-                            const isFull = Math.abs(totalWeight - 1.0) < 0.01
+                            const mappings = getAssessmentMappingsForLO(lo.id)
+                            const maxWeight = mappings.length > 0 ? Math.max(...mappings.map(m => m.weight)) : 0
                             return (
                               <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                                isFull ? 'bg-green-100 text-green-700' :
-                                totalWeight > 0 ? 'bg-amber-100 text-amber-700' :
+                                maxWeight >= 4 ? 'bg-green-100 text-green-700' :
+                                maxWeight >= 2 ? 'bg-amber-100 text-amber-700' :
                                 'bg-gray-100 text-gray-500'
                               }`}>
-                                {percentage}%/100%
-                                {totalWeight > 0 && !isFull && (
-                                  <span className="ml-1" title="Weights are normalized to 100% in score calculation">
-                                    &#9888;
-                                  </span>
-                                )}
+                                {mappings.length > 0 ? `max ${maxWeight}/5` : '0/5'}
                               </span>
                             )
                           })()}
@@ -818,9 +748,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                 const assessment = assessments.find(
                                   (a) => a.id === mapping.assessment
                                 )
-                                const usedWeight = assessmentLOMappings
-                                  .filter((m) => m.learning_outcome?.id === lo.id)
-                                  .reduce((sum, m) => sum + (m.weight || 0), 0)
                                 return (
                                   <span
                                     key={mapping.id}
@@ -834,7 +761,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                         toId: lo.id,
                                         fromLabel: assessment?.name || '',
                                         toLabel: lo.code,
-                                        usedWeight,
                                         editMode: true,
                                         mappingId: mapping.id,
                                         initialWeight: mapping.weight,
@@ -844,7 +770,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                   >
                                     {assessment?.name?.substring(0, 15)}
                                     <span className="text-blue-500">
-                                      ({(mapping.weight * 100).toFixed(0)}%)
+                                      ({mapping.weight})
                                     </span>
                                     <button
                                       onClick={(e) => {
@@ -872,9 +798,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                               {getPOMappingsForLO(lo.id).map((mapping) => {
                                 const poId = mapping.program_outcome?.id
                                 const po = programOutcomes.find((p) => p.id === poId)
-                                const usedWeight = loPOMappings
-                                  .filter((m) => m.program_outcome?.id === poId)
-                                  .reduce((sum, m) => sum + m.weight, 0)
                                 if (!poId) {
                                   return null
                                 }
@@ -891,7 +814,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                         toId: poId,
                                         fromLabel: lo.code,
                                         toLabel: po?.code || '',
-                                        usedWeight,
                                         editMode: true,
                                         mappingId: mapping.id,
                                         initialWeight: mapping.weight,
@@ -901,7 +823,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                   >
                                     {po?.code}
                                     <span className="text-purple-500">
-                                      ({(mapping.weight * 100).toFixed(0)}%)
+                                      ({mapping.weight})
                                     </span>
                                     <button
                                       onClick={(e) => {
@@ -968,15 +890,15 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                           {po.code}
                         </span>
                         {(() => {
-                          const totalWeight = getLOMappingsForPO(po.id).reduce((sum, m) => sum + m.weight, 0)
-                          const percentage = Math.round(totalWeight * 100)
+                          const mappings = getLOMappingsForPO(po.id)
+                          const maxWeight = mappings.length > 0 ? Math.max(...mappings.map(m => m.weight)) : 0
                           return (
                             <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              percentage >= 100 ? 'bg-green-100 text-green-700' :
-                              percentage > 0 ? 'bg-amber-100 text-amber-700' :
+                              maxWeight >= 4 ? 'bg-green-100 text-green-700' :
+                              maxWeight >= 2 ? 'bg-amber-100 text-amber-700' :
                               'bg-gray-100 text-gray-500'
                             }`}>
-                              {percentage}%/100%
+                              {mappings.length > 0 ? `max ${maxWeight}/5` : '0/5'}
                             </span>
                           )
                         })()}
@@ -991,9 +913,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                             {getLOMappingsForPO(po.id).map((mapping) => {
                               const loId = mapping.learning_outcome?.id
                               const lo = learningOutcomes.find((l) => l.id === loId)
-                              const usedWeight = loPOMappings
-                                .filter((m) => m.program_outcome?.id === po.id)
-                                .reduce((sum, m) => sum + m.weight, 0)
                               if (!loId) {
                                 return null
                               }
@@ -1010,7 +929,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                       toId: po.id,
                                       fromLabel: lo?.code || '',
                                       toLabel: po.code,
-                                      usedWeight,
                                       editMode: true,
                                       mappingId: mapping.id,
                                       initialWeight: mapping.weight,
@@ -1020,7 +938,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                 >
                                   {lo?.code}
                                   <span className="text-teal-500">
-                                    ({(mapping.weight * 100).toFixed(0)}%)
+                                    ({mapping.weight})
                                   </span>
                                   <button
                                     onClick={(e) => {
@@ -1072,7 +990,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           }
           fromLabel={weightModal.fromLabel}
           toLabel={weightModal.toLabel}
-          usedWeight={weightModal.usedWeight}
           editMode={weightModal.editMode}
           initialWeight={weightModal.initialWeight}
         />
