@@ -111,6 +111,71 @@ class TestCalculateCourseScores:
         # No scores should be created
         assert StudentLearningOutcomeScore.objects.filter(learning_outcome__course=course).count() == 0
 
+    def test_normalizes_mapping_weights_that_dont_sum_to_one(
+        self,
+        course_factory,
+        assessment_factory,
+        student_user_factory,
+        learning_outcome_factory,
+        course_enrollment_factory,
+        student_grade_factory,
+    ):
+        """Mapping weights that don't sum to 1.0 should be normalized in calculation."""
+        from evaluation.models import AssessmentLearningOutcomeMapping
+
+        course = course_factory()
+        lo = learning_outcome_factory(course=course)
+        student = student_user_factory()
+        course_enrollment_factory(student=student, course=course)
+
+        assessment = assessment_factory(course=course, total_score=100, weight=0.5)
+
+        # Only 0.6 total mapping weight (should be 1.0)
+        AssessmentLearningOutcomeMapping.objects.create(assessment=assessment, learning_outcome=lo, weight=0.6)
+
+        student_grade_factory(student=student, assessment=assessment, score=80.0)
+
+        calculate_course_scores(course.id)
+
+        score = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo)
+        # Normalized: 0.6/0.6 = 1.0, so full weight applied → 80% score
+        assert score.score == pytest.approx(80.0, rel=1e-2)
+
+    def test_multiple_mappings_per_assessment_get_normalized(
+        self,
+        course_factory,
+        assessment_factory,
+        student_user_factory,
+        learning_outcome_factory,
+        course_enrollment_factory,
+        student_grade_factory,
+    ):
+        """Multiple mappings under one assessment are normalized to sum 1.0."""
+        from evaluation.models import AssessmentLearningOutcomeMapping
+
+        course = course_factory()
+        lo1 = learning_outcome_factory(course=course)
+        lo2 = learning_outcome_factory(course=course)
+        student = student_user_factory()
+        course_enrollment_factory(student=student, course=course)
+
+        assessment = assessment_factory(course=course, total_score=100, weight=1.0)
+
+        # Weights sum to 0.5 (should be 1.0) — normalization: lo1=0.6, lo2=0.4
+        AssessmentLearningOutcomeMapping.objects.create(assessment=assessment, learning_outcome=lo1, weight=0.3)
+        AssessmentLearningOutcomeMapping.objects.create(assessment=assessment, learning_outcome=lo2, weight=0.2)
+
+        student_grade_factory(student=student, assessment=assessment, score=100.0)
+
+        calculate_course_scores(course.id)
+
+        score1 = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo1)
+        score2 = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo2)
+        # Normalized: lo1 → 0.3/0.5 = 0.6 * weight 1.0 * score 100 / 0.6 = 100
+        # lo2 → 0.2/0.5 = 0.4 * weight 1.0 * score 100 / 0.4 = 100
+        assert score1.score == pytest.approx(100.0, rel=1e-2)
+        assert score2.score == pytest.approx(100.0, rel=1e-2)
+
     def test_handles_no_assessments(self, course_factory, student_user_factory, course_enrollment_factory):
         """Test calculation when course has no assessments."""
         course = course_factory()

@@ -24,6 +24,31 @@ from core.models import (
 User = get_user_model()
 
 
+def _compute_student_lo_scores(student_id, assessments, learning_outcomes, matrix_map, assessment_mapping_totals, grade_map):
+    """Compute LO scores for a single student using normalized mapping weights."""
+    lo_score_objects = []
+    for lo in learning_outcomes:
+        total_score = 0
+        total_weight = 0
+
+        for assessment in assessments:
+            mapping_weight = matrix_map.get((assessment.id, lo.id), 0) or 0
+            ass_total = assessment_mapping_totals.get(assessment.id, 0)
+            if ass_total > 0 and mapping_weight > 0:
+                normalized_mapping_weight = mapping_weight / ass_total
+            else:
+                normalized_mapping_weight = 0
+            weight = (assessment.weight or 0) * normalized_mapping_weight
+            if weight > 0:
+                score = grade_map.get((student_id, assessment.id), 0) or 0
+                total_score += score * weight
+                total_weight += weight
+
+        final_lo_score = (total_score / total_weight) if total_weight > 0 else 0
+        lo_score_objects.append((student_id, lo, final_lo_score))
+    return lo_score_objects
+
+
 def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     """
     Calculate Learning Outcome scores for all students in a course.
@@ -77,6 +102,11 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     ):
         matrix_map[(item.assessment_id, item.learning_outcome_id)] = item.weight
 
+    # Build per-assessment sum of mapping weights for normalization
+    assessment_mapping_totals = {}
+    for (ass_id, lo_id), w in matrix_map.items():
+        assessment_mapping_totals[ass_id] = assessment_mapping_totals.get(ass_id, 0) + w
+
     # Get all grades for this course in one query
     # Dict format: {(student_id, assessment_id): score}
     grade_map = {}
@@ -97,24 +127,10 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
             affected_students.add(student.id)
 
             # --- Calculate LO Scores ---
-            for lo in learning_outcomes:
-                total_score = 0
-                total_weight = 0
-
-                # Use pre-fetched assessments instead of querying in loop
-                for assessment in assessments:
-                    # Effective weight combines assessment weight and mapping weight
-                    mapping_weight = matrix_map.get((assessment.id, lo.id), 0) or 0
-                    weight = (assessment.weight or 0) * mapping_weight
-                    if weight > 0:
-                        score = grade_map.get((student.id, assessment.id), 0) or 0
-                        total_score += score * weight
-                        total_weight += weight
-
-                # Avoid division by zero
-                final_lo_score = (total_score / total_weight) if total_weight > 0 else 0
-
-                # Prepare object
+            student_scores = _compute_student_lo_scores(
+                student.id, assessments, learning_outcomes, matrix_map, assessment_mapping_totals, grade_map
+            )
+            for student_id, lo, final_lo_score in student_scores:
                 lo_score_objects.append(
                     StudentLearningOutcomeScore(student=student, learning_outcome=lo, score=final_lo_score)
                 )
