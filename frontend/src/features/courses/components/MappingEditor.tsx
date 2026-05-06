@@ -790,13 +790,19 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                           {(() => {
                             const totalWeight = getAssessmentMappingsForLO(lo.id).reduce((sum, m) => sum + m.weight, 0)
                             const percentage = Math.round(totalWeight * 100)
+                            const isFull = Math.abs(totalWeight - 1.0) < 0.01
                             return (
                               <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                                percentage >= 100 ? 'bg-green-100 text-green-700' :
-                                percentage > 0 ? 'bg-amber-100 text-amber-700' :
+                                isFull ? 'bg-green-100 text-green-700' :
+                                totalWeight > 0 ? 'bg-amber-100 text-amber-700' :
                                 'bg-gray-100 text-gray-500'
                               }`}>
                                 {percentage}%/100%
+                                {totalWeight > 0 && !isFull && (
+                                  <span className="ml-1" title="Weights are normalized to 100% in score calculation">
+                                    &#9888;
+                                  </span>
+                                )}
                               </span>
                             )
                           })()}
