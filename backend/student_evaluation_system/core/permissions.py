@@ -147,7 +147,7 @@ class IsInstructorOfCourse(BasePermission):
         """
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.is_instructor or request.user.is_admin_user
+        return request.user.is_instructor or request.user.is_admin_user or request.user.is_program_head
 
     def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
         """
