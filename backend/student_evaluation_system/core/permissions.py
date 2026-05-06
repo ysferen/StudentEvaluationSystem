@@ -130,42 +130,81 @@ class IsInstructorOfCourse(BasePermission):
     """
     Allow access only to instructors of a specific course.
 
-    Object must have a 'course' attribute or be a Course itself.
-    Admins always have access.
+    Resolves the course from objects that have:
+    - A 'course' attribute directly (e.g., Assessment, CourseEnrollment)
+    - A 'course' FK on a related 'assessment' (e.g., AssessmentLearningOutcomeMapping, StudentGrade)
+    - Themselves are Course instances
+
+    Admins and Program Heads always have access.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
         """
-        Check basic permission - user must be instructor or admin.
+        Check basic permission - user must be instructor, admin, or program head.
 
         Args:
             request: The incoming request
             view: The view being accessed
 
         Returns:
-            True if user is authenticated and is instructor or admin
+            True if user is authenticated and authorized role
         """
         if not request.user or not request.user.is_authenticated:
             return False
         return request.user.is_instructor or request.user.is_admin_user or request.user.is_program_head
 
+    @staticmethod
+    def _resolve_course(obj: Any) -> Any:
+        """
+        Resolve the course from an object that may reference it directly,
+        through an assessment, or be the course itself.
+
+        Returns the course object, or None if it cannot be resolved.
+        """
+        # Direct course attribute (e.g., Assessment, CourseEnrollment)
+        course = getattr(obj, "course", None)
+        if course is not None:
+            return course
+
+        # Through assessment FK (e.g., AssessmentLearningOutcomeMapping, StudentGrade)
+        assessment = getattr(obj, "assessment", None)
+        if assessment is not None:
+            return getattr(assessment, "course", None)
+
+        # Object itself is a Course
+        if getattr(obj, "instructors", None) is not None:
+            return obj
+
+        return None
+
     def has_object_permission(self, request: Request, view: ViewType, obj: Any) -> bool:
         """
-        Check if user is instructor of the object's course.
+        Check if user is instructor or program head of the object's course.
 
         Args:
             request: The incoming request
             view: The view being accessed
-            obj: The object being accessed (must have course attribute or be Course)
+            obj: The object being accessed
 
         Returns:
-            True if user is admin or instructor of the course
+            True if user is admin, program head of the course's program,
+            or instructor of the course
         """
+        # Admin bypass
         if request.user.is_admin_user:
             return True
 
-        # Get the course from the object
-        course = getattr(obj, "course", None) or obj
+        course = self._resolve_course(obj)
+        if course is None:
+            return False
+
+        # Program heads have access to courses in their program
+        if request.user.is_program_head and hasattr(course, "program_id"):
+            try:
+                head_program = request.user.program_head_profile.program
+                return course.program_id == head_program.id
+            except Exception:
+                return False
 
         # Check if user is an instructor of this course
         if hasattr(course, "instructors"):
