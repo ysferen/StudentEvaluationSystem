@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Sum
 from django.utils import timezone
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from core.models import LearningOutcome
@@ -50,6 +51,35 @@ class AssessmentLearningOutcomeMappingSerializer(serializers.ModelSerializer):
         model = AssessmentLearningOutcomeMapping
         fields = ["id", "assessment", "assessment_id", "learning_outcome", "learning_outcome_id", "weight"]
         read_only_fields = ["assessment"]
+
+    def validate(self, data):
+        instance = self.instance
+        assessment = data.get("assessment") or (instance.assessment if instance else None)
+        new_weight = data.get("weight", instance.weight if instance else 0)
+
+        if assessment is None:
+            return data
+
+        existing_mappings = AssessmentLearningOutcomeMapping.objects.filter(assessment=assessment)
+        if instance and instance.pk:
+            existing_mappings = existing_mappings.exclude(pk=instance.pk)
+
+        current_total = existing_mappings.aggregate(total=Sum("weight"))["total"] or 0
+        projected_total = current_total + new_weight
+
+        if projected_total > 1.01:
+            raise serializers.ValidationError(
+                {
+                    "weight": (
+                        f"Total weight for this assessment would be {projected_total:.2f}, "
+                        f"which exceeds the maximum of 1.0. "
+                        f"Existing mappings sum to {current_total:.2f}. "
+                        f"Please adjust weights so the total equals 1.0."
+                    )
+                }
+            )
+
+        return data
 
 
 class AssessmentSerializer(serializers.ModelSerializer):
