@@ -255,7 +255,7 @@ class CourseTemplateAssessmentLOMappingFactory(DjangoModelFactory):
 
     template_assessment = factory.SubFactory(CourseTemplateAssessmentFactory)
     template_learning_outcome = factory.SubFactory(CourseTemplateLearningOutcomeFactory)
-    weight = 0.5
+    weight = 3
 
 
 class CourseTemplateLOPOMappingFactory(DjangoModelFactory):
@@ -266,7 +266,7 @@ class CourseTemplateLOPOMappingFactory(DjangoModelFactory):
 
     template_learning_outcome = factory.SubFactory(CourseTemplateLearningOutcomeFactory)
     program_outcome = factory.SubFactory("tests.factories.ProgramOutcomeFactory")
-    weight = 0.5
+    weight = 3
 
 
 class LearningOutcomeFactory(DjangoModelFactory):
@@ -351,7 +351,7 @@ class AssessmentLearningOutcomeMappingFactory(DjangoModelFactory):
 
     assessment = factory.SubFactory(AssessmentFactory)
     learning_outcome = factory.SubFactory(LearningOutcomeFactory)
-    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0, max_value=5)
 
 
 class LearningOutcomeProgramOutcomeMappingFactory(DjangoModelFactory):
@@ -363,7 +363,7 @@ class LearningOutcomeProgramOutcomeMappingFactory(DjangoModelFactory):
     course = factory.SubFactory(CourseFactory)
     learning_outcome = factory.SubFactory(LearningOutcomeFactory)
     program_outcome = factory.SubFactory(ProgramOutcomeFactory)
-    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0.0, max_value=1.0)
+    weight = factory.Faker("pyfloat", left_digits=0, right_digits=2, min_value=0, max_value=5)
 
 
 # Pre-built scenarios for common test setups

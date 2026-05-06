@@ -192,10 +192,10 @@ def sample_course(db_setup):
     lo2 = LearningOutcome.objects.create(code="LO2", description="Identify and formulate problems", course=course)
 
     # Create LO-PO mappings
-    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo1, program_outcome=po1, weight=0.6)
-    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo1, program_outcome=po2, weight=0.4)
-    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo2, program_outcome=po1, weight=0.3)
-    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo2, program_outcome=po2, weight=0.7)
+    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo1, program_outcome=po1, weight=3)
+    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo1, program_outcome=po2, weight=2)
+    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo2, program_outcome=po1, weight=2)
+    LearningOutcomeProgramOutcomeMapping.objects.create(course=course, learning_outcome=lo2, program_outcome=po2, weight=4)
 
     return {
         "course": course,
@@ -328,7 +328,7 @@ def assessment_lo_mappings(sample_assessments, sample_course):
     mappings = []
     for assessment in assessments:
         for lo in learning_outcomes:
-            mapping = AssessmentLearningOutcomeMapping.objects.create(assessment=assessment, learning_outcome=lo, weight=0.5)
+            mapping = AssessmentLearningOutcomeMapping.objects.create(assessment=assessment, learning_outcome=lo, weight=3)
             mappings.append(mapping)
 
     return {"mappings": mappings, "assessments": assessments, "learning_outcomes": learning_outcomes}
