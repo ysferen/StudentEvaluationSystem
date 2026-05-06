@@ -1,10 +1,10 @@
-import student_evaluation_system.settings as base_settings
+from student_evaluation_system.settings import *  # noqa: F403
 
-BASE_DIR = base_settings.BASE_DIR
-
+# Override settings for testing
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": base_settings.BASE_DIR / "test_db.sqlite3",
     }
 }
+
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
