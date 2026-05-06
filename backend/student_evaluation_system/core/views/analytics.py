@@ -2,12 +2,12 @@ from rest_framework import serializers as drf_serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Avg
+from django.db.models import Avg, F
 from drf_spectacular.utils import extend_schema
 
 from core.permissions import IsAdminOrProgramHead
 from core.models import Program, StudentLearningOutcomeScore, StudentProgramOutcomeScore, Course, ProgramOutcome, Term
-from evaluation.models import CourseEnrollment
+from evaluation.models import CourseEnrollment, StudentGrade
 
 
 class ProgramStatSerializer(drf_serializers.Serializer):
@@ -27,9 +27,16 @@ class YearLevelBreakdownSerializer(drf_serializers.Serializer):
     avg_score = drf_serializers.FloatField(allow_null=True)
 
 
+class GpaByYearSerializer(drf_serializers.Serializer):
+    year = drf_serializers.IntegerField()
+    student_count = drf_serializers.IntegerField()
+    gpa = drf_serializers.FloatField(allow_null=True)
+
+
 class ProgramStatsResponseSerializer(drf_serializers.Serializer):
     programs = ProgramStatSerializer(many=True)
     year_level_breakdown = YearLevelBreakdownSerializer(many=True)
+    gpa_by_year = GpaByYearSerializer(many=True)
 
 
 def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years):
@@ -82,6 +89,151 @@ def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years):
         )
 
     return year_level_breakdown
+
+
+_TURKISH_GRADE_SCALE = [
+    (90, 4.00),
+    (85, 3.50),
+    (80, 3.00),
+    (70, 2.50),
+    (60, 2.00),
+    (55, 1.50),
+    (50, 1.00),
+    (0, 0.00),
+]
+
+
+def _percentage_to_gpa(percentage):
+    """Convert a percentage score to GPA on 4.0 scale using Turkish letter grade system."""
+    for threshold, gpa in _TURKISH_GRADE_SCALE:
+        if percentage >= threshold:
+            return gpa
+    return 0.00
+
+
+def _get_enrolled_students_by_year(prog_course_ids, duration_years, active_term):
+    enrolled_students = list(
+        CourseEnrollment.objects.filter(course_id__in=prog_course_ids, status="active")
+        .order_by()
+        .values("student_id", "student__student_profile__enrollment_term__academic_year")
+        .distinct()
+    )
+
+    students_by_year = {year_num: [] for year_num in range(1, duration_years + 1)}
+
+    for enrollment in enrolled_students:
+        enrollment_ay = enrollment.get("student__student_profile__enrollment_term__academic_year")
+        if enrollment_ay is None:
+            continue
+        year_level = active_term.academic_year - enrollment_ay + 1
+        if 1 <= year_level <= duration_years:
+            students_by_year[year_level].append(enrollment["student_id"])
+
+    return students_by_year
+
+
+def _get_student_course_grade_map(all_student_ids, prog_course_ids):
+    all_grades = list(
+        StudentGrade.objects.filter(
+            student_id__in=all_student_ids,
+            assessment__course_id__in=prog_course_ids,
+        )
+        .select_related("assessment", "assessment__course")
+        .annotate(
+            percentage=F("score") * 100.0 / F("assessment__total_score"),
+        )
+        .values("student_id", "assessment__course_id", "assessment__course__credits", "percentage", "assessment__weight")
+    )
+
+    student_course_grade = {}
+    for g in all_grades:
+        sid = g["student_id"]
+        cid = g["assessment__course_id"]
+        credits = g["assessment__course__credits"] or 0
+        w = g["assessment__weight"] or 0
+        if w > 0:
+            key = (sid, cid)
+            if key not in student_course_grade:
+                student_course_grade[key] = [0, 0, credits]
+            student_course_grade[key][0] += g["percentage"] * w
+            student_course_grade[key][1] += w
+
+    return student_course_grade
+
+
+def _get_student_gpa_by_id(student_course_grade):
+    student_cumulative = {}
+    for (sid, cid), (weighted_sum, total_weight, credits) in student_course_grade.items():
+        if total_weight > 0 and credits > 0:
+            course_pct = weighted_sum / total_weight
+            course_gpa = _percentage_to_gpa(course_pct)
+            if sid not in student_cumulative:
+                student_cumulative[sid] = [0, 0]
+            student_cumulative[sid][0] += course_gpa * credits
+            student_cumulative[sid][1] += credits
+
+    student_gpa = {}
+    for sid, (gpa_sum, total_credits) in student_cumulative.items():
+        if total_credits > 0:
+            student_gpa[sid] = round(gpa_sum / total_credits, 2)
+
+    return student_gpa
+
+
+def _build_gpa_by_year_response(students_by_year, student_gpa, duration_years):
+    gpa_by_year = []
+
+    for year_num in range(1, duration_years + 1):
+        student_ids = students_by_year[year_num]
+        student_count = len(student_ids)
+        gpas = [student_gpa[sid] for sid in student_ids if sid in student_gpa]
+        gpa = round(sum(gpas) / len(gpas), 2) if gpas else None
+
+        gpa_by_year.append(
+            {
+                "year": year_num,
+                "student_count": student_count,
+                "gpa": gpa,
+            }
+        )
+
+    return gpa_by_year
+
+
+def _calculate_gpa_by_year(prog_course_ids, duration_years):
+    """
+    Calculate GPA per year level using Turkish letter grade scale.
+
+    For each student:
+      1. Calculate per-course weighted percentage from assessment grades.
+      2. Convert to letter-grade GPA using the Turkish scale.
+      3. Compute credit-weighted cumulative GPA across all courses.
+    Then average cumulative GPAs by year level.
+    """
+    active_term = Term.objects.filter(is_active=True).first()
+
+    if not active_term or not active_term.academic_year or not prog_course_ids:
+        gpa_by_year = []
+        for year_num in range(1, duration_years + 1):
+            gpa_by_year.append({"year": year_num, "student_count": 0, "gpa": None})
+        return gpa_by_year
+
+    students_by_year = _get_enrolled_students_by_year(prog_course_ids, duration_years, active_term)
+
+    all_student_ids = []
+    for sids in students_by_year.values():
+        all_student_ids.extend(sids)
+
+    if not all_student_ids:
+        gpa_by_year = []
+        for year_num in range(1, duration_years + 1):
+            gpa_by_year.append({"year": year_num, "student_count": 0, "gpa": None})
+        return gpa_by_year
+
+    student_course_grade = _get_student_course_grade_map(all_student_ids, prog_course_ids)
+    student_gpa = _get_student_gpa_by_id(student_course_grade)
+
+    return _build_gpa_by_year_response(students_by_year, student_gpa, duration_years)
 
 
 @extend_schema(
@@ -151,9 +303,12 @@ class ProgramStatsView(APIView):
 
         year_level_breakdown = _calculate_year_level_breakdown(all_course_ids, all_po_ids, max_duration_years)
 
+        gpa_by_year = _calculate_gpa_by_year(all_course_ids, max_duration_years)
+
         return Response(
             {
                 "programs": program_stats,
                 "year_level_breakdown": year_level_breakdown,
+                "gpa_by_year": gpa_by_year,
             }
         )
