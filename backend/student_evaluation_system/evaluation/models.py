@@ -53,7 +53,7 @@ class AssessmentLearningOutcomeMapping(models.Model):
 
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name="lo_mappings")
     learning_outcome = models.ForeignKey(LearningOutcome, on_delete=models.CASCADE, related_name="assessment_mappings")
-    weight = models.FloatField(help_text="0.0 to 1.0", validators=[MinValueValidator(0.0), MaxValueValidator(1.0)])
+    weight = models.FloatField(help_text="0 to 5", validators=[MinValueValidator(0), MaxValueValidator(5)])
 
     class Meta:
         ordering = ["assessment", "learning_outcome"]

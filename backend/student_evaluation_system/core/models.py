@@ -390,7 +390,6 @@ class CourseTemplateAssessment(TimeStampedModel):
     weight = models.FloatField(
         help_text="0.0 to 1.0",
         validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
-        default=0.0,
     )
     course_template = models.ForeignKey(CourseTemplate, on_delete=models.CASCADE, related_name="assessments")
 
@@ -413,8 +412,8 @@ class CourseTemplateAssessmentLOMapping(models.Model):
         CourseTemplateLearningOutcome, on_delete=models.CASCADE, related_name="assessment_mappings"
     )
     weight = models.FloatField(
-        help_text="0.0 to 1.0",
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="0 to 5",
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
 
     class Meta:
@@ -445,8 +444,8 @@ class CourseTemplateLOPOMapping(models.Model):
     )
     program_outcome = models.ForeignKey(ProgramOutcome, on_delete=models.CASCADE, related_name="template_lo_mappings")
     weight = models.FloatField(
-        help_text="0.0 to 1.0",
-        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="0 to 5",
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
 
     class Meta:
@@ -510,7 +509,7 @@ class LearningOutcomeProgramOutcomeMapping(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="lo_po_mappings")
     learning_outcome = models.ForeignKey(LearningOutcome, on_delete=models.CASCADE, related_name="po_mappings")
     program_outcome = models.ForeignKey(ProgramOutcome, on_delete=models.CASCADE, related_name="lo_mappings")
-    weight = models.FloatField(help_text="0.0 to 1.0", validators=[MinValueValidator(0.0), MaxValueValidator(1.0)])
+    weight = models.FloatField(help_text="0 to 5", validators=[MinValueValidator(0), MaxValueValidator(5)])
 
     class Meta:
         ordering = ["course", "learning_outcome", "program_outcome"]
