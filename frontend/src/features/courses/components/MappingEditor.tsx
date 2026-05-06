@@ -723,19 +723,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                           <span className="px-2 py-1 bg-teal-100 text-teal-800 rounded text-sm font-bold">
                             {lo.code}
                           </span>
-                          {(() => {
-                            const mappings = getAssessmentMappingsForLO(lo.id)
-                            const maxWeight = mappings.length > 0 ? Math.max(...mappings.map(m => m.weight)) : 0
-                            return (
-                              <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                                maxWeight >= 4 ? 'bg-green-100 text-green-700' :
-                                maxWeight >= 2 ? 'bg-amber-100 text-amber-700' :
-                                'bg-gray-100 text-gray-500'
-                              }`}>
-                                {mappings.length > 0 ? `max ${maxWeight}/5` : '0/5'}
-                              </span>
-                            )
-                          })()}
+
                         </div>
                         <p className="text-xs text-teal-700 line-clamp-2">{lo.description}</p>
 
@@ -889,19 +877,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                         <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm font-bold">
                           {po.code}
                         </span>
-                        {(() => {
-                          const mappings = getLOMappingsForPO(po.id)
-                          const maxWeight = mappings.length > 0 ? Math.max(...mappings.map(m => m.weight)) : 0
-                          return (
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              maxWeight >= 4 ? 'bg-green-100 text-green-700' :
-                              maxWeight >= 2 ? 'bg-amber-100 text-amber-700' :
-                              'bg-gray-100 text-gray-500'
-                            }`}>
-                              {mappings.length > 0 ? `max ${maxWeight}/5` : '0/5'}
-                            </span>
-                          )
-                        })()}
+
                       </div>
                       <p className="text-xs text-purple-700 mt-2 line-clamp-2">{po.description}</p>
 
