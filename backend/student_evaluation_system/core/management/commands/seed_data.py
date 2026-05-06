@@ -298,7 +298,7 @@ class Command(BaseCommand):
                     CourseTemplateAssessmentLOMapping.objects.get_or_create(
                         template_assessment=ta,
                         template_learning_outcome=tlo,
-                        defaults={"weight": round(1.0 / template.learning_outcomes.count(), 3)},
+                        defaults={"weight": 3},
                     )
 
     def _build_curriculum(self, program, terms, instructors, head_user):
@@ -376,9 +376,8 @@ class Command(BaseCommand):
                 continue
             k = min(random.randint(2, 4), len(term_pos))
             selected = random.sample(term_pos, k=k)
-            weights = [random.random() for _ in selected]
-            total = sum(weights)
-            for po, w in zip(selected, [round(x / total, 3) for x in weights]):
+            for po in selected:
+                w = random.randint(1, 5)
                 LearningOutcomeProgramOutcomeMapping.objects.get_or_create(
                     course=lo.course,
                     learning_outcome=lo,
@@ -389,12 +388,11 @@ class Command(BaseCommand):
     def _create_assessment_lo_mappings(self, assessment, learning_outcomes):
         if not learning_outcomes:
             return
-        w = round(1.0 / len(learning_outcomes), 3)
         for lo in learning_outcomes:
             AssessmentLearningOutcomeMapping.objects.get_or_create(
                 assessment=assessment,
                 learning_outcome=lo,
-                defaults={"weight": w},
+                defaults={"weight": 3},
             )
 
     def _create_student_cohorts(self, department, program, university, terms, all_courses, courses_by_sem_cohort):
