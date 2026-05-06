@@ -244,52 +244,12 @@ class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "description", "course", "created_at"]
 
 
-class LearningOutcomeProgramOutcomeMappingListSerializer(serializers.ListSerializer):
-    """
-    Custom ListSerializer for validating LO-PO mapping weight sums.
-
-    Validates that weights for mappings of the same learning outcome
-    sum to approximately 1.0 (with 1% tolerance for floating point).
-
-    This serializer is used when many=True is passed to the parent serializer.
-    """
-
-    def validate(self, attrs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Validate that total weights sum to 1.0.
-
-        Args:
-            attrs: List of mapping data dictionaries
-
-        Returns:
-            Validated data
-
-        Raises:
-            ValidationError: If weights don't sum to approximately 1.0
-        """
-        # Calculate total weight
-        total_weight = sum(item.get("weight", 0) for item in attrs)
-
-        # Allow 1% tolerance for floating point arithmetic
-        if not (0.99 <= total_weight <= 1.01):
-            raise serializers.ValidationError(
-                {
-                    "weights": f"Program Outcome weights must sum to 1.0, but got {total_weight:.4f}. "
-                    f"Please adjust the weights so they total exactly 1.0."
-                }
-            )
-        return attrs
-
-
 class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer):
     """
     Serializer for LearningOutcomeProgramOutcomeMapping model.
 
     Handles bidirectional serialization of LO-PO mappings with nested
     read representation and ID-based write representation.
-
-    Uses LearningOutcomeProgramOutcomeMappingListSerializer for validation
-    when processing multiple mappings.
 
     Fields:
         id: Mapping ID
@@ -313,7 +273,6 @@ class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer
     class Meta:
         model = LearningOutcomeProgramOutcomeMapping
         fields = ["id", "course", "learning_outcome", "learning_outcome_id", "program_outcome", "program_outcome_id", "weight"]
-        list_serializer_class = LearningOutcomeProgramOutcomeMappingListSerializer
 
 
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):

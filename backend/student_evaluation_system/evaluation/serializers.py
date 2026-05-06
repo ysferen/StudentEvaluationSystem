@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.db.models import Sum
 from django.utils import timezone
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from core.models import LearningOutcome
@@ -13,37 +12,6 @@ class EvaluationLearningOutcomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearningOutcome
         fields = ["id", "code", "description", "course", "created_at"]
-
-
-class AssessmentLearningOutcomeMappingListSerializer(serializers.ListSerializer):
-    """
-    Custom ListSerializer to validate that weights sum to 1.0 per assessment.
-    Called when many=True is used.
-    """
-
-    def validate(self, attrs):
-        # Group by assessment
-        by_assessment = {}
-        for item in attrs:
-            ass_id = item.get("assessment_id") or (item.get("assessment") and item["assessment"].id)
-            if ass_id is None:
-                continue
-            if ass_id not in by_assessment:
-                by_assessment[ass_id] = []
-            by_assessment[ass_id].append(item.get("weight", 0))
-
-        for ass_id, weights in by_assessment.items():
-            total_weight = sum(weights)
-            if not (0.99 <= total_weight <= 1.01):
-                raise serializers.ValidationError(
-                    {
-                        "weights": (
-                            f"Learning Outcome weights for assessment {ass_id} must sum to 1.0, "
-                            f"but got {total_weight:.4f}. Please adjust the weights so they total exactly 1.0."
-                        )
-                    }
-                )
-        return attrs
 
 
 class AssessmentLearningOutcomeMappingSerializer(serializers.ModelSerializer):
@@ -61,36 +29,6 @@ class AssessmentLearningOutcomeMappingSerializer(serializers.ModelSerializer):
         model = AssessmentLearningOutcomeMapping
         fields = ["id", "assessment", "assessment_id", "learning_outcome", "learning_outcome_id", "weight"]
         read_only_fields = ["assessment"]
-        list_serializer_class = AssessmentLearningOutcomeMappingListSerializer
-
-    def validate(self, data):
-        instance = self.instance
-        assessment = data.get("assessment") or (instance.assessment if instance else None)
-        new_weight = data.get("weight", instance.weight if instance else 0)
-
-        if assessment is None:
-            return data
-
-        existing_mappings = AssessmentLearningOutcomeMapping.objects.filter(assessment=assessment)
-        if instance and instance.pk:
-            existing_mappings = existing_mappings.exclude(pk=instance.pk)
-
-        current_total = existing_mappings.aggregate(total=Sum("weight"))["total"] or 0
-        projected_total = current_total + new_weight
-
-        if projected_total > 1.01:
-            raise serializers.ValidationError(
-                {
-                    "weight": (
-                        f"Total weight for this assessment would be {projected_total:.2f}, "
-                        f"which exceeds the maximum of 1.0. "
-                        f"Existing mappings sum to {current_total:.2f}. "
-                        f"Please adjust weights so the total equals 1.0."
-                    )
-                }
-            )
-
-        return data
 
 
 class AssessmentSerializer(serializers.ModelSerializer):
