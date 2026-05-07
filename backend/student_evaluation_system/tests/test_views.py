@@ -422,3 +422,71 @@ class TestStudentProgramOutcomeScoreViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) >= 1
+
+
+@pytest.mark.django_db
+class TestAssessmentLOMappingBulkSync:
+    """Test bulk_sync endpoint for assessment-LO mappings."""
+
+    def test_bulk_sync_creates_mappings(self, api_client, sample_course, sample_instructor, sample_assessments):
+        """Bulk sync should create specified mappings."""
+        api_client.force_authenticate(user=sample_instructor)
+        from evaluation.models import Assessment
+        from core.models import LearningOutcome
+
+        assessment = Assessment.objects.filter(course=sample_course["course"]).first()
+        lo = LearningOutcome.objects.filter(course=sample_course["course"]).first()
+
+        response = api_client.post(
+            "/api/evaluation/assessment-lo-mappings/bulk_sync/",
+            {
+                "course_id": sample_course["course"].id,
+                "creates": [{"assessment_id": assessment.id, "learning_outcome_id": lo.id, "weight": 3}],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert len(response.data["created"]) == 1
+        assert response.data["created"][0]["assessment"] == assessment.id
+        assert response.data["created"][0]["weight"] == 3
+
+    def test_bulk_sync_updates_mappings(self, api_client, sample_course, sample_instructor, assessment_lo_mappings):
+        """Bulk sync should update existing mapping weights."""
+        api_client.force_authenticate(user=sample_instructor)
+        from evaluation.models import AssessmentLearningOutcomeMapping
+
+        mapping = AssessmentLearningOutcomeMapping.objects.first()
+
+        response = api_client.post(
+            "/api/evaluation/assessment-lo-mappings/bulk_sync/",
+            {
+                "course_id": sample_course["course"].id,
+                "updates": [{"id": mapping.id, "weight": 4}],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        mapping.refresh_from_db()
+        assert mapping.weight == 4
+
+    def test_bulk_sync_deletes_mappings(self, api_client, sample_course, sample_instructor, assessment_lo_mappings):
+        """Bulk sync should delete specified mappings."""
+        api_client.force_authenticate(user=sample_instructor)
+        from evaluation.models import AssessmentLearningOutcomeMapping
+
+        mapping = AssessmentLearningOutcomeMapping.objects.first()
+
+        response = api_client.post(
+            "/api/evaluation/assessment-lo-mappings/bulk_sync/",
+            {
+                "course_id": sample_course["course"].id,
+                "deletes": [mapping.id],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert response.data["deleted"] == [mapping.id]
+        assert not AssessmentLearningOutcomeMapping.objects.filter(pk=mapping.id).exists()

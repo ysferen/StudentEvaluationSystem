@@ -51,6 +51,25 @@ class AssessmentSerializer(serializers.ModelSerializer):
         ]
 
 
+class BulkAssessmentLOMappingItem(serializers.Serializer):
+    """Single item in a bulk sync request."""
+
+    temp_id = serializers.IntegerField(required=False)
+    id = serializers.IntegerField(required=False)
+    assessment_id = serializers.IntegerField(required=False)
+    learning_outcome_id = serializers.IntegerField(required=False)
+    weight = serializers.FloatField(required=False)
+
+
+class BulkAssessmentLOMappingSerializer(serializers.Serializer):
+    """Bulk sync payload for assessment-LO mappings."""
+
+    course_id = serializers.IntegerField()
+    creates = BulkAssessmentLOMappingItem(many=True, required=False, default=list)
+    updates = BulkAssessmentLOMappingItem(many=True, required=False, default=list)
+    deletes = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
+
+
 class AssessmentCreateSerializer(serializers.ModelSerializer):
     """For creating/updating assessments"""
 

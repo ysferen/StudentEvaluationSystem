@@ -334,6 +334,18 @@ def assessment_lo_mappings(sample_assessments, sample_course):
     return {"mappings": mappings, "assessments": assessments, "learning_outcomes": learning_outcomes}
 
 
+@pytest.fixture
+def sample_instructor(db_setup, instructor_factory):
+    """
+    Creates an instructor user and adds them to the sample course as instructor.
+    Returns the User object.
+    """
+    course = db_setup["course"]
+    instructor = instructor_factory("test_instr")
+    course.instructors.add(instructor.user)
+    return instructor.user
+
+
 # Factory-boy fixtures for new tests
 # These return factory classes that are called with keyword arguments
 
