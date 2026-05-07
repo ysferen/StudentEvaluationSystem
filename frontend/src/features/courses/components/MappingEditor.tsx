@@ -497,30 +497,29 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const aloDiff = computeDiff(workingAssessmentLOMappings, initialAssessmentLOMappings)
       const lopoDiff = computeDiff(workingLoPOMappings, initialLoPOMappings)
 
-      const [aloResult, lopoResult] = await Promise.all([
-        bulkSyncAssessmentLOMappings({
-          course_id: courseId,
-          creates: aloDiff.creates.map(m => ({
-            temp_id: m.id,
-            assessment_id: (m as any).assessment_id ?? (m as any).assessment,
-            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
-            weight: m.weight,
-          })),
-          updates: aloDiff.updates,
-          deletes: aloDiff.deletes,
-        }),
-        bulkSyncLOPOMappings({
-          course_id: courseId,
-          creates: lopoDiff.creates.map(m => ({
-            temp_id: m.id,
-            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
-            program_outcome_id: (m as any).program_outcome_id ?? (m as any).program_outcome?.id,
-            weight: m.weight,
-          })),
-          updates: lopoDiff.updates,
-          deletes: lopoDiff.deletes,
-        }),
-      ])
+      const aloResult = await bulkSyncAssessmentLOMappings({
+        course_id: courseId,
+        creates: aloDiff.creates.map(m => ({
+          temp_id: m.id,
+          assessment_id: (m as any).assessment_id ?? (m as any).assessment,
+          learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+          weight: m.weight,
+        })),
+        updates: aloDiff.updates,
+        deletes: aloDiff.deletes,
+      })
+
+      const lopoResult = await bulkSyncLOPOMappings({
+        course_id: courseId,
+        creates: lopoDiff.creates.map(m => ({
+          temp_id: m.id,
+          learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+          program_outcome_id: (m as any).program_outcome_id ?? (m as any).program_outcome?.id,
+          weight: m.weight,
+        })),
+        updates: lopoDiff.updates,
+        deletes: lopoDiff.deletes,
+      })
 
       // Replace temp IDs with real IDs
       const tempIdMap = new Map<number, number>()
@@ -635,7 +634,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-6" data-has-changes={String(hasChanges)}>
+      <div className="flex h-full flex-col gap-6" data-has-changes={String(hasChanges)}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -686,9 +685,9 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         </div>
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-3 gap-6" style={{ height: 'calc(95vh - 100px)', minHeight: '600px' }}>
+        <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
           {/* Assessments Column */}
-          <Card className="p-4 flex flex-col overflow-hidden">
+          <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <ClipboardDocumentListIcon className="h-5 w-5 text-primary-600" />
@@ -749,7 +748,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           </Card>
 
           {/* Learning Outcomes Column */}
-          <Card className="p-4 flex flex-col overflow-hidden">
+          <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <AcademicCapIcon className="h-5 w-5 text-teal-600" />
@@ -908,7 +907,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           </Card>
 
           {/* Program Outcomes Column */}
-          <Card className="p-4 flex flex-col overflow-hidden">
+          <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <ChartBarIcon className="h-5 w-5 text-purple-600" />
