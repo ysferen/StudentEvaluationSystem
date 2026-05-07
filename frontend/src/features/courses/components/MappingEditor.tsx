@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
   DragOverlay,
@@ -25,15 +24,9 @@ import {
 import {
   useEvaluationAssessmentsList,
   useEvaluationAssessmentLoMappingsList,
-  useEvaluationAssessmentLoMappingsCreate,
-  useEvaluationAssessmentLoMappingsPartialUpdate,
-  useEvaluationAssessmentLoMappingsDestroy,
 } from '../../../shared/api/generated/evaluation/evaluation'
 import {
   useCoreLoPoMappingsList,
-  useCoreLoPoMappingsCreate,
-  useCoreLoPoMappingsPartialUpdate,
-  useCoreLoPoMappingsDestroy,
   useCoreCoursesLearningOutcomesRetrieve,
 } from '../../../shared/api/generated/core/core'
 import {
@@ -45,7 +38,6 @@ import type {
   LearningOutcomeProgramOutcomeMapping,
   CoreLearningOutcome,
   ProgramOutcome,
-  EvaluationLearningOutcome,
 } from '../../../shared/api/model'
 
 type Assessment = OrvalAssessment & { assessment_type: string }
@@ -85,18 +77,36 @@ const toDragItemData = (value: unknown): DragItemData | null => {
 
 const clone = <T,>(arr: T[]): T[] => arr.map(item => ({ ...item }))
 
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (isRecord(error) && isRecord(error.response) && isRecord(error.response.data)) {
-    const data = error.response.data
-    if (Array.isArray(data.non_field_errors) && typeof data.non_field_errors[0] === 'string') {
-      return data.non_field_errors[0]
-    }
-    if (typeof data.detail === 'string') {
-      return data.detail
-    }
-  }
+const bulkSyncAssessmentLOMappings = async (payload: {
+  course_id: number
+  creates: Array<{ temp_id?: number; assessment_id?: number; learning_outcome_id?: number; weight: number }>
+  updates: Array<{ id: number; weight: number }>
+  deletes: number[]
+}) => {
+  const response = await fetch('/api/evaluation/assessment-lo-mappings/bulk_sync/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: 'include',
+  })
+  if (!response.ok) throw new Error('Bulk sync failed')
+  return response.json()
+}
 
-  return fallback
+const bulkSyncLOPOMappings = async (payload: {
+  course_id: number
+  creates: Array<{ temp_id?: number; learning_outcome_id?: number; program_outcome_id?: number; weight: number }>
+  updates: Array<{ id: number; weight: number }>
+  deletes: number[]
+}) => {
+  const response = await fetch('/api/core/lo-po-mappings/bulk_sync/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: 'include',
+  })
+  if (!response.ok) throw new Error('Bulk sync failed')
+  return response.json()
 }
 
 interface MappingEditorProps {
@@ -276,7 +286,6 @@ const WeightModal = ({
 
 // Main Component
 const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
-  const queryClient = useQueryClient()
 
   // Data fetching
   const assessmentsQuery = useEvaluationAssessmentsList({ course: courseId })
@@ -326,13 +335,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   // Loading state
   const isLoading = assessmentsQuery.isLoading || losQuery.isLoading || posQuery.isLoading || aloQuery.isLoading || lopoQuery.isLoading
 
-  // Mutations
-  const aloCreateMutation = useEvaluationAssessmentLoMappingsCreate()
-  const aloPartialUpdateMutation = useEvaluationAssessmentLoMappingsPartialUpdate()
-  const aloDestroyMutation = useEvaluationAssessmentLoMappingsDestroy()
-  const lopoCreateMutation = useCoreLoPoMappingsCreate()
-  const lopoPartialUpdateMutation = useCoreLoPoMappingsPartialUpdate()
-  const lopoDestroyMutation = useCoreLoPoMappingsDestroy()
+  const [isSaving, setIsSaving] = useState(false)
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeData, setActiveData] = useState<DragItemData | null>(null)
@@ -487,112 +490,119 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     )
   }, [workingAssessmentLOMappings, initialAssessmentLOMappings, workingLoPOMappings, initialLoPOMappings])
 
-  const handleCreateOrUpdateMapping = async (weight: number) => {
-    if (!weightModal) return
-
+  const handleSave = async (closeAfterSave = false) => {
+    setIsSaving(true)
     try {
-      if (weightModal.editMode && weightModal.mappingId) {
-        if (weightModal.type === 'assessment-lo') {
-          const previousMappings = workingAssessmentLOMappings
-          setWorkingAssessmentLOMappings(workingAssessmentLOMappings.map((m) =>
-            m.id === weightModal.mappingId ? { ...m, weight } : m
-          ))
-          setWeightModal(null)
+      const aloDiff = computeDiff(workingAssessmentLOMappings, initialAssessmentLOMappings)
+      const lopoDiff = computeDiff(workingLoPOMappings, initialLoPOMappings)
 
-          try {
-            await aloPartialUpdateMutation.mutateAsync({
-              id: weightModal.mappingId,
-              data: { weight },
-            })
-            await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
-          } catch (error) {
-            setWorkingAssessmentLOMappings(previousMappings)
-            throw error
-          }
-        } else {
-          const response = await lopoPartialUpdateMutation.mutateAsync({
-            id: weightModal.mappingId,
-            data: { weight },
-          })
-          setWorkingLoPOMappings(workingLoPOMappings.map((m) =>
-            m.id === weightModal.mappingId ? { ...m, weight: response.weight } : m
-          ))
-          setWeightModal(null)
-          await queryClient.invalidateQueries({ queryKey: ['/api/core/lo-po-mappings/'] })
-        }
-      } else {
-        if (weightModal.type === 'assessment-lo') {
-          const tempId = -Date.now()
-          const tempMapping = {
-            id: tempId,
-            assessment: weightModal.fromId,
-            learning_outcome: { id: weightModal.toId } as EvaluationLearningOutcome,
-            learning_outcome_id: weightModal.toId,
-            weight,
-          } as AssessmentLearningOutcomeMapping
-          setWorkingAssessmentLOMappings([...workingAssessmentLOMappings, tempMapping])
-          setWeightModal(null)
+      const [aloResult, lopoResult] = await Promise.all([
+        bulkSyncAssessmentLOMappings({
+          course_id: courseId,
+          creates: aloDiff.creates.map(m => ({
+            temp_id: m.id,
+            assessment_id: (m as any).assessment_id ?? (m as any).assessment,
+            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+            weight: m.weight,
+          })),
+          updates: aloDiff.updates,
+          deletes: aloDiff.deletes,
+        }),
+        bulkSyncLOPOMappings({
+          course_id: courseId,
+          creates: lopoDiff.creates.map(m => ({
+            temp_id: m.id,
+            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+            program_outcome_id: (m as any).program_outcome_id ?? (m as any).program_outcome?.id,
+            weight: m.weight,
+          })),
+          updates: lopoDiff.updates,
+          deletes: lopoDiff.deletes,
+        }),
+      ])
 
-          try {
-            const response = await aloCreateMutation.mutateAsync({
-              data: {
-                assessment_id: weightModal.fromId,
-                learning_outcome_id: weightModal.toId,
-                weight,
-              },
-            })
-            setWorkingAssessmentLOMappings(prev =>
-              prev.map(m => m.id === tempId ? response : m)
-            )
-            await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
-          } catch (error) {
-            setWorkingAssessmentLOMappings(prev => prev.filter(m => m.id !== tempId))
-            throw error
-          }
-        } else {
-          const response = await lopoCreateMutation.mutateAsync({
-            data: {
-              course: courseId,
-              learning_outcome_id: weightModal.fromId,
-              program_outcome_id: weightModal.toId,
-              weight,
-            },
-          })
-          setWorkingLoPOMappings([...workingLoPOMappings, response])
-          setWeightModal(null)
-          await queryClient.invalidateQueries({ queryKey: ['/api/core/lo-po-mappings/'] })
-        }
+      // Replace temp IDs with real IDs
+      const tempIdMap = new Map<number, number>()
+      for (const item of aloResult.created || []) {
+        if (item.temp_id) tempIdMap.set(item.temp_id, item.id)
+      }
+      for (const item of lopoResult.created || []) {
+        if (item.temp_id) tempIdMap.set(item.temp_id, item.id)
+      }
+
+      setWorkingAssessmentLOMappings(prev =>
+        prev.map(m => (tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m))
+      )
+      setWorkingLoPOMappings(prev =>
+        prev.map(m => (tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m))
+      )
+
+      // Update initial state to match saved state
+      setInitialAssessmentLOMappings(clone(workingAssessmentLOMappings))
+      setInitialLoPOMappings(clone(workingLoPOMappings))
+
+      if (closeAfterSave) {
+        onClose?.()
       }
     } catch (error) {
-      console.error('Error creating/updating mapping:', error)
-
-      const errorMsg = getErrorMessage(error, 'Failed to save mapping')
-      alert(errorMsg)
+      console.error('Bulk sync failed:', error)
+      alert('Failed to save changes. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  const handleDeleteALOMapping = async (mappingId: number) => {
-    const previousMappings = workingAssessmentLOMappings
-    setWorkingAssessmentLOMappings(workingAssessmentLOMappings.filter((m) => m.id !== mappingId))
+  const handleCreateOrUpdateMapping = (weight: number) => {
+    if (!weightModal) return
 
-    try {
-      await aloDestroyMutation.mutateAsync({ id: mappingId })
-      await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
-    } catch (error) {
-      console.error('Error deleting mapping:', error)
-      setWorkingAssessmentLOMappings(previousMappings)
-      alert('Failed to delete mapping. Please try again.')
+    if (weightModal.editMode && weightModal.mappingId) {
+      // Update existing mapping in working state (no API call)
+      if (weightModal.type === 'assessment-lo') {
+        setWorkingAssessmentLOMappings(prev =>
+          prev.map(m => m.id === weightModal.mappingId ? { ...m, weight } : m)
+        )
+      } else {
+        setWorkingLoPOMappings(prev =>
+          prev.map(m => m.id === weightModal.mappingId ? { ...m, weight } : m)
+        )
+      }
+    } else {
+      // Create new mapping in working state with temp negative ID
+      const tempId = -Date.now()
+      if (weightModal.type === 'assessment-lo') {
+        const newMapping: any = {
+          id: tempId,
+          assessment: weightModal.fromId,
+          learning_outcome: { id: weightModal.toId },
+          learning_outcome_id: weightModal.toId,
+          weight,
+        }
+        setWorkingAssessmentLOMappings(prev => [...prev, newMapping])
+      } else {
+        const newMapping: any = {
+          id: tempId,
+          course: courseId,
+          learning_outcome: { id: weightModal.fromId },
+          program_outcome: { id: weightModal.toId },
+          weight,
+        }
+        setWorkingLoPOMappings(prev => [...prev, newMapping])
+      }
+    }
+    setWeightModal(null)
+  }
+
+  const handleDeleteMapping = (mappingId: number, type: 'assessment-lo' | 'lo-po') => {
+    if (type === 'assessment-lo') {
+      setWorkingAssessmentLOMappings(prev => prev.filter(m => m.id !== mappingId))
+    } else {
+      setWorkingLoPOMappings(prev => prev.filter(m => m.id !== mappingId))
     }
   }
 
-  const handleDeleteLOPOMapping = async (mappingId: number) => {
-    try {
-      await lopoDestroyMutation.mutateAsync({ id: mappingId })
-      setWorkingLoPOMappings(workingLoPOMappings.filter((m) => m.id !== mappingId))
-      await queryClient.invalidateQueries({ queryKey: ['/api/core/lo-po-mappings/'] })
-    } catch (error) {
-      console.error('Error deleting mapping:', error)
-    }
+  const handleReset = () => {
+    setWorkingAssessmentLOMappings(clone(initialAssessmentLOMappings))
+    setWorkingLoPOMappings(clone(initialLoPOMappings))
   }
 
   // Get mappings for a specific LO
@@ -804,7 +814,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        handleDeleteALOMapping(mapping.id)
+                                        handleDeleteMapping(mapping.id, 'assessment-lo')
                                       }}
                                       className="p-0.5 hover:text-red-600 -mr-1"
                                       title="Remove mapping"
@@ -857,7 +867,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        handleDeleteLOPOMapping(mapping.id)
+                                        handleDeleteMapping(mapping.id, 'lo-po')
                                       }}
                                       className="p-0.5 hover:text-red-600 -mr-1"
                                       title="Remove mapping"
@@ -960,7 +970,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      handleDeleteLOPOMapping(mapping.id)
+                                      handleDeleteMapping(mapping.id, 'lo-po')
                                     }}
                                     className="p-0.5 hover:text-red-600 -mr-1"
                                     title="Remove mapping"
@@ -980,6 +990,32 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
               )}
             </div>
           </Card>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
+          <button
+            onClick={handleReset}
+            disabled={!hasChanges}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              hasChanges
+                ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                : 'border border-gray-200 text-gray-300 cursor-not-allowed'
+            }`}
+          >
+            ↺ Reset Changes
+          </button>
+          <button
+            onClick={() => handleSave(false)}
+            disabled={!hasChanges || isSaving}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              hasChanges && !isSaving
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
 
