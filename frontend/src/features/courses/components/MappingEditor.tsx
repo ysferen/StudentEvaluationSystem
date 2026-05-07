@@ -336,6 +336,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const isLoading = assessmentsQuery.isLoading || losQuery.isLoading || posQuery.isLoading || aloQuery.isLoading || lopoQuery.isLoading
 
   const [isSaving, setIsSaving] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeData, setActiveData] = useState<DragItemData | null>(null)
@@ -656,15 +657,32 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
               </div>
             </div>
           </div>
-          {onClose && (
+           <div className="flex items-center gap-2">
             <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-              aria-label="Close"
+              className="p-2 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="AI Weight Suggestion"
+              aria-label="AI Weight Suggestion"
             >
-              <XMarkIcon className="h-6 w-6 text-gray-500" />
+              <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </button>
-          )}
+            {onClose && (
+              <button
+                onClick={() => {
+                  if (hasChanges) {
+                    setShowCloseConfirm(true)
+                  } else {
+                    onClose()
+                  }
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+                aria-label="Close"
+              >
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Three Column Layout */}
@@ -1046,6 +1064,44 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           editMode={weightModal.editMode}
           initialWeight={weightModal.initialWeight}
         />
+      )}
+      {/* Close Confirmation Dialog */}
+      {showCloseConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10001]">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unsaved Changes</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              You have unsaved mapping changes. What would you like to do?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={() => {
+                  handleReset()
+                  setShowCloseConfirm(false)
+                  onClose?.()
+                }}
+                className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Discard
+              </button>
+              <button
+                onClick={async () => {
+                  setShowCloseConfirm(false)
+                  await handleSave(true)
+                }}
+                className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Save & Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </DndContext>
   )
