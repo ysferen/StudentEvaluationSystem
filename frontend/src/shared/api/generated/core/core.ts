@@ -30,6 +30,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BulkLOPOMapping,
+  CoreCourseTemplateAssessmentLoMappingsListParams,
+  CoreCourseTemplateLoPoMappingsListParams,
+  CoreCourseTemplatesInstantiateCreateBodyOne,
+  CoreCourseTemplatesInstantiateCreateBodyThree,
+  CoreCourseTemplatesListParams,
   CoreCoursesListParams,
   CoreDegreeLevelsListParams,
   CoreDepartmentsListParams,
@@ -70,13 +76,20 @@ import type {
   CoreStudentPoScoresListParams,
   CoreStudentsListParams,
   CoreTermsListParams,
+  CoreWeightSuggestionListParams,
   Course,
+  CourseTemplate,
+  CourseTemplateAssessmentLOMapping,
+  CourseTemplateLOPOMapping,
   DegreeLevel,
   Department,
   FileImportResponse,
   InstructorPermission,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedCourseList,
+  PaginatedCourseTemplateAssessmentLOMappingList,
+  PaginatedCourseTemplateLOPOMappingList,
+  PaginatedCourseTemplateList,
   PaginatedDegreeLevelList,
   PaginatedDepartmentList,
   PaginatedInstructorPermissionList,
@@ -85,18 +98,23 @@ import type {
   PaginatedStudentProfileList,
   PaginatedStudentProgramOutcomeScoreList,
   PaginatedTermList,
+  PaginatedWeightSuggestionJobList,
   PatchedCourse,
+  PatchedCourseTemplate,
+  PatchedCourseTemplateAssessmentLOMapping,
+  PatchedCourseTemplateLOPOMapping,
   PatchedDegreeLevel,
   PatchedDepartment,
   PatchedInstructorPermission,
   PatchedLearningOutcomeProgramOutcomeMapping,
   PatchedProgram,
   PatchedTerm,
+  PatchedWeightSuggestionJob,
   Program,
   StudentLearningOutcomeScore,
-  StudentProfile,
   StudentProgramOutcomeScore,
-  Term
+  Term,
+  WeightSuggestionJob
 } from '../../model';
 
 import { customInstance } from '../../mutator';
@@ -134,6 +152,2189 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsList = (
+    params?: CoreCourseTemplateAssessmentLoMappingsListParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedCourseTemplateAssessmentLOMappingList>(
+      {url: `/api/core/course-template-assessment-lo-mappings/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsListInfiniteQueryKey = (params?: CoreCourseTemplateAssessmentLoMappingsListParams,) => {
+    return [
+    'infinite', `/api/core/course-template-assessment-lo-mappings/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getCoreCourseTemplateAssessmentLoMappingsListQueryKey = (params?: CoreCourseTemplateAssessmentLoMappingsListParams,) => {
+    return [
+    `/api/core/course-template-assessment-lo-mappings/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, CoreCourseTemplateAssessmentLoMappingsListParams['page']>, TError = unknown>(params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateAssessmentLoMappingsListInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']> = ({ signal, pageParam }) => coreCourseTemplateAssessmentLoMappingsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateAssessmentLoMappingsListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>>
+export type CoreCourseTemplateAssessmentLoMappingsListInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplateAssessmentLoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, CoreCourseTemplateAssessmentLoMappingsListParams['page']>, TError = unknown>(
+ params: undefined |  CoreCourseTemplateAssessmentLoMappingsListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, CoreCourseTemplateAssessmentLoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, CoreCourseTemplateAssessmentLoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateAssessmentLoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, CoreCourseTemplateAssessmentLoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateAssessmentLoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateAssessmentLoMappingsListInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsListQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError = unknown>(params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateAssessmentLoMappingsListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>> = ({ signal }) => coreCourseTemplateAssessmentLoMappingsList(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateAssessmentLoMappingsListQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>>
+export type CoreCourseTemplateAssessmentLoMappingsListQueryError = unknown
+
+
+export function useCoreCourseTemplateAssessmentLoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError = unknown>(
+ params: undefined |  CoreCourseTemplateAssessmentLoMappingsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateAssessmentLoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateAssessmentLoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateAssessmentLoMappingsListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsCreate = (
+    courseTemplateAssessmentLOMapping: NonReadonly<CourseTemplateAssessmentLOMapping>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplateAssessmentLOMapping>(
+      {url: `/api/core/course-template-assessment-lo-mappings/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplateAssessmentLOMapping, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateAssessmentLoMappingsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>, {data: NonReadonly<CourseTemplateAssessmentLOMapping>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreCourseTemplateAssessmentLoMappingsCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateAssessmentLoMappingsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>>
+    export type CoreCourseTemplateAssessmentLoMappingsCreateMutationBody = NonReadonly<CourseTemplateAssessmentLOMapping>
+    export type CoreCourseTemplateAssessmentLoMappingsCreateMutationError = unknown
+
+    export const useCoreCourseTemplateAssessmentLoMappingsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsCreate>>,
+        TError,
+        {data: NonReadonly<CourseTemplateAssessmentLOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateAssessmentLoMappingsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplateAssessmentLOMapping>(
+      {url: `/api/core/course-template-assessment-lo-mappings/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/course-template-assessment-lo-mappings/${id}/`
+    ] as const;
+    }
+
+export const getCoreCourseTemplateAssessmentLoMappingsRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/course-template-assessment-lo-mappings/${id}/`
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>> = ({ signal }) => coreCourseTemplateAssessmentLoMappingsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>
+export type CoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateAssessmentLoMappingsRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateAssessmentLoMappingsRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>> = ({ signal }) => coreCourseTemplateAssessmentLoMappingsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateAssessmentLoMappingsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>>
+export type CoreCourseTemplateAssessmentLoMappingsRetrieveQueryError = unknown
+
+
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateAssessmentLoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateAssessmentLoMappingsRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsUpdate = (
+    id: number,
+    courseTemplateAssessmentLOMapping: NonReadonly<CourseTemplateAssessmentLOMapping>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplateAssessmentLOMapping>(
+      {url: `/api/core/course-template-assessment-lo-mappings/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplateAssessmentLOMapping
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateAssessmentLoMappingsUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>, {id: number;data: NonReadonly<CourseTemplateAssessmentLOMapping>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplateAssessmentLoMappingsUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateAssessmentLoMappingsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>>
+    export type CoreCourseTemplateAssessmentLoMappingsUpdateMutationBody = NonReadonly<CourseTemplateAssessmentLOMapping>
+    export type CoreCourseTemplateAssessmentLoMappingsUpdateMutationError = unknown
+
+    export const useCoreCourseTemplateAssessmentLoMappingsUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<CourseTemplateAssessmentLOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateAssessmentLoMappingsUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsPartialUpdate = (
+    id: number,
+    patchedCourseTemplateAssessmentLOMapping: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplateAssessmentLOMapping>(
+      {url: `/api/core/course-template-assessment-lo-mappings/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedCourseTemplateAssessmentLOMapping
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateAssessmentLoMappingsPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>, {id: number;data: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplateAssessmentLoMappingsPartialUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateAssessmentLoMappingsPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>>
+    export type CoreCourseTemplateAssessmentLoMappingsPartialUpdateMutationBody = NonReadonly<PatchedCourseTemplateAssessmentLOMapping>
+    export type CoreCourseTemplateAssessmentLoMappingsPartialUpdateMutationError = unknown
+
+    export const useCoreCourseTemplateAssessmentLoMappingsPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsPartialUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<PatchedCourseTemplateAssessmentLOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateAssessmentLoMappingsPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template assessment-to-LO mappings.
+ */
+export const coreCourseTemplateAssessmentLoMappingsDestroy = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<void>(
+      {url: `/api/core/course-template-assessment-lo-mappings/${id}/`, method: 'DELETE'
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateAssessmentLoMappingsDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateAssessmentLoMappingsDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  coreCourseTemplateAssessmentLoMappingsDestroy(id,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateAssessmentLoMappingsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>>
+
+    export type CoreCourseTemplateAssessmentLoMappingsDestroyMutationError = unknown
+
+    export const useCoreCourseTemplateAssessmentLoMappingsDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateAssessmentLoMappingsDestroy>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateAssessmentLoMappingsDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsList = (
+    params?: CoreCourseTemplateLoPoMappingsListParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedCourseTemplateLOPOMappingList>(
+      {url: `/api/core/course-template-lo-po-mappings/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplateLoPoMappingsListInfiniteQueryKey = (params?: CoreCourseTemplateLoPoMappingsListParams,) => {
+    return [
+    'infinite', `/api/core/course-template-lo-po-mappings/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getCoreCourseTemplateLoPoMappingsListQueryKey = (params?: CoreCourseTemplateLoPoMappingsListParams,) => {
+    return [
+    `/api/core/course-template-lo-po-mappings/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplateLoPoMappingsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, CoreCourseTemplateLoPoMappingsListParams['page']>, TError = unknown>(params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateLoPoMappingsListInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']> = ({ signal, pageParam }) => coreCourseTemplateLoPoMappingsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateLoPoMappingsListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>>
+export type CoreCourseTemplateLoPoMappingsListInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplateLoPoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, CoreCourseTemplateLoPoMappingsListParams['page']>, TError = unknown>(
+ params: undefined |  CoreCourseTemplateLoPoMappingsListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, CoreCourseTemplateLoPoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, CoreCourseTemplateLoPoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateLoPoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, CoreCourseTemplateLoPoMappingsListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData, QueryKey, CoreCourseTemplateLoPoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateLoPoMappingsListInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplateLoPoMappingsListQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError = unknown>(params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateLoPoMappingsListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>> = ({ signal }) => coreCourseTemplateLoPoMappingsList(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateLoPoMappingsListQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>>
+export type CoreCourseTemplateLoPoMappingsListQueryError = unknown
+
+
+export function useCoreCourseTemplateLoPoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError = unknown>(
+ params: undefined |  CoreCourseTemplateLoPoMappingsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateLoPoMappingsList<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError = unknown>(
+ params?: CoreCourseTemplateLoPoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateLoPoMappingsListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsCreate = (
+    courseTemplateLOPOMapping: NonReadonly<CourseTemplateLOPOMapping>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplateLOPOMapping>(
+      {url: `/api/core/course-template-lo-po-mappings/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplateLOPOMapping, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateLoPoMappingsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateLOPOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateLoPoMappingsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>, {data: NonReadonly<CourseTemplateLOPOMapping>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreCourseTemplateLoPoMappingsCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateLoPoMappingsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>>
+    export type CoreCourseTemplateLoPoMappingsCreateMutationBody = NonReadonly<CourseTemplateLOPOMapping>
+    export type CoreCourseTemplateLoPoMappingsCreateMutationError = unknown
+
+    export const useCoreCourseTemplateLoPoMappingsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>, TError,{data: NonReadonly<CourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsCreate>>,
+        TError,
+        {data: NonReadonly<CourseTemplateLOPOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateLoPoMappingsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplateLOPOMapping>(
+      {url: `/api/core/course-template-lo-po-mappings/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/course-template-lo-po-mappings/${id}/`
+    ] as const;
+    }
+
+export const getCoreCourseTemplateLoPoMappingsRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/course-template-lo-po-mappings/${id}/`
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>> = ({ signal }) => coreCourseTemplateLoPoMappingsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>
+export type CoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplateLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateLoPoMappingsRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplateLoPoMappingsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplateLoPoMappingsRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>> = ({ signal }) => coreCourseTemplateLoPoMappingsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplateLoPoMappingsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>>
+export type CoreCourseTemplateLoPoMappingsRetrieveQueryError = unknown
+
+
+export function useCoreCourseTemplateLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplateLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplateLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplateLoPoMappingsRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsUpdate = (
+    id: number,
+    courseTemplateLOPOMapping: NonReadonly<CourseTemplateLOPOMapping>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplateLOPOMapping>(
+      {url: `/api/core/course-template-lo-po-mappings/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplateLOPOMapping
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateLoPoMappingsUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateLOPOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateLoPoMappingsUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>, {id: number;data: NonReadonly<CourseTemplateLOPOMapping>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplateLoPoMappingsUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateLoPoMappingsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>>
+    export type CoreCourseTemplateLoPoMappingsUpdateMutationBody = NonReadonly<CourseTemplateLOPOMapping>
+    export type CoreCourseTemplateLoPoMappingsUpdateMutationError = unknown
+
+    export const useCoreCourseTemplateLoPoMappingsUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<CourseTemplateLOPOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateLoPoMappingsUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsPartialUpdate = (
+    id: number,
+    patchedCourseTemplateLOPOMapping: NonReadonly<PatchedCourseTemplateLOPOMapping>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplateLOPOMapping>(
+      {url: `/api/core/course-template-lo-po-mappings/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedCourseTemplateLOPOMapping
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateLoPoMappingsPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateLOPOMapping>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateLoPoMappingsPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>, {id: number;data: NonReadonly<PatchedCourseTemplateLOPOMapping>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplateLoPoMappingsPartialUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateLoPoMappingsPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>>
+    export type CoreCourseTemplateLoPoMappingsPartialUpdateMutationBody = NonReadonly<PatchedCourseTemplateLOPOMapping>
+    export type CoreCourseTemplateLoPoMappingsPartialUpdateMutationError = unknown
+
+    export const useCoreCourseTemplateLoPoMappingsPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplateLOPOMapping>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsPartialUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<PatchedCourseTemplateLOPOMapping>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateLoPoMappingsPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD for template LO-to-PO mappings.
+ */
+export const coreCourseTemplateLoPoMappingsDestroy = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<void>(
+      {url: `/api/core/course-template-lo-po-mappings/${id}/`, method: 'DELETE'
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplateLoPoMappingsDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['coreCourseTemplateLoPoMappingsDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  coreCourseTemplateLoPoMappingsDestroy(id,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplateLoPoMappingsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>>
+
+    export type CoreCourseTemplateLoPoMappingsDestroyMutationError = unknown
+
+    export const useCoreCourseTemplateLoPoMappingsDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplateLoPoMappingsDestroy>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplateLoPoMappingsDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesList = (
+    params?: CoreCourseTemplatesListParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedCourseTemplateList>(
+      {url: `/api/core/course-templates/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplatesListInfiniteQueryKey = (params?: CoreCourseTemplatesListParams,) => {
+    return [
+    'infinite', `/api/core/course-templates/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getCoreCourseTemplatesListQueryKey = (params?: CoreCourseTemplatesListParams,) => {
+    return [
+    `/api/core/course-templates/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplatesListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesList>>, CoreCourseTemplatesListParams['page']>, TError = unknown>(params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesListInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesList>>, QueryKey, CoreCourseTemplatesListParams['page']> = ({ signal, pageParam }) => coreCourseTemplatesList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesList>>>
+export type CoreCourseTemplatesListInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesList>>, CoreCourseTemplatesListParams['page']>, TError = unknown>(
+ params: undefined |  CoreCourseTemplatesListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesList>>, CoreCourseTemplatesListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesList>>, CoreCourseTemplatesListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesList>>, CoreCourseTemplatesListParams['page']>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData, QueryKey, CoreCourseTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesListInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplatesListQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError = unknown>(params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesList>>> = ({ signal }) => coreCourseTemplatesList(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesListQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesList>>>
+export type CoreCourseTemplatesListQueryError = unknown
+
+
+export function useCoreCourseTemplatesList<TData = Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError = unknown>(
+ params: undefined |  CoreCourseTemplatesListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesList<TData = Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesList<TData = Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesList<TData = Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError = unknown>(
+ params?: CoreCourseTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesCreate = (
+    courseTemplate: NonReadonly<CourseTemplate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplate, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesCreate>>, TError,{data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesCreate>>, TError,{data: NonReadonly<CourseTemplate>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesCreate>>, {data: NonReadonly<CourseTemplate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreCourseTemplatesCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesCreate>>>
+    export type CoreCourseTemplatesCreateMutationBody = NonReadonly<CourseTemplate>
+    export type CoreCourseTemplatesCreateMutationError = unknown
+
+    export const useCoreCourseTemplatesCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesCreate>>, TError,{data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesCreate>>,
+        TError,
+        {data: NonReadonly<CourseTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplatesRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/course-templates/${id}/`
+    ] as const;
+    }
+
+export const getCoreCourseTemplatesRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/course-templates/${id}/`
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplatesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>> = ({ signal }) => coreCourseTemplatesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>
+export type CoreCourseTemplatesRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplatesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>> = ({ signal }) => coreCourseTemplatesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>>
+export type CoreCourseTemplatesRetrieveQueryError = unknown
+
+
+export function useCoreCourseTemplatesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesUpdate = (
+    id: number,
+    courseTemplate: NonReadonly<CourseTemplate>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplate
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>, {id: number;data: NonReadonly<CourseTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplatesUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>>
+    export type CoreCourseTemplatesUpdateMutationBody = NonReadonly<CourseTemplate>
+    export type CoreCourseTemplatesUpdateMutationError = unknown
+
+    export const useCoreCourseTemplatesUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<CourseTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesPartialUpdate = (
+    id: number,
+    patchedCourseTemplate: NonReadonly<PatchedCourseTemplate>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedCourseTemplate
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplate>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>, {id: number;data: NonReadonly<PatchedCourseTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplatesPartialUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>>
+    export type CoreCourseTemplatesPartialUpdateMutationBody = NonReadonly<PatchedCourseTemplate>
+    export type CoreCourseTemplatesPartialUpdateMutationError = unknown
+
+    export const useCoreCourseTemplatesPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedCourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesPartialUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<PatchedCourseTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for course templates, plus instantiate action.
+ */
+export const coreCourseTemplatesDestroy = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<void>(
+      {url: `/api/core/course-templates/${id}/`, method: 'DELETE'
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  coreCourseTemplatesDestroy(id,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>>
+
+    export type CoreCourseTemplatesDestroyMutationError = unknown
+
+    export const useCoreCourseTemplatesDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesDestroy>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * GET/POST assessments for this template.
+ */
+export const coreCourseTemplatesAssessmentsRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/assessments/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplatesAssessmentsRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/course-templates/${id}/assessments/`
+    ] as const;
+    }
+
+export const getCoreCourseTemplatesAssessmentsRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/course-templates/${id}/assessments/`
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplatesAssessmentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesAssessmentsRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>> = ({ signal }) => coreCourseTemplatesAssessmentsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesAssessmentsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>
+export type CoreCourseTemplatesAssessmentsRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplatesAssessmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesAssessmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesAssessmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesAssessmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesAssessmentsRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplatesAssessmentsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesAssessmentsRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>> = ({ signal }) => coreCourseTemplatesAssessmentsRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesAssessmentsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>>
+export type CoreCourseTemplatesAssessmentsRetrieveQueryError = unknown
+
+
+export function useCoreCourseTemplatesAssessmentsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesAssessmentsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesAssessmentsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesAssessmentsRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesAssessmentsRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * GET/POST assessments for this template.
+ */
+export const coreCourseTemplatesAssessmentsCreate = (
+    id: number,
+    courseTemplate: NonReadonly<CourseTemplate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/assessments/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplate, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesAssessmentsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesAssessmentsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>, {id: number;data: NonReadonly<CourseTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplatesAssessmentsCreate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesAssessmentsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>>
+    export type CoreCourseTemplatesAssessmentsCreateMutationBody = NonReadonly<CourseTemplate>
+    export type CoreCourseTemplatesAssessmentsCreateMutationError = unknown
+
+    export const useCoreCourseTemplatesAssessmentsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesAssessmentsCreate>>,
+        TError,
+        {id: number;data: NonReadonly<CourseTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesAssessmentsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Create a new Course by cloning all template data into the given term.
+ */
+export const coreCourseTemplatesInstantiateCreate = (
+    id: number,
+    coreCourseTemplatesInstantiateCreateBody: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Course>(
+      {url: `/api/core/course-templates/${id}/instantiate/`, method: 'POST',
+      data: coreCourseTemplatesInstantiateCreateBody, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesInstantiateCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesInstantiateCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, {id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplatesInstantiateCreate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesInstantiateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>>
+    export type CoreCourseTemplatesInstantiateCreateMutationBody = CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree
+    export type CoreCourseTemplatesInstantiateCreateMutationError = unknown
+
+    export const useCoreCourseTemplatesInstantiateCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>,
+        TError,
+        {id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | unknown | CoreCourseTemplatesInstantiateCreateBodyThree},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesInstantiateCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * GET/POST learning outcomes for this template.
+ */
+export const coreCourseTemplatesLearningOutcomesRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/learning-outcomes/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/course-templates/${id}/learning-outcomes/`
+    ] as const;
+    }
+
+export const getCoreCourseTemplatesLearningOutcomesRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/course-templates/${id}/learning-outcomes/`
+    ] as const;
+    }
+
+
+export const getCoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>> = ({ signal }) => coreCourseTemplatesLearningOutcomesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>
+export type CoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreCourseTemplatesLearningOutcomesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesLearningOutcomesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesLearningOutcomesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesLearningOutcomesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesLearningOutcomesRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreCourseTemplatesLearningOutcomesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreCourseTemplatesLearningOutcomesRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>> = ({ signal }) => coreCourseTemplatesLearningOutcomesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreCourseTemplatesLearningOutcomesRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>>
+export type CoreCourseTemplatesLearningOutcomesRetrieveQueryError = unknown
+
+
+export function useCoreCourseTemplatesLearningOutcomesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesLearningOutcomesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreCourseTemplatesLearningOutcomesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreCourseTemplatesLearningOutcomesRetrieve<TData = Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreCourseTemplatesLearningOutcomesRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * GET/POST learning outcomes for this template.
+ */
+export const coreCourseTemplatesLearningOutcomesCreate = (
+    id: number,
+    courseTemplate: NonReadonly<CourseTemplate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CourseTemplate>(
+      {url: `/api/core/course-templates/${id}/learning-outcomes/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: courseTemplate, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreCourseTemplatesLearningOutcomesCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext> => {
+
+const mutationKey = ['coreCourseTemplatesLearningOutcomesCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>, {id: number;data: NonReadonly<CourseTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreCourseTemplatesLearningOutcomesCreate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreCourseTemplatesLearningOutcomesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>>
+    export type CoreCourseTemplatesLearningOutcomesCreateMutationBody = NonReadonly<CourseTemplate>
+    export type CoreCourseTemplatesLearningOutcomesCreateMutationError = unknown
+
+    export const useCoreCourseTemplatesLearningOutcomesCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>, TError,{id: number;data: NonReadonly<CourseTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreCourseTemplatesLearningOutcomesCreate>>,
+        TError,
+        {id: number;data: NonReadonly<CourseTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreCourseTemplatesLearningOutcomesCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * CRUD operations for courses.
 
 Permissions:
@@ -144,15 +2345,15 @@ export const coreCoursesList = (
     params?: CoreCoursesListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedCourseList>(
       {url: `/api/core/courses/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -168,7 +2369,7 @@ export const getCoreCoursesListQueryKey = (params?: CoreCoursesListParams,) => {
     ] as const;
     }
 
-    
+
 export const getCoreCoursesListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesList>>, CoreCoursesListParams['page']>, TError = unknown>(params?: CoreCoursesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesList>>, TError, TData, QueryKey, CoreCoursesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -176,13 +2377,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesList>>, QueryKey, CoreCoursesListParams['page']> = ({ signal, pageParam }) => coreCoursesList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesList>>, TError, TData, QueryKey, CoreCoursesListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -218,7 +2419,7 @@ export function useCoreCoursesListInfinite<TData = InfiniteData<Awaited<ReturnTy
 
 export function useCoreCoursesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesList>>, CoreCoursesListParams['page']>, TError = unknown>(
  params?: CoreCoursesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesList>>, TError, TData, QueryKey, CoreCoursesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesListInfiniteQueryOptions(params,options)
@@ -240,13 +2441,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesList>>> = ({ signal }) => coreCoursesList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCoursesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -282,7 +2483,7 @@ export function useCoreCoursesList<TData = Awaited<ReturnType<typeof coreCourses
 
 export function useCoreCoursesList<TData = Awaited<ReturnType<typeof coreCoursesList>>, TError = unknown>(
  params?: CoreCoursesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCoursesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesListQueryOptions(params,options)
@@ -308,8 +2509,8 @@ export const coreCoursesCreate = (
     course: NonReadonly<Course>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Course>(
       {url: `/api/core/courses/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -317,7 +2518,7 @@ export const coreCoursesCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreCoursesCreateMutationOptions = <TError = unknown,
@@ -331,7 +2532,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCoursesCreate>>, {data: NonReadonly<Course>}> = (props) => {
@@ -340,7 +2541,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreCoursesCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -373,14 +2574,14 @@ export const coreCoursesRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Course>(
       {url: `/api/core/courses/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -396,7 +2597,7 @@ export const getCoreCoursesRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreCoursesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -404,13 +2605,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesRetrieve>>> = ({ signal }) => coreCoursesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -446,7 +2647,7 @@ export function useCoreCoursesRetrieveInfinite<TData = InfiniteData<Awaited<Retu
 
 export function useCoreCoursesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesRetrieveInfiniteQueryOptions(id,options)
@@ -468,13 +2669,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesRetrieve>>> = ({ signal }) => coreCoursesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -510,7 +2711,7 @@ export function useCoreCoursesRetrieve<TData = Awaited<ReturnType<typeof coreCou
 
 export function useCoreCoursesRetrieve<TData = Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCoursesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesRetrieveQueryOptions(id,options)
@@ -536,8 +2737,8 @@ export const coreCoursesUpdate = (
     id: number,
     course: NonReadonly<Course>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Course>(
       {url: `/api/core/courses/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -545,7 +2746,7 @@ export const coreCoursesUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreCoursesUpdateMutationOptions = <TError = unknown,
@@ -559,7 +2760,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCoursesUpdate>>, {id: number;data: NonReadonly<Course>}> = (props) => {
@@ -568,7 +2769,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreCoursesUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -601,8 +2802,8 @@ export const coreCoursesPartialUpdate = (
     id: number,
     patchedCourse: NonReadonly<PatchedCourse>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Course>(
       {url: `/api/core/courses/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -610,7 +2811,7 @@ export const coreCoursesPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreCoursesPartialUpdateMutationOptions = <TError = unknown,
@@ -624,7 +2825,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCoursesPartialUpdate>>, {id: number;data: NonReadonly<PatchedCourse>}> = (props) => {
@@ -633,7 +2834,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreCoursesPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -665,14 +2866,14 @@ Permissions:
 export const coreCoursesDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/courses/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreCoursesDestroyMutationOptions = <TError = unknown,
@@ -686,7 +2887,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCoursesDestroy>>, {id: number}> = (props) => {
@@ -695,13 +2896,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreCoursesDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreCoursesDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreCoursesDestroy>>>
-    
+
     export type CoreCoursesDestroyMutationError = unknown
 
     export const useCoreCoursesDestroy = <TError = unknown,
@@ -724,14 +2925,14 @@ export const coreCoursesLearningOutcomesRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Course>(
       {url: `/api/core/courses/${id}/learning_outcomes/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -747,7 +2948,7 @@ export const getCoreCoursesLearningOutcomesRetrieveQueryKey = (id?: number,) => 
     ] as const;
     }
 
-    
+
 export const getCoreCoursesLearningOutcomesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -755,13 +2956,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesLearningOutcomesRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>> = ({ signal }) => coreCoursesLearningOutcomesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -797,7 +2998,7 @@ export function useCoreCoursesLearningOutcomesRetrieveInfinite<TData = InfiniteD
 
 export function useCoreCoursesLearningOutcomesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesLearningOutcomesRetrieveInfiniteQueryOptions(id,options)
@@ -819,13 +3020,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreCoursesLearningOutcomesRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>> = ({ signal }) => coreCoursesLearningOutcomesRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -861,7 +3062,7 @@ export function useCoreCoursesLearningOutcomesRetrieve<TData = Awaited<ReturnTyp
 
 export function useCoreCoursesLearningOutcomesRetrieve<TData = Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreCoursesLearningOutcomesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreCoursesLearningOutcomesRetrieveQueryOptions(id,options)
@@ -887,15 +3088,15 @@ export const coreDegreeLevelsList = (
     params?: CoreDegreeLevelsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedDegreeLevelList>(
       {url: `/api/core/degree-levels/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -911,7 +3112,7 @@ export const getCoreDegreeLevelsListQueryKey = (params?: CoreDegreeLevelsListPar
     ] as const;
     }
 
-    
+
 export const getCoreDegreeLevelsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreDegreeLevelsList>>, CoreDegreeLevelsListParams['page']>, TError = unknown>(params?: CoreDegreeLevelsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError, TData, QueryKey, CoreDegreeLevelsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -919,13 +3120,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDegreeLevelsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDegreeLevelsList>>, QueryKey, CoreDegreeLevelsListParams['page']> = ({ signal, pageParam }) => coreDegreeLevelsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError, TData, QueryKey, CoreDegreeLevelsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -961,7 +3162,7 @@ export function useCoreDegreeLevelsListInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useCoreDegreeLevelsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreDegreeLevelsList>>, CoreDegreeLevelsListParams['page']>, TError = unknown>(
  params?: CoreDegreeLevelsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError, TData, QueryKey, CoreDegreeLevelsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDegreeLevelsListInfiniteQueryOptions(params,options)
@@ -983,13 +3184,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDegreeLevelsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDegreeLevelsList>>> = ({ signal }) => coreDegreeLevelsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1025,7 +3226,7 @@ export function useCoreDegreeLevelsList<TData = Awaited<ReturnType<typeof coreDe
 
 export function useCoreDegreeLevelsList<TData = Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError = unknown>(
  params?: CoreDegreeLevelsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDegreeLevelsListQueryOptions(params,options)
@@ -1051,8 +3252,8 @@ export const coreDegreeLevelsCreate = (
     degreeLevel: NonReadonly<DegreeLevel>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<DegreeLevel>(
       {url: `/api/core/degree-levels/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -1060,7 +3261,7 @@ export const coreDegreeLevelsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDegreeLevelsCreateMutationOptions = <TError = unknown,
@@ -1074,7 +3275,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDegreeLevelsCreate>>, {data: NonReadonly<DegreeLevel>}> = (props) => {
@@ -1083,7 +3284,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDegreeLevelsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1116,14 +3317,14 @@ export const coreDegreeLevelsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<DegreeLevel>(
       {url: `/api/core/degree-levels/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1139,7 +3340,7 @@ export const getCoreDegreeLevelsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreDegreeLevelsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1147,13 +3348,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDegreeLevelsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>> = ({ signal }) => coreDegreeLevelsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1189,7 +3390,7 @@ export function useCoreDegreeLevelsRetrieveInfinite<TData = InfiniteData<Awaited
 
 export function useCoreDegreeLevelsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDegreeLevelsRetrieveInfiniteQueryOptions(id,options)
@@ -1211,13 +3412,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDegreeLevelsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>> = ({ signal }) => coreDegreeLevelsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1253,7 +3454,7 @@ export function useCoreDegreeLevelsRetrieve<TData = Awaited<ReturnType<typeof co
 
 export function useCoreDegreeLevelsRetrieve<TData = Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreDegreeLevelsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDegreeLevelsRetrieveQueryOptions(id,options)
@@ -1279,8 +3480,8 @@ export const coreDegreeLevelsUpdate = (
     id: number,
     degreeLevel: NonReadonly<DegreeLevel>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<DegreeLevel>(
       {url: `/api/core/degree-levels/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1288,7 +3489,7 @@ export const coreDegreeLevelsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDegreeLevelsUpdateMutationOptions = <TError = unknown,
@@ -1302,7 +3503,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDegreeLevelsUpdate>>, {id: number;data: NonReadonly<DegreeLevel>}> = (props) => {
@@ -1311,7 +3512,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDegreeLevelsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1344,8 +3545,8 @@ export const coreDegreeLevelsPartialUpdate = (
     id: number,
     patchedDegreeLevel: NonReadonly<PatchedDegreeLevel>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<DegreeLevel>(
       {url: `/api/core/degree-levels/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1353,7 +3554,7 @@ export const coreDegreeLevelsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDegreeLevelsPartialUpdateMutationOptions = <TError = unknown,
@@ -1367,7 +3568,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDegreeLevelsPartialUpdate>>, {id: number;data: NonReadonly<PatchedDegreeLevel>}> = (props) => {
@@ -1376,7 +3577,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDegreeLevelsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1408,14 +3609,14 @@ Permissions:
 export const coreDegreeLevelsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/degree-levels/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreDegreeLevelsDestroyMutationOptions = <TError = unknown,
@@ -1429,7 +3630,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDegreeLevelsDestroy>>, {id: number}> = (props) => {
@@ -1438,13 +3639,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDegreeLevelsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreDegreeLevelsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreDegreeLevelsDestroy>>>
-    
+
     export type CoreDegreeLevelsDestroyMutationError = unknown
 
     export const useCoreDegreeLevelsDestroy = <TError = unknown,
@@ -1471,15 +3672,15 @@ export const coreDepartmentsList = (
     params?: CoreDepartmentsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedDepartmentList>(
       {url: `/api/core/departments/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -1495,7 +3696,7 @@ export const getCoreDepartmentsListQueryKey = (params?: CoreDepartmentsListParam
     ] as const;
     }
 
-    
+
 export const getCoreDepartmentsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreDepartmentsList>>, CoreDepartmentsListParams['page']>, TError = unknown>(params?: CoreDepartmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsList>>, TError, TData, QueryKey, CoreDepartmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1503,13 +3704,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDepartmentsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDepartmentsList>>, QueryKey, CoreDepartmentsListParams['page']> = ({ signal, pageParam }) => coreDepartmentsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsList>>, TError, TData, QueryKey, CoreDepartmentsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1545,7 +3746,7 @@ export function useCoreDepartmentsListInfinite<TData = InfiniteData<Awaited<Retu
 
 export function useCoreDepartmentsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreDepartmentsList>>, CoreDepartmentsListParams['page']>, TError = unknown>(
  params?: CoreDepartmentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsList>>, TError, TData, QueryKey, CoreDepartmentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDepartmentsListInfiniteQueryOptions(params,options)
@@ -1567,13 +3768,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDepartmentsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDepartmentsList>>> = ({ signal }) => coreDepartmentsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreDepartmentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1609,7 +3810,7 @@ export function useCoreDepartmentsList<TData = Awaited<ReturnType<typeof coreDep
 
 export function useCoreDepartmentsList<TData = Awaited<ReturnType<typeof coreDepartmentsList>>, TError = unknown>(
  params?: CoreDepartmentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreDepartmentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDepartmentsListQueryOptions(params,options)
@@ -1635,8 +3836,8 @@ export const coreDepartmentsCreate = (
     department: NonReadonly<Department>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Department>(
       {url: `/api/core/departments/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -1644,7 +3845,7 @@ export const coreDepartmentsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDepartmentsCreateMutationOptions = <TError = unknown,
@@ -1658,7 +3859,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDepartmentsCreate>>, {data: NonReadonly<Department>}> = (props) => {
@@ -1667,7 +3868,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDepartmentsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1700,14 +3901,14 @@ export const coreDepartmentsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Department>(
       {url: `/api/core/departments/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -1723,7 +3924,7 @@ export const getCoreDepartmentsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreDepartmentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -1731,13 +3932,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDepartmentsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>> = ({ signal }) => coreDepartmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1773,7 +3974,7 @@ export function useCoreDepartmentsRetrieveInfinite<TData = InfiniteData<Awaited<
 
 export function useCoreDepartmentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDepartmentsRetrieveInfiniteQueryOptions(id,options)
@@ -1795,13 +3996,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreDepartmentsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>> = ({ signal }) => coreDepartmentsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -1837,7 +4038,7 @@ export function useCoreDepartmentsRetrieve<TData = Awaited<ReturnType<typeof cor
 
 export function useCoreDepartmentsRetrieve<TData = Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreDepartmentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreDepartmentsRetrieveQueryOptions(id,options)
@@ -1863,8 +4064,8 @@ export const coreDepartmentsUpdate = (
     id: number,
     department: NonReadonly<Department>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Department>(
       {url: `/api/core/departments/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -1872,7 +4073,7 @@ export const coreDepartmentsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDepartmentsUpdateMutationOptions = <TError = unknown,
@@ -1886,7 +4087,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDepartmentsUpdate>>, {id: number;data: NonReadonly<Department>}> = (props) => {
@@ -1895,7 +4096,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDepartmentsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1928,8 +4129,8 @@ export const coreDepartmentsPartialUpdate = (
     id: number,
     patchedDepartment: NonReadonly<PatchedDepartment>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Department>(
       {url: `/api/core/departments/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -1937,7 +4138,7 @@ export const coreDepartmentsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreDepartmentsPartialUpdateMutationOptions = <TError = unknown,
@@ -1951,7 +4152,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDepartmentsPartialUpdate>>, {id: number;data: NonReadonly<PatchedDepartment>}> = (props) => {
@@ -1960,7 +4161,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDepartmentsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -1992,14 +4193,14 @@ Permissions:
 export const coreDepartmentsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/departments/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreDepartmentsDestroyMutationOptions = <TError = unknown,
@@ -2013,7 +4214,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreDepartmentsDestroy>>, {id: number}> = (props) => {
@@ -2022,13 +4223,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreDepartmentsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreDepartmentsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreDepartmentsDestroy>>>
-    
+
     export type CoreDepartmentsDestroyMutationError = unknown
 
     export const useCoreDepartmentsDestroy = <TError = unknown,
@@ -2052,7 +4253,7 @@ export const coreFileImportAssignmentScoresResolveCreate = (
     params: CoreFileImportAssignmentScoresResolveCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 if(coreFileImportAssignmentScoresResolveCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportAssignmentScoresResolveCreateBody.file)
@@ -2069,7 +4270,7 @@ if(coreFileImportAssignmentScoresResolveCreateBody.resolutions !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportAssignmentScoresResolveCreateMutationOptions = <TError = unknown,
@@ -2083,7 +4284,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresResolveCreate>>, {data: CoreFileImportAssignmentScoresResolveCreateBody;params: CoreFileImportAssignmentScoresResolveCreateParams}> = (props) => {
@@ -2092,7 +4293,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportAssignmentScoresResolveCreate(data,params,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2121,15 +4322,15 @@ export const coreFileImportAssignmentScoresUploadRetrieve = (
     params: CoreFileImportAssignmentScoresUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CoreFileImportAssignmentScoresUploadRetrieve200 | CoreFileImportAssignmentScoresUploadRetrieve202>(
       {url: `/api/core/file-import/assignment-scores/upload/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2139,7 +4340,7 @@ export const getCoreFileImportAssignmentScoresUploadRetrieveQueryKey = (params?:
     ] as const;
     }
 
-    
+
 export const getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2147,13 +4348,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportAssignmentScoresUploadRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>> = ({ signal }) => coreFileImportAssignmentScoresUploadRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2189,7 +4390,7 @@ export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<
 
 export function useCoreFileImportAssignmentScoresUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError = CoreFileImportAssignmentScoresUploadRetrieve400 | CoreFileImportAssignmentScoresUploadRetrieve404>(
  params: CoreFileImportAssignmentScoresUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreFileImportAssignmentScoresUploadRetrieveQueryOptions(params,options)
@@ -2212,7 +4413,7 @@ export const coreFileImportAssignmentScoresUploadCreate = (
     params: CoreFileImportAssignmentScoresUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`file`, coreFileImportAssignmentScoresUploadCreateBody.file)
 if(coreFileImportAssignmentScoresUploadCreateBody.resolution_policy !== undefined) {
@@ -2227,7 +4428,7 @@ if(coreFileImportAssignmentScoresUploadCreateBody.resolution_policy !== undefine
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportAssignmentScoresUploadCreateMutationOptions = <TError = CoreFileImportAssignmentScoresUploadCreate400 | CoreFileImportAssignmentScoresUploadCreate404,
@@ -2241,7 +4442,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresUploadCreate>>, {data: CoreFileImportAssignmentScoresUploadCreateBody;params: CoreFileImportAssignmentScoresUploadCreateParams}> = (props) => {
@@ -2250,7 +4451,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportAssignmentScoresUploadCreate(data,params,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2280,7 +4481,7 @@ export const coreFileImportAssignmentScoresValidateCreate = (
     params: CoreFileImportAssignmentScoresValidateCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 if(coreFileImportAssignmentScoresValidateCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportAssignmentScoresValidateCreateBody.file)
@@ -2294,7 +4495,7 @@ if(coreFileImportAssignmentScoresValidateCreateBody.file !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportAssignmentScoresValidateCreateMutationOptions = <TError = unknown,
@@ -2308,7 +4509,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportAssignmentScoresValidateCreate>>, {data: CoreFileImportAssignmentScoresValidateCreateBody;params: CoreFileImportAssignmentScoresValidateCreateParams}> = (props) => {
@@ -2317,7 +4518,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportAssignmentScoresValidateCreate(data,params,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2346,15 +4547,15 @@ export const coreFileImportLearningOutcomesUploadRetrieve = (
     params: CoreFileImportLearningOutcomesUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CoreFileImportLearningOutcomesUploadRetrieve200>(
       {url: `/api/core/file-import/learning-outcomes/upload/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2364,7 +4565,7 @@ export const getCoreFileImportLearningOutcomesUploadRetrieveQueryKey = (params?:
     ] as const;
     }
 
-    
+
 export const getCoreFileImportLearningOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>, TError = CoreFileImportLearningOutcomesUploadRetrieve400>(params: CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2372,13 +4573,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportLearningOutcomesUploadRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>> = ({ signal }) => coreFileImportLearningOutcomesUploadRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2414,7 +4615,7 @@ export function useCoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<
 
 export function useCoreFileImportLearningOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>, TError = CoreFileImportLearningOutcomesUploadRetrieve400>(
  params: CoreFileImportLearningOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreFileImportLearningOutcomesUploadRetrieveQueryOptions(params,options)
@@ -2437,7 +4638,7 @@ export const coreFileImportLearningOutcomesUploadCreate = (
     params: CoreFileImportLearningOutcomesUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 if(coreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportLearningOutcomesUploadCreateBody.file)
@@ -2451,7 +4652,7 @@ if(coreFileImportLearningOutcomesUploadCreateBody.file !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportLearningOutcomesUploadCreateMutationOptions = <TError = CoreFileImportLearningOutcomesUploadCreate400,
@@ -2465,7 +4666,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesUploadCreate>>, {data: CoreFileImportLearningOutcomesUploadCreateBody;params: CoreFileImportLearningOutcomesUploadCreateParams}> = (props) => {
@@ -2474,7 +4675,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportLearningOutcomesUploadCreate(data,params,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2503,7 +4704,7 @@ export const coreFileImportLearningOutcomesValidateCreate = (
     fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`message`, fileImportResponse.message)
 formData.append(`results`, JSON.stringify(fileImportResponse.results));
@@ -2515,7 +4716,7 @@ formData.append(`results`, JSON.stringify(fileImportResponse.results));
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportLearningOutcomesValidateCreateMutationOptions = <TError = unknown,
@@ -2529,7 +4730,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportLearningOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
@@ -2538,7 +4739,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportLearningOutcomesValidateCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2567,15 +4768,15 @@ export const coreFileImportProgramOutcomesUploadRetrieve = (
     params: CoreFileImportProgramOutcomesUploadRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<CoreFileImportProgramOutcomesUploadRetrieve200>(
       {url: `/api/core/file-import/program-outcomes/upload/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2585,7 +4786,7 @@ export const getCoreFileImportProgramOutcomesUploadRetrieveQueryKey = (params?: 
     ] as const;
     }
 
-    
+
 export const getCoreFileImportProgramOutcomesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError = CoreFileImportProgramOutcomesUploadRetrieve400>(params: CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2593,13 +4794,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreFileImportProgramOutcomesUploadRetrieveQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>> = ({ signal }) => coreFileImportProgramOutcomesUploadRetrieve(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2635,7 +4836,7 @@ export function useCoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<R
 
 export function useCoreFileImportProgramOutcomesUploadRetrieve<TData = Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError = CoreFileImportProgramOutcomesUploadRetrieve400>(
  params: CoreFileImportProgramOutcomesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreFileImportProgramOutcomesUploadRetrieveQueryOptions(params,options)
@@ -2658,7 +4859,7 @@ export const coreFileImportProgramOutcomesUploadCreate = (
     params: CoreFileImportProgramOutcomesUploadCreateParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 if(coreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
  formData.append(`file`, coreFileImportProgramOutcomesUploadCreateBody.file)
@@ -2672,7 +4873,7 @@ if(coreFileImportProgramOutcomesUploadCreateBody.file !== undefined) {
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportProgramOutcomesUploadCreateMutationOptions = <TError = CoreFileImportProgramOutcomesUploadCreate400,
@@ -2686,7 +4887,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesUploadCreate>>, {data: CoreFileImportProgramOutcomesUploadCreateBody;params: CoreFileImportProgramOutcomesUploadCreateParams}> = (props) => {
@@ -2695,7 +4896,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportProgramOutcomesUploadCreate(data,params,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2724,7 +4925,7 @@ export const coreFileImportProgramOutcomesValidateCreate = (
     fileImportResponse: FileImportResponse,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+
       const formData = new FormData();
 formData.append(`message`, fileImportResponse.message)
 formData.append(`results`, JSON.stringify(fileImportResponse.results));
@@ -2736,7 +4937,7 @@ formData.append(`results`, JSON.stringify(fileImportResponse.results));
     },
       options);
     }
-  
+
 
 
 export const getCoreFileImportProgramOutcomesValidateCreateMutationOptions = <TError = unknown,
@@ -2750,7 +4951,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreFileImportProgramOutcomesValidateCreate>>, {data: FileImportResponse}> = (props) => {
@@ -2759,7 +4960,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreFileImportProgramOutcomesValidateCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -2788,15 +4989,15 @@ export const coreLoPoMappingsList = (
     params?: CoreLoPoMappingsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedLearningOutcomeProgramOutcomeMappingList>(
       {url: `/api/core/lo-po-mappings/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -2812,7 +5013,7 @@ export const getCoreLoPoMappingsListQueryKey = (params?: CoreLoPoMappingsListPar
     ] as const;
     }
 
-    
+
 export const getCoreLoPoMappingsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreLoPoMappingsList>>, CoreLoPoMappingsListParams['page']>, TError = unknown>(params?: CoreLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError, TData, QueryKey, CoreLoPoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -2820,13 +5021,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreLoPoMappingsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreLoPoMappingsList>>, QueryKey, CoreLoPoMappingsListParams['page']> = ({ signal, pageParam }) => coreLoPoMappingsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError, TData, QueryKey, CoreLoPoMappingsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2862,7 +5063,7 @@ export function useCoreLoPoMappingsListInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useCoreLoPoMappingsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreLoPoMappingsList>>, CoreLoPoMappingsListParams['page']>, TError = unknown>(
  params?: CoreLoPoMappingsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError, TData, QueryKey, CoreLoPoMappingsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreLoPoMappingsListInfiniteQueryOptions(params,options)
@@ -2884,13 +5085,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreLoPoMappingsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreLoPoMappingsList>>> = ({ signal }) => coreLoPoMappingsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -2926,7 +5127,7 @@ export function useCoreLoPoMappingsList<TData = Awaited<ReturnType<typeof coreLo
 
 export function useCoreLoPoMappingsList<TData = Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError = unknown>(
  params?: CoreLoPoMappingsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreLoPoMappingsListQueryOptions(params,options)
@@ -2948,8 +5149,8 @@ export const coreLoPoMappingsCreate = (
     learningOutcomeProgramOutcomeMapping: NonReadonly<LearningOutcomeProgramOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<LearningOutcomeProgramOutcomeMapping>(
       {url: `/api/core/lo-po-mappings/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -2957,7 +5158,7 @@ export const coreLoPoMappingsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreLoPoMappingsCreateMutationOptions = <TError = unknown,
@@ -2971,7 +5172,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreLoPoMappingsCreate>>, {data: NonReadonly<LearningOutcomeProgramOutcomeMapping>}> = (props) => {
@@ -2980,7 +5181,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreLoPoMappingsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3009,14 +5210,14 @@ export const coreLoPoMappingsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<LearningOutcomeProgramOutcomeMapping>(
       {url: `/api/core/lo-po-mappings/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -3032,7 +5233,7 @@ export const getCoreLoPoMappingsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreLoPoMappingsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -3040,13 +5241,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreLoPoMappingsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>> = ({ signal }) => coreLoPoMappingsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3082,7 +5283,7 @@ export function useCoreLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited
 
 export function useCoreLoPoMappingsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreLoPoMappingsRetrieveInfiniteQueryOptions(id,options)
@@ -3104,13 +5305,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreLoPoMappingsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>> = ({ signal }) => coreLoPoMappingsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3146,7 +5347,7 @@ export function useCoreLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof co
 
 export function useCoreLoPoMappingsRetrieve<TData = Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreLoPoMappingsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreLoPoMappingsRetrieveQueryOptions(id,options)
@@ -3168,8 +5369,8 @@ export const coreLoPoMappingsUpdate = (
     id: number,
     learningOutcomeProgramOutcomeMapping: NonReadonly<LearningOutcomeProgramOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<LearningOutcomeProgramOutcomeMapping>(
       {url: `/api/core/lo-po-mappings/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -3177,7 +5378,7 @@ export const coreLoPoMappingsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreLoPoMappingsUpdateMutationOptions = <TError = unknown,
@@ -3191,7 +5392,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreLoPoMappingsUpdate>>, {id: number;data: NonReadonly<LearningOutcomeProgramOutcomeMapping>}> = (props) => {
@@ -3200,7 +5401,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreLoPoMappingsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3229,8 +5430,8 @@ export const coreLoPoMappingsPartialUpdate = (
     id: number,
     patchedLearningOutcomeProgramOutcomeMapping: NonReadonly<PatchedLearningOutcomeProgramOutcomeMapping>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<LearningOutcomeProgramOutcomeMapping>(
       {url: `/api/core/lo-po-mappings/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -3238,7 +5439,7 @@ export const coreLoPoMappingsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreLoPoMappingsPartialUpdateMutationOptions = <TError = unknown,
@@ -3252,7 +5453,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreLoPoMappingsPartialUpdate>>, {id: number;data: NonReadonly<PatchedLearningOutcomeProgramOutcomeMapping>}> = (props) => {
@@ -3261,7 +5462,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreLoPoMappingsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3289,14 +5490,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 export const coreLoPoMappingsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/lo-po-mappings/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreLoPoMappingsDestroyMutationOptions = <TError = unknown,
@@ -3310,7 +5511,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreLoPoMappingsDestroy>>, {id: number}> = (props) => {
@@ -3319,13 +5520,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreLoPoMappingsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreLoPoMappingsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreLoPoMappingsDestroy>>>
-    
+
     export type CoreLoPoMappingsDestroyMutationError = unknown
 
     export const useCoreLoPoMappingsDestroy = <TError = unknown,
@@ -3341,19 +5542,80 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * Apply LO-PO mapping changes in bulk and trigger async PO score recompute.
+ */
+export const coreLoPoMappingsBulkSyncCreate = (
+    bulkLOPOMapping: BulkLOPOMapping,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LearningOutcomeProgramOutcomeMapping>(
+      {url: `/api/core/lo-po-mappings/bulk_sync/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkLOPOMapping, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreLoPoMappingsBulkSyncCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>, TError,{data: BulkLOPOMapping}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>, TError,{data: BulkLOPOMapping}, TContext> => {
+
+const mutationKey = ['coreLoPoMappingsBulkSyncCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>, {data: BulkLOPOMapping}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreLoPoMappingsBulkSyncCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreLoPoMappingsBulkSyncCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>>
+    export type CoreLoPoMappingsBulkSyncCreateMutationBody = BulkLOPOMapping
+    export type CoreLoPoMappingsBulkSyncCreateMutationError = unknown
+
+    export const useCoreLoPoMappingsBulkSyncCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>, TError,{data: BulkLOPOMapping}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreLoPoMappingsBulkSyncCreate>>,
+        TError,
+        {data: BulkLOPOMapping},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreLoPoMappingsBulkSyncCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
     export const corePermissionsList = (
     params?: CorePermissionsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedInstructorPermissionList>(
       {url: `/api/core/permissions/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -3369,7 +5631,7 @@ export const getCorePermissionsListQueryKey = (params?: CorePermissionsListParam
     ] as const;
     }
 
-    
+
 export const getCorePermissionsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsList>>, CorePermissionsListParams['page']>, TError = unknown>(params?: CorePermissionsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsList>>, TError, TData, QueryKey, CorePermissionsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -3377,13 +5639,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsList>>, QueryKey, CorePermissionsListParams['page']> = ({ signal, pageParam }) => corePermissionsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsList>>, TError, TData, QueryKey, CorePermissionsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3419,7 +5681,7 @@ export function useCorePermissionsListInfinite<TData = InfiniteData<Awaited<Retu
 
 export function useCorePermissionsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsList>>, CorePermissionsListParams['page']>, TError = unknown>(
  params?: CorePermissionsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsList>>, TError, TData, QueryKey, CorePermissionsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsListInfiniteQueryOptions(params,options)
@@ -3441,13 +5703,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsList>>> = ({ signal }) => corePermissionsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof corePermissionsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3483,7 +5745,7 @@ export function useCorePermissionsList<TData = Awaited<ReturnType<typeof corePer
 
 export function useCorePermissionsList<TData = Awaited<ReturnType<typeof corePermissionsList>>, TError = unknown>(
  params?: CorePermissionsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof corePermissionsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsListQueryOptions(params,options)
@@ -3502,8 +5764,8 @@ export const corePermissionsCreate = (
     instructorPermission: NonReadonly<InstructorPermission>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -3511,7 +5773,7 @@ export const corePermissionsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCorePermissionsCreateMutationOptions = <TError = unknown,
@@ -3525,7 +5787,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof corePermissionsCreate>>, {data: NonReadonly<InstructorPermission>}> = (props) => {
@@ -3534,7 +5796,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  corePermissionsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3560,14 +5822,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -3583,7 +5845,7 @@ export const getCorePermissionsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCorePermissionsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -3591,13 +5853,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsRetrieve>>> = ({ signal }) => corePermissionsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3633,7 +5895,7 @@ export function useCorePermissionsRetrieveInfinite<TData = InfiniteData<Awaited<
 
 export function useCorePermissionsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsRetrieveInfiniteQueryOptions(id,options)
@@ -3655,13 +5917,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsRetrieve>>> = ({ signal }) => corePermissionsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -3697,7 +5959,7 @@ export function useCorePermissionsRetrieve<TData = Awaited<ReturnType<typeof cor
 
 export function useCorePermissionsRetrieve<TData = Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof corePermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsRetrieveQueryOptions(id,options)
@@ -3716,8 +5978,8 @@ export const corePermissionsUpdate = (
     id: number,
     instructorPermission: NonReadonly<InstructorPermission>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -3725,7 +5987,7 @@ export const corePermissionsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCorePermissionsUpdateMutationOptions = <TError = unknown,
@@ -3739,7 +6001,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof corePermissionsUpdate>>, {id: number;data: NonReadonly<InstructorPermission>}> = (props) => {
@@ -3748,7 +6010,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  corePermissionsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3774,8 +6036,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     id: number,
     patchedInstructorPermission: NonReadonly<PatchedInstructorPermission>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -3783,7 +6045,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     },
       options);
     }
-  
+
 
 
 export const getCorePermissionsPartialUpdateMutationOptions = <TError = unknown,
@@ -3797,7 +6059,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof corePermissionsPartialUpdate>>, {id: number;data: NonReadonly<PatchedInstructorPermission>}> = (props) => {
@@ -3806,7 +6068,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  corePermissionsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3831,14 +6093,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export const corePermissionsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/permissions/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCorePermissionsDestroyMutationOptions = <TError = unknown,
@@ -3852,7 +6114,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof corePermissionsDestroy>>, {id: number}> = (props) => {
@@ -3861,13 +6123,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  corePermissionsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CorePermissionsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof corePermissionsDestroy>>>
-    
+
     export type CorePermissionsDestroyMutationError = unknown
 
     export const useCorePermissionsDestroy = <TError = unknown,
@@ -3886,8 +6148,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export const corePermissionsBulkUpdate = (
     instructorPermission: NonReadonly<InstructorPermission>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/bulk/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -3895,7 +6157,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     },
       options);
     }
-  
+
 
 
 export const getCorePermissionsBulkUpdateMutationOptions = <TError = unknown,
@@ -3909,7 +6171,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof corePermissionsBulkUpdate>>, {data: NonReadonly<InstructorPermission>}> = (props) => {
@@ -3918,7 +6180,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  corePermissionsBulkUpdate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -3941,17 +6203,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const corePermissionsMyPermissionsRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<InstructorPermission>(
       {url: `/api/core/permissions/my-permissions/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -3967,7 +6229,7 @@ export const getCorePermissionsMyPermissionsRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCorePermissionsMyPermissionsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -3975,13 +6237,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsMyPermissionsRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>> = ({ signal }) => corePermissionsMyPermissionsRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4017,7 +6279,7 @@ export function useCorePermissionsMyPermissionsRetrieveInfinite<TData = Infinite
 
 export function useCorePermissionsMyPermissionsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>>, TError = unknown>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsMyPermissionsRetrieveInfiniteQueryOptions(options)
@@ -4039,13 +6301,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCorePermissionsMyPermissionsRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>> = ({ signal }) => corePermissionsMyPermissionsRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4081,7 +6343,7 @@ export function useCorePermissionsMyPermissionsRetrieve<TData = Awaited<ReturnTy
 
 export function useCorePermissionsMyPermissionsRetrieve<TData = Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof corePermissionsMyPermissionsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCorePermissionsMyPermissionsRetrieveQueryOptions(options)
@@ -4107,15 +6369,15 @@ export const coreProgramsList = (
     params?: CoreProgramsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedProgramList>(
       {url: `/api/core/programs/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -4131,7 +6393,7 @@ export const getCoreProgramsListQueryKey = (params?: CoreProgramsListParams,) =>
     ] as const;
     }
 
-    
+
 export const getCoreProgramsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreProgramsList>>, CoreProgramsListParams['page']>, TError = unknown>(params?: CoreProgramsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsList>>, TError, TData, QueryKey, CoreProgramsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -4139,13 +6401,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreProgramsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreProgramsList>>, QueryKey, CoreProgramsListParams['page']> = ({ signal, pageParam }) => coreProgramsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsList>>, TError, TData, QueryKey, CoreProgramsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4181,7 +6443,7 @@ export function useCoreProgramsListInfinite<TData = InfiniteData<Awaited<ReturnT
 
 export function useCoreProgramsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreProgramsList>>, CoreProgramsListParams['page']>, TError = unknown>(
  params?: CoreProgramsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsList>>, TError, TData, QueryKey, CoreProgramsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreProgramsListInfiniteQueryOptions(params,options)
@@ -4203,13 +6465,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreProgramsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreProgramsList>>> = ({ signal }) => coreProgramsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreProgramsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4245,7 +6507,7 @@ export function useCoreProgramsList<TData = Awaited<ReturnType<typeof coreProgra
 
 export function useCoreProgramsList<TData = Awaited<ReturnType<typeof coreProgramsList>>, TError = unknown>(
  params?: CoreProgramsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreProgramsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreProgramsListQueryOptions(params,options)
@@ -4271,8 +6533,8 @@ export const coreProgramsCreate = (
     program: NonReadonly<Program>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Program>(
       {url: `/api/core/programs/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -4280,7 +6542,7 @@ export const coreProgramsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreProgramsCreateMutationOptions = <TError = unknown,
@@ -4294,7 +6556,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreProgramsCreate>>, {data: NonReadonly<Program>}> = (props) => {
@@ -4303,7 +6565,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreProgramsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4336,14 +6598,14 @@ export const coreProgramsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Program>(
       {url: `/api/core/programs/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -4359,7 +6621,7 @@ export const getCoreProgramsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreProgramsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreProgramsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -4367,13 +6629,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreProgramsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreProgramsRetrieve>>> = ({ signal }) => coreProgramsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4409,7 +6671,7 @@ export function useCoreProgramsRetrieveInfinite<TData = InfiniteData<Awaited<Ret
 
 export function useCoreProgramsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreProgramsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreProgramsRetrieveInfiniteQueryOptions(id,options)
@@ -4431,13 +6693,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreProgramsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreProgramsRetrieve>>> = ({ signal }) => coreProgramsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4473,7 +6735,7 @@ export function useCoreProgramsRetrieve<TData = Awaited<ReturnType<typeof corePr
 
 export function useCoreProgramsRetrieve<TData = Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreProgramsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreProgramsRetrieveQueryOptions(id,options)
@@ -4499,8 +6761,8 @@ export const coreProgramsUpdate = (
     id: number,
     program: NonReadonly<Program>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Program>(
       {url: `/api/core/programs/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -4508,7 +6770,7 @@ export const coreProgramsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreProgramsUpdateMutationOptions = <TError = unknown,
@@ -4522,7 +6784,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreProgramsUpdate>>, {id: number;data: NonReadonly<Program>}> = (props) => {
@@ -4531,7 +6793,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreProgramsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4564,8 +6826,8 @@ export const coreProgramsPartialUpdate = (
     id: number,
     patchedProgram: NonReadonly<PatchedProgram>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Program>(
       {url: `/api/core/programs/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -4573,7 +6835,7 @@ export const coreProgramsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreProgramsPartialUpdateMutationOptions = <TError = unknown,
@@ -4587,7 +6849,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreProgramsPartialUpdate>>, {id: number;data: NonReadonly<PatchedProgram>}> = (props) => {
@@ -4596,7 +6858,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreProgramsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -4628,14 +6890,14 @@ Permissions:
 export const coreProgramsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/programs/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreProgramsDestroyMutationOptions = <TError = unknown,
@@ -4649,7 +6911,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreProgramsDestroy>>, {id: number}> = (props) => {
@@ -4658,13 +6920,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreProgramsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreProgramsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreProgramsDestroy>>>
-    
+
     export type CoreProgramsDestroyMutationError = unknown
 
     export const useCoreProgramsDestroy = <TError = unknown,
@@ -4684,17 +6946,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Return average LO scores grouped by course.
  */
 export const coreStudentLoScoresCourseAveragesRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentLearningOutcomeScore>(
       {url: `/api/core/student-lo-scores/course_averages/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -4704,7 +6966,7 @@ export const getCoreStudentLoScoresCourseAveragesRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreStudentLoScoresCourseAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -4712,13 +6974,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresCourseAveragesRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>> = ({ signal }) => coreStudentLoScoresCourseAveragesRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4754,7 +7016,7 @@ export function useCoreStudentLoScoresCourseAveragesRetrieve<TData = Awaited<Ret
 
 export function useCoreStudentLoScoresCourseAveragesRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresCourseAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresCourseAveragesRetrieveQueryOptions(options)
@@ -4773,17 +7035,17 @@ export function useCoreStudentLoScoresCourseAveragesRetrieve<TData = Awaited<Ret
  * Return average LO scores grouped by learning outcome.
  */
 export const coreStudentLoScoresLoAveragesRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentLearningOutcomeScore>(
       {url: `/api/core/student-lo-scores/lo_averages/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -4793,7 +7055,7 @@ export const getCoreStudentLoScoresLoAveragesRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreStudentLoScoresLoAveragesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -4801,13 +7063,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentLoScoresLoAveragesRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>> = ({ signal }) => coreStudentLoScoresLoAveragesRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4843,7 +7105,7 @@ export function useCoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<ReturnT
 
 export function useCoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentLoScoresLoAveragesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentLoScoresLoAveragesRetrieveQueryOptions(options)
@@ -4870,15 +7132,15 @@ export const coreStudentPoScoresList = (
     params?: CoreStudentPoScoresListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedStudentProgramOutcomeScoreList>(
       {url: `/api/core/student-po-scores/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -4894,7 +7156,7 @@ export const getCoreStudentPoScoresListQueryKey = (params?: CoreStudentPoScoresL
     ] as const;
     }
 
-    
+
 export const getCoreStudentPoScoresListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentPoScoresList>>, CoreStudentPoScoresListParams['page']>, TError = unknown>(params?: CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError, TData, QueryKey, CoreStudentPoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -4902,13 +7164,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentPoScoresListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentPoScoresList>>, QueryKey, CoreStudentPoScoresListParams['page']> = ({ signal, pageParam }) => coreStudentPoScoresList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError, TData, QueryKey, CoreStudentPoScoresListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -4944,7 +7206,7 @@ export function useCoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<
 
 export function useCoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentPoScoresList>>, CoreStudentPoScoresListParams['page']>, TError = unknown>(
  params?: CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError, TData, QueryKey, CoreStudentPoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentPoScoresListInfiniteQueryOptions(params,options)
@@ -4966,13 +7228,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentPoScoresListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentPoScoresList>>> = ({ signal }) => coreStudentPoScoresList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5008,7 +7270,7 @@ export function useCoreStudentPoScoresList<TData = Awaited<ReturnType<typeof cor
 
 export function useCoreStudentPoScoresList<TData = Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError = unknown>(
  params?: CoreStudentPoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentPoScoresListQueryOptions(params,options)
@@ -5035,14 +7297,14 @@ export const coreStudentPoScoresRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<StudentProgramOutcomeScore>(
       {url: `/api/core/student-po-scores/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -5058,7 +7320,7 @@ export const getCoreStudentPoScoresRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreStudentPoScoresRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -5066,13 +7328,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentPoScoresRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>> = ({ signal }) => coreStudentPoScoresRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5108,7 +7370,7 @@ export function useCoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awai
 
 export function useCoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentPoScoresRetrieveInfiniteQueryOptions(id,options)
@@ -5130,13 +7392,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentPoScoresRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>> = ({ signal }) => coreStudentPoScoresRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5172,7 +7434,7 @@ export function useCoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof
 
 export function useCoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentPoScoresRetrieveQueryOptions(id,options)
@@ -5191,15 +7453,15 @@ export const coreStudentsList = (
     params?: CoreStudentsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedStudentProfileList>(
       {url: `/api/core/students/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -5215,7 +7477,7 @@ export const getCoreStudentsListQueryKey = (params?: CoreStudentsListParams,) =>
     ] as const;
     }
 
-    
+
 export const getCoreStudentsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsList>>, CoreStudentsListParams['page']>, TError = unknown>(params?: CoreStudentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsList>>, TError, TData, QueryKey, CoreStudentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -5223,13 +7485,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentsList>>, QueryKey, CoreStudentsListParams['page']> = ({ signal, pageParam }) => coreStudentsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsList>>, TError, TData, QueryKey, CoreStudentsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5265,7 +7527,7 @@ export function useCoreStudentsListInfinite<TData = InfiniteData<Awaited<ReturnT
 
 export function useCoreStudentsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsList>>, CoreStudentsListParams['page']>, TError = unknown>(
  params?: CoreStudentsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsList>>, TError, TData, QueryKey, CoreStudentsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentsListInfiniteQueryOptions(params,options)
@@ -5287,13 +7549,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreStudentsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentsList>>> = ({ signal }) => coreStudentsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5329,166 +7591,10 @@ export function useCoreStudentsList<TData = Awaited<ReturnType<typeof coreStuden
 
 export function useCoreStudentsList<TData = Awaited<ReturnType<typeof coreStudentsList>>, TError = unknown>(
  params?: CoreStudentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreStudentsListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const coreStudentsRetrieve = (
-    id: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<StudentProfile>(
-      {url: `/api/core/students/${id}/`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getCoreStudentsRetrieveInfiniteQueryKey = (id?: number,) => {
-    return [
-    'infinite', `/api/core/students/${id}/`
-    ] as const;
-    }
-
-export const getCoreStudentsRetrieveQueryKey = (id?: number,) => {
-    return [
-    `/api/core/students/${id}/`
-    ] as const;
-    }
-
-    
-export const getCoreStudentsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentsRetrieveInfiniteQueryKey(id);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentsRetrieve>>> = ({ signal }) => coreStudentsRetrieve(id, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentsRetrieve>>>
-export type CoreStudentsRetrieveInfiniteQueryError = unknown
-
-
-export function useCoreStudentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsRetrieve>>>, TError = unknown>(
- id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreStudentsRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentsRetrieveInfiniteQueryOptions(id,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getCoreStudentsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getCoreStudentsRetrieveQueryKey(id);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreStudentsRetrieve>>> = ({ signal }) => coreStudentsRetrieve(id, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CoreStudentsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreStudentsRetrieve>>>
-export type CoreStudentsRetrieveQueryError = unknown
-
-
-export function useCoreStudentsRetrieve<TData = Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentsRetrieve<TData = Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof coreStudentsRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCoreStudentsRetrieve<TData = Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useCoreStudentsRetrieve<TData = Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreStudentsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getCoreStudentsRetrieveQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -5511,15 +7617,15 @@ export const coreTermsList = (
     params?: CoreTermsListParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<PaginatedTermList>(
       {url: `/api/core/terms/`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -5535,7 +7641,7 @@ export const getCoreTermsListQueryKey = (params?: CoreTermsListParams,) => {
     ] as const;
     }
 
-    
+
 export const getCoreTermsListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreTermsList>>, CoreTermsListParams['page']>, TError = unknown>(params?: CoreTermsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsList>>, TError, TData, QueryKey, CoreTermsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -5543,13 +7649,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsListInfiniteQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsList>>, QueryKey, CoreTermsListParams['page']> = ({ signal, pageParam }) => coreTermsList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsList>>, TError, TData, QueryKey, CoreTermsListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5585,7 +7691,7 @@ export function useCoreTermsListInfinite<TData = InfiniteData<Awaited<ReturnType
 
 export function useCoreTermsListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreTermsList>>, CoreTermsListParams['page']>, TError = unknown>(
  params?: CoreTermsListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsList>>, TError, TData, QueryKey, CoreTermsListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsListInfiniteQueryOptions(params,options)
@@ -5607,13 +7713,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsListQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsList>>> = ({ signal }) => coreTermsList(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreTermsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5649,7 +7755,7 @@ export function useCoreTermsList<TData = Awaited<ReturnType<typeof coreTermsList
 
 export function useCoreTermsList<TData = Awaited<ReturnType<typeof coreTermsList>>, TError = unknown>(
  params?: CoreTermsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreTermsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsListQueryOptions(params,options)
@@ -5675,8 +7781,8 @@ export const coreTermsCreate = (
     term: NonReadonly<Term>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Term>(
       {url: `/api/core/terms/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -5684,7 +7790,7 @@ export const coreTermsCreate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreTermsCreateMutationOptions = <TError = unknown,
@@ -5698,7 +7804,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreTermsCreate>>, {data: NonReadonly<Term>}> = (props) => {
@@ -5707,7 +7813,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreTermsCreate(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -5740,14 +7846,14 @@ export const coreTermsRetrieve = (
     id: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Term>(
       {url: `/api/core/terms/${id}/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -5763,7 +7869,7 @@ export const getCoreTermsRetrieveQueryKey = (id?: number,) => {
     ] as const;
     }
 
-    
+
 export const getCoreTermsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreTermsRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -5771,13 +7877,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsRetrieveInfiniteQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsRetrieve>>> = ({ signal }) => coreTermsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5813,7 +7919,7 @@ export function useCoreTermsRetrieveInfinite<TData = InfiniteData<Awaited<Return
 
 export function useCoreTermsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreTermsRetrieve>>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsRetrieveInfiniteQueryOptions(id,options)
@@ -5835,13 +7941,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsRetrieveQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsRetrieve>>> = ({ signal }) => coreTermsRetrieve(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreTermsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -5877,7 +7983,7 @@ export function useCoreTermsRetrieve<TData = Awaited<ReturnType<typeof coreTerms
 
 export function useCoreTermsRetrieve<TData = Awaited<ReturnType<typeof coreTermsRetrieve>>, TError = unknown>(
  id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreTermsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsRetrieveQueryOptions(id,options)
@@ -5903,8 +8009,8 @@ export const coreTermsUpdate = (
     id: number,
     term: NonReadonly<Term>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Term>(
       {url: `/api/core/terms/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
@@ -5912,7 +8018,7 @@ export const coreTermsUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreTermsUpdateMutationOptions = <TError = unknown,
@@ -5926,7 +8032,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreTermsUpdate>>, {id: number;data: NonReadonly<Term>}> = (props) => {
@@ -5935,7 +8041,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreTermsUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -5968,8 +8074,8 @@ export const coreTermsPartialUpdate = (
     id: number,
     patchedTerm: NonReadonly<PatchedTerm>,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<Term>(
       {url: `/api/core/terms/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -5977,7 +8083,7 @@ export const coreTermsPartialUpdate = (
     },
       options);
     }
-  
+
 
 
 export const getCoreTermsPartialUpdateMutationOptions = <TError = unknown,
@@ -5991,7 +8097,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreTermsPartialUpdate>>, {id: number;data: NonReadonly<PatchedTerm>}> = (props) => {
@@ -6000,7 +8106,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreTermsPartialUpdate(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -6032,14 +8138,14 @@ Permissions:
 export const coreTermsDestroy = (
     id: number,
  options?: SecondParameter<typeof customInstance>,) => {
-      
-      
+
+
       return customInstance<void>(
       {url: `/api/core/terms/${id}/`, method: 'DELETE'
     },
       options);
     }
-  
+
 
 
 export const getCoreTermsDestroyMutationOptions = <TError = unknown,
@@ -6053,7 +8159,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreTermsDestroy>>, {id: number}> = (props) => {
@@ -6062,13 +8168,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  coreTermsDestroy(id,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreTermsDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreTermsDestroy>>>
-    
+
     export type CoreTermsDestroyMutationError = unknown
 
     export const useCoreTermsDestroy = <TError = unknown,
@@ -6088,17 +8194,17 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * Get currently active term.
  */
 export const coreTermsActiveRetrieve = (
-    
+
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customInstance<Term>(
       {url: `/api/core/terms/active/`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -6114,7 +8220,7 @@ export const getCoreTermsActiveRetrieveQueryKey = () => {
     ] as const;
     }
 
-    
+
 export const getCoreTermsActiveRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -6122,13 +8228,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsActiveRetrieveInfiniteQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>> = ({ signal }) => coreTermsActiveRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -6164,7 +8270,7 @@ export function useCoreTermsActiveRetrieveInfinite<TData = InfiniteData<Awaited<
 
 export function useCoreTermsActiveRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>>, TError = unknown>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsActiveRetrieveInfiniteQueryOptions(options)
@@ -6186,13 +8292,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getCoreTermsActiveRetrieveQueryKey();
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>> = ({ signal }) => coreTermsActiveRetrieve(requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -6228,7 +8334,7 @@ export function useCoreTermsActiveRetrieve<TData = Awaited<ReturnType<typeof cor
 
 export function useCoreTermsActiveRetrieve<TData = Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreTermsActiveRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getCoreTermsActiveRetrieveQueryOptions(options)
@@ -6243,3 +8349,572 @@ export function useCoreTermsActiveRetrieve<TData = Awaited<ReturnType<typeof cor
 
 
 
+/**
+ * List weight suggestion jobs.
+ */
+export const coreWeightSuggestionList = (
+    params?: CoreWeightSuggestionListParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedWeightSuggestionJobList>(
+      {url: `/api/core/weight-suggestion/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreWeightSuggestionListInfiniteQueryKey = (params?: CoreWeightSuggestionListParams,) => {
+    return [
+    'infinite', `/api/core/weight-suggestion/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getCoreWeightSuggestionListQueryKey = (params?: CoreWeightSuggestionListParams,) => {
+    return [
+    `/api/core/weight-suggestion/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getCoreWeightSuggestionListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionList>>, CoreWeightSuggestionListParams['page']>, TError = unknown>(params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreWeightSuggestionListInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreWeightSuggestionList>>, QueryKey, CoreWeightSuggestionListParams['page']> = ({ signal, pageParam }) => coreWeightSuggestionList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreWeightSuggestionListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionList>>>
+export type CoreWeightSuggestionListInfiniteQueryError = unknown
+
+
+export function useCoreWeightSuggestionListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionList>>, CoreWeightSuggestionListParams['page']>, TError = unknown>(
+ params: undefined |  CoreWeightSuggestionListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionList>>, CoreWeightSuggestionListParams['page']>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionList>>, CoreWeightSuggestionListParams['page']>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreWeightSuggestionListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionList>>, CoreWeightSuggestionListParams['page']>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData, QueryKey, CoreWeightSuggestionListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreWeightSuggestionListInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreWeightSuggestionListQueryOptions = <TData = Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError = unknown>(params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreWeightSuggestionListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreWeightSuggestionList>>> = ({ signal }) => coreWeightSuggestionList(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreWeightSuggestionListQueryResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionList>>>
+export type CoreWeightSuggestionListQueryError = unknown
+
+
+export function useCoreWeightSuggestionList<TData = Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError = unknown>(
+ params: undefined |  CoreWeightSuggestionListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionList<TData = Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionList<TData = Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreWeightSuggestionList<TData = Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError = unknown>(
+ params?: CoreWeightSuggestionListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreWeightSuggestionListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Queue a weight suggestion Celery task for the given course.
+ */
+export const coreWeightSuggestionCreate = (
+    weightSuggestionJob: NonReadonly<WeightSuggestionJob>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeightSuggestionJob>(
+      {url: `/api/core/weight-suggestion/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: weightSuggestionJob, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreWeightSuggestionCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionCreate>>, TError,{data: NonReadonly<WeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionCreate>>, TError,{data: NonReadonly<WeightSuggestionJob>}, TContext> => {
+
+const mutationKey = ['coreWeightSuggestionCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreWeightSuggestionCreate>>, {data: NonReadonly<WeightSuggestionJob>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreWeightSuggestionCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreWeightSuggestionCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionCreate>>>
+    export type CoreWeightSuggestionCreateMutationBody = NonReadonly<WeightSuggestionJob>
+    export type CoreWeightSuggestionCreateMutationError = unknown
+
+    export const useCoreWeightSuggestionCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionCreate>>, TError,{data: NonReadonly<WeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreWeightSuggestionCreate>>,
+        TError,
+        {data: NonReadonly<WeightSuggestionJob>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreWeightSuggestionCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Get a single job's status and result.
+ */
+export const coreWeightSuggestionRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeightSuggestionJob>(
+      {url: `/api/core/weight-suggestion/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreWeightSuggestionRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/core/weight-suggestion/${id}/`
+    ] as const;
+    }
+
+export const getCoreWeightSuggestionRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/core/weight-suggestion/${id}/`
+    ] as const;
+    }
+
+
+export const getCoreWeightSuggestionRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreWeightSuggestionRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>> = ({ signal }) => coreWeightSuggestionRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreWeightSuggestionRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>
+export type CoreWeightSuggestionRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreWeightSuggestionRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreWeightSuggestionRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreWeightSuggestionRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreWeightSuggestionRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreWeightSuggestionRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>> = ({ signal }) => coreWeightSuggestionRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreWeightSuggestionRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>>
+export type CoreWeightSuggestionRetrieveQueryError = unknown
+
+
+export function useCoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreWeightSuggestionRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreWeightSuggestionRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * ViewSet for triggering and tracking weight suggestion jobs.
+
+POST /weight-suggestion/ -- queue a suggestion for a course
+GET  /weight-suggestion/{id}/ -- get job status and result
+ */
+export const coreWeightSuggestionUpdate = (
+    id: number,
+    weightSuggestionJob: NonReadonly<WeightSuggestionJob>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<WeightSuggestionJob>(
+      {url: `/api/core/weight-suggestion/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: weightSuggestionJob
+    },
+      options);
+    }
+
+
+
+export const getCoreWeightSuggestionUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>, TError,{id: number;data: NonReadonly<WeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>, TError,{id: number;data: NonReadonly<WeightSuggestionJob>}, TContext> => {
+
+const mutationKey = ['coreWeightSuggestionUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>, {id: number;data: NonReadonly<WeightSuggestionJob>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreWeightSuggestionUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreWeightSuggestionUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>>
+    export type CoreWeightSuggestionUpdateMutationBody = NonReadonly<WeightSuggestionJob>
+    export type CoreWeightSuggestionUpdateMutationError = unknown
+
+    export const useCoreWeightSuggestionUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>, TError,{id: number;data: NonReadonly<WeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreWeightSuggestionUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<WeightSuggestionJob>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreWeightSuggestionUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * ViewSet for triggering and tracking weight suggestion jobs.
+
+POST /weight-suggestion/ -- queue a suggestion for a course
+GET  /weight-suggestion/{id}/ -- get job status and result
+ */
+export const coreWeightSuggestionPartialUpdate = (
+    id: number,
+    patchedWeightSuggestionJob: NonReadonly<PatchedWeightSuggestionJob>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<WeightSuggestionJob>(
+      {url: `/api/core/weight-suggestion/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedWeightSuggestionJob
+    },
+      options);
+    }
+
+
+
+export const getCoreWeightSuggestionPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedWeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedWeightSuggestionJob>}, TContext> => {
+
+const mutationKey = ['coreWeightSuggestionPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>, {id: number;data: NonReadonly<PatchedWeightSuggestionJob>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  coreWeightSuggestionPartialUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreWeightSuggestionPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>>
+    export type CoreWeightSuggestionPartialUpdateMutationBody = NonReadonly<PatchedWeightSuggestionJob>
+    export type CoreWeightSuggestionPartialUpdateMutationError = unknown
+
+    export const useCoreWeightSuggestionPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedWeightSuggestionJob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreWeightSuggestionPartialUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<PatchedWeightSuggestionJob>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreWeightSuggestionPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * ViewSet for triggering and tracking weight suggestion jobs.
+
+POST /weight-suggestion/ -- queue a suggestion for a course
+GET  /weight-suggestion/{id}/ -- get job status and result
+ */
+export const coreWeightSuggestionDestroy = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<void>(
+      {url: `/api/core/weight-suggestion/${id}/`, method: 'DELETE'
+    },
+      options);
+    }
+
+
+
+export const getCoreWeightSuggestionDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['coreWeightSuggestionDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  coreWeightSuggestionDestroy(id,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreWeightSuggestionDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>>
+
+    export type CoreWeightSuggestionDestroyMutationError = unknown
+
+    export const useCoreWeightSuggestionDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreWeightSuggestionDestroy>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreWeightSuggestionDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }

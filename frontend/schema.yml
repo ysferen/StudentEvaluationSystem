@@ -2153,6 +2153,35 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/core/lo-po-mappings/bulk_sync/:
+    post:
+      operationId: core_lo_po_mappings_bulk_sync_create
+      description: Apply LO-PO mapping changes in bulk and trigger async PO score
+        recompute.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
+          description: ''
   /api/core/permissions/:
     get:
       operationId: core_permissions_list
@@ -2887,27 +2916,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedStudentProfileList'
           description: ''
-  /api/core/students/{id}/:
-    get:
-      operationId: core_students_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - core
-      security:
-      - jwtCookie: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StudentProfile'
-          description: ''
   /api/core/terms/:
     get:
       operationId: core_terms_list
@@ -3300,6 +3308,168 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/core/weight-suggestion/:
+    get:
+      operationId: core_weight_suggestion_list
+      description: List weight suggestion jobs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWeightSuggestionJobList'
+          description: ''
+    post:
+      operationId: core_weight_suggestion_create
+      description: Queue a weight suggestion Celery task for the given course.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+  /api/core/weight-suggestion/{id}/:
+    get:
+      operationId: core_weight_suggestion_retrieve
+      description: Get a single job's status and result.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    put:
+      operationId: core_weight_suggestion_update
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    patch:
+      operationId: core_weight_suggestion_partial_update
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    delete:
+      operationId: core_weight_suggestion_destroy
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
   /api/evaluation/assessment-lo-mappings/:
     get:
       operationId: evaluation_assessment_lo_mappings_list
@@ -3491,6 +3661,34 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/evaluation/assessment-lo-mappings/bulk_sync/:
+    post:
+      operationId: evaluation_assessment_lo_mappings_bulk_sync_create
+      description: Apply assessment-LO mapping changes in bulk and trigger async score
+        recompute.
+      tags:
+      - evaluation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
+          description: ''
   /api/evaluation/assessments/:
     get:
       operationId: evaluation_assessments_list
@@ -4803,7 +5001,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - {}
       responses:
         '200':
           content:
@@ -4852,7 +5049,6 @@ paths:
       - users
       security:
       - jwtCookie: []
-      - {}
       responses:
         '200':
           content:
@@ -7258,6 +7454,35 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/core/lo-po-mappings/bulk_sync/:
+    post:
+      operationId: v1_core_lo_po_mappings_bulk_sync_create
+      description: Apply LO-PO mapping changes in bulk and trigger async PO score
+        recompute.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkLOPOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningOutcomeProgramOutcomeMapping'
+          description: ''
   /api/v1/core/permissions/:
     get:
       operationId: v1_core_permissions_list
@@ -7992,27 +8217,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedStudentProfileList'
           description: ''
-  /api/v1/core/students/{id}/:
-    get:
-      operationId: v1_core_students_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - v1
-      security:
-      - jwtCookie: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StudentProfile'
-          description: ''
   /api/v1/core/terms/:
     get:
       operationId: v1_core_terms_list
@@ -8405,6 +8609,168 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/core/weight-suggestion/:
+    get:
+      operationId: v1_core_weight_suggestion_list
+      description: List weight suggestion jobs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWeightSuggestionJobList'
+          description: ''
+    post:
+      operationId: v1_core_weight_suggestion_create
+      description: Queue a weight suggestion Celery task for the given course.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+  /api/v1/core/weight-suggestion/{id}/:
+    get:
+      operationId: v1_core_weight_suggestion_retrieve
+      description: Get a single job's status and result.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    put:
+      operationId: v1_core_weight_suggestion_update
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    patch:
+      operationId: v1_core_weight_suggestion_partial_update
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWeightSuggestionJob'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightSuggestionJob'
+          description: ''
+    delete:
+      operationId: v1_core_weight_suggestion_destroy
+      description: |-
+        ViewSet for triggering and tracking weight suggestion jobs.
+
+        POST /weight-suggestion/ -- queue a suggestion for a course
+        GET  /weight-suggestion/{id}/ -- get job status and result
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Weight Suggestion Job.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/evaluation/assessment-lo-mappings/:
     get:
       operationId: v1_evaluation_assessment_lo_mappings_list
@@ -8596,6 +8962,34 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/evaluation/assessment-lo-mappings/bulk_sync/:
+    post:
+      operationId: v1_evaluation_assessment_lo_mappings_bulk_sync_create
+      description: Apply assessment-LO mapping changes in bulk and trigger async score
+        recompute.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkAssessmentLOMapping'
+        required: true
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentLearningOutcomeMapping'
+          description: ''
   /api/v1/evaluation/assessments/:
     get:
       operationId: v1_evaluation_assessments_list
@@ -9908,7 +10302,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - {}
       responses:
         '200':
           content:
@@ -9957,7 +10350,6 @@ paths:
       - v1
       security:
       - jwtCookie: []
-      - {}
       responses:
         '200':
           content:
@@ -10228,6 +10620,12 @@ components:
         name:
           type: string
           maxLength: 255
+        assessment_type:
+          $ref: '#/components/schemas/AssessmentTypeEnum'
+        description:
+          type: string
+          description: Single-sentence description of what this assessment evaluates,
+            used for AI weight correlation
         course:
           type: string
           readOnly: true
@@ -10288,6 +10686,10 @@ components:
           description: 0.0 to 1.0
         assessment_type:
           $ref: '#/components/schemas/AssessmentTypeEnum'
+        description:
+          type: string
+          description: Single-sentence description of what this assessment evaluates,
+            used for AI weight correlation
       required:
       - course
       - id
@@ -10315,9 +10717,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
       required:
       - assessment
       - id
@@ -10341,6 +10743,76 @@ components:
         * `quiz` - Quiz
         * `attendance` - Attendance
         * `other` - Other
+    BulkAssessmentLOMapping:
+      type: object
+      description: Bulk sync payload for assessment-LO mappings.
+      properties:
+        course_id:
+          type: integer
+        creates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkAssessmentLOMappingItem'
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkAssessmentLOMappingItem'
+        deletes:
+          type: array
+          items:
+            type: integer
+      required:
+      - course_id
+    BulkAssessmentLOMappingItem:
+      type: object
+      description: Single item in a bulk sync request.
+      properties:
+        temp_id:
+          type: integer
+        id:
+          type: integer
+        assessment_id:
+          type: integer
+        learning_outcome_id:
+          type: integer
+        weight:
+          type: number
+          format: double
+    BulkLOPOMapping:
+      type: object
+      description: Bulk sync payload for LO-PO mappings.
+      properties:
+        course_id:
+          type: integer
+        creates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkLOPOMappingItem'
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkLOPOMappingItem'
+        deletes:
+          type: array
+          items:
+            type: integer
+      required:
+      - course_id
+    BulkLOPOMappingItem:
+      type: object
+      description: Single item in a bulk LO-PO sync request.
+      properties:
+        temp_id:
+          type: integer
+        id:
+          type: integer
+        learning_outcome_id:
+          type: integer
+        program_outcome_id:
+          type: integer
+        weight:
+          type: number
+          format: double
     CoreLearningOutcome:
       type: object
       description: |-
@@ -10544,9 +11016,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
       required:
       - id
       - template_assessment
@@ -10566,9 +11038,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
       required:
       - id
       - program_outcome
@@ -10728,6 +11200,21 @@ components:
       required:
       - message
       - results
+    GpaByYear:
+      type: object
+      properties:
+        year:
+          type: integer
+        student_count:
+          type: integer
+        gpa:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - gpa
+      - student_count
+      - year
     InstructorPermission:
       type: object
       properties:
@@ -10791,9 +11278,6 @@ components:
         Handles bidirectional serialization of LO-PO mappings with nested
         read representation and ID-based write representation.
 
-        Uses LearningOutcomeProgramOutcomeMappingListSerializer for validation
-        when processing multiple mappings.
-
         Fields:
             id: Mapping ID
             course: Course ID
@@ -10825,9 +11309,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
       required:
       - course
       - id
@@ -11386,6 +11870,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/University'
+    PaginatedWeightSuggestionJobList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeightSuggestionJob'
     PatchedAssessmentCreate:
       type: object
       description: For creating/updating assessments
@@ -11414,6 +11921,10 @@ components:
           description: 0.0 to 1.0
         assessment_type:
           $ref: '#/components/schemas/AssessmentTypeEnum'
+        description:
+          type: string
+          description: Single-sentence description of what this assessment evaluates,
+            used for AI weight correlation
     PatchedAssessmentLearningOutcomeMapping:
       type: object
       description: Nested inside AssessmentSerializer
@@ -11437,9 +11948,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
     PatchedCoreLearningOutcome:
       type: object
       description: |-
@@ -11613,9 +12124,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
     PatchedCourseTemplateLOPOMapping:
       type: object
       description: Serializer for CourseTemplateLOPOMapping.
@@ -11630,9 +12141,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
     PatchedCustomUser:
       type: object
       description: Full user serializer with all fields.
@@ -11781,9 +12292,6 @@ components:
         Handles bidirectional serialization of LO-PO mappings with nested
         read representation and ID-based write representation.
 
-        Uses LearningOutcomeProgramOutcomeMappingListSerializer for validation
-        when processing multiple mappings.
-
         Fields:
             id: Mapping ID
             course: Course ID
@@ -11815,9 +12323,9 @@ components:
         weight:
           type: number
           format: double
-          maximum: 1.0
-          minimum: 0.0
-          description: 0.0 to 1.0
+          maximum: 5
+          minimum: 0
+          description: 0 to 5
     PatchedProgram:
       type: object
       description: |-
@@ -12008,6 +12516,50 @@ components:
         code:
           type: string
           maxLength: 10
+    PatchedWeightSuggestionJob:
+      type: object
+      description: Serializer for WeightSuggestionJob.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        course:
+          type: integer
+          nullable: true
+        triggered_by:
+          type: integer
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        celery_task_id:
+          type: string
+          readOnly: true
+        result:
+          readOnly: true
+          nullable: true
+        error:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PermissionTierEnum:
       enum:
       - view
@@ -12174,7 +12726,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/YearLevelBreakdown'
+        gpa_by_year:
+          type: array
+          items:
+            $ref: '#/components/schemas/GpaByYear'
       required:
+      - gpa_by_year
       - programs
       - year_level_breakdown
     ResourceAreaEnum:
@@ -12529,6 +13086,60 @@ components:
       required:
       - id
       - username
+    WeightSuggestionJob:
+      type: object
+      description: Serializer for WeightSuggestionJob.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        course:
+          type: integer
+          nullable: true
+        triggered_by:
+          type: integer
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        celery_task_id:
+          type: string
+          readOnly: true
+        result:
+          readOnly: true
+          nullable: true
+        error:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - celery_task_id
+      - created_at
+      - error
+      - finished_at
+      - id
+      - result
+      - started_at
+      - status
+      - updated_at
     YearLevelBreakdown:
       type: object
       properties:

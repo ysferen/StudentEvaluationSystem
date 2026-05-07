@@ -29,6 +29,10 @@ from core.permissions import (
     InstructorPermissionMixin,
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -181,6 +185,7 @@ class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
         instance.delete()
         calculate_course_scores(course_id)
 
+    @extend_schema(request=BulkAssessmentLOMappingSerializer)
     @action(detail=False, methods=["post"])
     def bulk_sync(self, request):
         """Apply assessment-LO mapping changes in bulk and trigger async score recompute."""

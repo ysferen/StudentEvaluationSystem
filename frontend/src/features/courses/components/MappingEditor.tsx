@@ -24,9 +24,11 @@ import {
 import {
   useEvaluationAssessmentsList,
   useEvaluationAssessmentLoMappingsList,
+  useEvaluationAssessmentLoMappingsBulkSyncCreate,
 } from '../../../shared/api/generated/evaluation/evaluation'
 import {
   useCoreLoPoMappingsList,
+  useCoreLoPoMappingsBulkSyncCreate,
   useCoreCoursesLearningOutcomesRetrieve,
 } from '../../../shared/api/generated/core/core'
 import {
@@ -76,38 +78,6 @@ const toDragItemData = (value: unknown): DragItemData | null => {
 }
 
 const clone = <T,>(arr: T[]): T[] => arr.map(item => ({ ...item }))
-
-const bulkSyncAssessmentLOMappings = async (payload: {
-  course_id: number
-  creates: Array<{ temp_id?: number; assessment_id?: number; learning_outcome_id?: number; weight: number }>
-  updates: Array<{ id: number; weight: number }>
-  deletes: number[]
-}) => {
-  const response = await fetch('/api/evaluation/assessment-lo-mappings/bulk_sync/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    credentials: 'include',
-  })
-  if (!response.ok) throw new Error('Bulk sync failed')
-  return response.json()
-}
-
-const bulkSyncLOPOMappings = async (payload: {
-  course_id: number
-  creates: Array<{ temp_id?: number; learning_outcome_id?: number; program_outcome_id?: number; weight: number }>
-  updates: Array<{ id: number; weight: number }>
-  deletes: number[]
-}) => {
-  const response = await fetch('/api/core/lo-po-mappings/bulk_sync/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    credentials: 'include',
-  })
-  if (!response.ok) throw new Error('Bulk sync failed')
-  return response.json()
-}
 
 interface MappingEditorProps {
   courseId: number
@@ -338,6 +308,9 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const [isSaving, setIsSaving] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
+  const aloBulkSyncMutation = useEvaluationAssessmentLoMappingsBulkSyncCreate()
+  const lopoBulkSyncMutation = useCoreLoPoMappingsBulkSyncCreate()
+
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeData, setActiveData] = useState<DragItemData | null>(null)
 
@@ -497,28 +470,32 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const aloDiff = computeDiff(workingAssessmentLOMappings, initialAssessmentLOMappings)
       const lopoDiff = computeDiff(workingLoPOMappings, initialLoPOMappings)
 
-      const aloResult = await bulkSyncAssessmentLOMappings({
-        course_id: courseId,
-        creates: aloDiff.creates.map(m => ({
-          temp_id: m.id,
-          assessment_id: (m as any).assessment_id ?? (m as any).assessment,
-          learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
-          weight: m.weight,
-        })),
-        updates: aloDiff.updates,
-        deletes: aloDiff.deletes,
+      const aloResult: any = await aloBulkSyncMutation.mutateAsync({
+        data: {
+          course_id: courseId,
+          creates: aloDiff.creates.map(m => ({
+            temp_id: m.id,
+            assessment_id: (m as any).assessment_id ?? (m as any).assessment,
+            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+            weight: m.weight,
+          })),
+          updates: aloDiff.updates,
+          deletes: aloDiff.deletes,
+        } as any,
       })
 
-      const lopoResult = await bulkSyncLOPOMappings({
-        course_id: courseId,
-        creates: lopoDiff.creates.map(m => ({
-          temp_id: m.id,
-          learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
-          program_outcome_id: (m as any).program_outcome_id ?? (m as any).program_outcome?.id,
-          weight: m.weight,
-        })),
-        updates: lopoDiff.updates,
-        deletes: lopoDiff.deletes,
+      const lopoResult: any = await lopoBulkSyncMutation.mutateAsync({
+        data: {
+          course_id: courseId,
+          creates: lopoDiff.creates.map(m => ({
+            temp_id: m.id,
+            learning_outcome_id: (m as any).learning_outcome_id ?? (m as any).learning_outcome?.id,
+            program_outcome_id: (m as any).program_outcome_id ?? (m as any).program_outcome?.id,
+            weight: m.weight,
+          })),
+          updates: lopoDiff.updates,
+          deletes: lopoDiff.deletes,
+        } as any,
       })
 
       // Replace temp IDs with real IDs

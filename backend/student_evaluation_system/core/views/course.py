@@ -241,6 +241,7 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, InstructorPermissionMixin]
     resource_area = "lo_po_weights"
 
+    @extend_schema(request=BulkLOPOMappingSerializer)
     @action(detail=False, methods=["post"])
     def bulk_sync(self, request):
         """Apply LO-PO mapping changes in bulk and trigger async PO score recompute."""

@@ -14,9 +14,6 @@ import type { ProgramOutcome } from './programOutcome';
 Handles bidirectional serialization of LO-PO mappings with nested
 read representation and ID-based write representation.
 
-Uses LearningOutcomeProgramOutcomeMappingListSerializer for validation
-when processing multiple mappings.
-
 Fields:
     id: Mapping ID
     course: Course ID
@@ -34,9 +31,9 @@ export interface LearningOutcomeProgramOutcomeMapping {
   readonly program_outcome: ProgramOutcome;
   program_outcome_id?: number;
   /**
-   * 0.0 to 1.0
+   * 0 to 5
    * @minimum 0
-   * @maximum 1
+   * @maximum 5
    */
   weight: number;
 }

@@ -15,6 +15,7 @@
 * `lo_po_weights` - LO-PO Weights
 * `assessment_lo_weights` - Assessment-LO Weights
 * `assessments` - Assessments
+* `course_templates` - Course Templates
  */
 export type ResourceAreaEnum = typeof ResourceAreaEnum[keyof typeof ResourceAreaEnum];
 
@@ -29,4 +30,5 @@ export const ResourceAreaEnum = {
   lo_po_weights: 'lo_po_weights',
   assessment_lo_weights: 'assessment_lo_weights',
   assessments: 'assessments',
+  course_templates: 'course_templates',
 } as const;

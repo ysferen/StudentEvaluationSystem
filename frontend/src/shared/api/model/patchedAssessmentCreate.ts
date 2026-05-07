@@ -28,4 +28,6 @@ export interface PatchedAssessmentCreate {
    */
   weight?: number;
   assessment_type?: AssessmentTypeEnum;
+  /** Single-sentence description of what this assessment evaluates, used for AI weight correlation */
+  description?: string;
 }

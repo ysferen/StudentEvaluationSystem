@@ -5,12 +5,16 @@
  * Outcome-based assessment system for academic programs
  * OpenAPI spec version: 1.0.0
  */
+import type { AssessmentTypeEnum } from './assessmentTypeEnum';
 import type { AssessmentLearningOutcomeMapping } from './assessmentLearningOutcomeMapping';
 
 export interface Assessment {
   readonly id: number;
   /** @maxLength 255 */
   name: string;
+  assessment_type?: AssessmentTypeEnum;
+  /** Single-sentence description of what this assessment evaluates, used for AI weight correlation */
+  description?: string;
   readonly course: string;
   date?: string;
   /**

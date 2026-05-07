@@ -5,9 +5,9 @@
  * Outcome-based assessment system for academic programs
  * OpenAPI spec version: 1.0.0
  */
-import type { GpaByYear } from './gpaByYear';
 import type { ProgramStat } from './programStat';
 import type { YearLevelBreakdown } from './yearLevelBreakdown';
+import type { GpaByYear } from './gpaByYear';
 
 export interface ProgramStatsResponse {
   programs: ProgramStat[];

@@ -17,9 +17,9 @@ export interface AssessmentLearningOutcomeMapping {
   readonly learning_outcome: EvaluationLearningOutcome;
   learning_outcome_id?: number;
   /**
-   * 0.0 to 1.0
+   * 0 to 5
    * @minimum 0
-   * @maximum 1
+   * @maximum 5
    */
   weight: number;
 }
