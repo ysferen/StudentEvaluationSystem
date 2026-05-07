@@ -7,6 +7,7 @@ from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiPara
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, Count, F, Sum, FloatField
 from django.db import transaction
+from django.utils import timezone
 
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from .serializers import (
@@ -224,9 +225,7 @@ class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
                 result["temp_id"] = item.get("temp_id")
                 created.append(result)
 
-        # Dispatch async score recompute (non-blocking)
-        from evaluation.tasks import recompute_course_scores_task
-
+        # Dispatch async score recompute (non-blocking) or fall back to sync
         job_ids = []
         for course_id in affected_course_ids:
             job = ScoreRecomputeJob.objects.create(
@@ -235,9 +234,18 @@ class AssessmentLearningOutcomeMappingViewSet(viewsets.ModelViewSet):
                 course_id=course_id,
                 triggered_by=request.user,
             )
-            async_result = recompute_course_scores_task.delay(course_id, job.pk)
-            job.celery_task_id = async_result.id
-            job.save(update_fields=["celery_task_id"])
+            try:
+                from evaluation.tasks import recompute_course_scores_task
+
+                async_result = recompute_course_scores_task.delay(course_id, job.pk)
+                job.celery_task_id = async_result.id
+                job.save(update_fields=["celery_task_id"])
+            except Exception:
+                # Celery unavailable — fall back to synchronous calculation
+                calculate_course_scores(course_id)
+                job.status = ScoreRecomputeJob.STATUS_SUCCESS
+                job.finished_at = timezone.now()
+                job.save(update_fields=["status", "finished_at"])
             job_ids.append(job.pk)
 
         return Response(
