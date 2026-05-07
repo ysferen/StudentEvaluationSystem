@@ -83,6 +83,8 @@ const toDragItemData = (value: unknown): DragItemData | null => {
   }
 }
 
+const clone = <T,>(arr: T[]): T[] => arr.map(item => ({ ...item }))
+
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (isRecord(error) && isRecord(error.response) && isRecord(error.response.data)) {
     const data = error.response.data
@@ -300,22 +302,26 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     return toList<ProgramOutcome>(posQuery.data)
   }, [posQuery.data])
 
-  // Local state for mappings (for optimistic updates)
-  const [assessmentLOMappings, setAssessmentLOMappings] = useState<AssessmentLearningOutcomeMapping[]>([])
-  const [loPOMappings, setLoPOMappings] = useState<LearningOutcomeProgramOutcomeMapping[]>([])
+  // Initial state (frozen snapshot from server on modal open)
+  const [initialAssessmentLOMappings, setInitialAssessmentLOMappings] = useState<AssessmentLearningOutcomeMapping[]>([])
+  const [initialLoPOMappings, setInitialLoPOMappings] = useState<LearningOutcomeProgramOutcomeMapping[]>([])
+  // Working state (editable copy, all mutations applied here)
+  const [workingAssessmentLOMappings, setWorkingAssessmentLOMappings] = useState<AssessmentLearningOutcomeMapping[]>([])
+  const [workingLoPOMappings, setWorkingLoPOMappings] = useState<LearningOutcomeProgramOutcomeMapping[]>([])
 
-  // Sync mapping data from queries
-  useEffect(() => {
-    if (aloQuery.data) {
-      setAssessmentLOMappings(toList<AssessmentLearningOutcomeMapping>(aloQuery.data))
-    }
-  }, [aloQuery.data])
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    if (lopoQuery.data) {
-      setLoPOMappings(toList<LearningOutcomeProgramOutcomeMapping>(lopoQuery.data))
+    if (!hasInitialized && aloQuery.data && lopoQuery.data) {
+      const aloData = toList<AssessmentLearningOutcomeMapping>(aloQuery.data)
+      const lopoData = toList<LearningOutcomeProgramOutcomeMapping>(lopoQuery.data)
+      setInitialAssessmentLOMappings(clone(aloData))
+      setInitialLoPOMappings(clone(lopoData))
+      setWorkingAssessmentLOMappings(clone(aloData))
+      setWorkingLoPOMappings(clone(lopoData))
+      setHasInitialized(true)
     }
-  }, [lopoQuery.data])
+  }, [aloQuery.data, lopoQuery.data, hasInitialized])
 
   // Loading state
   const isLoading = assessmentsQuery.isLoading || losQuery.isLoading || posQuery.isLoading || aloQuery.isLoading || lopoQuery.isLoading
@@ -375,7 +381,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const lo = learningOutcomes.find((l) => l.id === loId)
 
       // Check if mapping already exists
-      const existingMapping = assessmentLOMappings.find(
+      const existingMapping = workingAssessmentLOMappings.find(
         (m) => m.assessment === assessmentId && m.learning_outcome?.id === loId
       )
 
@@ -413,7 +419,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const po = programOutcomes.find((p) => p.id === poId)
 
       // Check if mapping already exists
-      const existingMapping = loPOMappings.find(
+      const existingMapping = workingLoPOMappings.find(
         (m) => m.learning_outcome?.id === loId && m.program_outcome?.id === poId
       )
 
@@ -446,14 +452,49 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     setActiveId(null)
   }
 
+  const computeDiff = <T extends { id: number; weight: number }>(
+    working: T[],
+    initial: T[]
+  ): { creates: T[]; updates: { id: number; weight: number }[]; deletes: number[] } => {
+    const workingMap = new Map(working.map(m => [m.id, m]))
+    const initialMap = new Map(initial.map(m => [m.id, m]))
+    const workingIds = new Set(workingMap.keys())
+    const initialIds = new Set(initialMap.keys())
+
+    const creates = working.filter(m => m.id < 0)
+    const deletes = initial.filter(m => !workingIds.has(m.id)).map(m => m.id)
+    const updates = working
+      .filter(m => m.id > 0 && initialIds.has(m.id))
+      .filter(m => {
+        const initialItem = initialMap.get(m.id)
+        return initialItem && initialItem.weight !== m.weight
+      })
+      .map(m => ({ id: m.id, weight: m.weight }))
+
+    return { creates, updates, deletes }
+  }
+
+  const hasChanges = useMemo(() => {
+    const aloDiff = computeDiff(workingAssessmentLOMappings, initialAssessmentLOMappings)
+    const lopoDiff = computeDiff(workingLoPOMappings, initialLoPOMappings)
+    return (
+      aloDiff.creates.length > 0 ||
+      aloDiff.updates.length > 0 ||
+      aloDiff.deletes.length > 0 ||
+      lopoDiff.creates.length > 0 ||
+      lopoDiff.updates.length > 0 ||
+      lopoDiff.deletes.length > 0
+    )
+  }, [workingAssessmentLOMappings, initialAssessmentLOMappings, workingLoPOMappings, initialLoPOMappings])
+
   const handleCreateOrUpdateMapping = async (weight: number) => {
     if (!weightModal) return
 
     try {
       if (weightModal.editMode && weightModal.mappingId) {
         if (weightModal.type === 'assessment-lo') {
-          const previousMappings = assessmentLOMappings
-          setAssessmentLOMappings(assessmentLOMappings.map((m) =>
+          const previousMappings = workingAssessmentLOMappings
+          setWorkingAssessmentLOMappings(workingAssessmentLOMappings.map((m) =>
             m.id === weightModal.mappingId ? { ...m, weight } : m
           ))
           setWeightModal(null)
@@ -465,7 +506,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
             })
             await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
           } catch (error) {
-            setAssessmentLOMappings(previousMappings)
+            setWorkingAssessmentLOMappings(previousMappings)
             throw error
           }
         } else {
@@ -473,7 +514,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
             id: weightModal.mappingId,
             data: { weight },
           })
-          setLoPOMappings(loPOMappings.map((m) =>
+          setWorkingLoPOMappings(workingLoPOMappings.map((m) =>
             m.id === weightModal.mappingId ? { ...m, weight: response.weight } : m
           ))
           setWeightModal(null)
@@ -489,7 +530,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
             learning_outcome_id: weightModal.toId,
             weight,
           } as AssessmentLearningOutcomeMapping
-          setAssessmentLOMappings([...assessmentLOMappings, tempMapping])
+          setWorkingAssessmentLOMappings([...workingAssessmentLOMappings, tempMapping])
           setWeightModal(null)
 
           try {
@@ -500,12 +541,12 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                 weight,
               },
             })
-            setAssessmentLOMappings(prev =>
+            setWorkingAssessmentLOMappings(prev =>
               prev.map(m => m.id === tempId ? response : m)
             )
             await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
           } catch (error) {
-            setAssessmentLOMappings(prev => prev.filter(m => m.id !== tempId))
+            setWorkingAssessmentLOMappings(prev => prev.filter(m => m.id !== tempId))
             throw error
           }
         } else {
@@ -517,7 +558,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
               weight,
             },
           })
-          setLoPOMappings([...loPOMappings, response])
+          setWorkingLoPOMappings([...workingLoPOMappings, response])
           setWeightModal(null)
           await queryClient.invalidateQueries({ queryKey: ['/api/core/lo-po-mappings/'] })
         }
@@ -531,15 +572,15 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   }
 
   const handleDeleteALOMapping = async (mappingId: number) => {
-    const previousMappings = assessmentLOMappings
-    setAssessmentLOMappings(assessmentLOMappings.filter((m) => m.id !== mappingId))
+    const previousMappings = workingAssessmentLOMappings
+    setWorkingAssessmentLOMappings(workingAssessmentLOMappings.filter((m) => m.id !== mappingId))
 
     try {
       await aloDestroyMutation.mutateAsync({ id: mappingId })
       await queryClient.invalidateQueries({ queryKey: ['/api/evaluation/assessment-lo-mappings/'] })
     } catch (error) {
       console.error('Error deleting mapping:', error)
-      setAssessmentLOMappings(previousMappings)
+      setWorkingAssessmentLOMappings(previousMappings)
       alert('Failed to delete mapping. Please try again.')
     }
   }
@@ -547,7 +588,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const handleDeleteLOPOMapping = async (mappingId: number) => {
     try {
       await lopoDestroyMutation.mutateAsync({ id: mappingId })
-      setLoPOMappings(loPOMappings.filter((m) => m.id !== mappingId))
+      setWorkingLoPOMappings(workingLoPOMappings.filter((m) => m.id !== mappingId))
       await queryClient.invalidateQueries({ queryKey: ['/api/core/lo-po-mappings/'] })
     } catch (error) {
       console.error('Error deleting mapping:', error)
@@ -556,16 +597,16 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
 
   // Get mappings for a specific LO
   const getAssessmentMappingsForLO = (loId: number) => {
-    return assessmentLOMappings.filter((m) => m.learning_outcome?.id === loId)
+    return workingAssessmentLOMappings.filter((m) => m.learning_outcome?.id === loId)
   }
 
   const getPOMappingsForLO = (loId: number) => {
-    return loPOMappings.filter((m) => m.learning_outcome?.id === loId)
+    return workingLoPOMappings.filter((m) => m.learning_outcome?.id === loId)
   }
 
   // Get LO mappings for a specific PO
   const getLOMappingsForPO = (poId: number) => {
-    return loPOMappings.filter((m) => m.program_outcome?.id === poId)
+    return workingLoPOMappings.filter((m) => m.program_outcome?.id === poId)
   }
 
   if (isLoading) {
@@ -583,7 +624,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-6">
+      <div className="space-y-6" data-has-changes={String(hasChanges)}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -627,7 +668,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
               </div>
               {(() => {
                 const unmappedCount = assessments.filter(a =>
-                  !assessmentLOMappings.some(m => m.assessment === a.id)
+                  !workingAssessmentLOMappings.some(m => m.assessment === a.id)
                 ).length
                 if (unmappedCount > 0) {
                   return (
@@ -644,7 +685,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                 <p className="text-sm text-gray-500 text-center py-4">No assessments are defined for this course</p>
               ) : (
                 assessments.map((assessment) => {
-                  const isMapped = assessmentLOMappings.some(m => m.assessment === assessment.id)
+                  const isMapped = workingAssessmentLOMappings.some(m => m.assessment === assessment.id)
                   return (
                   <DraggableItem
                     key={assessment.id}
