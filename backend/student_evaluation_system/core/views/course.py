@@ -8,6 +8,7 @@ Contains ViewSets for managing:
 - LearningOutcomeProgramOutcomeMappings
 """
 
+from django.db import transaction
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -28,6 +29,7 @@ from ..serializers import (
     ProgramOutcomeSerializer,
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
+    BulkLOPOMappingSerializer,
 )
 from ..permissions import InstructorPermissionMixin
 
@@ -238,3 +240,54 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
     permission_classes = [AllowAny, InstructorPermissionMixin]
     resource_area = "lo_po_weights"
+
+    @action(detail=False, methods=["post"])
+    def bulk_sync(self, request):
+        """Apply LO-PO mapping changes in bulk and trigger async PO score recompute."""
+        from django.shortcuts import get_object_or_404
+
+        serializer = BulkLOPOMappingSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        created = []
+        updated = []
+        deleted_ids = []
+
+        with transaction.atomic():
+            # Deletes
+            for mapping_id in data.get("deletes", []):
+                mapping = get_object_or_404(LearningOutcomeProgramOutcomeMapping, pk=mapping_id)
+                mapping.delete()
+                deleted_ids.append(mapping_id)
+
+            # Updates
+            for item in data.get("updates", []):
+                mapping = get_object_or_404(LearningOutcomeProgramOutcomeMapping, pk=item["id"])
+                if "weight" in item:
+                    mapping.weight = item["weight"]
+                    mapping.save(update_fields=["weight"])
+                updated.append(LearningOutcomeProgramOutcomeMappingSerializer(mapping).data)
+
+            # Creates
+            for item in data.get("creates", []):
+                learning_outcome = get_object_or_404(LearningOutcome, pk=item["learning_outcome_id"])
+                program_outcome = get_object_or_404(ProgramOutcome, pk=item["program_outcome_id"])
+                course = get_object_or_404(Course, pk=data["course_id"])
+                mapping = LearningOutcomeProgramOutcomeMapping.objects.create(
+                    learning_outcome=learning_outcome,
+                    program_outcome=program_outcome,
+                    course=course,
+                    weight=item["weight"],
+                )
+                result = LearningOutcomeProgramOutcomeMappingSerializer(mapping).data
+                result["temp_id"] = item.get("temp_id")
+                created.append(result)
+
+        return Response(
+            {
+                "created": created,
+                "updated": updated,
+                "deleted": deleted_ids,
+            }
+        )

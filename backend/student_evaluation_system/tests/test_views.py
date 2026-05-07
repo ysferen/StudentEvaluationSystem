@@ -490,3 +490,52 @@ class TestAssessmentLOMappingBulkSync:
         assert response.status_code == 200
         assert response.data["deleted"] == [mapping.id]
         assert not AssessmentLearningOutcomeMapping.objects.filter(pk=mapping.id).exists()
+
+
+@pytest.mark.django_db
+class TestLOPOMappingBulkSync:
+    """Test bulk_sync endpoint for LO-PO mappings."""
+
+    def test_bulk_sync_creates_lo_po_mappings(self, api_client, sample_course, sample_instructor):
+        """Bulk sync should create LO-PO mappings."""
+        api_client.force_authenticate(user=sample_instructor)
+        from core.models import LearningOutcome, ProgramOutcome, Term
+
+        term = Term.objects.first()
+        lo = LearningOutcome.objects.create(code="LO-TEST", description="Test LO", course=sample_course["course"])
+        po = ProgramOutcome.objects.create(
+            code="PO-TEST", description="Test PO", program=sample_course["course"].program, term=term
+        )
+
+        response = api_client.post(
+            "/api/core/lo-po-mappings/bulk_sync/",
+            {
+                "course_id": sample_course["course"].id,
+                "creates": [{"learning_outcome_id": lo.id, "program_outcome_id": po.id, "weight": 3}],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert len(response.data["created"]) == 1
+
+    def test_bulk_sync_deletes_lo_po_mappings(self, api_client, sample_course, sample_instructor):
+        """Bulk sync should delete specified LO-PO mappings."""
+        api_client.force_authenticate(user=sample_instructor)
+        from core.models import LearningOutcomeProgramOutcomeMapping
+
+        # Use an existing mapping from the fixture
+        mapping = LearningOutcomeProgramOutcomeMapping.objects.filter(course=sample_course["course"]).first()
+
+        response = api_client.post(
+            "/api/core/lo-po-mappings/bulk_sync/",
+            {
+                "course_id": sample_course["course"].id,
+                "deletes": [mapping.id],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert response.data["deleted"] == [mapping.id]
+        assert not LearningOutcomeProgramOutcomeMapping.objects.filter(pk=mapping.id).exists()

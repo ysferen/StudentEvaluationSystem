@@ -566,6 +566,7 @@ class InstructorPermissionMixin(BasePermission):
         "destroy": "full",
         "update": "edit",
         "partial_update": "edit",
+        "bulk_sync": "full",
     }
 
     def has_permission(self, request: Request, view: ViewType) -> bool:

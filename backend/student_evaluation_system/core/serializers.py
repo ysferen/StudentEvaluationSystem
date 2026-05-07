@@ -275,6 +275,25 @@ class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer
         fields = ["id", "course", "learning_outcome", "learning_outcome_id", "program_outcome", "program_outcome_id", "weight"]
 
 
+class BulkLOPOMappingItem(serializers.Serializer):
+    """Single item in a bulk LO-PO sync request."""
+
+    temp_id = serializers.IntegerField(required=False)
+    id = serializers.IntegerField(required=False)
+    learning_outcome_id = serializers.IntegerField(required=False)
+    program_outcome_id = serializers.IntegerField(required=False)
+    weight = serializers.FloatField(required=False)
+
+
+class BulkLOPOMappingSerializer(serializers.Serializer):
+    """Bulk sync payload for LO-PO mappings."""
+
+    course_id = serializers.IntegerField()
+    creates = BulkLOPOMappingItem(many=True, required=False, default=list)
+    updates = BulkLOPOMappingItem(many=True, required=False, default=list)
+    deletes = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
+
+
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
     """
     Serializer for StudentLearningOutcomeScore model.
