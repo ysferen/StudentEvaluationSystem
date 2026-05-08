@@ -9,6 +9,7 @@ Contains ViewSets for managing:
 """
 
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -254,11 +255,13 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
         created = []
         updated = []
         deleted_ids = []
+        affected_course_ids = set()
 
         with transaction.atomic():
             # Deletes
             for mapping_id in data.get("deletes", []):
                 mapping = get_object_or_404(LearningOutcomeProgramOutcomeMapping, pk=mapping_id)
+                affected_course_ids.add(mapping.course_id)
                 mapping.delete()
                 deleted_ids.append(mapping_id)
 
@@ -268,6 +271,7 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
                 if "weight" in item:
                     mapping.weight = item["weight"]
                     mapping.save(update_fields=["weight"])
+                    affected_course_ids.add(mapping.course_id)
                 updated.append(LearningOutcomeProgramOutcomeMappingSerializer(mapping).data)
 
             # Creates
@@ -281,14 +285,43 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
                     course=course,
                     weight=item["weight"],
                 )
+                affected_course_ids.add(course.id)
                 result = LearningOutcomeProgramOutcomeMappingSerializer(mapping).data
                 result["temp_id"] = item.get("temp_id")
                 created.append(result)
+
+        # Dispatch async score recompute (non-blocking) or fall back to sync
+        job_ids = []
+        from evaluation.models import ScoreRecomputeJob
+
+        for course_id in affected_course_ids:
+            job = ScoreRecomputeJob.objects.create(
+                task_type=ScoreRecomputeJob.TASK_TYPE_COURSE_RECOMPUTE,
+                status=ScoreRecomputeJob.STATUS_PENDING,
+                course_id=course_id,
+                triggered_by=request.user,
+            )
+            try:
+                from evaluation.tasks import recompute_course_scores_task
+
+                async_result = recompute_course_scores_task.delay(course_id, job.pk)
+                job.celery_task_id = async_result.id
+                job.save(update_fields=["celery_task_id"])
+            except Exception:
+                # Celery unavailable — fall back to synchronous calculation
+                from evaluation.services import calculate_course_scores
+
+                calculate_course_scores(course_id)
+                job.status = ScoreRecomputeJob.STATUS_SUCCESS
+                job.finished_at = timezone.now()
+                job.save(update_fields=["status", "finished_at"])
+            job_ids.append(job.pk)
 
         return Response(
             {
                 "created": created,
                 "updated": updated,
                 "deleted": deleted_ids,
+                "recompute_job_ids": job_ids,
             }
         )

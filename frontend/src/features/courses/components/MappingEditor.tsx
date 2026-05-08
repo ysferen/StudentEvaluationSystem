@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
   DragOverlay,
@@ -25,22 +26,30 @@ import {
   useEvaluationAssessmentsList,
   useEvaluationAssessmentLoMappingsList,
   useEvaluationAssessmentLoMappingsBulkSyncCreate,
+  getEvaluationAssessmentLoMappingsListQueryKey,
 } from '../../../shared/api/generated/evaluation/evaluation'
 import {
   useCoreLoPoMappingsList,
   useCoreLoPoMappingsBulkSyncCreate,
   useCoreCoursesLearningOutcomesRetrieve,
+  getCoreLoPoMappingsListQueryKey,
 } from '../../../shared/api/generated/core/core'
 import {
   useCoreProgramOutcomesList,
 } from '../../../shared/api/generated/outcomes/outcomes'
+import {
+  useV1CoreWeightSuggestionCreate,
+} from '../../../shared/api/generated/v1/v1'
+import { v1CoreWeightSuggestionRetrieve } from '../../../shared/api/generated/v1/v1'
 import type {
   Assessment as OrvalAssessment,
   AssessmentLearningOutcomeMapping,
   LearningOutcomeProgramOutcomeMapping,
   CoreLearningOutcome,
   ProgramOutcome,
+  WeightSuggestionJobResult,
 } from '../../../shared/api/model'
+import { useRecomputeJobs } from '../../../shared/contexts/RecomputeJobsContext'
 
 type Assessment = OrvalAssessment & { assessment_type: string }
 type LearningOutcome = CoreLearningOutcome
@@ -291,7 +300,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    if (!hasInitialized && aloQuery.data && lopoQuery.data) {
+    if (!hasInitialized && aloQuery.data && lopoQuery.data && !aloQuery.isFetching && !lopoQuery.isFetching) {
       const aloData = toList<AssessmentLearningOutcomeMapping>(aloQuery.data)
       const lopoData = toList<LearningOutcomeProgramOutcomeMapping>(lopoQuery.data)
       setInitialAssessmentLOMappings(clone(aloData))
@@ -300,7 +309,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       setWorkingLoPOMappings(clone(lopoData))
       setHasInitialized(true)
     }
-  }, [aloQuery.data, lopoQuery.data, hasInitialized])
+  }, [aloQuery.data, lopoQuery.data, aloQuery.isFetching, lopoQuery.isFetching, hasInitialized])
 
   // Loading state
   const isLoading = assessmentsQuery.isLoading || losQuery.isLoading || posQuery.isLoading || aloQuery.isLoading || lopoQuery.isLoading
@@ -308,8 +317,17 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   const [isSaving, setIsSaving] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
+  const [isSuggesting, setIsSuggesting] = useState(false)
+  const [suggestionError, setSuggestionError] = useState<string | null>(null)
+
   const aloBulkSyncMutation = useEvaluationAssessmentLoMappingsBulkSyncCreate()
   const lopoBulkSyncMutation = useCoreLoPoMappingsBulkSyncCreate()
+
+  const queryClient = useQueryClient()
+
+  const { enqueueJobs } = useRecomputeJobs()
+
+  const createSuggestionMutation = useV1CoreWeightSuggestionCreate()
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeData, setActiveData] = useState<DragItemData | null>(null)
@@ -507,16 +525,36 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         if (item.temp_id) tempIdMap.set(item.temp_id, item.id)
       }
 
-      setWorkingAssessmentLOMappings(prev =>
-        prev.map(m => (tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m))
+      const updatedALO = workingAssessmentLOMappings.map(m =>
+        tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m
       )
-      setWorkingLoPOMappings(prev =>
-        prev.map(m => (tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m))
+      const updatedLOPO = workingLoPOMappings.map(m =>
+        tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m
       )
 
-      // Update initial state to match saved state
-      setInitialAssessmentLOMappings(clone(workingAssessmentLOMappings))
-      setInitialLoPOMappings(clone(workingLoPOMappings))
+      setWorkingAssessmentLOMappings(updatedALO)
+      setWorkingLoPOMappings(updatedLOPO)
+      setInitialAssessmentLOMappings(clone(updatedALO))
+      setInitialLoPOMappings(clone(updatedLOPO))
+
+      // Invalidate mapping list queries to prevent stale data when the modal reopens.
+      // The global QueryClient has a 5-minute staleTime, so without invalidation
+      // the cached data would remain "fresh" and React Query would not refetch
+      // when this component remounts after the modal is closed and reopened.
+      queryClient.invalidateQueries({
+        queryKey: getEvaluationAssessmentLoMappingsListQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: getCoreLoPoMappingsListQueryKey(),
+      })
+
+      const allJobIds = [
+        ...(aloResult?.recompute_job_ids || []),
+        ...(lopoResult?.recompute_job_ids || []),
+      ].map((id: any) => ({ id, status: 'pending' as const }))
+      if (allJobIds.length > 0) {
+        enqueueJobs(allJobIds)
+      }
 
       if (closeAfterSave) {
         onClose?.()
@@ -596,6 +634,92 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     return workingLoPOMappings.filter((m) => m.program_outcome?.id === poId)
   }
 
+  const handleSuggestWeights = async () => {
+    setIsSuggesting(true)
+    setSuggestionError(null)
+    try {
+      const job = await createSuggestionMutation.mutateAsync({
+        data: { course_id: courseId } as any,
+      })
+
+      let attempts = 0
+      const maxAttempts = 60
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const updated = await v1CoreWeightSuggestionRetrieve(job.id)
+        if (updated.status === 'success') {
+          const result = updated.result as WeightSuggestionJobResult
+          if (result && typeof result === 'object' && 'assessment_lo' in result) {
+            const assessmentLo = (result as any).assessment_lo as Record<string, Record<string, number>>
+            setWorkingAssessmentLOMappings(prev => {
+              // Index existing mappings by (assessmentId, loId) key
+              const existingByKey = new Map<string, AssessmentLearningOutcomeMapping>()
+              for (const m of prev) {
+                const aId = typeof m.assessment === 'number' ? m.assessment : (m as any).assessment_id
+                const loId = m.learning_outcome?.id
+                if (aId !== undefined && loId !== undefined) {
+                  existingByKey.set(`${aId}-${loId}`, m)
+                }
+              }
+
+              const next: AssessmentLearningOutcomeMapping[] = []
+
+              // Update existing mappings with suggested weights
+              for (const m of prev) {
+                const assessmentId = typeof m.assessment === 'number' ? m.assessment : (m as any).assessment_id
+                const assessmentName = assessments.find(a => a.id === assessmentId)?.name
+                const loId = m.learning_outcome?.id
+                const loCode = learningOutcomes.find(lo => lo.id === loId)?.code
+                if (assessmentName && loCode && assessmentLo[assessmentName]?.[loCode] !== undefined) {
+                  next.push({ ...m, weight: assessmentLo[assessmentName][loCode] })
+                } else {
+                  next.push(m)
+                }
+              }
+
+              // Add new mappings for suggested (assessment, lo) pairs not currently mapped
+              for (const [assessmentName, loWeights] of Object.entries(assessmentLo)) {
+                const assessment = assessments.find(a => a.name === assessmentName)
+                if (!assessment) continue
+                for (const [loCode, weight] of Object.entries(loWeights)) {
+                  const lo = learningOutcomes.find(l => l.code === loCode)
+                  if (!lo) continue
+                  const key = `${assessment.id}-${lo.id}`
+                  if (!existingByKey.has(key)) {
+                    const tempId = -Date.now()
+                    next.push({
+                      id: tempId,
+                      assessment: assessment.id,
+                      assessment_id: assessment.id,
+                      learning_outcome: { id: lo.id },
+                      learning_outcome_id: lo.id,
+                      weight,
+                    } as AssessmentLearningOutcomeMapping)
+                  }
+                }
+              }
+
+              return next
+            })
+          }
+          break
+        } else if (updated.status === 'failed') {
+          setSuggestionError('Weight suggestion failed. Please try again.')
+          break
+        }
+        attempts++
+      }
+      if (attempts >= maxAttempts) {
+        setSuggestionError('Weight suggestion timed out. Please try again.')
+      }
+    } catch (err) {
+      setSuggestionError('Failed to get weight suggestions. Please try again.')
+      console.error('Weight suggestion error:', err)
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-96">
@@ -635,14 +759,23 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           </div>
            <div className="flex items-center gap-2">
             <button
-              className="p-2 hover:bg-indigo-50 rounded-lg transition-colors"
+              onClick={handleSuggestWeights}
+              disabled={isSuggesting || assessments.length === 0}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="AI Weight Suggestion"
-              aria-label="AI Weight Suggestion"
             >
-              <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+              {isSuggesting ? (
+                <div className="h-4 w-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
+              <span>{isSuggesting ? 'Suggesting...' : 'Suggest Weights'}</span>
             </button>
+            {suggestionError && (
+              <p className="text-xs text-red-600 mt-1">{suggestionError}</p>
+            )}
             {onClose && (
               <button
                 onClick={() => {

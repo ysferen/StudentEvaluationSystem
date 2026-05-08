@@ -369,26 +369,26 @@ class IsOwnerOrInstructorOrAdmin(BasePermission):
 
 class IsInstructorOrAdmin(BasePermission):
     """
-    Allow access to instructors and admins.
+    Allow access to instructors, program heads, and admins.
 
-    Used for course management endpoints where both instructors and
-    administrators need access.
+    Used for course management endpoints where instructors, program heads,
+    and administrators need access.
     """
 
     def has_permission(self, request: Request, view: ViewType) -> bool:
         """
-        Check if user is instructor or admin.
+        Check if user is instructor, program head, or admin.
 
         Args:
             request: The incoming request
             view: The view being accessed
 
         Returns:
-            True if user is authenticated and is instructor or admin
+            True if user is authenticated and is instructor, program head, or admin
         """
         if not request.user or not request.user.is_authenticated:
             return False
-        return request.user.is_instructor or request.user.is_admin_user
+        return request.user.is_instructor or request.user.is_admin_user or request.user.is_program_head
 
 
 class IsProgramHead(BasePermission):
