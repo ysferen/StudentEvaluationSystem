@@ -94,7 +94,6 @@ class WeightSuggester:
         source_embeddings = self._encode_texts(source_texts)
         target_embeddings = self._encode_texts(target_texts)
         similarity_matrix = np.matmul(source_embeddings, target_embeddings.T)
-
         return [self._normalize_scores(row) for row in similarity_matrix]
 
     def _encode_texts(self, texts):

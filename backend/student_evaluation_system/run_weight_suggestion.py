@@ -64,12 +64,16 @@ def main():
 
     django.setup()
 
-    from core.models import Course
+    from core.models import Course, ProgramOutcome
 
     course_id = _resolve_course_id()
     course = Course.objects.get(id=course_id)
+    pos = list(ProgramOutcome.objects.filter(term=course.term))
     print("=" * 70)
     print(f"Course: {course.name} (ID: {course.id})")
+    print(f"POs: {len(pos)}")
+    for po in pos:
+        print(f"  {po.code}: {po.description}")
     print(f"LOs: {course.learning_outcomes.count()}")
     for lo in course.learning_outcomes.all():
         print(f"  {lo.code}: {lo.description}")

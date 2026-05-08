@@ -20,6 +20,7 @@ class WeightSuggestionViewSet(viewsets.ModelViewSet):
 
     POST /weight-suggestion/ -- queue a suggestion for a course
     GET  /weight-suggestion/{id}/ -- get job status and result
+    Supports both assessment-to-LO and LO-to-PO weight suggestions.
     """
 
     queryset = WeightSuggestionJob.objects.all()
@@ -34,7 +35,11 @@ class WeightSuggestionViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        """Queue a weight suggestion Celery task for the given course."""
+        """Queue a weight suggestion Celery task for the given course.
+
+        Returns job tracking record. Result will contain both assessment_lo
+        and lo_po weight mappings when the job completes successfully.
+        """
         course_id = request.data.get("course_id")
         if not course_id:
             return Response(

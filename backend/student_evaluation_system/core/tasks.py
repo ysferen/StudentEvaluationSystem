@@ -51,7 +51,7 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
     Returns:
         dict with shape: {"assessment_lo": {assessment_name: {LO_key: weight}}}
     """
-    from core.models import Course, WeightSuggestionJob
+    from core.models import Course, ProgramOutcome, WeightSuggestionJob
 
     logger.info(f"TASK STARTED AT: {time.time()}")
     # Update job status to running
@@ -73,7 +73,6 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             f"{a.name}: {a.description}" if a.description else f"{a.name}: {a.get_assessment_type_display()}"
             for a in assessments
         ]
-
         if _suggester is None:
             _init_weight_suggester()
         if _suggester is None:
@@ -85,6 +84,15 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             assessments=assessment_texts,
             assessment_keys=assessment_names,
         )
+
+        pos = list(ProgramOutcome.objects.filter(term=course.term).values_list("description", flat=True))
+        if pos:
+            lo_po_result = _suggester.suggest_lo_po(
+                course_name=course.name,
+                los=los,
+                pos=pos,
+            )
+            result["lo_po"] = lo_po_result["lo_po"]
 
     except Exception as exc:
         if job_id:

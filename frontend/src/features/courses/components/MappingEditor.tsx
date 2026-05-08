@@ -702,6 +702,57 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
               return next
             })
           }
+
+          const loPo = (result as any).lo_po as Record<string, Record<string, number>> | undefined
+          if (loPo) {
+            setWorkingLoPOMappings(prev => {
+              const existingByKey = new Map<string, LearningOutcomeProgramOutcomeMapping>()
+              for (const m of prev) {
+                const loId = m.learning_outcome?.id
+                const poId = m.program_outcome?.id
+                if (loId !== undefined && poId !== undefined) {
+                  existingByKey.set(`${loId}-${poId}`, m)
+                }
+              }
+
+              const next: LearningOutcomeProgramOutcomeMapping[] = []
+
+              for (const m of prev) {
+                const loId = m.learning_outcome?.id
+                const loCode = learningOutcomes.find(lo => lo.id === loId)?.code
+                const poId = m.program_outcome?.id
+                const poCode = programOutcomes.find(po => po.id === poId)?.code
+                if (loCode && poCode && loPo?.[loCode]?.[poCode] !== undefined) {
+                  next.push({ ...m, weight: loPo[loCode][poCode] })
+                } else {
+                  next.push(m)
+                }
+              }
+
+              for (const [loCode, poWeights] of Object.entries(loPo)) {
+                const lo = learningOutcomes.find(l => l.code === loCode)
+                if (!lo) continue
+                for (const [poCode, weight] of Object.entries(poWeights)) {
+                  const po = programOutcomes.find(p => p.code === poCode)
+                  if (!po) continue
+                  const key = `${lo.id}-${po.id}`
+                  if (!existingByKey.has(key)) {
+                    next.push({
+                      id: -Date.now(),
+                      course: courseId,
+                      learning_outcome: { id: lo.id },
+                      learning_outcome_id: lo.id,
+                      program_outcome: { id: po.id },
+                      program_outcome_id: po.id,
+                      weight,
+                    } as LearningOutcomeProgramOutcomeMapping)
+                  }
+                }
+              }
+
+              return next
+            })
+          }
           break
         } else if (updated.status === 'failed') {
           setSuggestionError('Weight suggestion failed. Please try again.')
