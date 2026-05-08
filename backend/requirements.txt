@@ -43,7 +43,7 @@ cuda-pathfinder==1.5.4 ; sys_platform == 'linux'
     # via cuda-bindings
 cuda-toolkit==13.0.2 ; sys_platform == 'linux'
     # via torch
-dj-database-url==2.3.0
+dj-database-url==3.1.2
     # via backend
 django==5.2.8
     # via
