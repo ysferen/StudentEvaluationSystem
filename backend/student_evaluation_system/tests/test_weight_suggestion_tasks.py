@@ -35,8 +35,13 @@ class TestSuggestAssessmentLOTask:
         ]
         mock_course.assessments.all.return_value = []
 
-        with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
+        with (
+            patch("core.tasks._suggester", mock_suggester),
+            patch("core.models.Course") as mock_course_model,
+            patch("core.models.ProgramOutcome") as mock_po_model,
+        ):
             mock_course_model.objects.get.return_value = mock_course
+            mock_po_model.objects.filter.return_value.values_list.return_value = []
 
             result = suggest_assessment_lo_weights_task(course_id=42)
 
@@ -69,11 +74,13 @@ class TestSuggestAssessmentLOTask:
             patch("core.tasks._suggester", mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.WeightSuggestionJob") as mock_job_model,
+            patch("core.models.ProgramOutcome") as mock_po_model,
             patch("core.tasks.timezone") as mock_tz,
         ):
             mock_course_model.objects.get.return_value = mock_course
             mock_filter = MagicMock()
             mock_job_model.objects.filter.return_value = mock_filter
+            mock_po_model.objects.filter.return_value.values_list.return_value = []
             mock_tz.now.return_value = "2025-01-01T00:00:00Z"
 
             suggest_assessment_lo_weights_task(course_id=42, job_id=99)
@@ -144,8 +151,13 @@ class TestSuggestAssessmentLOTask:
         del mock_a.get_assessment_type_display  # force use of description path
         mock_course.assessments.all.return_value = [mock_a]
 
-        with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
+        with (
+            patch("core.tasks._suggester", mock_suggester),
+            patch("core.models.Course") as mock_course_model,
+            patch("core.models.ProgramOutcome") as mock_po_model,
+        ):
             mock_course_model.objects.get.return_value = mock_course
+            mock_po_model.objects.filter.return_value.values_list.return_value = []
 
             result = suggest_assessment_lo_weights_task(course_id=42)
 
@@ -176,8 +188,13 @@ class TestSuggestAssessmentLOTask:
         mock_b.get_assessment_type_display.return_value = "Final Exam"
         mock_course.assessments.all.return_value = [mock_a, mock_b]
 
-        with patch("core.tasks._suggester", mock_suggester), patch("core.models.Course") as mock_course_model:
+        with (
+            patch("core.tasks._suggester", mock_suggester),
+            patch("core.models.Course") as mock_course_model,
+            patch("core.models.ProgramOutcome") as mock_po_model,
+        ):
             mock_course_model.objects.get.return_value = mock_course
+            mock_po_model.objects.filter.return_value.values_list.return_value = []
 
             suggest_assessment_lo_weights_task(course_id=42)
 
