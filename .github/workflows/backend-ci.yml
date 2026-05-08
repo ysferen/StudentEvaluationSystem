@@ -31,6 +31,8 @@ jobs:
         working-directory: backend
         run: |
           cd student_evaluation_system
+          SECRET_KEY="django-insecure-dev-key-for-ci-only-change-in-production" \
+          DEBUG=true \
           uv run python manage.py check --deploy
 
   migrations:
