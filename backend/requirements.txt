@@ -214,7 +214,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.2
+ruff==0.15.12
 safetensors==0.7.0
     # via transformers
 scikit-learn==1.8.0
