@@ -142,3 +142,33 @@ class ScoreRecomputeJobSerializer(serializers.ModelSerializer):
             "finished_at",
             "error",
         ]
+
+
+class BulkAssessmentDescriptionUpdateSerializer(serializers.Serializer):
+    """Bulk update assessment descriptions.
+
+    Request body:
+        {
+            "assessments": [
+                {"id": 1, "description": "Vize sınavı: ..."},
+                {"id": 2, "description": "Final sınavı: ..."},
+            ]
+        }
+    """
+
+    assessments = serializers.ListField(
+        child=serializers.DictField(),
+        min_length=1,
+    )
+
+    def validate_assessments(self, value):
+        for item in value:
+            if "id" not in item:
+                raise serializers.ValidationError("Each item must have an 'id' field.")
+            if "description" not in item:
+                raise serializers.ValidationError("Each item must have a 'description' field.")
+            if not isinstance(item["id"], int):
+                raise serializers.ValidationError("'id' must be an integer.")
+            if not isinstance(item["description"], str):
+                raise serializers.ValidationError("'description' must be a string.")
+        return value

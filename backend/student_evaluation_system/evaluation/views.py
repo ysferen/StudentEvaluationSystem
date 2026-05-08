@@ -15,6 +15,7 @@ from .serializers import (
     AssessmentCreateSerializer,
     AssessmentLearningOutcomeMappingSerializer,
     BulkAssessmentLOMappingSerializer,
+    BulkAssessmentDescriptionUpdateSerializer,
     StudentGradeSerializer,
     StudentGradeCreateSerializer,
     CourseEnrollmentSerializer,
@@ -124,6 +125,26 @@ class AssessmentViewSet(viewsets.ModelViewSet):
                 "max_score": assessment.total_score,
             }
         )
+
+    @extend_schema(
+        request=BulkAssessmentDescriptionUpdateSerializer,
+        responses={200: {"type": "object", "properties": {"updated_count": {"type": "integer"}}}},
+        description="Bulk update assessment descriptions. Used to set descriptions before AI weight suggestion.",
+    )
+    @action(detail=False, methods=["post"])
+    def bulk_descriptions(self, request):
+        """Bulk update assessment descriptions in a single transaction."""
+        serializer = BulkAssessmentDescriptionUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        updated_count = 0
+        with transaction.atomic():
+            for item in data["assessments"]:
+                Assessment.objects.filter(id=item["id"]).update(description=item["description"])
+                updated_count += 1
+
+        return Response({"updated_count": updated_count})
 
 
 @extend_schema_view(

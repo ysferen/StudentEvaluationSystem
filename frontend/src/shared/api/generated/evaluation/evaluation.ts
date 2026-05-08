@@ -33,9 +33,11 @@ import type {
   Assessment,
   AssessmentCreate,
   AssessmentLearningOutcomeMapping,
+  BulkAssessmentDescriptionUpdate,
   BulkAssessmentLOMapping,
   CourseEnrollment,
   EvaluationAssessmentLoMappingsListParams,
+  EvaluationAssessmentsBulkDescriptionsCreate200,
   EvaluationAssessmentsListParams,
   EvaluationEnrollmentsListParams,
   EvaluationEvaluationListParams,
@@ -1638,6 +1640,67 @@ export function useEvaluationAssessmentsStatisticsRetrieve<TData = Awaited<Retur
 
 
 /**
+ * Bulk update assessment descriptions. Used to set descriptions before AI weight suggestion.
+ */
+export const evaluationAssessmentsBulkDescriptionsCreate = (
+    bulkAssessmentDescriptionUpdate: BulkAssessmentDescriptionUpdate,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EvaluationAssessmentsBulkDescriptionsCreate200>(
+      {url: `/api/evaluation/assessments/bulk_descriptions/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkAssessmentDescriptionUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getEvaluationAssessmentsBulkDescriptionsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext> => {
+
+const mutationKey = ['evaluationAssessmentsBulkDescriptionsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>, {data: BulkAssessmentDescriptionUpdate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  evaluationAssessmentsBulkDescriptionsCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EvaluationAssessmentsBulkDescriptionsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>>
+    export type EvaluationAssessmentsBulkDescriptionsCreateMutationBody = BulkAssessmentDescriptionUpdate
+    export type EvaluationAssessmentsBulkDescriptionsCreateMutationError = unknown
+
+    export const useEvaluationAssessmentsBulkDescriptionsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof evaluationAssessmentsBulkDescriptionsCreate>>,
+        TError,
+        {data: BulkAssessmentDescriptionUpdate},
+        TContext
+      > => {
+
+      const mutationOptions = getEvaluationAssessmentsBulkDescriptionsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * CRUD operations for course enrollments.
 
 Permissions:

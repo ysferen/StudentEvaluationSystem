@@ -33,6 +33,7 @@ import type {
   Assessment,
   AssessmentCreate,
   AssessmentLearningOutcomeMapping,
+  BulkAssessmentDescriptionUpdate,
   BulkAssessmentLOMapping,
   BulkLOPOMapping,
   Course,
@@ -143,6 +144,7 @@ import type {
   V1CoreTermsListParams,
   V1CoreWeightSuggestionListParams,
   V1EvaluationAssessmentLoMappingsListParams,
+  V1EvaluationAssessmentsBulkDescriptionsCreate200,
   V1EvaluationAssessmentsListParams,
   V1EvaluationEnrollmentsListParams,
   V1EvaluationEvaluationListParams,
@@ -8690,6 +8692,9 @@ export function useV1CoreWeightSuggestionList<TData = Awaited<ReturnType<typeof 
 
 /**
  * Queue a weight suggestion Celery task for the given course.
+
+Returns job tracking record. Result will contain both assessment_lo
+and lo_po weight mappings when the job completes successfully.
  */
 export const v1CoreWeightSuggestionCreate = (
     weightSuggestionJob: NonReadonly<WeightSuggestionJob>,
@@ -8913,6 +8918,7 @@ export function useV1CoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typ
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const v1CoreWeightSuggestionUpdate = (
     id: number,
@@ -8977,6 +8983,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const v1CoreWeightSuggestionPartialUpdate = (
     id: number,
@@ -9041,6 +9048,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const v1CoreWeightSuggestionDestroy = (
     id: number,
@@ -10645,6 +10653,67 @@ export function useV1EvaluationAssessmentsStatisticsRetrieve<TData = Awaited<Ret
 
 
 /**
+ * Bulk update assessment descriptions. Used to set descriptions before AI weight suggestion.
+ */
+export const v1EvaluationAssessmentsBulkDescriptionsCreate = (
+    bulkAssessmentDescriptionUpdate: BulkAssessmentDescriptionUpdate,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<V1EvaluationAssessmentsBulkDescriptionsCreate200>(
+      {url: `/api/v1/evaluation/assessments/bulk_descriptions/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkAssessmentDescriptionUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getV1EvaluationAssessmentsBulkDescriptionsCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext> => {
+
+const mutationKey = ['v1EvaluationAssessmentsBulkDescriptionsCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>, {data: BulkAssessmentDescriptionUpdate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  v1EvaluationAssessmentsBulkDescriptionsCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1EvaluationAssessmentsBulkDescriptionsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>>
+    export type V1EvaluationAssessmentsBulkDescriptionsCreateMutationBody = BulkAssessmentDescriptionUpdate
+    export type V1EvaluationAssessmentsBulkDescriptionsCreateMutationError = unknown
+
+    export const useV1EvaluationAssessmentsBulkDescriptionsCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>, TError,{data: BulkAssessmentDescriptionUpdate}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1EvaluationAssessmentsBulkDescriptionsCreate>>,
+        TError,
+        {data: BulkAssessmentDescriptionUpdate},
+        TContext
+      > => {
+
+      const mutationOptions = getV1EvaluationAssessmentsBulkDescriptionsCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * CRUD operations for course enrollments.
 
 Permissions:

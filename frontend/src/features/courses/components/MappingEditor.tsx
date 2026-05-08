@@ -50,6 +50,7 @@ import type {
   WeightSuggestionJobResult,
 } from '../../../shared/api/model'
 import { useRecomputeJobs } from '../../../shared/contexts/RecomputeJobsContext'
+import { AssessmentDescriptionsModal } from './AssessmentDescriptionsModal'
 
 type Assessment = OrvalAssessment & { assessment_type: string }
 type LearningOutcome = CoreLearningOutcome
@@ -319,6 +320,8 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
 
   const [isSuggesting, setIsSuggesting] = useState(false)
   const [suggestionError, setSuggestionError] = useState<string | null>(null)
+
+  const [showDescriptionsModal, setShowDescriptionsModal] = useState(false)
 
   const aloBulkSyncMutation = useEvaluationAssessmentLoMappingsBulkSyncCreate()
   const lopoBulkSyncMutation = useCoreLoPoMappingsBulkSyncCreate()
@@ -634,7 +637,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     return workingLoPOMappings.filter((m) => m.program_outcome?.id === poId)
   }
 
-  const handleSuggestWeights = async () => {
+  const queueWeightSuggestion = async () => {
     setIsSuggesting(true)
     setSuggestionError(null)
     try {
@@ -652,7 +655,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           if (result && typeof result === 'object' && 'assessment_lo' in result) {
             const assessmentLo = (result as any).assessment_lo as Record<string, Record<string, number>>
             setWorkingAssessmentLOMappings(prev => {
-              // Index existing mappings by (assessmentId, loId) key
               const existingByKey = new Map<string, AssessmentLearningOutcomeMapping>()
               for (const m of prev) {
                 const aId = typeof m.assessment === 'number' ? m.assessment : (m as any).assessment_id
@@ -664,7 +666,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
 
               const next: AssessmentLearningOutcomeMapping[] = []
 
-              // Update existing mappings with suggested weights
               for (const m of prev) {
                 const assessmentId = typeof m.assessment === 'number' ? m.assessment : (m as any).assessment_id
                 const assessmentName = assessments.find(a => a.id === assessmentId)?.name
@@ -677,7 +678,6 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                 }
               }
 
-              // Add new mappings for suggested (assessment, lo) pairs not currently mapped
               for (const [assessmentName, loWeights] of Object.entries(assessmentLo)) {
                 const assessment = assessments.find(a => a.name === assessmentName)
                 if (!assessment) continue
@@ -769,6 +769,20 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     } finally {
       setIsSuggesting(false)
     }
+  }
+
+  const handleSuggestWeights = async () => {
+    const needsDescriptions = assessments.some(a => !a.description?.trim())
+    if (needsDescriptions) {
+      setShowDescriptionsModal(true)
+    } else {
+      await queueWeightSuggestion()
+    }
+  }
+
+  const handleDescriptionsSubmit = async () => {
+    setShowDescriptionsModal(false)
+    await queueWeightSuggestion()
   }
 
   if (isLoading) {
@@ -1263,6 +1277,12 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           </div>
         </div>
       )}
+      <AssessmentDescriptionsModal
+        isOpen={showDescriptionsModal}
+        onClose={() => setShowDescriptionsModal(false)}
+        onSubmit={handleDescriptionsSubmit}
+        assessments={assessments}
+      />
     </DndContext>
   )
 }

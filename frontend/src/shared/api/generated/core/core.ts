@@ -8511,6 +8511,9 @@ export function useCoreWeightSuggestionList<TData = Awaited<ReturnType<typeof co
 
 /**
  * Queue a weight suggestion Celery task for the given course.
+
+Returns job tracking record. Result will contain both assessment_lo
+and lo_po weight mappings when the job completes successfully.
  */
 export const coreWeightSuggestionCreate = (
     weightSuggestionJob: NonReadonly<WeightSuggestionJob>,
@@ -8734,6 +8737,7 @@ export function useCoreWeightSuggestionRetrieve<TData = Awaited<ReturnType<typeo
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const coreWeightSuggestionUpdate = (
     id: number,
@@ -8798,6 +8802,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const coreWeightSuggestionPartialUpdate = (
     id: number,
@@ -8862,6 +8867,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 POST /weight-suggestion/ -- queue a suggestion for a course
 GET  /weight-suggestion/{id}/ -- get job status and result
+Supports both assessment-to-LO and LO-to-PO weight suggestions.
  */
 export const coreWeightSuggestionDestroy = (
     id: number,

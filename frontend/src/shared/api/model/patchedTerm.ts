@@ -25,8 +25,8 @@ export interface PatchedTerm {
   is_active?: boolean;
   /**
    * The calendar year the academic year starts (e.g., 2024 for AY 2024-2025)
-   * @minimum -9223372036854776000
-   * @maximum 9223372036854776000
+   * @minimum -2147483648
+   * @maximum 2147483647
    * @nullable
    */
   academic_year?: number | null;
