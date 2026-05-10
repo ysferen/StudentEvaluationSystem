@@ -582,20 +582,18 @@ paths:
       - core
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}
@@ -5965,20 +5963,18 @@ paths:
       - v1
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}

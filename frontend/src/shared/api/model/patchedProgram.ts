@@ -27,7 +27,7 @@ export interface PatchedProgram {
   /**
    * Program duration in years, used to cap year-level calculations
    * @minimum 0
-   * @maximum 2147483647
+   * @maximum 9223372036854776000
    */
   duration_years?: number;
 }

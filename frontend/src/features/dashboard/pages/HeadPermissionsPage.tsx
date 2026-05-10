@@ -53,7 +53,7 @@ const computeDiff = (
     })
     .map(wp => ({
       id: wp.id,
-      permission_tier: wp.permission_tier,
+      permission_tier: wp.permission_tier ?? 'view',
     }))
 }
 

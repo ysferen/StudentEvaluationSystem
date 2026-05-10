@@ -582,20 +582,18 @@ paths:
       - core
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}
@@ -2331,19 +2329,26 @@ paths:
   /api/core/permissions/bulk/:
     put:
       operationId: core_permissions_bulk_update
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
       tags:
       - core
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
         required: true
       security:
       - jwtCookie: []
@@ -2352,7 +2357,41 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InstructorPermission'
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+  /api/core/permissions/bulk-update/:
+    patch:
+      operationId: core_permissions_bulk_update_partial_update
+      description: Bulk partial update - only send changed permissions with their
+        IDs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
           description: ''
   /api/core/permissions/my-permissions/:
     get:
@@ -5924,20 +5963,18 @@ paths:
       - v1
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}
@@ -7670,19 +7707,26 @@ paths:
   /api/v1/core/permissions/bulk/:
     put:
       operationId: v1_core_permissions_bulk_update
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
       tags:
       - v1
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
         required: true
       security:
       - jwtCookie: []
@@ -7691,7 +7735,41 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InstructorPermission'
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+  /api/v1/core/permissions/bulk-update/:
+    patch:
+      operationId: v1_core_permissions_bulk_update_partial_update
+      description: Bulk partial update - only send changed permissions with their
+        IDs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
           description: ''
   /api/v1/core/permissions/my-permissions/:
     get:
@@ -10710,8 +10788,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -10750,8 +10829,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -10873,6 +10953,19 @@ components:
         weight:
           type: number
           format: double
+    BulkInstructorPermission:
+      type: object
+      description: Bulk update payload for instructor permissions.
+      properties:
+        instructor_id:
+          type: integer
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPermissionItem'
+      required:
+      - instructor_id
+      - permissions
     BulkLOPOMapping:
       type: object
       description: Bulk sync payload for LO-PO mappings.
@@ -10908,6 +11001,29 @@ components:
         weight:
           type: number
           format: double
+    BulkPermissionItem:
+      type: object
+      description: Single permission item in a bulk permission update request.
+      properties:
+        resource_area:
+          type: string
+        permission_tier:
+          type: string
+      required:
+      - permission_tier
+      - resource_area
+    BulkPermissionUpdateItem:
+      type: object
+      description: Single permission update item with ID for bulk partial updates.
+      properties:
+        id:
+          type: integer
+        permission_tier:
+          type: string
+        resource_area:
+          type: string
+      required:
+      - id
     CoreLearningOutcome:
       type: object
       description: |-
@@ -10976,8 +11092,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11065,8 +11182,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11216,8 +11334,9 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - id
       - name
@@ -12002,8 +12121,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -12042,6 +12162,15 @@ components:
           maximum: 5
           minimum: 0
           description: 0 to 5
+    PatchedBulkPermissionUpdate:
+      type: object
+      description: Bulk partial update payload for instructor permissions - sends
+        only changed items.
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPermissionUpdateItem'
     PatchedCoreLearningOutcome:
       type: object
       description: |-
@@ -12104,8 +12233,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12178,8 +12308,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12304,8 +12435,9 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
     PatchedDepartment:
       type: object
       description: |-
@@ -12441,8 +12573,9 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
@@ -12574,8 +12707,9 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)
@@ -12683,8 +12817,9 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           description: Program duration in years, used to cap year-level calculations
       required:
       - code
@@ -13095,8 +13230,9 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)

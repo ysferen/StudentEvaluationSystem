@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CoreCourseTemplatesInstantiateCreateBodyThree = {[key: string]: unknown};
+export type V1CoreCourseTemplatesInstantiateCreateBodyTwo = {[key: string]: unknown};

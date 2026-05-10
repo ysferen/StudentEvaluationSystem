@@ -56,7 +56,7 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         description="Create a new Course by cloning all template data into the given term.",
-        request={"type": "object", "properties": {"term_id": {"type": "integer"}}, "required": ["term_id"]},
+        request=OpenApiTypes.OBJECT,
         responses={201: CourseSerializer},
     )
     @action(detail=True, methods=["post"])

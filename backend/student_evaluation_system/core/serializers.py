@@ -538,6 +538,12 @@ class CourseTemplateLOPOMappingSerializer(serializers.ModelSerializer):
         fields = ["id", "template_learning_outcome", "program_outcome", "weight"]
 
 
+class InstantiateCourseTemplateSerializer(serializers.Serializer):
+    """Serializer for instantiating a course from a template."""
+
+    term_id = serializers.IntegerField()
+
+
 class WeightSuggestionJobSerializer(serializers.ModelSerializer):
     """Serializer for WeightSuggestionJob."""
 

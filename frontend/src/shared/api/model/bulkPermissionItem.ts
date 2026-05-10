@@ -6,4 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CoreCourseTemplatesInstantiateCreateBodyThree = {[key: string]: unknown};
+/**
+ * Single permission item in a bulk permission update request.
+ */
+export interface BulkPermissionItem {
+  resource_area: string;
+  permission_tier: string;
+}

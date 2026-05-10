@@ -6,7 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-/**
- * Unspecified request body
- */
 export type V1CoreCourseTemplatesInstantiateCreateBodyThree = {[key: string]: unknown};
