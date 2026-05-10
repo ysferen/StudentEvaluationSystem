@@ -35,7 +35,7 @@ export interface PatchedCourse {
   name?: string;
   /**
    * @minimum 0
-   * @maximum 9223372036854776000
+   * @maximum 2147483647
    */
   credits?: number;
   readonly program?: Program;
@@ -59,5 +59,6 @@ Returns:
         - last_name: Instructor's last name
         - title: Academic title (if available) */
   readonly instructors?: readonly PatchedCourseInstructorsItem[];
+  instructor_ids?: number[];
   readonly created_at?: string;
 }

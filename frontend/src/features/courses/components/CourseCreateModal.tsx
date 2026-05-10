@@ -13,6 +13,7 @@ import {
 import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 import { useAuth } from '../../auth/hooks/useAuth'
 import type { CourseTemplate } from '../../../shared/api/model'
+import InstructorSelect from './InstructorSelect'
 
 interface CourseCreateModalProps {
   isOpen: boolean
@@ -36,6 +37,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
   const [termOption, setTermOption] = useState<'active' | 'select'>('active')
   const [termId, setTermId] = useState<number | ''>('')
   const [courseTemplateId, setCourseTemplateId] = useState<number | ''>('')
+  const [instructorIds, setInstructorIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [showTemplatePrompt, setShowTemplatePrompt] = useState(false)
   const [templatePromptCourse, setTemplatePromptCourse] = useState<{
@@ -104,7 +106,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
               name: name.trim(),
               code: code.trim(),
               credits: credits === '' ? undefined : Number(credits),
-              program_id: programOption === 'my_program' && myProgramId ? myProgramId : (programId === '' ? undefined : Number(programId))
+              program_id: programOption === 'my_program' && myProgramId ? myProgramId : (programId === '' ? undefined : Number(programId)),
+              instructor_ids: instructorIds,
             }
           })
           onSuccess()
@@ -128,6 +131,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     setName('')
     setCode('')
     setCredits('')
+    setInstructorIds([])
     setProgramOption('my_program')
     setProgramId('')
     setTermOption('active')
@@ -203,7 +207,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
           code: code.trim(),
           credits: credits === '' ? undefined : Number(credits),
           program_id: resolvedProgramId,
-          term_id: resolvedTermId
+          term_id: resolvedTermId,
+          instructor_ids: instructorIds,
         }
       })
       setTemplatePromptCourse({
@@ -415,6 +420,11 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
             </select>
           )}
         </div>
+
+        <InstructorSelect
+          selectedIds={instructorIds}
+          onChange={setInstructorIds}
+        />
 
         <div className="flex justify-end gap-3 pt-2">
           <button
