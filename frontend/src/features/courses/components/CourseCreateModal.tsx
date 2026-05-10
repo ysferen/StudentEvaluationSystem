@@ -230,7 +230,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
         }
       })
     }
-  }, [name, code, credits, flowType, programOption, myProgramId, programId, termOption, activeTerm, termId, courseTemplateId, createMutation, instantiateMutation])
+  }, [name, code, credits, instructorIds, flowType, programOption, myProgramId, programId, termOption, activeTerm, termId, courseTemplateId, createMutation, instantiateMutation])
 
   if (showTemplatePrompt) {
     return (
@@ -422,6 +422,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
         </div>
 
         <InstructorSelect
+          key={isOpen ? 'create-open' : 'create-closed'}
           selectedIds={instructorIds}
           onChange={setInstructorIds}
         />

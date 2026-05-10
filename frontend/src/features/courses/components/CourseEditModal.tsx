@@ -63,7 +63,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
         name: name.trim(),
         code: code.trim(),
         credits: credits === '' ? undefined : Number(credits),
-        instructor_ids: instructorIds
+        ...(instructorIds.length > 0 ? { instructor_ids: instructorIds } : {}),
       }
     })
   }, [name, code, credits, instructorIds, course.id, updateMutation])
@@ -112,6 +112,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
         </div>
 
         <InstructorSelect
+          key={isOpen ? `edit-open-${course.id}` : 'edit-closed'}
           selectedIds={instructorIds}
           onChange={setInstructorIds}
         />
