@@ -41,7 +41,7 @@ const InstructorSelect = ({ selectedIds, onChange }: InstructorSelectProps) => {
     if (hasNextPage) {
       fetchNextPage()
     }
-  }, [hasNextPage, fetchNextPage, data])
+  }, [hasNextPage, fetchNextPage])
 
   // Flatten all pages into a single array
   const allInstructors: InstructorItem[] = useMemo(() => {
@@ -123,6 +123,11 @@ const InstructorSelect = ({ selectedIds, onChange }: InstructorSelectProps) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const handleBlur = () => {
+    // Timeout allows click events on dropdown items to register before closing
+    setTimeout(() => setIsOpen(false), 150)
+  }
+
   if (isLoading) {
     return <p className="text-sm text-secondary-500">Loading instructors...</p>
   }
@@ -148,6 +153,7 @@ const InstructorSelect = ({ selectedIds, onChange }: InstructorSelectProps) => {
               <button
                 type="button"
                 onClick={() => removeInstructor(inst.id)}
+                aria-label={`Remove ${inst.first_name} ${inst.last_name}`}
                 className="ml-0.5 text-primary-500 hover:text-primary-700"
               >
                 &#x2715;
@@ -167,18 +173,26 @@ const InstructorSelect = ({ selectedIds, onChange }: InstructorSelectProps) => {
           setHighlightIndex(-1)
         }}
         onFocus={() => setIsOpen(true)}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         className={inputClass}
         placeholder="Search instructors..."
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+        aria-activedescendant={highlightIndex >= 0 ? `instructor-option-${filtered[highlightIndex]?.id}` : undefined}
       />
 
       {/* Dropdown */}
       {isOpen && filtered.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+        <div role="listbox" className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
           {filtered.map((inst, idx) => (
             <button
               key={inst.id}
               type="button"
+              role="option"
+              aria-selected={idx === highlightIndex}
+              id={`instructor-option-${inst.id}`}
               onClick={() => selectInstructor(inst.id)}
               className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary-50 transition-colors ${
                 idx === highlightIndex ? 'bg-primary-100' : ''
