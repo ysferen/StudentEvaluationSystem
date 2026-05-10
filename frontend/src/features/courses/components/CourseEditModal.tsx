@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import Modal from '../../../shared/components/ui/Modal'
 import { useCoreCoursesPartialUpdate } from '../../../shared/api/generated/core/core'
 import type { Course } from '../../../shared/api/model'
+import InstructorSelect from './InstructorSelect'
 
 interface CourseEditModalProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
   const [name, setName] = useState(course.name)
   const [code, setCode] = useState(course.code)
   const [credits, setCredits] = useState<number | ''>(course.credits ?? 3)
+  const [instructorIds, setInstructorIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const updateMutation = useCoreCoursesPartialUpdate({
@@ -37,6 +39,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
       setName(course.name)
       setCode(course.code)
       setCredits(course.credits ?? '')
+      setInstructorIds((course.instructors as Array<{ id: number }>)?.map(i => i.id) ?? [])
       setError(null)
     }
   }, [isOpen, course])
@@ -59,10 +62,11 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
       data: {
         name: name.trim(),
         code: code.trim(),
-        credits: credits === '' ? undefined : Number(credits)
+        credits: credits === '' ? undefined : Number(credits),
+        instructor_ids: instructorIds
       }
     })
-  }, [name, code, credits, course.id, updateMutation])
+  }, [name, code, credits, instructorIds, course.id, updateMutation])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Course" size="md">
@@ -106,6 +110,11 @@ const CourseEditModal: React.FC<CourseEditModalProps> = React.memo(({
             min={0}
           />
         </div>
+
+        <InstructorSelect
+          selectedIds={instructorIds}
+          onChange={setInstructorIds}
+        />
 
         <div className="flex justify-end gap-3 pt-2">
           <button
