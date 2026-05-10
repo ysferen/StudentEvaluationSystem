@@ -6,6 +6,7 @@ transformation, and representation for API responses. Each serializer correspond
 to a specific model and defines how it is serialized/deserialized.
 """
 
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from core.models import (
     Course,
@@ -30,6 +31,8 @@ from core.models import (
 from users.models import InstructorProfile, ProgramHeadProfile
 from typing import List, Dict, Any, Optional
 from drf_spectacular.utils import extend_schema_field
+
+User = get_user_model()
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -182,6 +185,13 @@ class CourseSerializer(serializers.ModelSerializer):
     program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
     term_id = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all(), source="term", write_only=True)
     instructors = serializers.SerializerMethodField()
+    instructor_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=User.objects.filter(role="instructor"),
+        source="instructors",
+        write_only=True,
+        required=False,
+    )
 
     class Meta:
         model = Course
@@ -196,6 +206,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "term_id",
             "course_template_id",
             "instructors",
+            "instructor_ids",
             "created_at",
         ]
         read_only_fields = ["course_template_id"]
