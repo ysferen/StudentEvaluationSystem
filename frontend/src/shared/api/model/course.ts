@@ -42,6 +42,11 @@ export interface Course {
   readonly term: Term;
   program_id: number;
   term_id: number;
+  /**
+   * Template this course was cloned from (if any)
+   * @nullable
+   */
+  readonly course_template_id: number | null;
   /** Get instructor details including name and title.
 
 Args:

@@ -26,5 +26,6 @@ export interface PatchedCoreLearningOutcome {
   code?: string;
   description?: string;
   readonly course?: Course;
+  course_id?: number;
   readonly created_at?: string;
 }

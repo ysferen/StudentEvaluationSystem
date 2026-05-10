@@ -303,6 +303,16 @@ const CourseDetail = () => {
     enabled: !!courseId
   })
 
+  const assignments = (gradesData as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }> })?.assignments || []
+
+  const assignmentsById = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }>()
+    for (const assignment of assignments) {
+      map.set(assignment.id, assignment)
+    }
+    return map
+  }, [assignments])
+
   const { data: enrollmentsData, error: enrollmentsError } = useQuery({
     queryKey: ['enrollments', courseId],
     queryFn: async () => {
@@ -970,7 +980,7 @@ const CourseDetail = () => {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 mb-4">
+<div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setAssessmentChartView('radar')}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -1002,8 +1012,10 @@ const CourseDetail = () => {
             Heatmap
           </button>
         </div>
-        {assessmentRadarData.length > 0 ? (
+{assessmentRadarData.length > 0 || assignments.length > 0 ? (
           <>
+            {assessmentRadarData.length > 0 && (
+              <>
             {assessmentChartView === 'radar' && (
               <ChartWidget
                 title=""
@@ -1189,15 +1201,19 @@ const CourseDetail = () => {
                 {[0, 25, 50, 75, 100].map((val) => (
                   <div key={val} className="flex items-center gap-1">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
-                    <span className="text-xs text-secondary-600 tabular-nums">{val}</span>
+                    <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
                   </div>
                 ))}
               </div>
             )}
+</>
+            )}
+            {assessmentRadarData.length > 0 ? (
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
               {assessmentRadarData.map((a) => {
                 const score = a.avg
-                const assessData = assessmentHeatmap.assessments.find(am => am.id === a.id)
+                const assignmentData = assignmentsById.get(a.id)
+                const editTarget = assignmentData || { id: a.id, name: a.name }
                 return (
                   <div key={a.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
                     <div className="flex items-center justify-between mb-2">
@@ -1208,12 +1224,12 @@ const CourseDetail = () => {
                         {score}%
                       </span>
                     </div>
-                    {assessEditMode && assessData && (
+                    {assessEditMode && (
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            setAssessEditTarget({ id: assessData.id, name: assessData.name })
+                            setAssessEditTarget(editTarget)
                           }}
                           className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
                           title="Edit"
@@ -1225,7 +1241,7 @@ const CourseDetail = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            setAssessDeleteTarget({ id: assessData.id, name: assessData.name })
+                            setAssessDeleteTarget({ id: editTarget.id, name: editTarget.name })
                           }}
                           className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-danger-100 hover:text-danger-700 transition-colors"
                           title="Delete"
@@ -1240,6 +1256,46 @@ const CourseDetail = () => {
                 )
               })}
             </div>
+) : (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {assignments.map((a) => (
+                <div key={a.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs truncate max-w-[200px]">{a.name}</span>
+                    <span className="text-xs text-secondary-400">0%</span>
+                  </div>
+                  {assessEditMode && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAssessEditTarget(a)
+                        }}
+                        className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
+                        title="Edit"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAssessDeleteTarget({ id: a.id, name: a.name })
+                        }}
+                        className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-danger-100 hover:text-danger-700 transition-colors"
+                        title="Delete"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            )}
           </>
         ) : (
           <p className="text-secondary-500 text-center py-4">No assessments defined for this course</p>

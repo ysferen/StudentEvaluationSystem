@@ -36,4 +36,5 @@ export interface CustomUser {
   /** Designates whether the user can log into this admin site. */
   is_staff?: boolean;
   readonly date_joined: string;
+  readonly permissions: string;
 }

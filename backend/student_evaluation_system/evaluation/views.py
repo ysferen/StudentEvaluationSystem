@@ -360,6 +360,16 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        course_id = request.query_params.get("course")
+        if course_id:
+            assessments = Assessment.objects.filter(course_id=course_id).values(
+                "id", "name", "assessment_type", "total_score", "weight", "date"
+            )
+            response.data["assignments"] = list(assessments)
+        return response
+
     def perform_create(self, serializer):
         """After creating a grade, recalculate scores."""
         grade = serializer.save()

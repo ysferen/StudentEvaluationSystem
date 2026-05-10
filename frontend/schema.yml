@@ -11051,6 +11051,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/Course'
           readOnly: true
+        course_id:
+          type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -11058,6 +11061,7 @@ components:
       required:
       - code
       - course
+      - course_id
       - created_at
       - description
       - id
@@ -11109,6 +11113,11 @@ components:
         term_id:
           type: integer
           writeOnly: true
+        course_template_id:
+          type: integer
+          nullable: true
+          description: Template this course was cloned from (if any)
+          readOnly: true
         instructors:
           type: array
           items:
@@ -11133,6 +11142,7 @@ components:
           readOnly: true
       required:
       - code
+      - course_template_id
       - created_at
       - id
       - instructors
@@ -11310,10 +11320,14 @@ components:
           type: string
           format: date-time
           readOnly: true
+        permissions:
+          type: string
+          readOnly: true
       required:
       - date_joined
       - department
       - id
+      - permissions
       - university
       - username
     DegreeLevel:
@@ -12198,6 +12212,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/Course'
           readOnly: true
+        course_id:
+          type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -12250,6 +12267,11 @@ components:
         term_id:
           type: integer
           writeOnly: true
+        course_template_id:
+          type: integer
+          nullable: true
+          description: Template this course was cloned from (if any)
+          readOnly: true
         instructors:
           type: array
           items:
@@ -12416,6 +12438,9 @@ components:
         date_joined:
           type: string
           format: date-time
+          readOnly: true
+        permissions:
+          type: string
           readOnly: true
     PatchedDegreeLevel:
       type: object

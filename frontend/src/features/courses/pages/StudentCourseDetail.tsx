@@ -88,6 +88,10 @@ const StudentCourseDetail = () => {
   const course = useMemo(() => courseQuery.data || null, [courseQuery.data])
   const loScores = useMemo(() => loScoresQuery.data?.results || [], [loScoresQuery.data])
   const studentGrades = useMemo(() => gradesQuery.data?.results || [], [gradesQuery.data])
+  const assignments = useMemo(() => {
+    const data = gradesQuery.data as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; date?: string }> } | undefined
+    return data?.assignments || []
+  }, [gradesQuery.data])
   const learningOutcomes = useMemo(() => {
     const data = learningOutcomesQuery.data
     return Array.isArray(data) ? data : [] as CoreLearningOutcome[]
@@ -374,6 +378,26 @@ const StudentCourseDetail = () => {
                 })}
               </div>
             </>
+) : assignments.length > 0 ? (
+            <div className="space-y-4">
+              {assignments.map((a) => (
+                <Card key={a.id} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-medium text-gray-900">{a.name}</p>
+                        <p className="text-sm text-gray-500">
+                          Weight: {((a.weight || 0) * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-4 text-right">
+                    <p className="text-2xl font-bold text-primary-600">0</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
           ) : (
             <Card className="text-center py-12">
               <ChartBarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
