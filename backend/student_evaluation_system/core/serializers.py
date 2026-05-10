@@ -294,6 +294,34 @@ class BulkLOPOMappingSerializer(serializers.Serializer):
     deletes = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
 
 
+class BulkPermissionItem(serializers.Serializer):
+    """Single permission item in a bulk permission update request."""
+
+    resource_area = serializers.CharField()
+    permission_tier = serializers.CharField()
+
+
+class BulkInstructorPermissionSerializer(serializers.Serializer):
+    """Bulk update payload for instructor permissions."""
+
+    instructor_id = serializers.IntegerField()
+    permissions = BulkPermissionItem(many=True)
+
+
+class BulkPermissionUpdateItem(serializers.Serializer):
+    """Single permission update item with ID for bulk partial updates."""
+
+    id = serializers.IntegerField()
+    permission_tier = serializers.CharField(required=False)
+    resource_area = serializers.CharField(required=False)
+
+
+class BulkPermissionUpdateSerializer(serializers.Serializer):
+    """Bulk partial update payload for instructor permissions - sends only changed items."""
+
+    updates = BulkPermissionUpdateItem(many=True)
+
+
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
     """
     Serializer for StudentLearningOutcomeScore model.
