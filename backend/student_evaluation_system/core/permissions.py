@@ -465,12 +465,23 @@ class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):
     def has_permission(self, request: Request, _view: ViewType) -> bool:
         if not request.user or not request.user.is_authenticated:
             return False
-        if request.user.is_admin_user or request.user.is_instructor:
+        if request.user.is_admin_user or request.user.is_instructor or request.user.is_program_head:
             return True
         return request.user.is_student and request.method in SAFE_METHODS
 
     def has_object_permission(self, request: Request, _view: ViewType, obj: Any) -> bool:
         if request.user.is_admin_user:
+            return True
+
+        # Program heads have access to enrollments in their program's courses
+        if request.user.is_program_head:
+            course = getattr(obj, "course", None)
+            if course and hasattr(course, "program_id"):
+                try:
+                    head_program = request.user.program_head_profile.program
+                    return course.program_id == head_program.id
+                except Exception:
+                    return False
             return True
 
         if request.user.is_instructor:

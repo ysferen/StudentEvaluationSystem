@@ -1,13 +1,18 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
-import { coreCoursesRetrieve } from '../../../shared/api/generated/core/core'
+import { useParams, useNavigate } from 'react-router-dom'
+import { coreCoursesRetrieve, useCoreCoursesDestroy } from '../../../shared/api/generated/core/core'
 import { coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
 import FileUploadModal from '../components/FileUploadModal'
 import MappingEditor from '../components/MappingEditor'
+import CourseEditModal from '../components/CourseEditModal'
+
+import ConfirmDialog from '../../../shared/components/ui/ConfirmDialog'
+import Modal from '../../../shared/components/ui/Modal'
+import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
-import { evaluationGradesList } from '../../../shared/api/generated/evaluation/evaluation'
+import { evaluationGradesList, evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
 import { Card } from '../../../shared/components/ui/Card'
 import { ChartWidget } from '../../../shared/components/ui/ChartWidget'
 import {
@@ -50,6 +55,13 @@ interface CourseDetailQueryData {
   loScores: StudentLearningOutcomeScore[]
 }
 
+interface StudentDetail {
+  name: string
+  overallScore: number
+  assessmentScores: { name: string; score: number }[]
+  loScores: { code: string; score: number }[]
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -69,11 +81,37 @@ const getInstructorName = (instructor: CourseInstructorsItem): string => {
   return 'Unknown Instructor'
 }
 
+const getQuantile = (arr: number[], q: number): number => {
+  const pos = (arr.length - 1) * q
+  const base = Math.floor(pos)
+  const rest = pos - base
+  if (arr[base + 1] !== undefined) {
+    return arr[base] + rest * (arr[base + 1] - arr[base])
+  }
+  return arr[base]
+}
+
 const CourseDetail = () => {
   const { id: courseId } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
   const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
-  const [loChartView, setLoChartView] = useState<'radar' | 'boxplot'>('radar')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [loChartView, setLoChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
+  const [assessmentChartView, setAssessmentChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
+  const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
+
+  const canEdit = user?.permissions?.includes('courses.change_course') ?? false
+  const canDelete = user?.permissions?.includes('courses.delete_course') ?? false
+
+  const deleteMutation = useCoreCoursesDestroy()
+
+  const handleDeleteConfirm = useCallback(async () => {
+    await deleteMutation.mutateAsync({ id: Number(courseId) })
+    navigate('/courses')
+  }, [courseId, deleteMutation, navigate])
 
   useEffect(() => {
     if (isMappingEditorOpen) {
@@ -153,16 +191,6 @@ const CourseDetail = () => {
       const min = loScoresFiltered[0]
       const max = loScoresFiltered[n - 1]
       const mean = loScoresFiltered.reduce((sum, val) => sum + val, 0) / n
-
-      const getQuantile = (arr: number[], q: number): number => {
-        const pos = (arr.length - 1) * q
-        const base = Math.floor(pos)
-        const rest = pos - base
-        if (arr[base + 1] !== undefined) {
-          return arr[base] + rest * (arr[base + 1] - arr[base])
-        }
-        return arr[base]
-      }
 
       const q1 = getQuantile(loScoresFiltered, 0.25)
       const median = getQuantile(loScoresFiltered, 0.5)
@@ -251,6 +279,16 @@ const CourseDetail = () => {
     enabled: !!courseId
   })
 
+  const { data: enrollmentsData, error: enrollmentsError } = useQuery({
+    queryKey: ['enrollments', courseId],
+    queryFn: async () => {
+      if (!courseId) return { results: [] }
+      const resp = await evaluationEnrollmentsList({ course: Number(courseId) })
+      return resp
+    },
+    enabled: !!courseId
+  })
+
   const assessmentHeatmap = useMemo((): AssessmentHeatmapData => {
     const results = gradesData?.results || []
     if (results.length === 0) return { assessments: [], students: [] }
@@ -288,6 +326,96 @@ const CourseDetail = () => {
     }
 
     return { assessments, students }
+  }, [gradesData])
+
+  const studentDataMap = useMemo(() => {
+    const map = new Map<string, StudentDetail>()
+
+    for (const grade of gradesData?.results || []) {
+      const name = grade.student.replace(/ \([^)]+\)$/, '')
+      if (!map.has(name)) {
+        map.set(name, { name, loScores: [], assessmentScores: [], overallScore: 0 })
+      }
+      const entry = map.get(name)!
+      const total = grade.assessment.total_score ?? 100
+      const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
+      entry.assessmentScores.push({ name: grade.assessment.name, score: pct })
+    }
+
+    for (const student of heatmapData.students) {
+      if (!map.has(student.studentName)) {
+        map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: 0 })
+      }
+      const entry = map.get(student.studentName)!
+      entry.loScores = Object.entries(student.loScores).map(([code, score]) => ({ code, score }))
+    }
+
+    for (const entry of map.values()) {
+      const scores = entry.assessmentScores.map(s => s.score)
+      entry.overallScore = scores.length > 0
+        ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+        : 0
+    }
+
+    return map
+  }, [gradesData, heatmapData])
+
+  const assessmentRadarData = useMemo(() => {
+    const results = gradesData?.results || []
+    const map = new Map<number, { name: string; scores: number[] }>()
+    for (const grade of results) {
+      const aId = grade.assessment.id
+      if (!map.has(aId)) {
+        map.set(aId, { name: grade.assessment.name, scores: [] })
+      }
+      const total = grade.assessment.total_score ?? 100
+      const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
+      map.get(aId)!.scores.push(pct)
+    }
+    return Array.from(map.values()).map(a => ({
+      id: Array.from(map.keys()).find(k => map.get(k) === a) || 0,
+      name: a.name,
+      avg: a.scores.length > 0 ? Math.round((a.scores.reduce((s, v) => s + v, 0) / a.scores.length) * 10) / 10 : 0
+    }))
+  }, [gradesData])
+
+  const assessmentBoxPlotData = useMemo((): BoxPlotData[] => {
+    const results = gradesData?.results || []
+    const grouped = new Map<number, number[]>()
+    const names = new Map<number, string>()
+    for (const grade of results) {
+      const aId = grade.assessment.id
+      if (!grouped.has(aId)) grouped.set(aId, [])
+      const total = grade.assessment.total_score ?? 100
+      grouped.get(aId)!.push(total > 0 ? (grade.score / total) * 100 : 0)
+      names.set(aId, grade.assessment.name)
+    }
+
+    return Array.from(grouped.entries()).map(([id, scores]) => {
+      const sorted = [...scores].sort((a: number, b: number) => a - b)
+      if (sorted.length === 0) {
+        return {
+          code: names.get(id) || String(id),
+          min: 0, q1: 0, median: 0, q3: 0, max: 0, mean: 0
+        }
+      }
+      const n = sorted.length
+      const min = sorted[0]
+      const max = sorted[n - 1]
+      const mean = sorted.reduce((sum, val) => sum + val, 0) / n
+      const q1 = getQuantile(sorted, 0.25)
+      const median = getQuantile(sorted, 0.5)
+      const q3 = getQuantile(sorted, 0.75)
+      return {
+        code: names.get(id) || String(id),
+        min: Math.round(min * 100) / 100,
+        q1: Math.round(q1 * 100) / 100,
+        median: Math.round(median * 100) / 100,
+        q3: Math.round(q3 * 100) / 100,
+        max: Math.round(max * 100) / 100,
+        mean: Math.round(mean * 100) / 100
+      }
+    })
   }, [gradesData])
 
   const getHeatmapColor = (score: number): string => {
@@ -328,6 +456,13 @@ const CourseDetail = () => {
     return 'rgb(255, 255, 255)'
   }
 
+  const handleStudentClick = useCallback((studentName: string) => {
+    const info = studentDataMap.get(studentName)
+    if (info) {
+      setSelectedStudent(info)
+    }
+  }, [studentDataMap])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -362,16 +497,42 @@ const CourseDetail = () => {
           <h1 className="text-2xl font-bold text-secondary-900">
             {data.course.code} - {data.course.name}
           </h1>
+          <div className="flex items-center gap-2 mt-2">
+            {canEdit && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="bg-secondary-100 text-secondary-700 px-3 py-1.5 rounded-lg hover:bg-secondary-200 flex items-center space-x-1.5 transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                <span>Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => setIsDeleteConfirmOpen(true)}
+                className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                <span>Delete</span>
+              </button>
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => setIsFileUploadModalOpen(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <span>Import File</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsFileUploadModalOpen(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span>Import File</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -438,6 +599,24 @@ const CourseDetail = () => {
           </button>
         </div>
         <div className="flex items-center gap-2 mb-4">
+          {canEdit && (
+            <button className="bg-secondary-100 text-secondary-700 px-3 py-1.5 rounded-lg hover:bg-secondary-200 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              <span>Edit</span>
+            </button>
+          )}
+          {canDelete && (
+            <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              <span>Delete</span>
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setLoChartView('radar')}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -458,10 +637,20 @@ const CourseDetail = () => {
           >
             Box Plot
           </button>
+          <button
+            onClick={() => setLoChartView('heatmap')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              loChartView === 'heatmap'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Heatmap
+          </button>
         </div>
         {data.learningOutcomes && data.learningOutcomes.length > 0 ? (
           <>
-            {loChartView === 'radar' ? (
+            {loChartView === 'radar' && (
               <ChartWidget
                 title=""
                 type="radar"
@@ -508,7 +697,8 @@ const CourseDetail = () => {
                 height={320}
                 className="shadow-none border-0 p-0 [&>div]:p-0"
               />
-            ) : (
+            )}
+            {loChartView === 'boxplot' && (
               <div className="space-y-6">
                 {boxPlotData.length > 0 ? (
                   boxPlotData.map((box) => {
@@ -573,6 +763,51 @@ const CourseDetail = () => {
                 )}
               </div>
             )}
+            {loChartView === 'heatmap' && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-secondary-100">
+                      <th className="sticky left-0 bg-secondary-100 px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-r border-secondary-200 z-10 min-w-[120px] max-w-[180px]">
+                        Student
+                      </th>
+                      {heatmapData.loCodes.map((loCode) => (
+                        <th key={loCode} className="px-2 py-1.5 text-center text-xs font-semibold text-secondary-700 border-b border-secondary-200 min-w-[60px]">
+                          {loCode}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {heatmapData.students.map((student, idx) => (
+                      <tr
+                        key={student.studentId}
+                        className={`cursor-pointer hover:bg-secondary-100/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}`}
+                        onClick={() => handleStudentClick(student.studentName)}
+                      >
+                        <td className="sticky left-0 px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-r border-secondary-200 truncate min-w-[120px] max-w-[180px]" style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafbfa' }}>
+                          {student.studentName}
+                        </td>
+                        {heatmapData.loCodes.map((loCode) => {
+                          const score = student.loScores[loCode] ?? 0
+                          const bgColor = getHeatmapColor(score)
+                          const textColor = getTextColor(score)
+                          return (
+                            <td
+                              key={loCode}
+                              className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
+                              style={{ backgroundColor: bgColor, color: textColor }}
+                            >
+                              {score > 0 ? score.toFixed(1) : '−'}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             {boxPlotData.length > 0 && loChartView === 'boxplot' && (
               <div className="mt-5 pt-4 border-t border-secondary-100">
                 <div className="flex items-center justify-center gap-5 text-xs text-secondary-500">
@@ -620,116 +855,323 @@ const CourseDetail = () => {
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold text-secondary-900 mb-4">Student Performance Heatmap</h2>
-        {heatmapData.students.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-secondary-100">
-                  <th className="sticky left-0 bg-secondary-100 px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-r border-secondary-200 z-10 min-w-[120px] max-w-[180px]">
-                    Student
-                  </th>
-                  {heatmapData.loCodes.map((loCode) => (
-                    <th key={loCode} className="px-2 py-1.5 text-center text-xs font-semibold text-secondary-700 border-b border-secondary-200 min-w-[60px]">
-                      {loCode}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {heatmapData.students.map((student, idx) => (
-                  <tr key={student.studentId} className={idx % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
-                    <td className="sticky left-0 px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-r border-secondary-200 truncate min-w-[120px] max-w-[180px]" style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafbfa' }}>
-                      {student.studentName}
-                    </td>
-                    {heatmapData.loCodes.map((loCode) => {
-                      const score = student.loScores[loCode] ?? 0
-                      const bgColor = getHeatmapColor(score)
-                      const textColor = getTextColor(score)
-                      return (
-                        <td
-                          key={loCode}
-                          className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
-                          style={{ backgroundColor: bgColor, color: textColor }}
-                        >
-                          {score > 0 ? score.toFixed(1) : '−'}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <h2 className="text-xl font-bold text-secondary-900 mb-2">Assessments</h2>
+        <div className="flex items-center gap-2 mb-4">
+          {canEdit && (
+              <button className="bg-secondary-100 text-secondary-700 px-3 py-1.5 rounded-lg hover:bg-secondary-200 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                <span>Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                <span>Delete</span>
+              </button>
+            )}
           </div>
-        ) : (
-          <p className="text-secondary-500 text-center py-8">No student performance data available</p>
-        )}
-        {heatmapData.students.length > 0 && (
-          <div className="mt-4 flex items-center justify-center gap-1">
-            {[0, 25, 50, 75, 100].map((val) => (
-              <div key={val} className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
-                <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setAssessmentChartView('radar')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'radar'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Radar
+          </button>
+          <button
+            onClick={() => setAssessmentChartView('boxplot')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'boxplot'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Box Plot
+          </button>
+          <button
+            onClick={() => setAssessmentChartView('heatmap')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'heatmap'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Heatmap
+          </button>
+        </div>
+        {assessmentRadarData.length > 0 ? (
+          <>
+            {assessmentChartView === 'radar' && (
+              <ChartWidget
+                title=""
+                type="radar"
+                series={[{
+                  name: 'Average Score',
+                  data: assessmentRadarData.map(a => a.avg)
+                }]}
+                options={{
+                  xaxis: {
+                    categories: assessmentRadarData.map(a => a.name)
+                  },
+                  yaxis: {
+                    show: false,
+                    min: 0,
+                    max: 100
+                  },
+                  fill: {
+                    opacity: 0.3,
+                    colors: ['#6366f1']
+                  },
+                  stroke: {
+                    colors: ['#6366f1']
+                  },
+                  colors: ['#6366f1'],
+                  markers: {
+                    size: 4
+                  },
+                  dataLabels: {
+                    enabled: true,
+                    background: {
+                      enabled: true,
+                      borderRadius: 2,
+                    }
+                  },
+                  plotOptions: {
+                    radar: {
+                      polygons: {
+                        strokeColors: '#e5e7eb',
+                        connectorColors: '#e5e7eb',
+                      }
+                    }
+                  }
+                }}
+                height={320}
+                className="shadow-none border-0 p-0 [&>div]:p-0"
+              />
+            )}
+            {assessmentChartView === 'boxplot' && (
+              <div className="space-y-6">
+                {assessmentBoxPlotData.length > 0 ? (
+                  assessmentBoxPlotData.map((box) => {
+                    const W = 500
+                    const PAD = 12
+                    const scale = W / 100
+                    const x = (v: number) => PAD + v * scale
+
+                    const getBoxColor = (median: number) => {
+                      if (median >= 80) return { stroke: '#15803d', fill: '#bbf7d0', whisker: '#4ade80' }
+                      if (median >= 60) return { stroke: '#a16207', fill: '#fef08a', whisker: '#facc15' }
+                      return { stroke: '#b91c1c', fill: '#fecaca', whisker: '#f87171' }
+                    }
+                    const c = getBoxColor(box.median)
+
+                    return (
+                      <div key={box.code}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-semibold text-secondary-800">{box.code}</span>
+                          <div className="flex items-center gap-3 text-xs text-secondary-500 tabular-nums">
+                            <span>Min <span className="font-semibold text-secondary-700">{box.min}</span></span>
+                            <span>Q1 <span className="font-semibold text-secondary-700">{box.q1}</span></span>
+                            <span>Med <span className="font-semibold text-secondary-700">{box.median}</span></span>
+                            <span>Q3 <span className="font-semibold text-secondary-700">{box.q3}</span></span>
+                            <span>Max <span className="font-semibold text-secondary-700">{box.max}</span></span>
+                          </div>
+                        </div>
+                        <svg width="100%" viewBox={`0 0 ${W + PAD * 2} 44`} preserveAspectRatio="none" className="overflow-visible">
+                          <rect x={PAD} y={19} width={W} height={2} rx={1} fill="#f3f4f6" />
+                          <line x1={x(box.min)} y1={20} x2={x(box.q1)} y2={20} stroke="#9ca3af" strokeWidth={1.5} />
+                          <line x1={x(box.q3)} y1={20} x2={x(box.max)} y2={20} stroke="#9ca3af" strokeWidth={1.5} />
+                          <line x1={x(box.min)} y1={12} x2={x(box.min)} y2={28} stroke="#6b7280" strokeWidth={2} strokeLinecap="round" />
+                          <line x1={x(box.max)} y1={12} x2={x(box.max)} y2={28} stroke="#6b7280" strokeWidth={2} strokeLinecap="round" />
+                          <rect
+                            x={x(box.q1)} y={8} width={x(box.q3) - x(box.q1)} height={24}
+                            fill={c.fill}
+                            stroke={c.stroke}
+                            strokeWidth={2}
+                            rx={4}
+                          />
+                          <line
+                            x1={x(box.median)} y1={6} x2={x(box.median)} y2={34}
+                            stroke={c.stroke} strokeWidth={3} strokeLinecap="round"
+                          />
+                          <polygon
+                            points={`${x(box.mean)},${14} ${x(box.mean) + 5},${20} ${x(box.mean)},${26} ${x(box.mean) - 5},${20}`}
+                            fill="#4f46e5"
+                            stroke="#fff"
+                            strokeWidth={1.5}
+                          />
+                          {[0, 25, 50, 75, 100].map((tick) => (
+                            <text key={tick} x={x(tick)} y={42} fontSize={10} textAnchor="middle" fill="#9ca3af" fontFamily="ui-monospace, monospace">
+                              {tick}
+                            </text>
+                          ))}
+                        </svg>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <p className="text-secondary-500 text-center py-4">No data available</p>
+                )}
               </div>
-            ))}
-          </div>
+            )}
+            {assessmentChartView === 'boxplot' && assessmentBoxPlotData.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-secondary-100">
+                <div className="flex items-center justify-center gap-5 text-xs text-secondary-500">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-3 rounded border-2 border-emerald-700 bg-emerald-200" />
+                    <span>IQR (Q1–Q3)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-0.5 h-4 bg-secondary-800 rounded-full" />
+                    <span>Median</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 bg-indigo-600 rotate-45 rounded-[1px]" />
+                    <span>Mean</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-0.5 h-3 bg-gray-400 rounded-full mx-1" />
+                    <span>Whiskers (Min–Max)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {assessmentChartView === 'heatmap' && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-secondary-100">
+                      <th className="sticky left-0 bg-secondary-100 px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-r border-secondary-200 z-10 min-w-[120px] max-w-[180px]">
+                        Student
+                      </th>
+                      {assessmentHeatmap.assessments.map((a) => (
+                        <th key={a.id} className="px-2 py-1.5 text-center text-xs font-semibold text-secondary-700 border-b border-secondary-200 min-w-[60px]">
+                          <div className="truncate max-w-[80px]" title={a.name}>{a.name}</div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assessmentHeatmap.students.map((student, idx) => (
+                      <tr
+                        key={idx}
+                        className={`cursor-pointer hover:bg-secondary-100/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}`}
+                        onClick={() => handleStudentClick(student.name)}
+                      >
+                        <td className="sticky left-0 px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-r border-secondary-200 truncate min-w-[120px] max-w-[180px]" style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafbfa' }}>
+                          {student.name}
+                        </td>
+                        {assessmentHeatmap.assessments.map((a) => {
+                          const pct = student.scores[a.id] ?? 0
+                          const bgColor = getHeatmapColor(pct)
+                          const textColor = getTextColor(pct)
+                          return (
+                            <td
+                              key={a.id}
+                              className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
+                              style={{ backgroundColor: bgColor, color: textColor }}
+                            >
+                              {pct > 0 ? pct.toFixed(1) : '−'}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {assessmentChartView === 'heatmap' && assessmentHeatmap.students.length > 0 && (
+              <div className="mt-4 flex items-center justify-center gap-1">
+                {[0, 25, 50, 75, 100].map((val) => (
+                  <div key={val} className="flex items-center gap-1">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
+                    <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {assessmentRadarData.map((a) => {
+                const score = a.avg
+                return (
+                  <div key={a.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs truncate max-w-[200px]">{a.name}</span>
+                      <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                        score >= 80 ? 'bg-emerald-100 text-emerald-700' : score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                      }`}>
+                        {score}%
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <p className="text-secondary-500 text-center py-4">No assessments defined for this course</p>
         )}
       </Card>
 
       <Card>
-        <h2 className="text-xl font-bold text-secondary-900 mb-4">Assessment Scores</h2>
-        {assessmentHeatmap.students.length > 0 ? (
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-secondary-900">Students</h2>
+          <div className="flex items-center gap-2">
+            <button className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Enroll</span>
+            </button>
+            <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+              <span>Unenroll</span>
+            </button>
+          </div>
+        </div>
+        {enrollmentsError ? (
+          <p className="text-secondary-500 text-center py-8">You do not have permission to view enrolled students.</p>
+        ) : (enrollmentsData?.results || []).length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-secondary-100">
-                  <th className="sticky left-0 bg-secondary-100 px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-r border-secondary-200 z-10 min-w-[120px] max-w-[180px]">
-                    Student
-                  </th>
-                  {assessmentHeatmap.assessments.map((a) => (
-                    <th key={a.id} className="px-2 py-1.5 text-center text-xs font-semibold text-secondary-700 border-b border-secondary-200 min-w-[60px]">
-                      <div className="truncate max-w-[80px]" title={a.name}>{a.name}</div>
-                    </th>
-                  ))}
+                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Student Name</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Current Score</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Enrollment Term</th>
                 </tr>
               </thead>
               <tbody>
-                {assessmentHeatmap.students.map((student, idx) => (
-                  <tr key={idx} className={`hover:bg-secondary-100/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}`}>
-                    <td className="sticky left-0 px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-r border-secondary-200 truncate min-w-[120px] max-w-[180px]" style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafbfa' }}>
-                      {student.name}
-                    </td>
-                    {assessmentHeatmap.assessments.map((a) => {
-                      const pct = student.scores[a.id] ?? 0
-                      const bgColor = getHeatmapColor(pct)
-                      const textColor = getTextColor(pct)
-                      return (
-                        <td
-                          key={a.id}
-                          className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
-                          style={{ backgroundColor: bgColor, color: textColor }}
-                        >
-                          {pct > 0 ? pct.toFixed(1) : '−'}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
+                {(enrollmentsData?.results || []).map((enrollment, idx) => {
+                  const studentName = enrollment.student.replace(/ \([^)]+\)$/, '')
+                  const info = studentDataMap.get(studentName)
+                  return (
+                    <tr
+                      key={enrollment.id}
+                      className={`cursor-pointer hover:bg-secondary-100/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}`}
+                      onClick={() => handleStudentClick(studentName)}
+                    >
+                      <td className="px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-secondary-200">{studentName}</td>
+                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 0}%</td>
+                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{data?.course?.term?.name ?? '—'}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-secondary-500 text-center py-8">No assessment data available</p>
-        )}
-        {assessmentHeatmap.students.length > 0 && (
-          <div className="mt-4 flex items-center justify-center gap-1">
-            {[0, 25, 50, 75, 100].map((val) => (
-              <div key={val} className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
-                <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
-              </div>
-            ))}
-          </div>
+          <p className="text-secondary-500 text-center py-8">No students enrolled in this course</p>
         )}
       </Card>
 
@@ -774,6 +1216,88 @@ const CourseDetail = () => {
         </div>,
         document.body
       )}
+
+      <CourseEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        course={data.course}
+        onSuccess={refetch}
+      />
+
+
+
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Course"
+        message="Are you sure you want to delete this course? This action cannot be undone."
+        confirmLabel="Yes, delete"
+        isConfirming={deleteMutation.isPending}
+        variant="danger"
+      />
+
+      <Modal
+        isOpen={!!selectedStudent}
+        onClose={() => setSelectedStudent(null)}
+        title={selectedStudent?.name || ''}
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div>
+            <p className="text-sm text-secondary-600 font-medium">Overall Course Score</p>
+            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 0}%</p>
+          </div>
+
+          {selectedStudent && selectedStudent.assessmentScores.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-secondary-800 mb-2">Assessment Scores</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-secondary-100">
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedStudent.assessmentScores.map((as, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
+                        <td className="px-2 py-1.5 text-sm text-secondary-900 border-b border-secondary-200">{as.name}</td>
+                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{as.score}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {selectedStudent && selectedStudent.loScores.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-secondary-800 mb-2">Learning Outcome Scores</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-secondary-100">
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Learning Outcome</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedStudent.loScores.map((ls, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
+                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-900 border-b border-secondary-200">{ls.code}</td>
+                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{ls.score}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useQuery, useQueries } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '../../../shared/components/ui/Card'
+import CourseCreateModal from '../components/CourseCreateModal'
 import {
   BookOpenIcon,
   AcademicCapIcon,
@@ -63,6 +64,7 @@ const InstructorCourses = () => {
   const navigate = useNavigate()
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const { data: termsData } = useQuery({
     queryKey: ['terms'],
@@ -183,7 +185,10 @@ const InstructorCourses = () => {
             </SelectContent>
           </Select>
           {canCreateCourse && (
-            <button className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
+            >
               <PlusIcon className="h-5 w-5" />
               <span>New Course</span>
             </button>
@@ -302,13 +307,25 @@ const InstructorCourses = () => {
           <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses assigned</h3>
           <p className="text-secondary-500 mb-6">You haven't been assigned to any courses yet.</p>
           {canCreateCourse && (
-            <button className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors"
+            >
               <PlusIcon className="h-5 w-5" />
               <span>Create Course</span>
             </button>
           )}
         </Card>
       )}
+
+      <CourseCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          // Refetch courses list after creation
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

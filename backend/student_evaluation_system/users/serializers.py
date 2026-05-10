@@ -14,6 +14,83 @@ class CustomUserSerializer(serializers.ModelSerializer):
     university_id = serializers.PrimaryKeyRelatedField(
         queryset=University.objects.all(), source="university", write_only=True, required=False, allow_null=True
     )
+    permissions = serializers.SerializerMethodField()
+
+    def get_permissions(self, obj):
+        """Return effective permission codenames for the user.
+
+        Combines Django's built-in permissions with synthesized permissions
+        derived from the instructor permission tier system. This allows the
+        frontend to check for standard codenames like
+        ``courses.change_course`` even when the backend uses tier-based
+        access control.
+        """
+        from core.models import ResourceArea
+        from core.permissions import get_instructor_permission_tier
+
+        perms = set(obj.get_all_permissions())
+
+        # Mapping from resource area code to the singular model name used in
+        # Django-style permission codenames (e.g. ``courses`` → ``course``).
+        MODEL_SUFFIX = {
+            "courses": "course",
+            "programs": "program",
+            "learning_outcomes": "learningoutcome",
+            "program_outcomes": "programoutcome",
+            "students": "student",
+            "lo_po_weights": "learningoutcomeprogramoutcomemapping",
+            "assessment_lo_weights": "assessmentlearningoutcomemapping",
+            "assessments": "assessment",
+            "course_templates": "coursetemplate",
+        }
+
+        for area_code, _area_label in ResourceArea.choices:
+            tier = get_instructor_permission_tier(obj, area_code)
+            model = MODEL_SUFFIX.get(area_code, area_code)
+
+            if tier in ("view", "edit", "full"):
+                perms.add(f"{area_code}.view_{model}")
+            if tier in ("edit", "full"):
+                perms.add(f"{area_code}.change_{model}")
+            if tier == "full":
+                perms.add(f"{area_code}.delete_{model}")
+                perms.add(f"{area_code}.add_{model}")
+
+        # Also translate real Django permissions (e.g. ``core.change_course``)
+        # into the resource-area format (``courses.change_course``) so that
+        # superusers and staff users with explicit Django permissions are
+        # recognised by the frontend checks.
+        DJANGO_TO_RESOURCE = {
+            "core.add_course": "courses.add_course",
+            "core.change_course": "courses.change_course",
+            "core.delete_course": "courses.delete_course",
+            "core.view_course": "courses.view_course",
+            "core.add_program": "programs.add_program",
+            "core.change_program": "programs.change_program",
+            "core.delete_program": "programs.delete_program",
+            "core.view_program": "programs.view_program",
+            "core.add_learningoutcome": "learning_outcomes.add_learningoutcome",
+            "core.change_learningoutcome": "learning_outcomes.change_learningoutcome",
+            "core.delete_learningoutcome": "learning_outcomes.delete_learningoutcome",
+            "core.view_learningoutcome": "learning_outcomes.view_learningoutcome",
+            "core.add_programoutcome": "program_outcomes.add_programoutcome",
+            "core.change_programoutcome": "program_outcomes.change_programoutcome",
+            "core.delete_programoutcome": "program_outcomes.delete_programoutcome",
+            "core.view_programoutcome": "program_outcomes.view_programoutcome",
+            "evaluation.add_assessment": "assessments.add_assessment",
+            "evaluation.change_assessment": "assessments.change_assessment",
+            "evaluation.delete_assessment": "assessments.delete_assessment",
+            "evaluation.view_assessment": "assessments.view_assessment",
+            "core.add_coursetemplate": "course_templates.add_coursetemplate",
+            "core.change_coursetemplate": "course_templates.change_coursetemplate",
+            "core.delete_coursetemplate": "course_templates.delete_coursetemplate",
+            "core.view_coursetemplate": "course_templates.view_coursetemplate",
+        }
+        for django_perm, resource_perm in DJANGO_TO_RESOURCE.items():
+            if django_perm in perms:
+                perms.add(resource_perm)
+
+        return sorted(perms)
 
     class Meta:
         model = CustomUser
@@ -31,8 +108,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "date_joined",
+            "permissions",
         ]
-        read_only_fields = ["id", "date_joined"]
+        read_only_fields = ["id", "date_joined", "permissions"]
 
 
 class UserSerializer(serializers.ModelSerializer):
