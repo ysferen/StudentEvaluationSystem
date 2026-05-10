@@ -1,18 +1,20 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import { coreCoursesRetrieve, useCoreCoursesDestroy } from '../../../shared/api/generated/core/core'
-import { coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
+import { coreLearningOutcomesList, coreLearningOutcomesDestroy } from '../../../shared/api/generated/outcomes/outcomes'
 import FileUploadModal from '../components/FileUploadModal'
 import MappingEditor from '../components/MappingEditor'
 import CourseEditModal from '../components/CourseEditModal'
+import CreateEditLOModal from '../components/CreateEditLOModal'
+import CreateEditAssessmentModal from '../components/CreateEditAssessmentModal'
 
-import ConfirmDialog from '../../../shared/components/ui/ConfirmDialog'
+import ConfirmDeleteModal from '../../../shared/components/ui/ConfirmDeleteModal'
 import Modal from '../../../shared/components/ui/Modal'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
-import { evaluationGradesList, evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
+import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
 import { Card } from '../../../shared/components/ui/Card'
 import { ChartWidget } from '../../../shared/components/ui/ChartWidget'
 import {
@@ -106,12 +108,30 @@ const CourseDetail = () => {
   const canEdit = user?.permissions?.includes('courses.change_course') ?? false
   const canDelete = user?.permissions?.includes('courses.delete_course') ?? false
 
+  // LO section state
+  const [loEditMode, setLoEditMode] = useState(false)
+  const [loCreateModalOpen, setLoCreateModalOpen] = useState(false)
+  const [loEditTarget, setLoEditTarget] = useState<CoreLearningOutcome | null>(null)
+  const [loDeleteTarget, setLoDeleteTarget] = useState<CoreLearningOutcome | null>(null)
+
+  // Assessment section state
+  const [assessEditMode, setAssessEditMode] = useState(false)
+  const [assessCreateModalOpen, setAssessCreateModalOpen] = useState(false)
+  const [assessEditTarget, setAssessEditTarget] = useState<{ id: number; name: string; assessment_type?: string; weight?: number; description?: string; total_score?: number } | null>(null)
+  const [assessDeleteTarget, setAssessDeleteTarget] = useState<{ id: number; name: string } | null>(null)
+
+  const queryClient = useQueryClient()
   const deleteMutation = useCoreCoursesDestroy()
 
   const handleDeleteConfirm = useCallback(async () => {
     await deleteMutation.mutateAsync({ id: Number(courseId) })
-    navigate('/courses')
-  }, [courseId, deleteMutation, navigate])
+    // Invalidate courses list caches so the list refreshes after redirect
+    queryClient.invalidateQueries({ queryKey: ['head-courses'] })
+    queryClient.invalidateQueries({ queryKey: ['instructor-courses'] })
+    queryClient.invalidateQueries({ queryKey: ['student-courses'] })
+    navigate(user?.role === 'program_head' ? '/head/courses' :
+      user?.role === 'instructor' ? '/instructor/courses' : '/courses')
+  }, [courseId, deleteMutation, navigate, queryClient, user?.role])
 
   useEffect(() => {
     if (isMappingEditorOpen) {
@@ -138,6 +158,10 @@ const CourseDetail = () => {
       }
     }
   })
+
+  // Course template ID — used for template-based LO/Assessment creation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const courseTemplateId: number | null = (data as any)?.course?.course_template_id ?? null
 
   const handleUploadComplete = () => {
     refetch()
@@ -463,6 +487,26 @@ const CourseDetail = () => {
     }
   }, [studentDataMap])
 
+  const handleLODelete = useCallback(async () => {
+    if (loDeleteTarget) {
+      try {
+        await coreLearningOutcomesDestroy(loDeleteTarget.id)
+        setLoDeleteTarget(null)
+        refetch()
+      } catch { /* error handled silently */ }
+    }
+  }, [loDeleteTarget, refetch])
+
+  const handleAssessmentDelete = useCallback(async () => {
+    if (assessDeleteTarget) {
+      try {
+        await evaluationAssessmentsDestroy(assessDeleteTarget.id)
+        setAssessDeleteTarget(null)
+        refetch()
+      } catch { /* error handled silently */ }
+    }
+  }, [assessDeleteTarget, refetch])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -567,7 +611,7 @@ const CourseDetail = () => {
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Avg Score</p>
-              <p className={`text-3xl font-bold ${scoreTextColor}`}>{avgScore}%</p>
+              <p className={`text-3xl font-bold ${scoreTextColor}`}>{avgScore}</p>
             </div>
           </div>
         </Card>
@@ -600,19 +644,29 @@ const CourseDetail = () => {
         </div>
         <div className="flex items-center gap-2 mb-4">
           {canEdit && (
-            <button className="bg-secondary-100 text-secondary-700 px-3 py-1.5 rounded-lg hover:bg-secondary-200 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+            <button
+              onClick={() => setLoEditMode(!loEditMode)}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-colors text-sm ${
+                loEditMode
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
+                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+              }`}
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
               </svg>
               <span>Edit</span>
             </button>
           )}
-          {canDelete && (
-            <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+          {canEdit && (
+            <button
+              onClick={() => setLoCreateModalOpen(true)}
+              className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span>Delete</span>
+              <span>Create</span>
             </button>
           )}
         </div>
@@ -808,6 +862,16 @@ const CourseDetail = () => {
                 </table>
               </div>
             )}
+            {loChartView === 'heatmap' && heatmapData.students.length > 0 && (
+              <div className="mt-4 flex items-center justify-center gap-1">
+                {[0, 25, 50, 75, 100].map((val) => (
+                  <div key={val} className="flex items-center gap-1">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
+                    <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {boxPlotData.length > 0 && loChartView === 'boxplot' && (
               <div className="mt-5 pt-4 border-t border-secondary-100">
                 <div className="flex items-center justify-center gap-5 text-xs text-secondary-500">
@@ -834,7 +898,7 @@ const CourseDetail = () => {
               {data.learningOutcomes.map((lo) => {
                 const score = getLOPerformance(lo.code)
                 return (
-                  <div key={lo.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm">
+                  <div key={lo.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.code}</span>
                       <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
@@ -844,6 +908,28 @@ const CourseDetail = () => {
                       </span>
                     </div>
                     <span className="text-secondary-700 text-sm leading-snug">{lo.description}</span>
+                    {loEditMode && (
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setLoEditTarget(lo) }}
+                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
+                          title="Edit"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setLoDeleteTarget(lo) }}
+                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-danger-100 hover:text-danger-700 transition-colors"
+                          title="Delete"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -858,22 +944,32 @@ const CourseDetail = () => {
         <h2 className="text-xl font-bold text-secondary-900 mb-2">Assessments</h2>
         <div className="flex items-center gap-2 mb-4">
           {canEdit && (
-              <button className="bg-secondary-100 text-secondary-700 px-3 py-1.5 rounded-lg hover:bg-secondary-200 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-                <span>Edit</span>
-              </button>
-            )}
-            {canDelete && (
-              <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-                <span>Delete</span>
-              </button>
-            )}
-          </div>
+            <button
+              onClick={() => setAssessEditMode(!assessEditMode)}
+              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-colors text-sm ${
+                assessEditMode
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
+                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              <span>Edit</span>
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => setAssessCreateModalOpen(true)}
+              className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Create</span>
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setAssessmentChartView('radar')}
@@ -1093,7 +1189,7 @@ const CourseDetail = () => {
                 {[0, 25, 50, 75, 100].map((val) => (
                   <div key={val} className="flex items-center gap-1">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: getHeatmapColor(val) }} />
-                    <span className="text-xs text-secondary-600 tabular-nums">{val}%</span>
+                    <span className="text-xs text-secondary-600 tabular-nums">{val}</span>
                   </div>
                 ))}
               </div>
@@ -1101,8 +1197,9 @@ const CourseDetail = () => {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
               {assessmentRadarData.map((a) => {
                 const score = a.avg
+                const assessData = assessmentHeatmap.assessments.find(am => am.id === a.id)
                 return (
-                  <div key={a.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm">
+                  <div key={a.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs truncate max-w-[200px]">{a.name}</span>
                       <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
@@ -1111,6 +1208,34 @@ const CourseDetail = () => {
                         {score}%
                       </span>
                     </div>
+                    {assessEditMode && assessData && (
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setAssessEditTarget({ id: assessData.id, name: assessData.name })
+                          }}
+                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
+                          title="Edit"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setAssessDeleteTarget({ id: assessData.id, name: assessData.name })
+                          }}
+                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-danger-100 hover:text-danger-700 transition-colors"
+                          title="Delete"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -1162,7 +1287,7 @@ const CourseDetail = () => {
                       onClick={() => handleStudentClick(studentName)}
                     >
                       <td className="px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-secondary-200">{studentName}</td>
-                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 0}%</td>
+                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 0}</td>
                       <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{data?.course?.term?.name ?? '—'}</td>
                     </tr>
                   )
@@ -1226,15 +1351,71 @@ const CourseDetail = () => {
 
 
 
-      <ConfirmDialog
+      <ConfirmDeleteModal
         isOpen={isDeleteConfirmOpen}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
         title="Delete Course"
-        message="Are you sure you want to delete this course? This action cannot be undone."
-        confirmLabel="Yes, delete"
+        itemName={`${data.course.code} - ${data.course.name}`}
+        confirmText={data.course.code}
+        inputLabel="course code"
         isConfirming={deleteMutation.isPending}
-        variant="danger"
+      />
+
+      {/* LO modals */}
+      <CreateEditLOModal
+        isOpen={loCreateModalOpen}
+        onClose={() => setLoCreateModalOpen(false)}
+        onSuccess={() => { setLoCreateModalOpen(false); refetch() }}
+        mode="create"
+        courseId={Number(courseId)}
+        courseTemplateId={courseTemplateId}
+      />
+      <CreateEditLOModal
+        isOpen={!!loEditTarget}
+        onClose={() => setLoEditTarget(null)}
+        onSuccess={() => { setLoEditTarget(null); refetch() }}
+        mode="edit"
+        courseId={Number(courseId)}
+        courseTemplateId={courseTemplateId}
+        existingLo={loEditTarget ? { id: loEditTarget.id, code: loEditTarget.code, description: loEditTarget.description } : null}
+      />
+      <ConfirmDeleteModal
+        isOpen={!!loDeleteTarget}
+        onClose={() => setLoDeleteTarget(null)}
+        onConfirm={handleLODelete}
+        title="Delete Learning Outcome"
+        itemName={loDeleteTarget?.code ?? ''}
+        confirmText={loDeleteTarget?.code ?? ''}
+        inputLabel="LO code"
+      />
+
+      {/* Assessment modals */}
+      <CreateEditAssessmentModal
+        isOpen={assessCreateModalOpen}
+        onClose={() => setAssessCreateModalOpen(false)}
+        onSuccess={() => { setAssessCreateModalOpen(false); refetch() }}
+        mode="create"
+        courseId={Number(courseId)}
+        courseTemplateId={courseTemplateId}
+      />
+      <CreateEditAssessmentModal
+        isOpen={!!assessEditTarget}
+        onClose={() => setAssessEditTarget(null)}
+        onSuccess={() => { setAssessEditTarget(null); refetch() }}
+        mode="edit"
+        courseId={Number(courseId)}
+        courseTemplateId={courseTemplateId}
+        existingAssessment={assessEditTarget}
+      />
+      <ConfirmDeleteModal
+        isOpen={!!assessDeleteTarget}
+        onClose={() => setAssessDeleteTarget(null)}
+        onConfirm={handleAssessmentDelete}
+        title="Delete Assessment"
+        itemName={assessDeleteTarget?.name ?? ''}
+        confirmText={assessDeleteTarget?.name ?? ''}
+        inputLabel="assessment name"
       />
 
       <Modal
@@ -1246,7 +1427,7 @@ const CourseDetail = () => {
         <div className="space-y-6">
           <div>
             <p className="text-sm text-secondary-600 font-medium">Overall Course Score</p>
-            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 0}%</p>
+            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 0}</p>
           </div>
 
           {selectedStudent && selectedStudent.assessmentScores.length > 0 && (
@@ -1264,7 +1445,7 @@ const CourseDetail = () => {
                     {selectedStudent.assessmentScores.map((as, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
                         <td className="px-2 py-1.5 text-sm text-secondary-900 border-b border-secondary-200">{as.name}</td>
-                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{as.score}%</td>
+                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{as.score}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1288,7 +1469,7 @@ const CourseDetail = () => {
                     {selectedStudent.loScores.map((ls, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
                         <td className="px-2 py-1.5 text-sm font-mono text-secondary-900 border-b border-secondary-200">{ls.code}</td>
-                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{ls.score}%</td>
+                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{ls.score}</td>
                       </tr>
                     ))}
                   </tbody>

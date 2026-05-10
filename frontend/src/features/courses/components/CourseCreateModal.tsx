@@ -1,15 +1,18 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import Modal from '../../../shared/components/ui/Modal'
 import {
   useCoreCoursesCreate,
   useCoreCoursesPartialUpdate,
   useCoreCourseTemplatesList,
   useCoreCourseTemplatesInstantiateCreate,
+  useCoreCourseTemplatesCreate,
   useCoreProgramsList,
   useCoreTermsList,
   useCoreTermsActiveRetrieve
 } from '../../../shared/api/generated/core/core'
+import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 import { useAuth } from '../../auth/hooks/useAuth'
+import type { CourseTemplate } from '../../../shared/api/model'
 
 interface CourseCreateModalProps {
   isOpen: boolean
@@ -35,12 +38,25 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
   const [courseTemplateId, setCourseTemplateId] = useState<number | ''>('')
   const [error, setError] = useState<string | null>(null)
   const [showTemplatePrompt, setShowTemplatePrompt] = useState(false)
+  const [templatePromptCourse, setTemplatePromptCourse] = useState<{
+    name: string; code: string; credits: number | undefined; program_id: number
+  } | null>(null)
+
+  // Fetch program head's program stats to resolve program for "My program" option
+  const { data: statsData } = useCoreAnalyticsProgramStatsRetrieve({
+    query: { enabled: isOpen && user?.role === 'program_head' }
+  })
 
   const myProgramId = useMemo(() => {
+    // For program heads, the program comes from the analytics stats endpoint
+    if (user?.role === 'program_head') {
+      return statsData?.programs?.[0]?.id ?? null
+    }
+    // For other user types, try legacy nested profile fields (may not exist)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const u = user as any
     return u?.program_head_profile?.program_id ?? u?.student_profile?.program_id ?? null
-  }, [user])
+  }, [user, statsData])
 
   const { data: activeTerm } = useCoreTermsActiveRetrieve({
     query: { enabled: isOpen && termOption === 'active' }
@@ -49,6 +65,18 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
   const { data: templatesData } = useCoreCourseTemplatesList(undefined, {
     query: { enabled: isOpen && flowType === 'template' }
   })
+
+  // Auto-populate name/code/credits when a template is selected
+  useEffect(() => {
+    if (flowType === 'template' && courseTemplateId !== '' && templatesData?.results) {
+      const template = templatesData.results.find((t: CourseTemplate) => t.id === Number(courseTemplateId))
+      if (template) {
+        setName(template.name)
+        setCode(template.code)
+        setCredits(template.credits ?? 3)
+      }
+    }
+  }, [flowType, courseTemplateId, templatesData])
 
   const { data: programsData } = useCoreProgramsList(undefined, {
     query: { enabled: isOpen && programOption === 'select' }
@@ -60,9 +88,6 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
 
   const createMutation = useCoreCoursesCreate({
     mutation: {
-      onSuccess: () => {
-        setShowTemplatePrompt(true)
-      },
       onError: (err: unknown) => {
         setError(err instanceof Error ? err.message : 'Failed to create course')
       }
@@ -96,6 +121,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
 
   const patchMutation = useCoreCoursesPartialUpdate()
 
+  const templateCreateMutation = useCoreCourseTemplatesCreate()
+
   const handleClose = useCallback(() => {
     setFlowType('blank')
     setName('')
@@ -108,13 +135,28 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     setCourseTemplateId('')
     setError(null)
     setShowTemplatePrompt(false)
+    setTemplatePromptCourse(null)
     onClose()
   }, [onClose])
 
-  const handleTemplatePromptYes = useCallback(() => {
+  const handleTemplatePromptYes = useCallback(async () => {
+    if (templatePromptCourse) {
+      try {
+        await templateCreateMutation.mutateAsync({
+          data: {
+            name: templatePromptCourse.name,
+            code: templatePromptCourse.code,
+            credits: templatePromptCourse.credits,
+            program_id: templatePromptCourse.program_id
+          }
+        })
+      } catch {
+        // Silently fail template creation — course was already created
+      }
+    }
     onSuccess()
     handleClose()
-  }, [onSuccess, handleClose])
+  }, [onSuccess, handleClose, templatePromptCourse, templateCreateMutation])
 
   const handleTemplatePromptNo = useCallback(() => {
     onSuccess()
@@ -125,13 +167,15 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     e.preventDefault()
     setError(null)
 
-    if (!name.trim()) {
-      setError('Course name is required')
-      return
-    }
-    if (!code.trim()) {
-      setError('Course code is required')
-      return
+    if (flowType !== 'template') {
+      if (!name.trim()) {
+        setError('Course name is required')
+        return
+      }
+      if (!code.trim()) {
+        setError('Course code is required')
+        return
+      }
     }
 
     const resolvedProgramId = programOption === 'my_program' && myProgramId
@@ -162,6 +206,13 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
           term_id: resolvedTermId
         }
       })
+      setTemplatePromptCourse({
+        name: name.trim(),
+        code: code.trim(),
+        credits: credits === '' ? undefined : Number(credits),
+        program_id: resolvedProgramId
+      })
+      setShowTemplatePrompt(true)
     } else {
       if (courseTemplateId === '') {
         setError('Please select a course template')
@@ -257,7 +308,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className={inputClass}
+            disabled={flowType === 'template'}
+            className={`${inputClass} ${flowType === 'template' ? 'bg-secondary-50 cursor-not-allowed' : ''}`}
             placeholder="e.g., Introduction to Computer Science"
           />
         </div>
@@ -268,7 +320,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className={inputClass}
+            disabled={flowType === 'template'}
+            className={`${inputClass} ${flowType === 'template' ? 'bg-secondary-50 cursor-not-allowed' : ''}`}
             placeholder="e.g., CS101"
           />
         </div>
@@ -279,7 +332,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
             type="number"
             value={credits}
             onChange={(e) => setCredits(e.target.value === '' ? '' : Number(e.target.value))}
-            className={inputClass}
+            disabled={flowType === 'template'}
+            className={`${inputClass} ${flowType === 'template' ? 'bg-secondary-50 cursor-not-allowed' : ''}`}
             placeholder="e.g., 3"
             min={0}
           />

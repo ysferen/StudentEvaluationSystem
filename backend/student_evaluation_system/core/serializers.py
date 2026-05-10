@@ -185,7 +185,20 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ["id", "code", "name", "credits", "program", "term", "program_id", "term_id", "instructors", "created_at"]
+        fields = [
+            "id",
+            "code",
+            "name",
+            "credits",
+            "program",
+            "term",
+            "program_id",
+            "term_id",
+            "course_template_id",
+            "instructors",
+            "created_at",
+        ]
+        read_only_fields = ["course_template_id"]
 
     @extend_schema_field(List[Dict[str, Any]])
     def get_instructors(self, obj: Course) -> List[Dict[str, Any]]:
@@ -238,10 +251,11 @@ class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
     """
 
     course = CourseSerializer(read_only=True)
+    course_id = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), source="course", write_only=True)
 
     class Meta:
         model = LearningOutcome
-        fields = ["id", "code", "description", "course", "created_at"]
+        fields = ["id", "code", "description", "course", "course_id", "created_at"]
 
 
 class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer):
