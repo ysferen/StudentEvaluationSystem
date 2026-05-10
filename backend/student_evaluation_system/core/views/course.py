@@ -232,6 +232,18 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="course",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter LO-PO mappings by course ID",
+            ),
+        ]
+    )
+)
 class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
     """CRUD operations for LO-PO mappings."""
 
@@ -241,6 +253,15 @@ class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
     serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
     permission_classes = [AllowAny, InstructorPermissionMixin]
     resource_area = "lo_po_weights"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        course_id = self.request.query_params.get("course", None)
+
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+
+        return queryset
 
     @extend_schema(request=BulkLOPOMappingSerializer)
     @action(detail=False, methods=["post"])

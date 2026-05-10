@@ -22,7 +22,6 @@ from ..models import (
     Course,
     ProgramOutcome,
     LearningOutcome,
-    LearningOutcomeProgramOutcomeMapping,
     StudentLearningOutcomeScore,
     StudentProgramOutcomeScore,
 )
@@ -34,7 +33,6 @@ from ..serializers import (
     TermSerializer,
     ProgramOutcomeSerializer,
     CoreLearningOutcomeSerializer,
-    LearningOutcomeProgramOutcomeMappingSerializer,
     StudentLearningOutcomeScoreSerializer,
     StudentProgramOutcomeScoreSerializer,
     FileImportResponseSerializer,
@@ -268,37 +266,6 @@ class LearningOutcomeViewSet(viewsets.ModelViewSet):
 
     queryset = LearningOutcome.objects.select_related("course", "created_by").all()
     serializer_class = CoreLearningOutcomeSerializer
-    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        course_id = self.request.query_params.get("course", None)
-
-        if course_id:
-            queryset = queryset.filter(course_id=course_id)
-
-        return queryset
-
-
-@extend_schema_view(
-    list=extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="course",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                description="Filter LO-PO mappings by course ID",
-            ),
-        ]
-    )
-)
-class LearningOutcomeProgramOutcomeMappingViewSet(viewsets.ModelViewSet):
-    """CRUD operations for LO-PO mappings."""
-
-    queryset = LearningOutcomeProgramOutcomeMapping.objects.select_related(
-        "course", "learning_outcome", "program_outcome"
-    ).all()
-    serializer_class = LearningOutcomeProgramOutcomeMappingSerializer
     permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 
     def get_queryset(self):

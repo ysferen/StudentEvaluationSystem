@@ -365,7 +365,7 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         course_id = request.query_params.get("course")
         if course_id:
             assessments = Assessment.objects.filter(course_id=course_id).values(
-                "id", "name", "assessment_type", "total_score", "weight", "date"
+                "id", "name", "assessment_type", "total_score", "weight", "date", "description"
             )
             response.data["assignments"] = list(assessments)
         return response

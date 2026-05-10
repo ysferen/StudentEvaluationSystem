@@ -513,9 +513,10 @@ const CourseDetail = () => {
         await evaluationAssessmentsDestroy(assessDeleteTarget.id)
         setAssessDeleteTarget(null)
         refetch()
+        queryClient.invalidateQueries({ queryKey: ['grades', courseId] })
       } catch { /* error handled silently */ }
     }
-  }, [assessDeleteTarget, refetch])
+  }, [assessDeleteTarget, courseId, refetch, queryClient])
 
   if (isLoading) {
     return (
@@ -1391,7 +1392,7 @@ const CourseDetail = () => {
             <MappingEditor
               courseId={Number(courseId)}
               termId={data.course.term.id}
-              onClose={() => setIsMappingEditorOpen(false)}
+              onClose={() => { setIsMappingEditorOpen(false); queryClient.invalidateQueries({ queryKey: ['grades', courseId] }) }}
             />
           </div>
         </div>,
@@ -1450,7 +1451,7 @@ const CourseDetail = () => {
       <CreateEditAssessmentModal
         isOpen={assessCreateModalOpen}
         onClose={() => setAssessCreateModalOpen(false)}
-        onSuccess={() => { setAssessCreateModalOpen(false); refetch() }}
+        onSuccess={() => { setAssessCreateModalOpen(false); refetch(); queryClient.invalidateQueries({ queryKey: ['grades', courseId] }) }}
         mode="create"
         courseId={Number(courseId)}
         courseTemplateId={courseTemplateId}
@@ -1458,7 +1459,7 @@ const CourseDetail = () => {
       <CreateEditAssessmentModal
         isOpen={!!assessEditTarget}
         onClose={() => setAssessEditTarget(null)}
-        onSuccess={() => { setAssessEditTarget(null); refetch() }}
+        onSuccess={() => { setAssessEditTarget(null); refetch(); queryClient.invalidateQueries({ queryKey: ['grades', courseId] }) }}
         mode="edit"
         courseId={Number(courseId)}
         courseTemplateId={courseTemplateId}
