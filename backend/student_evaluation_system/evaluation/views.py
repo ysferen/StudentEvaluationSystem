@@ -599,20 +599,23 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         calculate_course_scores(enrollment.course_id)
 
     def perform_destroy(self, instance):
-        """After unenrolling, remove student's scores for this course."""
+        """After unenrolling, remove student's scores and grades for this course."""
         course_id = instance.course_id
         student_id = instance.student_id
         program_id = instance.course.program_id
         term_id = instance.course.term_id
 
         with transaction.atomic():
+            # Delete grades for this student in this course
+            StudentGrade.objects.filter(student_id=student_id, assessment__course_id=course_id).delete()
+
             # Delete LO scores for this student in this course
             StudentLearningOutcomeScore.objects.filter(student_id=student_id, learning_outcome__course_id=course_id).delete()
 
             # Delete the enrollment
             instance.delete()
 
-            # Recalculate PO scores (since removing course affects program-level scores)
+            # Recalculate PO scores
             calculate_student_po_scores(student_id, program_id, term_id)
 
     @action(detail=False, methods=["post"])
