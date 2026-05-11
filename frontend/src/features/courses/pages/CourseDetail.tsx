@@ -109,13 +109,11 @@ const CourseDetail = () => {
   const canDelete = user?.permissions?.includes('courses.delete_course') ?? false
 
   // LO section state
-  const [loEditMode, setLoEditMode] = useState(false)
   const [loCreateModalOpen, setLoCreateModalOpen] = useState(false)
   const [loEditTarget, setLoEditTarget] = useState<CoreLearningOutcome | null>(null)
   const [loDeleteTarget, setLoDeleteTarget] = useState<CoreLearningOutcome | null>(null)
 
   // Assessment section state
-  const [assessEditMode, setAssessEditMode] = useState(false)
   const [assessCreateModalOpen, setAssessCreateModalOpen] = useState(false)
   const [assessEditTarget, setAssessEditTarget] = useState<{ id: number; name: string; assessment_type?: string; weight?: number; description?: string; total_score?: number } | null>(null)
   const [assessDeleteTarget, setAssessDeleteTarget] = useState<{ id: number; name: string } | null>(null)
@@ -411,7 +409,7 @@ const CourseDetail = () => {
     return assignments.map(a => ({
       ...a,
       avg: avgMap.get(a.id) ?? 0,
-    }))
+    })).sort((a, b) => a.name.localeCompare(b.name))
   }, [assignments, assessmentRadarData])
 
   const assessmentBoxPlotData = useMemo((): BoxPlotData[] => {
@@ -655,21 +653,6 @@ const CourseDetail = () => {
           </button>
         </div>
         <div className="flex items-center gap-2 mb-4">
-          {canEdit && (
-            <button
-              onClick={() => setLoEditMode(!loEditMode)}
-              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-colors text-sm ${
-                loEditMode
-                  ? 'bg-primary-600 text-white hover:bg-primary-700'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              <span>Edit</span>
-            </button>
-          )}
           {canEdit && (
             <button
               onClick={() => setLoCreateModalOpen(true)}
@@ -920,7 +903,6 @@ const CourseDetail = () => {
                       </span>
                     </div>
                     <span className="text-secondary-700 text-sm leading-snug">{lo.description}</span>
-                    {loEditMode && (
                       <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); setLoEditTarget(lo) }}
@@ -941,8 +923,7 @@ const CourseDetail = () => {
                           </svg>
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
                 )
               })}
             </div>
@@ -955,21 +936,6 @@ const CourseDetail = () => {
       <Card>
         <h2 className="text-xl font-bold text-secondary-900 mb-2">Assessments</h2>
         <div className="flex items-center gap-2 mb-4">
-          {canEdit && (
-            <button
-              onClick={() => setAssessEditMode(!assessEditMode)}
-              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-colors text-sm ${
-                assessEditMode
-                  ? 'bg-primary-600 text-white hover:bg-primary-700'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              <span>Edit</span>
-            </button>
-          )}
           {canEdit && (
             <button
               onClick={() => setAssessCreateModalOpen(true)}
@@ -1229,7 +1195,6 @@ const CourseDetail = () => {
                     {a.description && (
                       <span className="text-secondary-700 text-sm leading-snug line-clamp-2">{a.description}</span>
                     )}
-                    {assessEditMode && (
                       <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
@@ -1256,8 +1221,7 @@ const CourseDetail = () => {
                           </svg>
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
                 )
               })}
             </div>
@@ -1298,7 +1262,7 @@ const CourseDetail = () => {
                 </tr>
               </thead>
               <tbody>
-                {(enrollmentsData?.results || []).map((enrollment, idx) => {
+                {(enrollmentsData?.results || []).sort((a, b) => a.student.localeCompare(b.student)).map((enrollment, idx) => {
                   const studentName = enrollment.student.replace(/ \([^)]+\)$/, '')
                   const info = studentDataMap.get(studentName)
                   return (
