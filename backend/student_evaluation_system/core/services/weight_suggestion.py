@@ -108,15 +108,23 @@ class WeightSuggester:
 
     @staticmethod
     def _normalize_scores(scores):
-        """Normalize similarity scores to 0-5 integer weights."""
+        """Normalize similarity scores to 0-5 integer weights.
+
+        Maps cosine similarity from [-1, 1] to [0, 1], applies a power
+        transform to spread mid-range values (higher power = more separation),
+        then scales to the 0-5 integer range. No min-max stretching is used
+        since it amplifies noise when all similarities are tightly clustered.
+        """
         scores = np.asarray(scores, dtype=np.float32)
+        # Cosine similarity [-1, 1] → [0, 1]
         scores = (scores + 1.0) / 2.0
         scores = np.clip(scores, 0.0, 1.0)
 
-        score_min = float(scores.min())
-        score_max = float(scores.max())
-        if score_max - score_min > 0.1:
-            scores = (scores - score_min) / (score_max - score_min)
+        # Power transform: higher values spread the middle range further.
+        # 2.0 → moderate separation, 3.0 → aggressive separation.
+        power = float(os.getenv("WEIGHT_SUGGESTION_POWER", "2.0"))
+        scores = np.power(scores, power)
 
         weights = np.rint(scores * 5.0).astype(int)
+        weights = np.clip(weights, 0, 5)
         return [int(weight) for weight in weights]
