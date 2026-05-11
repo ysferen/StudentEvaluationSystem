@@ -26,6 +26,31 @@ interface CreateEditAssessmentModalProps {
   } | null
 }
 
+type TemplateAssessment = {
+  id: number
+  name?: string
+  assessment_type?: string
+  weight?: number
+  description?: string
+  total_score?: number
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const isTemplateAssessment = (value: unknown): value is TemplateAssessment =>
+  isRecord(value) && typeof value.id === 'number'
+
+const extractTemplateAssessments = (value: unknown): TemplateAssessment[] => {
+  if (Array.isArray(value)) {
+    return value.filter(isTemplateAssessment)
+  }
+  if (isRecord(value) && Array.isArray(value.results)) {
+    return value.results.filter(isTemplateAssessment)
+  }
+  return []
+}
+
 const inputClass = 'block w-full rounded-xl border border-secondary-300 px-4 py-2.5 text-sm text-secondary-900 placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition'
 
 const CreateEditAssessmentModal: React.FC<CreateEditAssessmentModalProps> = ({
@@ -47,28 +72,25 @@ const CreateEditAssessmentModal: React.FC<CreateEditAssessmentModalProps> = ({
   const { data: templateAssessments } = useQuery({
     queryKey: ['template-assessments', courseTemplateId],
     queryFn: async () => {
-      if (!courseTemplateId) return { results: [] }
+      if (!courseTemplateId) return [] as TemplateAssessment[]
       try {
         const resp = await coreCourseTemplatesAssessmentsRetrieve(courseTemplateId)
-        return { results: (resp as any).results || resp }
+        return extractTemplateAssessments(resp)
       } catch {
-        return { results: [] }
+        return [] as TemplateAssessment[]
       }
     },
     enabled: isOpen && !!courseTemplateId && flowType === 'template',
   })
 
-  const templateItems = useMemo(() => {
-    const data = templateAssessments as any
-    const results = data?.results
-    if (Array.isArray(results)) return results
-    if (Array.isArray(data)) return data
-    return []
-  }, [templateAssessments])
+  const templateItems = useMemo(
+    () => templateAssessments ?? [],
+    [templateAssessments]
+  )
 
   useEffect(() => {
     if (flowType === 'template' && templateAssessmentId !== '' && templateItems.length > 0) {
-      const tpl = templateItems.find((t: any) => t.id === Number(templateAssessmentId))
+      const tpl = templateItems.find((t) => t.id === Number(templateAssessmentId))
       if (tpl) {
         setName(tpl.name || '')
         setAssessmentType(tpl.assessment_type || '')

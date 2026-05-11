@@ -3,8 +3,19 @@ import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthLogoutCreate,
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
 
-export interface AuthenticatedUser extends CustomUser {
+export type AuthenticatedUser = Omit<CustomUser, 'permissions'> & {
   permissions?: string[]
+}
+
+const normalizePermissions = (user: CustomUser): AuthenticatedUser => {
+  const raw = user.permissions
+  const permissions = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string'
+      ? raw.split(',').map((value) => value.trim()).filter(Boolean)
+      : undefined
+
+  return { ...user, permissions }
 }
 
 /**
@@ -118,7 +129,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
             queryKey: ['/api/users/auth/me/'],
             queryFn: () => usersAuthMeRetrieve(),
           })
-          setUser(userData as AuthenticatedUser)
+          setUser(normalizePermissions(userData))
         } catch {
           // If fetch fails, invalidate and let the query handle it
           queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
@@ -154,7 +165,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   useEffect(() => {
     // Update user state when user data is fetched
     if (currentUser) {
-      setUser(currentUser as AuthenticatedUser)
+      setUser(normalizePermissions(currentUser))
     }
 
     // Handle authentication errors by logging out

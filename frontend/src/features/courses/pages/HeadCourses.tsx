@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import {
@@ -41,6 +41,7 @@ function formatInstructorNames(
 
 const HeadCourses = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -256,7 +257,7 @@ const HeadCourses = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
           // Refetch courses list after creation
-          window.location.reload()
+          queryClient.invalidateQueries({ queryKey: ['head-courses'] })
         }}
       />
     </div>

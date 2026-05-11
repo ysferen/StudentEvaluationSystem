@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import CustomUser, StudentProfile, InstructorProfile, ProgramHeadProfile
 from core.models import Department, Program, Term, University
+from core.models import ResourceArea
+from core.permissions import get_instructor_permission_tier
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -25,9 +27,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         ``courses.change_course`` even when the backend uses tier-based
         access control.
         """
-        from core.models import ResourceArea
-        from core.permissions import get_instructor_permission_tier
-
         perms = set(obj.get_all_permissions())
 
         # Mapping from resource area code to the singular model name used in

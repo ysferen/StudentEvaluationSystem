@@ -101,12 +101,12 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
 
         updates = serializer.validated_data["updates"]
 
-        # Get IDs that the user has permission to update
+        # Build a queryset scoped to what the user can update.
         user = request.user
         if user.is_admin_user:
-            allowed_ids = set(InstructorPermission.objects.values_list("id", flat=True))
+            allowed_qs = InstructorPermission.objects
         elif user.is_program_head:
-            allowed_ids = set(self.queryset.filter(program_head__user=user).values_list("id", flat=True))
+            allowed_qs = self.queryset.filter(program_head__user=user)
         else:
             return Response(
                 {"detail": "You do not have permission to update permissions."},
@@ -117,13 +117,9 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
         updated_count = 0
         for update_item in updates:
             perm_id = update_item["id"]
-            if perm_id not in allowed_ids:
-                continue
-
             update_fields = {k: v for k, v in update_item.items() if k != "id" and v is not None}
             if update_fields:
-                InstructorPermission.objects.filter(id=perm_id).update(**update_fields)
-                updated_count += 1
+                updated_count += allowed_qs.filter(id=perm_id).update(**update_fields)
 
         # Return all permissions for the program head's scope
         perms = self.queryset

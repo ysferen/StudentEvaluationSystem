@@ -22,6 +22,7 @@ from core.serializers import (
     CourseTemplateAssessmentSerializer,
     CourseTemplateAssessmentLOMappingSerializer,
     CourseTemplateLOPOMappingSerializer,
+    InstantiateCourseTemplateSerializer,
 )
 from core.permissions import InstructorPermissionMixin
 from core.services.course_template import clone_course_from_template
@@ -56,7 +57,7 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         description="Create a new Course by cloning all template data into the given term.",
-        request=OpenApiTypes.OBJECT,
+        request=InstantiateCourseTemplateSerializer,
         responses={201: CourseSerializer},
     )
     @action(detail=True, methods=["post"])
@@ -69,9 +70,9 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
         """
         template = self.get_object()
 
-        term_id = request.data.get("term_id")
-        if not term_id:
-            return Response({"error": "term_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = InstantiateCourseTemplateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        term_id = serializer.validated_data["term_id"]
 
         try:
             term = Term.objects.get(pk=term_id)

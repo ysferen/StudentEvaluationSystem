@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { useQuery, useQueries } from '@tanstack/react-query'
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '../../../shared/components/ui/Card'
@@ -62,6 +62,7 @@ const getScoreTextColor = (score: number | null): string => {
 const InstructorCourses = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -323,7 +324,7 @@ const InstructorCourses = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
           // Refetch courses list after creation
-          window.location.reload()
+          queryClient.invalidateQueries({ queryKey: ['instructor-courses'] })
         }}
       />
     </div>

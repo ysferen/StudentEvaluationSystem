@@ -23,6 +23,28 @@ interface CreateEditLOModalProps {
   } | null
 }
 
+type TemplateLearningOutcome = {
+  id: number
+  code?: string
+  description?: string
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
+
+const isTemplateLearningOutcome = (value: unknown): value is TemplateLearningOutcome =>
+  isRecord(value) && typeof value.id === 'number'
+
+const extractTemplateLearningOutcomes = (value: unknown): TemplateLearningOutcome[] => {
+  if (Array.isArray(value)) {
+    return value.filter(isTemplateLearningOutcome)
+  }
+  if (isRecord(value) && Array.isArray(value.results)) {
+    return value.results.filter(isTemplateLearningOutcome)
+  }
+  return []
+}
+
 const inputClass = 'block w-full rounded-xl border border-secondary-300 px-4 py-2.5 text-sm text-secondary-900 placeholder-secondary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition'
 
 const CreateEditLOModal: React.FC<CreateEditLOModalProps> = ({
@@ -42,31 +64,27 @@ const CreateEditLOModal: React.FC<CreateEditLOModalProps> = ({
   const { data: templateLOs } = useQuery({
     queryKey: ['template-los', courseTemplateId],
     queryFn: async () => {
-      if (!courseTemplateId) return { results: [] }
+      if (!courseTemplateId) return [] as TemplateLearningOutcome[]
       try {
         const resp = await coreCourseTemplatesLearningOutcomesRetrieve(courseTemplateId)
-        // Response is actually a list of template LOs, not CourseTemplate
-        return { results: (resp as any).results || resp }
+        return extractTemplateLearningOutcomes(resp)
       } catch {
-        return { results: [] }
+        return [] as TemplateLearningOutcome[]
       }
     },
     enabled: isOpen && !!courseTemplateId && flowType === 'template',
   })
 
   // Get the list of templates
-  const templateLOItems = useMemo(() => {
-    const data = templateLOs as any
-    const results = data?.results
-    if (Array.isArray(results)) return results
-    if (Array.isArray(data)) return data
-    return []
-  }, [templateLOs])
+  const templateLOItems = useMemo(
+    () => templateLOs ?? [],
+    [templateLOs]
+  )
 
   // Auto-populate fields when template is selected
   useEffect(() => {
     if (flowType === 'template' && templateLoId !== '' && templateLOItems.length > 0) {
-      const tpl = templateLOItems.find((t: any) => t.id === Number(templateLoId))
+      const tpl = templateLOItems.find((t) => t.id === Number(templateLoId))
       if (tpl) {
         setCode(tpl.code || '')
         setDescription(tpl.description || '')

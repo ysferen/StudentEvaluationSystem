@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, Count, F, Sum, FloatField
+from django.db.models.functions import NullIf
 from django.db import transaction
 from django.utils import timezone
 
@@ -377,7 +378,7 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
             StudentGrade.objects.filter(assessment__course_id=course_id)
             .select_related("assessment")
             .annotate(
-                percentage=F("score") * 100.0 / F("assessment__total_score"),
+                percentage=F("score") * 100.0 / NullIf(F("assessment__total_score"), 0),
                 weight=F("assessment__weight"),
             )
         )

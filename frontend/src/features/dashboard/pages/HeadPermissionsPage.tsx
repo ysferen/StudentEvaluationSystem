@@ -12,8 +12,8 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   corePermissionsList,
+  corePermissionsBulkUpdatePartialUpdate,
 } from '../../../shared/api/generated/core/core'
-import { axiosInstance } from '../../../shared/api/mutator'
 import type { InstructorPermission } from '../../../shared/api/model'
 import {
   ResourceAreaEnum,
@@ -78,11 +78,7 @@ const HeadPermissionsPage = () => {
   const bulkPartialUpdateMutation = useMutation({
     mutationFn: async (data: { updates: { id: number; permission_tier: string }[] }) => {
       // PATCH /api/core/permissions/bulk-update/ - sends only changed permissions
-      const response = await axiosInstance.patch(
-        '/api/core/permissions/bulk-update/',
-        data
-      )
-      return response.data
+      return corePermissionsBulkUpdatePartialUpdate(data)
     },
     onSuccess: (newData) => {
       queryClient.invalidateQueries({ queryKey: ['permissions'] })
@@ -90,9 +86,9 @@ const HeadPermissionsPage = () => {
       setShowConfirmDialog(false)
       setErrorMessage(null)
       // Update working state with fresh data from server
-      if (newData) {
-        setInitialPermissions(clone(newData))
-        setWorkingPermissions(clone(newData))
+      if (newData?.results) {
+        setInitialPermissions(clone(newData.results))
+        setWorkingPermissions(clone(newData.results))
       }
     },
     onError: (error: Error) => {
