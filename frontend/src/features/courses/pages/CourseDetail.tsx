@@ -174,10 +174,8 @@ const CourseDetail = () => {
     return data.course.instructors.map(getInstructorName).join(', ')
   }
 
-  const getAverageScore = () => {
-    if (!data?.loScores || data.loScores.length === 0) return 0
-    const total = data.loScores.reduce((sum, score) => sum + (score.score ?? 0), 0)
-    return Math.round((total / data.loScores.length) * 100) / 100
+  const getAverageScore = (): number => {
+    return (gradesData as { course_average?: number })?.course_average ?? 0
   }
 
   const getLOPerformance = (loCode: string) => {

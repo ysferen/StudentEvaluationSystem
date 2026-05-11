@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Avg, Count, F, Sum, FloatField
+from django.db.models import Avg, Count, ExpressionWrapper, F, Sum, FloatField
 from django.db import transaction
 from django.utils import timezone
 
@@ -368,6 +368,19 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
                 "id", "name", "assessment_type", "total_score", "weight", "date", "description"
             )
             response.data["assignments"] = list(assessments)
+
+            # Compute the course-wide average from raw assessment grades
+            avg = (
+                StudentGrade.objects.filter(assessment__course_id=course_id)
+                .annotate(
+                    pct=ExpressionWrapper(
+                        F("score") * 100.0 / F("assessment__total_score"),
+                        output_field=FloatField(),
+                    )
+                )
+                .aggregate(avg=Avg("pct"))["avg"]
+            )
+            response.data["course_average"] = round(avg, 2) if avg is not None else 0
         return response
 
     def perform_create(self, serializer):
