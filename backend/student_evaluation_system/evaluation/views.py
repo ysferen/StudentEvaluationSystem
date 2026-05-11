@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Avg, Count, ExpressionWrapper, F, Sum, FloatField
+from django.db.models import Avg, Count, F, Sum, FloatField
 from django.db import transaction
 from django.utils import timezone
 
@@ -368,20 +368,32 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
                 "id", "name", "assessment_type", "total_score", "weight", "date", "description"
             )
             response.data["assignments"] = list(assessments)
-
-            # Compute the course-wide average from raw assessment grades
-            avg = (
-                StudentGrade.objects.filter(assessment__course_id=course_id)
-                .annotate(
-                    pct=ExpressionWrapper(
-                        F("score") * 100.0 / F("assessment__total_score"),
-                        output_field=FloatField(),
-                    )
-                )
-                .aggregate(avg=Avg("pct"))["avg"]
-            )
-            response.data["course_average"] = round(avg, 2) if avg is not None else 0
+            response.data["course_average"] = self._compute_weighted_average(course_id)
         return response
+
+    def _compute_weighted_average(self, course_id: str) -> float | None:
+        """Compute the weighted course average from assessment grades."""
+        grades = (
+            StudentGrade.objects.filter(assessment__course_id=course_id)
+            .select_related("assessment")
+            .annotate(
+                percentage=F("score") * 100.0 / F("assessment__total_score"),
+                weight=F("assessment__weight"),
+            )
+        )
+        if not grades.exists():
+            return None
+
+        aggregated = grades.aggregate(
+            weighted_sum=Sum(F("percentage") * F("weight"), output_field=FloatField()),
+            total_weight=Sum("weight"),
+        )
+        weighted_sum = aggregated["weighted_sum"] or 0
+        total_weight = aggregated["total_weight"] or 0
+
+        if total_weight > 0:
+            return round(weighted_sum / total_weight, 2)
+        return None
 
     def perform_create(self, serializer):
         """After creating a grade, recalculate scores."""
