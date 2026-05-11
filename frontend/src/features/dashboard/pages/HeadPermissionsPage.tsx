@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   corePermissionsList,
-  corePermissionsBulkUpdate,
+  corePermissionsBulkUpdatePartialUpdate,
 } from '../../../shared/api/generated/core/core'
 import type { InstructorPermission } from '../../../shared/api/model'
 import {
@@ -37,35 +37,75 @@ const PERMISSION_TIERS = [
   { value: PermissionTierEnum.full, label: 'Full Control', color: 'primary' as const },
 ]
 
+// Helper to clone arrays
+const clone = <T,>(arr: T[]): T[] => arr.map(item => ({ ...item }))
+
+// Compute diff between initial and working permissions
+const computeDiff = (
+  working: InstructorPermission[],
+  initial: InstructorPermission[]
+): { id: number; permission_tier: string }[] => {
+  const initialMap = new Map(initial.map(p => [p.id, p]))
+  return working
+    .filter(wp => {
+      const ip = initialMap.get(wp.id)
+      return ip && ip.permission_tier !== wp.permission_tier
+    })
+    .map(wp => ({
+      id: wp.id,
+      permission_tier: wp.permission_tier ?? 'view',
+    }))
+}
+
 const HeadPermissionsPage = () => {
   const queryClient = useQueryClient()
-  const [selectedInstructors, setSelectedInstructors] = useState<number[]>([])
   const [editMode, setEditMode] = useState(false)
-  const [pendingChanges, setPendingChanges] = useState<Record<string, PermissionTierEnum>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Initial state (frozen snapshot from server on modal open)
+  const [initialPermissions, setInitialPermissions] = useState<InstructorPermission[]>([])
+  // Working state (editable copy, all mutations applied here)
+  const [workingPermissions, setWorkingPermissions] = useState<InstructorPermission[]>([])
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['permissions'],
     queryFn: () => corePermissionsList({}),
   })
 
-  const bulkUpdateMutation = useMutation({
-    mutationFn: (permissions: InstructorPermission[]) =>
-      corePermissionsBulkUpdate(permissions as unknown as InstructorPermission),
-    onSuccess: () => {
+  const bulkPartialUpdateMutation = useMutation({
+    mutationFn: async (data: { updates: { id: number; permission_tier: string }[] }) => {
+      // PATCH /api/core/permissions/bulk-update/ - sends only changed permissions
+      return corePermissionsBulkUpdatePartialUpdate(data)
+    },
+    onSuccess: (newData) => {
       queryClient.invalidateQueries({ queryKey: ['permissions'] })
       setEditMode(false)
-      setPendingChanges({})
       setShowConfirmDialog(false)
       setErrorMessage(null)
+      // Update working state with fresh data from server
+      if (newData?.results) {
+        setInitialPermissions(clone(newData.results))
+        setWorkingPermissions(clone(newData.results))
+      }
     },
     onError: (error: Error) => {
       setErrorMessage(error.message || 'Failed to save permissions. Please try again.')
       setShowConfirmDialog(false)
     },
   })
+
+  // Initialize state when data loads
+  useEffect(() => {
+    if (data?.results && !hasInitialized) {
+      const perms = data.results as InstructorPermission[]
+      setInitialPermissions(clone(perms))
+      setWorkingPermissions(clone(perms))
+      setHasInitialized(true)
+    }
+  }, [data?.results, hasInitialized])
 
   useEffect(() => {
     if (errorMessage) {
@@ -74,7 +114,7 @@ const HeadPermissionsPage = () => {
     }
   }, [errorMessage])
 
-  const permissions = useMemo(() => data?.results || [], [data])
+  const permissions = useMemo(() => workingPermissions, [workingPermissions])
 
   const groupedPermissions = useMemo(() => {
     const groups: Record<string, InstructorPermission[]> = {}
@@ -103,69 +143,56 @@ const HeadPermissionsPage = () => {
     )
   }, [uniqueInstructors, searchQuery])
 
-  const handleSelectAll = () => {
-    if (selectedInstructors.length === filteredInstructors.length) {
-      setSelectedInstructors([])
-    } else {
-      setSelectedInstructors(filteredInstructors.map((p) => p.instructor_id))
-    }
-  }
+  // Compute which permissions have changed
+  const changedPermissions = useMemo(() => {
+    return computeDiff(workingPermissions, initialPermissions)
+  }, [workingPermissions, initialPermissions])
 
-  const handleSelectInstructor = (id: number) => {
-    setSelectedInstructors((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    )
-  }
+  const hasChanges = changedPermissions.length > 0
 
   const handleStartEdit = () => {
-    const changes: Record<string, PermissionTierEnum> = {}
-    permissions.forEach((p) => {
-      const key = `${p.instructor_id}-${p.resource_area}`
-      changes[key] = p.permission_tier || PermissionTierEnum.view
-    })
-    setPendingChanges(changes)
     setEditMode(true)
     setErrorMessage(null)
   }
 
   const handleCancelEdit = () => {
+    // Reset working to initial
+    setWorkingPermissions(clone(initialPermissions))
     setEditMode(false)
-    setPendingChanges({})
     setErrorMessage(null)
   }
 
   const handlePermissionChange = (
-    instructorId: number,
-    resourceArea: string,
+    permissionId: number,
     tier: PermissionTierEnum
   ) => {
-    const key = `${instructorId}-${resourceArea}`
-    setPendingChanges((prev) => ({ ...prev, [key]: tier }))
+    setWorkingPermissions(prev =>
+      prev.map(p =>
+        p.id === permissionId ? { ...p, permission_tier: tier } : p
+      )
+    )
+  }
+
+  // Handle column header click to change all instructors in that column
+  const handleColumnHeaderClick = (resourceArea: string, tier: PermissionTierEnum) => {
+    if (!editMode) return
+
+    setWorkingPermissions(prev =>
+      prev.map(p =>
+        p.resource_area === resourceArea ? { ...p, permission_tier: tier } : p
+      )
+    )
   }
 
   const handleSaveBulk = () => {
+    if (changedPermissions.length === 0) return
     setShowConfirmDialog(true)
   }
 
   const handleConfirmSave = () => {
-    const updates: InstructorPermission[] = []
-    Object.entries(pendingChanges).forEach(([key, tier]) => {
-      const [instructorId, resourceArea] = key.split('-')
-      const existing = permissions.find(
-        (p) =>
-          p.instructor_id === parseInt(instructorId) &&
-          p.resource_area === resourceArea
-      )
-      if (existing) {
-        updates.push({
-          ...existing,
-          permission_tier: tier,
-        })
-      }
+    bulkPartialUpdateMutation.mutate({
+      updates: changedPermissions,
     })
-    if (updates.length > 0) {
-      bulkUpdateMutation.mutate(updates)
-    }
   }
 
   const getPermissionTierBadgeVariant = (tier?: PermissionTierEnum) => {
@@ -218,11 +245,11 @@ const HeadPermissionsPage = () => {
               </button>
               <button
                 onClick={handleSaveBulk}
-                disabled={bulkUpdateMutation.isPending}
+                disabled={!hasChanges || bulkPartialUpdateMutation.isPending}
                 className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
                 <CheckIcon className="h-4 w-4" />
-                <span>{bulkUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
+                <span>{bulkPartialUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </>
           ) : (
@@ -257,7 +284,8 @@ const HeadPermissionsPage = () => {
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-bold text-secondary-900 mb-2">Confirm Permission Changes</h3>
             <p className="text-secondary-600 mb-6">
-              You are about to update {Object.keys(pendingChanges).length} permission{Object.keys(pendingChanges).length !== 1 ? 's' : ''}. This action will override the existing permission tiers for the selected instructors and resource areas.
+              You are about to update {changedPermissions.length} permission{changedPermissions.length !== 1 ? 's' : ''}.
+              {editMode && ' Click a column header while editing to change all instructors in that column.'}
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -268,10 +296,10 @@ const HeadPermissionsPage = () => {
               </button>
               <button
                 onClick={handleConfirmSave}
-                disabled={bulkUpdateMutation.isPending}
+                disabled={bulkPartialUpdateMutation.isPending}
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
-                {bulkUpdateMutation.isPending ? 'Saving...' : 'Confirm'}
+                {bulkPartialUpdateMutation.isPending ? 'Saving...' : 'Confirm'}
               </button>
             </div>
           </div>
@@ -349,17 +377,11 @@ const HeadPermissionsPage = () => {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-secondary-900">Permission Matrix</h2>
-          <div className="flex items-center space-x-2">
-            <label className="flex items-center space-x-2 text-sm text-secondary-600">
-              <input
-                type="checkbox"
-                checked={selectedInstructors.length === filteredInstructors.length && filteredInstructors.length > 0}
-                onChange={handleSelectAll}
-                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-              />
-              <span>Select All Instructors</span>
-            </label>
-          </div>
+          {editMode && (
+            <p className="text-sm text-secondary-500">
+              Click a column header to change all instructors in that column
+            </p>
+          )}
         </div>
 
         {permissions.length > 0 ? (
@@ -375,7 +397,22 @@ const HeadPermissionsPage = () => {
                       key={area.value}
                       className="text-center py-3 px-4 text-sm font-semibold text-secondary-900 min-w-[120px]"
                     >
-                      {area.label}
+                      {editMode ? (
+                        <select
+                          className="px-2 py-1 border border-secondary-300 rounded text-sm bg-transparent cursor-pointer hover:bg-secondary-100"
+                          onChange={(e) => handleColumnHeaderClick(area.value, e.target.value as PermissionTierEnum)}
+                          value=""
+                        >
+                          <option value="" disabled>{area.label}</option>
+                          {PERMISSION_TIERS.map((tier) => (
+                            <option key={tier.value} value={tier.value}>
+                              All: {tier.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        area.label
+                      )}
                     </th>
                   ))}
                 </tr>
@@ -387,39 +424,28 @@ const HeadPermissionsPage = () => {
                     className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors"
                   >
                     <td className="py-3 px-4">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedInstructors.includes(instructor.instructor_id)}
-                          onChange={() => handleSelectInstructor(instructor.instructor_id)}
-                          className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        <div>
-                          <div className="font-medium text-secondary-900">
-                            {instructor.instructor}
-                          </div>
-                          <div className="text-xs text-secondary-500">
-                            ID: {instructor.instructor_id}
-                          </div>
+                      <div>
+                        <div className="font-medium text-secondary-900">
+                          {instructor.instructor}
+                        </div>
+                        <div className="text-xs text-secondary-500">
+                          ID: {instructor.instructor_id}
                         </div>
                       </div>
                     </td>
                     {RESOURCE_AREAS.map((area) => {
                       const key = `${instructor.instructor_id}-${area.value}`
                       const perm = groupedPermissions[key]?.[0]
-                      const currentTier = editMode
-                        ? pendingChanges[key] || perm?.permission_tier
-                        : perm?.permission_tier
+                      const currentTier = perm?.permission_tier
 
                       return (
                         <td key={area.value} className="py-3 px-4 text-center">
-                          {editMode ? (
+                          {editMode && perm ? (
                             <select
                               value={currentTier || PermissionTierEnum.view}
                               onChange={(e) =>
                                 handlePermissionChange(
-                                  instructor.instructor_id,
-                                  area.value,
+                                  perm.id,
                                   e.target.value as PermissionTierEnum
                                 )
                               }

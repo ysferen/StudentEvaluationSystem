@@ -35,6 +35,7 @@ import type {
   AssessmentLearningOutcomeMapping,
   BulkAssessmentDescriptionUpdate,
   BulkAssessmentLOMapping,
+  BulkInstructorPermission,
   BulkLOPOMapping,
   Course,
   CourseEnrollment,
@@ -71,6 +72,7 @@ import type {
   PaginatedWeightSuggestionJobList,
   PatchedAssessmentCreate,
   PatchedAssessmentLearningOutcomeMapping,
+  PatchedBulkPermissionUpdate,
   PatchedCourse,
   PatchedCourseEnrollment,
   PatchedCourseTemplate,
@@ -101,6 +103,7 @@ import type {
   V1CoreCourseTemplateLoPoMappingsListParams,
   V1CoreCourseTemplatesInstantiateCreateBodyOne,
   V1CoreCourseTemplatesInstantiateCreateBodyThree,
+  V1CoreCourseTemplatesInstantiateCreateBodyTwo,
   V1CoreCourseTemplatesListParams,
   V1CoreCoursesListParams,
   V1CoreDegreeLevelsListParams,
@@ -137,6 +140,8 @@ import type {
   V1CoreFileImportProgramOutcomesUploadRetrieve400,
   V1CoreFileImportProgramOutcomesUploadRetrieveParams,
   V1CoreLoPoMappingsListParams,
+  V1CorePermissionsBulkUpdateParams,
+  V1CorePermissionsBulkUpdatePartialUpdateParams,
   V1CorePermissionsListParams,
   V1CoreProgramsListParams,
   V1CoreStudentPoScoresListParams,
@@ -2098,7 +2103,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const v1CoreCourseTemplatesInstantiateCreate = (
     id: number,
-    v1CoreCourseTemplatesInstantiateCreateBody: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree,
+    v1CoreCourseTemplatesInstantiateCreateBody: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -2113,8 +2118,8 @@ export const v1CoreCourseTemplatesInstantiateCreate = (
 
 
 export const getV1CoreCourseTemplatesInstantiateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext> => {
 
 const mutationKey = ['v1CoreCourseTemplatesInstantiateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2126,7 +2131,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, {id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, {id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree}> = (props) => {
           const {id,data} = props ?? {};
 
           return  v1CoreCourseTemplatesInstantiateCreate(id,data,requestOptions)
@@ -2138,15 +2143,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CoreCourseTemplatesInstantiateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>>
-    export type V1CoreCourseTemplatesInstantiateCreateMutationBody = V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree
+    export type V1CoreCourseTemplatesInstantiateCreateMutationBody = V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree
     export type V1CoreCourseTemplatesInstantiateCreateMutationError = unknown
 
     export const useV1CoreCourseTemplatesInstantiateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CoreCourseTemplatesInstantiateCreate>>,
         TError,
-        {id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | unknown | V1CoreCourseTemplatesInstantiateCreateBodyThree},
+        {id: number;data: V1CoreCourseTemplatesInstantiateCreateBodyOne | V1CoreCourseTemplatesInstantiateCreateBodyTwo | V1CoreCourseTemplatesInstantiateCreateBodyThree},
         TContext
       > => {
 
@@ -6187,14 +6192,16 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const v1CorePermissionsBulkUpdate = (
-    instructorPermission: NonReadonly<InstructorPermission>,
+    bulkInstructorPermission: BulkInstructorPermission,
+    params?: V1CorePermissionsBulkUpdateParams,
  options?: SecondParameter<typeof customInstance>,) => {
 
 
-      return customInstance<InstructorPermission>(
+      return customInstance<PaginatedInstructorPermissionList>(
       {url: `/api/v1/core/permissions/bulk/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: instructorPermission
+      data: bulkInstructorPermission,
+        params
     },
       options);
     }
@@ -6202,8 +6209,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getV1CorePermissionsBulkUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: NonReadonly<InstructorPermission>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: NonReadonly<InstructorPermission>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: BulkInstructorPermission;params?: V1CorePermissionsBulkUpdateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: BulkInstructorPermission;params?: V1CorePermissionsBulkUpdateParams}, TContext> => {
 
 const mutationKey = ['v1CorePermissionsBulkUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -6215,10 +6222,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, {data: NonReadonly<InstructorPermission>}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, {data: BulkInstructorPermission;params?: V1CorePermissionsBulkUpdateParams}> = (props) => {
+          const {data,params} = props ?? {};
 
-          return  v1CorePermissionsBulkUpdate(data,requestOptions)
+          return  v1CorePermissionsBulkUpdate(data,params,requestOptions)
         }
 
 
@@ -6227,19 +6234,81 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type V1CorePermissionsBulkUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>>
-    export type V1CorePermissionsBulkUpdateMutationBody = NonReadonly<InstructorPermission>
+    export type V1CorePermissionsBulkUpdateMutationBody = BulkInstructorPermission
     export type V1CorePermissionsBulkUpdateMutationError = unknown
 
     export const useV1CorePermissionsBulkUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: NonReadonly<InstructorPermission>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>, TError,{data: BulkInstructorPermission;params?: V1CorePermissionsBulkUpdateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof v1CorePermissionsBulkUpdate>>,
         TError,
-        {data: NonReadonly<InstructorPermission>},
+        {data: BulkInstructorPermission;params?: V1CorePermissionsBulkUpdateParams},
         TContext
       > => {
 
       const mutationOptions = getV1CorePermissionsBulkUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Bulk partial update - only send changed permissions with their IDs.
+ */
+export const v1CorePermissionsBulkUpdatePartialUpdate = (
+    patchedBulkPermissionUpdate: PatchedBulkPermissionUpdate,
+    params?: V1CorePermissionsBulkUpdatePartialUpdateParams,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<PaginatedInstructorPermissionList>(
+      {url: `/api/v1/core/permissions/bulk-update/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedBulkPermissionUpdate,
+        params
+    },
+      options);
+    }
+
+
+
+export const getV1CorePermissionsBulkUpdatePartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>, TError,{data: PatchedBulkPermissionUpdate;params?: V1CorePermissionsBulkUpdatePartialUpdateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>, TError,{data: PatchedBulkPermissionUpdate;params?: V1CorePermissionsBulkUpdatePartialUpdateParams}, TContext> => {
+
+const mutationKey = ['v1CorePermissionsBulkUpdatePartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>, {data: PatchedBulkPermissionUpdate;params?: V1CorePermissionsBulkUpdatePartialUpdateParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  v1CorePermissionsBulkUpdatePartialUpdate(data,params,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CorePermissionsBulkUpdatePartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>>
+    export type V1CorePermissionsBulkUpdatePartialUpdateMutationBody = PatchedBulkPermissionUpdate
+    export type V1CorePermissionsBulkUpdatePartialUpdateMutationError = unknown
+
+    export const useV1CorePermissionsBulkUpdatePartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>, TError,{data: PatchedBulkPermissionUpdate;params?: V1CorePermissionsBulkUpdatePartialUpdateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CorePermissionsBulkUpdatePartialUpdate>>,
+        TError,
+        {data: PatchedBulkPermissionUpdate;params?: V1CorePermissionsBulkUpdatePartialUpdateParams},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CorePermissionsBulkUpdatePartialUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -6,6 +6,7 @@ transformation, and representation for API responses. Each serializer correspond
 to a specific model and defines how it is serialized/deserialized.
 """
 
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from core.models import (
     Course,
@@ -30,6 +31,8 @@ from core.models import (
 from users.models import InstructorProfile, ProgramHeadProfile
 from typing import List, Dict, Any, Optional
 from drf_spectacular.utils import extend_schema_field
+
+User = get_user_model()
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -182,10 +185,31 @@ class CourseSerializer(serializers.ModelSerializer):
     program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
     term_id = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all(), source="term", write_only=True)
     instructors = serializers.SerializerMethodField()
+    instructor_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=User.objects.filter(role="instructor"),
+        source="instructors",
+        write_only=True,
+        required=False,
+    )
 
     class Meta:
         model = Course
-        fields = ["id", "code", "name", "credits", "program", "term", "program_id", "term_id", "instructors", "created_at"]
+        fields = [
+            "id",
+            "code",
+            "name",
+            "credits",
+            "program",
+            "term",
+            "program_id",
+            "term_id",
+            "course_template_id",
+            "instructors",
+            "instructor_ids",
+            "created_at",
+        ]
+        read_only_fields = ["course_template_id"]
 
     @extend_schema_field(List[Dict[str, Any]])
     def get_instructors(self, obj: Course) -> List[Dict[str, Any]]:
@@ -238,10 +262,11 @@ class CoreLearningOutcomeSerializer(serializers.ModelSerializer):
     """
 
     course = CourseSerializer(read_only=True)
+    course_id = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), source="course", write_only=True)
 
     class Meta:
         model = LearningOutcome
-        fields = ["id", "code", "description", "course", "created_at"]
+        fields = ["id", "code", "description", "course", "course_id", "created_at"]
 
 
 class LearningOutcomeProgramOutcomeMappingSerializer(serializers.ModelSerializer):
@@ -292,6 +317,34 @@ class BulkLOPOMappingSerializer(serializers.Serializer):
     creates = BulkLOPOMappingItem(many=True, required=False, default=list)
     updates = BulkLOPOMappingItem(many=True, required=False, default=list)
     deletes = serializers.ListField(child=serializers.IntegerField(), required=False, default=list)
+
+
+class BulkPermissionItem(serializers.Serializer):
+    """Single permission item in a bulk permission update request."""
+
+    resource_area = serializers.CharField()
+    permission_tier = serializers.CharField()
+
+
+class BulkInstructorPermissionSerializer(serializers.Serializer):
+    """Bulk update payload for instructor permissions."""
+
+    instructor_id = serializers.IntegerField()
+    permissions = BulkPermissionItem(many=True)
+
+
+class BulkPermissionUpdateItem(serializers.Serializer):
+    """Single permission update item with ID for bulk partial updates."""
+
+    id = serializers.IntegerField()
+    permission_tier = serializers.CharField(required=False)
+    resource_area = serializers.CharField(required=False)
+
+
+class BulkPermissionUpdateSerializer(serializers.Serializer):
+    """Bulk partial update payload for instructor permissions - sends only changed items."""
+
+    updates = BulkPermissionUpdateItem(many=True)
 
 
 class StudentLearningOutcomeScoreSerializer(serializers.ModelSerializer):
@@ -508,6 +561,12 @@ class CourseTemplateLOPOMappingSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseTemplateLOPOMapping
         fields = ["id", "template_learning_outcome", "program_outcome", "weight"]
+
+
+class InstantiateCourseTemplateSerializer(serializers.Serializer):
+    """Serializer for instantiating a course from a template."""
+
+    term_id = serializers.IntegerField()
 
 
 class WeightSuggestionJobSerializer(serializers.ModelSerializer):

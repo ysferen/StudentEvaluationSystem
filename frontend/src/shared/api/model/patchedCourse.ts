@@ -42,6 +42,11 @@ export interface PatchedCourse {
   readonly term?: Term;
   program_id?: number;
   term_id?: number;
+  /**
+   * Template this course was cloned from (if any)
+   * @nullable
+   */
+  readonly course_template_id?: number | null;
   /** Get instructor details including name and title.
 
 Args:
@@ -54,5 +59,6 @@ Returns:
         - last_name: Instructor's last name
         - title: Academic title (if available) */
   readonly instructors?: readonly PatchedCourseInstructorsItem[];
+  instructor_ids?: number[];
   readonly created_at?: string;
 }

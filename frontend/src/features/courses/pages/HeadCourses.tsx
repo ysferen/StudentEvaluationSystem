@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
+import CourseCreateModal from '../components/CourseCreateModal'
 import {
   BookOpenIcon,
   AcademicCapIcon,
   UsersIcon,
   ChartBarIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline'
 import {
   coreCoursesList,
@@ -39,8 +41,10 @@ function formatInstructorNames(
 
 const HeadCourses = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const { data: statsData, isLoading: statsLoading } =
     useCoreAnalyticsProgramStatsRetrieve()
@@ -131,6 +135,13 @@ const HeadCourses = () => {
               ))}
             </SelectContent>
           </Select>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span>New Course</span>
+          </button>
         </div>
       </div>
 
@@ -240,6 +251,15 @@ const HeadCourses = () => {
           <p className="text-secondary-500 mb-6">No courses are available in your program for this term.</p>
         </div>
       )}
+
+      <CourseCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          // Refetch courses list after creation
+          queryClient.invalidateQueries({ queryKey: ['head-courses'] })
+        }}
+      />
     </div>
   )
 }

@@ -3,18 +3,33 @@ import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthLogoutCreate,
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
 
+export type AuthenticatedUser = Omit<CustomUser, 'permissions'> & {
+  permissions?: string[]
+}
+
+const normalizePermissions = (user: CustomUser): AuthenticatedUser => {
+  const raw = user.permissions
+  const permissions = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string'
+      ? raw.split(',').map((value) => value.trim()).filter(Boolean)
+      : undefined
+
+  return { ...user, permissions }
+}
+
 /**
  * Authentication context type definition.
  *
  * @interface AuthContextType
- * @property {CustomUser | null} user - Current authenticated user or null if not logged in
+ * @property {AuthenticatedUser | null} user - Current authenticated user or null if not logged in
  * @property {(username: string, password: string) => Promise<void>} login - Login function
  * @property {() => Promise<void>} logout - Logout function that clears tokens and cache
  * @property {boolean} isLoading - Whether auth state is being initialized
  * @property {boolean} isAuthenticated - Whether user is currently authenticated
  */
 interface AuthContextType {
-  user: CustomUser | null
+  user: AuthenticatedUser | null
   login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
   isLoading: boolean
@@ -86,7 +101,7 @@ to all child components. Handles:
  * @returns {JSX.Element} Provider component with auth context
  */
 export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
-  const [user, setUser] = useState<CustomUser | null>(null)
+  const [user, setUser] = useState<AuthenticatedUser | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const queryClient = useQueryClient()
 
@@ -114,7 +129,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
             queryKey: ['/api/users/auth/me/'],
             queryFn: () => usersAuthMeRetrieve(),
           })
-          setUser(userData)
+          setUser(normalizePermissions(userData))
         } catch {
           // If fetch fails, invalidate and let the query handle it
           queryClient.invalidateQueries({ queryKey: ['/api/users/auth/me/'] })
@@ -150,7 +165,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   useEffect(() => {
     // Update user state when user data is fetched
     if (currentUser) {
-      setUser(currentUser)
+      setUser(normalizePermissions(currentUser))
     }
 
     // Handle authentication errors by logging out
@@ -185,7 +200,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
       username,
       email: '', // Required field but not used for login
       password: password
-    } as CustomUser & { password: string }
+    } as AuthenticatedUser & { password: string }
 
     await loginMutation.mutateAsync({ data: loginData })
   }, [loginMutation])

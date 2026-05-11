@@ -26,5 +26,6 @@ export interface CoreLearningOutcome {
   code: string;
   description: string;
   readonly course: Course;
+  course_id: number;
   readonly created_at: string;
 }

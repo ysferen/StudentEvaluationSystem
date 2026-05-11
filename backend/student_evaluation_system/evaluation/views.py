@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg, Count, F, Sum, FloatField
+from django.db.models.functions import NullIf
 from django.db import transaction
 from django.utils import timezone
 
@@ -360,6 +361,41 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        course_id = request.query_params.get("course")
+        if course_id:
+            assessments = Assessment.objects.filter(course_id=course_id).values(
+                "id", "name", "assessment_type", "total_score", "weight", "date", "description"
+            )
+            response.data["assignments"] = list(assessments)
+            response.data["course_average"] = self._compute_weighted_average(course_id)
+        return response
+
+    def _compute_weighted_average(self, course_id: str) -> float | None:
+        """Compute the weighted course average from assessment grades."""
+        grades = (
+            StudentGrade.objects.filter(assessment__course_id=course_id)
+            .select_related("assessment")
+            .annotate(
+                percentage=F("score") * 100.0 / NullIf(F("assessment__total_score"), 0),
+                weight=F("assessment__weight"),
+            )
+        )
+        if not grades.exists():
+            return None
+
+        aggregated = grades.aggregate(
+            weighted_sum=Sum(F("percentage") * F("weight"), output_field=FloatField()),
+            total_weight=Sum("weight"),
+        )
+        weighted_sum = aggregated["weighted_sum"] or 0
+        total_weight = aggregated["total_weight"] or 0
+
+        if total_weight > 0:
+            return round(weighted_sum / total_weight, 2)
+        return None
+
     def perform_create(self, serializer):
         """After creating a grade, recalculate scores."""
         grade = serializer.save()
@@ -564,20 +600,23 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         calculate_course_scores(enrollment.course_id)
 
     def perform_destroy(self, instance):
-        """After unenrolling, remove student's scores for this course."""
+        """After unenrolling, remove student's scores and grades for this course."""
         course_id = instance.course_id
         student_id = instance.student_id
         program_id = instance.course.program_id
         term_id = instance.course.term_id
 
         with transaction.atomic():
+            # Delete grades for this student in this course
+            StudentGrade.objects.filter(student_id=student_id, assessment__course_id=course_id).delete()
+
             # Delete LO scores for this student in this course
             StudentLearningOutcomeScore.objects.filter(student_id=student_id, learning_outcome__course_id=course_id).delete()
 
             # Delete the enrollment
             instance.delete()
 
-            # Recalculate PO scores (since removing course affects program-level scores)
+            # Recalculate PO scores
             calculate_student_po_scores(student_id, program_id, term_id)
 
     @action(detail=False, methods=["post"])

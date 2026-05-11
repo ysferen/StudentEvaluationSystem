@@ -582,20 +582,18 @@ paths:
       - core
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}
@@ -1996,6 +1994,11 @@ paths:
       operationId: core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -2331,19 +2334,26 @@ paths:
   /api/core/permissions/bulk/:
     put:
       operationId: core_permissions_bulk_update
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
       tags:
       - core
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
         required: true
       security:
       - jwtCookie: []
@@ -2352,7 +2362,41 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InstructorPermission'
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+  /api/core/permissions/bulk-update/:
+    patch:
+      operationId: core_permissions_bulk_update_partial_update
+      description: Bulk partial update - only send changed permissions with their
+        IDs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
           description: ''
   /api/core/permissions/my-permissions/:
     get:
@@ -5924,20 +5968,18 @@ paths:
       - v1
       requestBody:
         content:
-          type:
+          application/json:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
-          properties:
-            schema:
-              term_id:
-                type: integer
-          required:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               additionalProperties: {}
-              description: Unspecified request body
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
       security:
       - jwtCookie: []
       - {}
@@ -7335,6 +7377,11 @@ paths:
       operationId: v1_core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -7670,19 +7717,26 @@ paths:
   /api/v1/core/permissions/bulk/:
     put:
       operationId: v1_core_permissions_bulk_update
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
       tags:
       - v1
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/InstructorPermission'
+              $ref: '#/components/schemas/BulkInstructorPermission'
         required: true
       security:
       - jwtCookie: []
@@ -7691,7 +7745,41 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InstructorPermission'
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
+          description: ''
+  /api/v1/core/permissions/bulk-update/:
+    patch:
+      operationId: v1_core_permissions_bulk_update_partial_update
+      description: Bulk partial update - only send changed permissions with their
+        IDs.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBulkPermissionUpdate'
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInstructorPermissionList'
           description: ''
   /api/v1/core/permissions/my-permissions/:
     get:
@@ -10873,6 +10961,19 @@ components:
         weight:
           type: number
           format: double
+    BulkInstructorPermission:
+      type: object
+      description: Bulk update payload for instructor permissions.
+      properties:
+        instructor_id:
+          type: integer
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPermissionItem'
+      required:
+      - instructor_id
+      - permissions
     BulkLOPOMapping:
       type: object
       description: Bulk sync payload for LO-PO mappings.
@@ -10908,6 +11009,29 @@ components:
         weight:
           type: number
           format: double
+    BulkPermissionItem:
+      type: object
+      description: Single permission item in a bulk permission update request.
+      properties:
+        resource_area:
+          type: string
+        permission_tier:
+          type: string
+      required:
+      - permission_tier
+      - resource_area
+    BulkPermissionUpdateItem:
+      type: object
+      description: Single permission update item with ID for bulk partial updates.
+      properties:
+        id:
+          type: integer
+        permission_tier:
+          type: string
+        resource_area:
+          type: string
+      required:
+      - id
     CoreLearningOutcome:
       type: object
       description: |-
@@ -10935,6 +11059,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/Course'
           readOnly: true
+        course_id:
+          type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -10942,6 +11069,7 @@ components:
       required:
       - code
       - course
+      - course_id
       - created_at
       - description
       - id
@@ -10992,6 +11120,11 @@ components:
         term_id:
           type: integer
           writeOnly: true
+        course_template_id:
+          type: integer
+          nullable: true
+          description: Template this course was cloned from (if any)
+          readOnly: true
         instructors:
           type: array
           items:
@@ -11010,12 +11143,19 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - code
+      - course_template_id
       - created_at
       - id
       - instructors
@@ -11033,6 +11173,9 @@ components:
         student:
           type: string
           readOnly: true
+        student_id:
+          type: integer
+          readOnly: true
         course:
           allOf:
           - $ref: '#/components/schemas/Course'
@@ -11046,6 +11189,7 @@ components:
       - enrolled_at
       - id
       - student
+      - student_id
     CourseTemplate:
       type: object
       description: |-
@@ -11192,10 +11336,14 @@ components:
           type: string
           format: date-time
           readOnly: true
+        permissions:
+          type: string
+          readOnly: true
       required:
       - date_joined
       - department
       - id
+      - permissions
       - university
       - username
     DegreeLevel:
@@ -12042,6 +12190,15 @@ components:
           maximum: 5
           minimum: 0
           description: 0 to 5
+    PatchedBulkPermissionUpdate:
+      type: object
+      description: Bulk partial update payload for instructor permissions - sends
+        only changed items.
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPermissionUpdateItem'
     PatchedCoreLearningOutcome:
       type: object
       description: |-
@@ -12069,6 +12226,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/Course'
           readOnly: true
+        course_id:
+          type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -12120,6 +12280,11 @@ components:
         term_id:
           type: integer
           writeOnly: true
+        course_template_id:
+          type: integer
+          nullable: true
+          description: Template this course was cloned from (if any)
+          readOnly: true
         instructors:
           type: array
           items:
@@ -12138,6 +12303,12 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -12150,6 +12321,9 @@ components:
           readOnly: true
         student:
           type: string
+          readOnly: true
+        student_id:
+          type: integer
           readOnly: true
         course:
           allOf:
@@ -12285,6 +12459,9 @@ components:
         date_joined:
           type: string
           format: date-time
+          readOnly: true
+        permissions:
+          type: string
           readOnly: true
     PatchedDegreeLevel:
       type: object
