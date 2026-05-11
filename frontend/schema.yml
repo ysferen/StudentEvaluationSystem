@@ -11173,6 +11173,9 @@ components:
         student:
           type: string
           readOnly: true
+        student_id:
+          type: integer
+          readOnly: true
         course:
           allOf:
           - $ref: '#/components/schemas/Course'
@@ -11186,6 +11189,7 @@ components:
       - enrolled_at
       - id
       - student
+      - student_id
     CourseTemplate:
       type: object
       description: |-
@@ -12317,6 +12321,9 @@ components:
           readOnly: true
         student:
           type: string
+          readOnly: true
+        student_id:
+          type: integer
           readOnly: true
         course:
           allOf:

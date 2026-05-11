@@ -9,6 +9,8 @@ import MappingEditor from '../components/MappingEditor'
 import CourseEditModal from '../components/CourseEditModal'
 import CreateEditLOModal from '../components/CreateEditLOModal'
 import CreateEditAssessmentModal from '../components/CreateEditAssessmentModal'
+import EnrollStudentsModal from '../components/EnrollStudentsModal'
+import UnenrollStudentsModal from '../components/UnenrollStudentsModal'
 
 import ConfirmDeleteModal from '../../../shared/components/ui/ConfirmDeleteModal'
 import Modal from '../../../shared/components/ui/Modal'
@@ -117,6 +119,10 @@ const CourseDetail = () => {
   const [assessCreateModalOpen, setAssessCreateModalOpen] = useState(false)
   const [assessEditTarget, setAssessEditTarget] = useState<{ id: number; name: string; assessment_type?: string; weight?: number; description?: string; total_score?: number } | null>(null)
   const [assessDeleteTarget, setAssessDeleteTarget] = useState<{ id: number; name: string } | null>(null)
+
+  // Enrollment modals state
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false)
+  const [unenrollModalOpen, setUnenrollModalOpen] = useState(false)
 
   const queryClient = useQueryClient()
   const deleteMutation = useCoreCoursesDestroy()
@@ -310,6 +316,23 @@ const CourseDetail = () => {
     },
     enabled: !!courseId
   })
+
+  const enrolledStudents = useMemo(() => {
+    return (enrollmentsData?.results || []).map(e => ({
+      id: e.id,
+      name: e.student.replace(/ \([^)]+\)$/, ''),
+    }))
+  }, [enrollmentsData])
+
+  const enrolledStudentIds = useMemo(() => {
+    return (enrollmentsData?.results || []).map(e => e.student_id)
+  }, [enrollmentsData])
+
+  const handleEnrollSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['enrollments', courseId] })
+    queryClient.invalidateQueries({ queryKey: ['grades', courseId] })
+    refetch()
+  }, [courseId, queryClient, refetch])
 
   const assessmentHeatmap = useMemo((): AssessmentHeatmapData => {
     const results = gradesData?.results || []
@@ -1235,13 +1258,19 @@ const CourseDetail = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-secondary-900">Students</h2>
           <div className="flex items-center gap-2">
-            <button className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+            <button
+              onClick={() => setEnrollModalOpen(true)}
+              className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span>Enroll</span>
             </button>
-            <button className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm cursor-default">
+            <button
+              onClick={() => setUnenrollModalOpen(true)}
+              className="bg-danger-50 text-danger-700 px-3 py-1.5 rounded-lg hover:bg-danger-100 flex items-center space-x-1.5 transition-colors text-sm"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
               </svg>
@@ -1334,7 +1363,19 @@ const CourseDetail = () => {
         onSuccess={refetch}
       />
 
-
+      <EnrollStudentsModal
+        isOpen={enrollModalOpen}
+        onClose={() => setEnrollModalOpen(false)}
+        courseId={Number(courseId)}
+        enrolledStudentIds={enrolledStudentIds}
+        onSuccess={handleEnrollSuccess}
+      />
+      <UnenrollStudentsModal
+        isOpen={unenrollModalOpen}
+        onClose={() => setUnenrollModalOpen(false)}
+        enrolledStudents={enrolledStudents}
+        onSuccess={handleEnrollSuccess}
+      />
 
       <ConfirmDeleteModal
         isOpen={isDeleteConfirmOpen}

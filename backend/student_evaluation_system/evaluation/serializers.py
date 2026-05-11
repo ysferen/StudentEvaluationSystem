@@ -102,11 +102,12 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
     from core.serializers import CourseSerializer
 
     student = serializers.StringRelatedField()
+    student_id = serializers.IntegerField(source="student.id", read_only=True)
     course = CourseSerializer(read_only=True)
 
     class Meta:
         model = CourseEnrollment
-        fields = ["id", "student", "course", "enrolled_at"]
+        fields = ["id", "student", "student_id", "course", "enrolled_at"]
 
 
 class MyGradesSerializer(serializers.ModelSerializer):

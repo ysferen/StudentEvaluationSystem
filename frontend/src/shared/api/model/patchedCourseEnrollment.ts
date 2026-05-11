@@ -10,6 +10,7 @@ import type { Course } from './course';
 export interface PatchedCourseEnrollment {
   readonly id?: number;
   readonly student?: string;
+  readonly student_id?: number;
   readonly course?: Course;
   readonly enrolled_at?: string;
 }
