@@ -1994,6 +1994,11 @@ paths:
       operationId: core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -7372,6 +7377,11 @@ paths:
       operationId: v1_core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -10788,9 +10798,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -10829,9 +10838,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -11096,9 +11104,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11136,6 +11143,12 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -11192,9 +11205,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11348,9 +11360,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
       required:
       - id
       - name
@@ -12135,9 +12146,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -12250,9 +12260,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12290,6 +12299,12 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -12330,9 +12345,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12460,9 +12474,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
     PatchedDepartment:
       type: object
       description: |-
@@ -12598,9 +12611,8 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
@@ -12732,9 +12744,8 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)
@@ -12842,9 +12853,8 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: Program duration in years, used to cap year-level calculations
       required:
       - code
@@ -13255,9 +13265,8 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)

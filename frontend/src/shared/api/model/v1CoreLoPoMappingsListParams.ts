@@ -8,6 +8,10 @@
 
 export type V1CoreLoPoMappingsListParams = {
 /**
+ * Filter LO-PO mappings by course ID
+ */
+course?: number;
+/**
  * A page number within the paginated result set.
  */
 page?: number;

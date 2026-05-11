@@ -863,7 +863,7 @@ const CourseDetail = () => {
                           return (
                             <td
                               key={loCode}
-                              className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
+                              className="px-2 py-1.5 text-center text-xs font-medium border-b border-secondary-200"
                               style={{ backgroundColor: bgColor, color: textColor }}
                             >
                               {score > 0 ? score.toFixed(1) : '−'}
@@ -914,7 +914,7 @@ const CourseDetail = () => {
                 return (
                   <div key={lo.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.code}</span>
+                      <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.code}</span>
                       <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
                         score >= 80 ? 'bg-emerald-100 text-emerald-700' : score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
                       }`}>
@@ -923,7 +923,7 @@ const CourseDetail = () => {
                     </div>
                     <span className="text-secondary-700 text-sm leading-snug">{lo.description}</span>
                     {loEditMode && (
-                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); setLoEditTarget(lo) }}
                           className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
@@ -1187,7 +1187,7 @@ const CourseDetail = () => {
                           return (
                             <td
                               key={a.id}
-                              className="px-2 py-1.5 text-center font-mono text-xs font-medium border-b border-secondary-200"
+                              className="px-2 py-1.5 text-center text-xs font-medium border-b border-secondary-200"
                               style={{ backgroundColor: bgColor, color: textColor }}
                             >
                               {pct > 0 ? pct.toFixed(1) : '−'}
@@ -1232,7 +1232,7 @@ const CourseDetail = () => {
                       <span className="text-secondary-700 text-sm leading-snug line-clamp-2">{a.description}</span>
                     )}
                     {assessEditMode && (
-                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -1468,7 +1468,7 @@ const CourseDetail = () => {
                     {selectedStudent.assessmentScores.map((as, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
                         <td className="px-2 py-1.5 text-sm text-secondary-900 border-b border-secondary-200">{as.name}</td>
-                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{as.score}</td>
+                        <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{as.score}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1491,8 +1491,8 @@ const CourseDetail = () => {
                   <tbody>
                     {selectedStudent.loScores.map((ls, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-secondary-50/50'}>
-                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-900 border-b border-secondary-200">{ls.code}</td>
-                        <td className="px-2 py-1.5 text-sm font-mono text-secondary-700 border-b border-secondary-200">{ls.score}</td>
+                        <td className="px-2 py-1.5 text-sm text-secondary-900 border-b border-secondary-200">{ls.code}</td>
+                        <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{ls.score}</td>
                       </tr>
                     ))}
                   </tbody>
