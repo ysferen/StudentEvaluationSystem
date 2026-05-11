@@ -110,20 +110,29 @@ class WeightSuggester:
     def _normalize_scores(scores):
         """Normalize similarity scores to 0-5 integer weights.
 
-        Maps cosine similarity from [-1, 1] to [0, 1], applies a power
-        transform to spread mid-range values (higher power = more separation),
-        then scales to the 0-5 integer range. No min-max stretching is used
-        since it amplifies noise when all similarities are tightly clustered.
+        Blends raw cosine similarity with rank-based normalization so that
+        the relative ordering within each assessment/LO creates contrast,
+        while the absolute similarity still anchors the general level.
+
+        Configurable via env vars:
+          WEIGHT_SUGGESTION_BLEND  — rank influence (0=raw only, 1=rank only)
+                                     default 0.5 balances both.
         """
         scores = np.asarray(scores, dtype=np.float32)
         # Cosine similarity [-1, 1] → [0, 1]
-        scores = (scores + 1.0) / 2.0
-        scores = np.clip(scores, 0.0, 1.0)
+        raw_scores = (scores + 1.0) / 2.0
+        raw_scores = np.clip(raw_scores, 0.0, 1.0)
 
-        # Power transform: higher values spread the middle range further.
-        # 2.0 → moderate separation, 3.0 → aggressive separation.
-        power = float(os.getenv("WEIGHT_SUGGESTION_POWER", "2.0"))
-        scores = np.power(scores, power)
+        # Rank scores within this row: 0 = lowest similarity, 1 = highest
+        n = len(raw_scores) - 1
+        if n > 0:
+            ranks = np.argsort(np.argsort(raw_scores)).astype(np.float32)
+            rank_scores = ranks / n
+        else:
+            rank_scores = np.zeros_like(raw_scores)
+
+        blend = float(os.getenv("WEIGHT_SUGGESTION_BLEND", "0.5"))
+        scores = (1.0 - blend) * raw_scores + blend * rank_scores
 
         weights = np.rint(scores * 5.0).astype(int)
         weights = np.clip(weights, 0, 5)
