@@ -584,16 +584,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           multipart/form-data:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -1272,6 +1270,17 @@ paths:
       - {}
       responses:
         '204':
+          description: No response body
+  /api/core/events/:
+    get:
+      operationId: core_events_retrieve
+      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
           description: No response body
   /api/core/file-import/assignment-scores/resolve/:
     post:
@@ -1994,6 +2003,11 @@ paths:
       operationId: core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -3149,6 +3163,39 @@ paths:
       description: Get currently active term.
       tags:
       - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
+  /api/core/terms/next-term/:
+    post:
+      operationId: core_terms_next_term_create
+      description: |-
+        CRUD operations for terms.
+
+        Permissions:
+        - Read: Any authenticated user
+        - Write: Admin only
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Term'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Term'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Term'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -5965,16 +6012,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           multipart/form-data:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -6650,6 +6695,17 @@ paths:
       - {}
       responses:
         '204':
+          description: No response body
+  /api/v1/core/events/:
+    get:
+      operationId: v1_core_events_retrieve
+      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
           description: No response body
   /api/v1/core/file-import/assignment-scores/resolve/:
     post:
@@ -7372,6 +7428,11 @@ paths:
       operationId: v1_core_lo_po_mappings_list
       description: CRUD operations for LO-PO mappings.
       parameters:
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Filter LO-PO mappings by course ID
       - name: page
         required: false
         in: query
@@ -8527,6 +8588,39 @@ paths:
       description: Get currently active term.
       tags:
       - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
+  /api/v1/core/terms/next-term/:
+    post:
+      operationId: v1_core_terms_next_term_create
+      description: |-
+        CRUD operations for terms.
+
+        Permissions:
+        - Read: Any authenticated user
+        - Write: Admin only
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Term'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Term'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Term'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -11136,6 +11230,12 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -11160,6 +11260,9 @@ components:
         student:
           type: string
           readOnly: true
+        student_id:
+          type: integer
+          readOnly: true
         course:
           allOf:
           - $ref: '#/components/schemas/Course'
@@ -11173,6 +11276,7 @@ components:
       - enrolled_at
       - id
       - student
+      - student_id
     CourseTemplate:
       type: object
       description: |-
@@ -11440,6 +11544,14 @@ components:
       - gpa
       - student_count
       - year
+    InstantiateCourseTemplate:
+      type: object
+      description: Serializer for instantiating a course from a template.
+      properties:
+        term_id:
+          type: integer
+      required:
+      - term_id
     InstructorPermission:
       type: object
       properties:
@@ -12290,6 +12402,12 @@ components:
                     - last_name: Instructor's last name
                     - title: Academic title (if available)
           readOnly: true
+        instructor_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -12302,6 +12420,9 @@ components:
           readOnly: true
         student:
           type: string
+          readOnly: true
+        student_id:
+          type: integer
           readOnly: true
         course:
           allOf:

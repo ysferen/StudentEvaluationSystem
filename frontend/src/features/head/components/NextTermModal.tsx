@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react'
 import { X } from 'lucide-react'
-import { useCoreCourseTemplatesList, useCoreTermsActiveRetrieve } from '@/shared/api/generated/core/core'
-import { customInstance } from '@/shared/api/mutator'
+import {
+  useCoreCourseTemplatesList,
+  useCoreTermsActiveRetrieve,
+  useCoreTermsNextTermCreate,
+} from '@/shared/api/generated/core/core'
 import { JobProgressBar } from '@/shared/components/JobProgressBar'
 
 interface NextTermModalProps {
@@ -18,6 +21,7 @@ const SEMESTER_CYCLE: Record<string, string> = {
 export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose }) => {
   const { data: activeTerm } = useCoreTermsActiveRetrieve()
   const { data: templatesData } = useCoreCourseTemplatesList()
+  const { mutateAsync: nextTermMutate } = useCoreTermsNextTermCreate()
 
   const [semester, setSemester] = useState('fall')
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear())
@@ -61,17 +65,14 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
     setSubmitting(true)
     setError(null)
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || ''
-      const result = await customInstance<{ job_id?: number }>({
-        url: `${baseUrl}/api/core/terms/next-term/`,
-        method: 'POST',
+      const result = await nextTermMutate({
         data: {
           semester,
           academic_year: academicYear,
           template_ids: Array.from(selectedTemplates),
-        },
+        } as any,
       })
-      setJobId(result.job_id ?? null)
+      setJobId((result as any)?.job_id ?? null)
     } catch (err: any) {
       setError(err?.message ?? 'Failed to start term transition.')
       setSubmitting(false)

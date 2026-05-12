@@ -584,16 +584,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           multipart/form-data:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -1272,6 +1270,17 @@ paths:
       - {}
       responses:
         '204':
+          description: No response body
+  /api/core/events/:
+    get:
+      operationId: core_events_retrieve
+      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
           description: No response body
   /api/core/file-import/assignment-scores/resolve/:
     post:
@@ -3154,6 +3163,39 @@ paths:
       description: Get currently active term.
       tags:
       - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
+  /api/core/terms/next-term/:
+    post:
+      operationId: core_terms_next_term_create
+      description: |-
+        CRUD operations for terms.
+
+        Permissions:
+        - Read: Any authenticated user
+        - Write: Admin only
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Term'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Term'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Term'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -5970,16 +6012,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
           multipart/form-data:
             schema:
-              type: object
-              additionalProperties: {}
+              $ref: '#/components/schemas/InstantiateCourseTemplate'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -6655,6 +6695,17 @@ paths:
       - {}
       responses:
         '204':
+          description: No response body
+  /api/v1/core/events/:
+    get:
+      operationId: v1_core_events_retrieve
+      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
           description: No response body
   /api/v1/core/file-import/assignment-scores/resolve/:
     post:
@@ -8537,6 +8588,39 @@ paths:
       description: Get currently active term.
       tags:
       - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
+  /api/v1/core/terms/next-term/:
+    post:
+      operationId: v1_core_terms_next_term_create
+      description: |-
+        CRUD operations for terms.
+
+        Permissions:
+        - Read: Any authenticated user
+        - Write: Admin only
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Term'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Term'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Term'
+        required: true
       security:
       - jwtCookie: []
       - {}
@@ -10798,8 +10882,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -10838,8 +10923,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -11104,8 +11190,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11209,8 +11296,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11364,8 +11452,9 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - id
       - name
@@ -11455,6 +11544,14 @@ components:
       - gpa
       - student_count
       - year
+    InstantiateCourseTemplate:
+      type: object
+      description: Serializer for instantiating a course from a template.
+      properties:
+        term_id:
+          type: integer
+      required:
+      - term_id
     InstructorPermission:
       type: object
       properties:
@@ -12150,8 +12247,9 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         weight:
           type: number
           format: double
@@ -12264,8 +12362,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12352,8 +12451,9 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12481,8 +12581,9 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
     PatchedDepartment:
       type: object
       description: |-
@@ -12618,8 +12719,9 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
@@ -12751,8 +12853,9 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)
@@ -12860,8 +12963,9 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           description: Program duration in years, used to cap year-level calculations
       required:
       - code
@@ -13272,8 +13376,9 @@ components:
           type: boolean
         academic_year:
           type: integer
-          maximum: 2147483647
-          minimum: -2147483648
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
           nullable: true
           description: The calendar year the academic year starts (e.g., 2024 for
             AY 2024-2025)

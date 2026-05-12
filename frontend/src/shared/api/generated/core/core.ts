@@ -34,9 +34,6 @@ import type {
   BulkLOPOMapping,
   CoreCourseTemplateAssessmentLoMappingsListParams,
   CoreCourseTemplateLoPoMappingsListParams,
-  CoreCourseTemplatesInstantiateCreateBodyOne,
-  CoreCourseTemplatesInstantiateCreateBodyThree,
-  CoreCourseTemplatesInstantiateCreateBodyTwo,
   CoreCourseTemplatesListParams,
   CoreCoursesListParams,
   CoreDegreeLevelsListParams,
@@ -88,6 +85,7 @@ import type {
   DegreeLevel,
   Department,
   FileImportResponse,
+  InstantiateCourseTemplate,
   InstructorPermission,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedCourseList,
@@ -2062,14 +2060,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const coreCourseTemplatesInstantiateCreate = (
     id: number,
-    coreCourseTemplatesInstantiateCreateBody: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree,
+    instantiateCourseTemplate: InstantiateCourseTemplate,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<Course>(
       {url: `/api/core/course-templates/${id}/instantiate/`, method: 'POST',
-      data: coreCourseTemplatesInstantiateCreateBody, signal
+      headers: {'Content-Type': 'application/json', },
+      data: instantiateCourseTemplate, signal
     },
       options);
     }
@@ -2077,8 +2076,8 @@ export const coreCourseTemplatesInstantiateCreate = (
 
 
 export const getCoreCourseTemplatesInstantiateCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: InstantiateCourseTemplate}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: InstantiateCourseTemplate}, TContext> => {
 
 const mutationKey = ['coreCourseTemplatesInstantiateCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2090,7 +2089,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, {id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, {id: number;data: InstantiateCourseTemplate}> = (props) => {
           const {id,data} = props ?? {};
 
           return  coreCourseTemplatesInstantiateCreate(id,data,requestOptions)
@@ -2102,15 +2101,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CoreCourseTemplatesInstantiateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>>
-    export type CoreCourseTemplatesInstantiateCreateMutationBody = CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree
+    export type CoreCourseTemplatesInstantiateCreateMutationBody = InstantiateCourseTemplate
     export type CoreCourseTemplatesInstantiateCreateMutationError = unknown
 
     export const useCoreCourseTemplatesInstantiateCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>, TError,{id: number;data: InstantiateCourseTemplate}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof coreCourseTemplatesInstantiateCreate>>,
         TError,
-        {id: number;data: CoreCourseTemplatesInstantiateCreateBodyOne | CoreCourseTemplatesInstantiateCreateBodyTwo | CoreCourseTemplatesInstantiateCreateBodyThree},
+        {id: number;data: InstantiateCourseTemplate},
         TContext
       > => {
 
@@ -4251,6 +4250,165 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+ */
+export const coreEventsRetrieve = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/core/events/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getCoreEventsRetrieveInfiniteQueryKey = () => {
+    return [
+    'infinite', `/api/core/events/`
+    ] as const;
+    }
+
+export const getCoreEventsRetrieveQueryKey = () => {
+    return [
+    `/api/core/events/`
+    ] as const;
+    }
+
+
+export const getCoreEventsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof coreEventsRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreEventsRetrieveInfiniteQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreEventsRetrieve>>> = ({ signal }) => coreEventsRetrieve(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreEventsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof coreEventsRetrieve>>>
+export type CoreEventsRetrieveInfiniteQueryError = unknown
+
+
+export function useCoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreEventsRetrieve>>>, TError = unknown>(
+  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreEventsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreEventsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreEventsRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreEventsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreEventsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreEventsRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof coreEventsRetrieve>>>, TError = unknown>(
+  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreEventsRetrieveInfiniteQueryOptions(options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getCoreEventsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof coreEventsRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCoreEventsRetrieveQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof coreEventsRetrieve>>> = ({ signal }) => coreEventsRetrieve(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CoreEventsRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof coreEventsRetrieve>>>
+export type CoreEventsRetrieveQueryError = unknown
+
+
+export function useCoreEventsRetrieve<TData = Awaited<ReturnType<typeof coreEventsRetrieve>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreEventsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreEventsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreEventsRetrieve<TData = Awaited<ReturnType<typeof coreEventsRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof coreEventsRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof coreEventsRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCoreEventsRetrieve<TData = Awaited<ReturnType<typeof coreEventsRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCoreEventsRetrieve<TData = Awaited<ReturnType<typeof coreEventsRetrieve>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof coreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCoreEventsRetrieveQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Apply resolutions and re-validate.
  */
 export const coreFileImportAssignmentScoresResolveCreate = (
@@ -8419,6 +8577,71 @@ export function useCoreTermsActiveRetrieve<TData = Awaited<ReturnType<typeof cor
 
 
 /**
+ * CRUD operations for terms.
+
+Permissions:
+- Read: Any authenticated user
+- Write: Admin only
+ */
+export const coreTermsNextTermCreate = (
+    term: NonReadonly<Term>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Term>(
+      {url: `/api/core/terms/next-term/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: term, signal
+    },
+      options);
+    }
+
+
+
+export const getCoreTermsNextTermCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreTermsNextTermCreate>>, TError,{data: NonReadonly<Term>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof coreTermsNextTermCreate>>, TError,{data: NonReadonly<Term>}, TContext> => {
+
+const mutationKey = ['coreTermsNextTermCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof coreTermsNextTermCreate>>, {data: NonReadonly<Term>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  coreTermsNextTermCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CoreTermsNextTermCreateMutationResult = NonNullable<Awaited<ReturnType<typeof coreTermsNextTermCreate>>>
+    export type CoreTermsNextTermCreateMutationBody = NonReadonly<Term>
+    export type CoreTermsNextTermCreateMutationError = unknown
+
+    export const useCoreTermsNextTermCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof coreTermsNextTermCreate>>, TError,{data: NonReadonly<Term>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof coreTermsNextTermCreate>>,
+        TError,
+        {data: NonReadonly<Term>},
+        TContext
+      > => {
+
+      const mutationOptions = getCoreTermsNextTermCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * List weight suggestion jobs.
  */
 export const coreWeightSuggestionList = (

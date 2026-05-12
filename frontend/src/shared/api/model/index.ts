@@ -112,6 +112,7 @@ export * from './evaluationScoreRecomputeJobsListParams';
 export * from './fileImportResponse';
 export * from './fileImportResponseResults';
 export * from './gpaByYear';
+export * from './instantiateCourseTemplate';
 export * from './instructorPermission';
 export * from './instructorProfile';
 export * from './learningOutcomeProgramOutcomeMapping';

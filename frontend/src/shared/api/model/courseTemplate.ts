@@ -21,7 +21,7 @@ export interface CourseTemplate {
   name: string;
   /**
    * @minimum 0
-   * @maximum 2147483647
+   * @maximum 9223372036854776000
    */
   credits?: number;
   readonly program: Program;
