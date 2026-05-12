@@ -365,3 +365,38 @@ class TestCalculateGpaByYear:
         for item in result:
             assert item["student_count"] == 0
             assert item["gpa"] is None
+
+
+@pytest.mark.django_db
+class TestProgramStatsPerformance:
+    def test_program_stats_uses_constant_queries(self, authenticated_client, program_factory, term_factory):
+        """Program stats endpoint should not scale queries with number of programs."""
+        from core.models import Department, DegreeLevel
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connections
+
+        client, user = authenticated_client("analytics_admin", "admin")
+
+        dept = Department.objects.first() or Department.objects.create(name="Test", code="TEST")
+        level = DegreeLevel.objects.first() or DegreeLevel.objects.create(name="Bachelor", duration_years=4)
+        active_term = Term.objects.filter(is_active=True).first() or term_factory(is_active=True)
+
+        # Create 3 extra programs (4 total with db_setup's) each with a course
+        for i in range(3):
+            prog = program_factory(
+                code=f"EX{i:02d}",
+                name=f"Extra Program {i}",
+                department=dept,
+                degree_level=level,
+                duration_years=4,
+            )
+            from factories import CourseFactory
+
+            CourseFactory(program=prog, term=active_term)
+
+        with CaptureQueriesContext(connections["default"]) as ctx:
+            response = client.get("/api/core/analytics/program-stats/")
+            assert response.status_code == 200
+
+        query_count = len(ctx.captured_queries)
+        assert query_count < 15, f"Expected <15 queries, got {query_count}"

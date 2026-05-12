@@ -2,7 +2,7 @@ from rest_framework import serializers as drf_serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Avg, F
+from django.db.models import Avg, Count, F, OuterRef, Subquery, IntegerField, FloatField
 from drf_spectacular.utils import extend_schema
 
 from core.permissions import IsAdminOrProgramHead
@@ -261,45 +261,49 @@ class ProgramStatsView(APIView):
                 return Response({"detail": "No program head profile found."}, status=403)
             programs = Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
 
-        program_stats = []
-        all_course_ids = []
-        all_po_ids = []
+        # Single annotated queryset replaces N+1 per-program queries
+        program_stats_qs = programs.annotate(
+            total_students=Count("courses__enrollments__student_id", distinct=True),
+            total_courses=Count("courses", distinct=True),
+            po_avg=Subquery(
+                StudentProgramOutcomeScore.objects.filter(program_outcome__program=OuterRef("pk"))
+                .values("program_outcome__program")
+                .annotate(avg=Avg("score"))
+                .values("avg")[:1],
+                output_field=FloatField(),
+            ),
+            lo_count=Subquery(
+                StudentLearningOutcomeScore.objects.filter(learning_outcome__course__program=OuterRef("pk"))
+                .values("learning_outcome__course__program")
+                .annotate(cnt=Count("*"))
+                .values("cnt")[:1],
+                output_field=IntegerField(),
+            ),
+            po_count=Count("program_outcomes__student_scores", distinct=True),
+        )
+
+        # Batch collect course/PO IDs (2 queries instead of N)
+        all_course_ids = list(Course.objects.filter(program__in=programs).values_list("id", flat=True))
+        all_po_ids = list(ProgramOutcome.objects.filter(program__in=programs).values_list("id", flat=True))
+
+        # Build response list from annotated queryset
         max_duration_years = 4
-        for program in programs:
-            prog_courses = Course.objects.filter(program=program)
-            prog_course_ids = list(prog_courses.values_list("id", flat=True))
-            all_course_ids.extend(prog_course_ids)
-
-            total_students = (
-                CourseEnrollment.objects.filter(course_id__in=prog_course_ids).values("student_id").distinct().count()
-            )
-
-            total_courses = Course.objects.filter(program=program).count()
-
-            prog_po_ids = list(ProgramOutcome.objects.filter(program=program).values_list("id", flat=True))
-            all_po_ids.extend(prog_po_ids)
-            po_avg = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=prog_po_ids).aggregate(
-                avg_score=Avg("score")
-            )["avg_score"]
-
-            lo_count = StudentLearningOutcomeScore.objects.filter(learning_outcome__course_id__in=prog_course_ids).count()
-
-            po_count = StudentProgramOutcomeScore.objects.filter(program_outcome_id__in=prog_po_ids).count()
-
-            max_duration_years = max(max_duration_years, program.duration_years)
-
-            program_stats.append(
+        result_list = []
+        for p in program_stats_qs:
+            result_list.append(
                 {
-                    "id": program.id,
-                    "code": program.code,
-                    "name": program.name,
-                    "total_students": total_students,
-                    "total_courses": total_courses,
-                    "avg_score": round(po_avg, 2) if po_avg is not None else None,
-                    "lo_count": lo_count,
-                    "po_count": po_count,
+                    "id": p.id,
+                    "code": p.code,
+                    "name": p.name,
+                    "total_students": p.total_students,
+                    "total_courses": p.total_courses,
+                    "avg_score": round(p.po_avg, 2) if p.po_avg is not None else None,
+                    "lo_count": p.lo_count or 0,
+                    "po_count": p.po_count,
                 }
             )
+            max_duration_years = max(max_duration_years, p.duration_years)
+        program_stats = result_list
 
         year_level_breakdown = _calculate_year_level_breakdown(all_course_ids, all_po_ids, max_duration_years)
 

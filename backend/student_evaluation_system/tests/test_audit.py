@@ -53,6 +53,9 @@ class TestAuditService:
 
     def test_log_audit_without_request(self, student_user_factory):
         """log_audit works even when no request is in thread-local (e.g., from tests)."""
+        from core.services.audit import clear_audit_request
+
+        clear_audit_request()
         user = student_user_factory(username="audit_no_req")
         entry = log_audit(user, "DELETE", "TestModel", object_id=99)
         assert entry.ip_address is None

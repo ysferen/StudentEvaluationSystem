@@ -14,6 +14,14 @@ def get_audit_request():
     return getattr(_audit_request_store, "request", None)
 
 
+def clear_audit_request():
+    """Clear the thread-local request storage (for cleanup between requests/tests)."""
+    try:
+        del _audit_request_store.request
+    except AttributeError:
+        pass
+
+
 def log_audit(user, action, model_name, object_id=None, before=None, after=None, metadata=None):
     """Create an audit log entry. Safe to call from views, signals, or tasks."""
     request = get_audit_request()

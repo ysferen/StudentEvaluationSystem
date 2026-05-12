@@ -399,9 +399,14 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """After creating a grade, recalculate scores and audit."""
-        set_grade_user(serializer.validated_data, None)  # will be set after save
         grade = serializer.save()
-        set_grade_user(grade, self.request.user)
+        after = {
+            "score": grade.score,
+            "total_score": grade.assessment.total_score,
+            "assessment_id": grade.assessment_id,
+            "student_id": grade.student_id,
+        }
+        log_audit(self.request.user, "CREATE", "StudentGrade", grade.id, before=None, after=after)
         calculate_course_scores(grade.assessment.course_id)
 
     def perform_update(self, serializer):
