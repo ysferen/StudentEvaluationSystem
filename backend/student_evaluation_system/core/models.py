@@ -689,3 +689,42 @@ class WeightSuggestionJob(TimeStampedModel):
     def __str__(self):
         course_id = self.course_id if self.course_id is not None else "-"
         return f"WeightSuggestionJob {self.id}: course={course_id} status={self.status}"
+
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ("CREATE", "Create"),
+        ("UPDATE", "Update"),
+        ("DELETE", "Delete"),
+        ("TRANSITION", "Term Transition"),
+        ("IMPORT", "File Import"),
+        ("APPROVE", "Approval"),
+    ]
+
+    user = models.ForeignKey(
+        "users.CustomUser",
+        on_delete=models.PROTECT,
+        related_name="audit_logs",
+    )
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES, db_index=True)
+    model_name = models.CharField(max_length=100)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    before_snapshot = models.JSONField(null=True, blank=True)
+    after_snapshot = models.JSONField(null=True, blank=True)
+    metadata = models.JSONField(default=dict)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["model_name", "object_id"]),
+            models.Index(fields=["user", "-timestamp"]),
+            models.Index(fields=["action", "-timestamp"]),
+        ]
+        verbose_name = "Audit Log Entry"
+        verbose_name_plural = "Audit Log Entries"
+
+    def __str__(self):
+        return f"{self.action} {self.model_name}#{self.object_id} by {self.user} at {self.timestamp}"

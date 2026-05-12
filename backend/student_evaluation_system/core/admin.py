@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import (
+from core.models import (
+    AuditLog,
     Term,
     Program,
     Department,
@@ -139,3 +140,32 @@ class CourseTemplateAssessmentLOMappingAdmin(admin.ModelAdmin):
 class CourseTemplateLOPOMappingAdmin(admin.ModelAdmin):
     list_display = ["template_learning_outcome", "program_outcome", "weight"]
     list_filter = ["template_learning_outcome__course_template"]
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ["timestamp", "user", "action", "model_name", "object_id"]
+    list_filter = ["action", "model_name", "timestamp"]
+    search_fields = ["user__username", "model_name", "metadata"]
+    readonly_fields = [
+        "user",
+        "action",
+        "model_name",
+        "object_id",
+        "before_snapshot",
+        "after_snapshot",
+        "metadata",
+        "ip_address",
+        "user_agent",
+        "timestamp",
+    ]
+    ordering = ["-timestamp"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
