@@ -1,5 +1,8 @@
+from unittest.mock import patch
+
 import pytest
 from core.models import TermTransitionJob
+from tests.factories import CourseTemplateFactory
 
 
 @pytest.mark.django_db
@@ -70,7 +73,7 @@ class TestNextTermEndpoint:
         assert response.status_code == 202
         result = response.json()
         assert "job_id" in result
-        assert result["new_term_name"] == "Spring 2026"
+        assert result["new_term_name"] == "Spring 2026 (Active)"
         assert result["template_count"] == 1
 
         # Old term should now be inactive
@@ -122,3 +125,68 @@ class TestNextTermEndpoint:
         # Note: the exact error code depends on whether the head has a program head profile
         # If the user isn't truly a program_head with a profile, this test may get 400 or 403
         assert response.status_code != 202
+
+
+@pytest.mark.django_db
+class TestCloneTemplatesTask:
+    @patch("core.tasks.term_transition.publish_progress")
+    def test_clone_templates_creates_courses(self, mock_publish, student_user_factory, term_factory):
+        """Task creates courses from templates and updates job."""
+        from core.models import TermTransitionJob
+        from core.tasks.term_transition import clone_templates_for_term_task
+
+        user = student_user_factory(username="clone_task_user")
+        old_term = term_factory(is_active=True)
+        new_term = term_factory(name="Spring 2026", semester="spring", academic_year=2026, is_active=False)
+
+        template = CourseTemplateFactory()
+
+        job = TermTransitionJob.objects.create(
+            old_term=old_term,
+            new_term=new_term,
+            triggered_by=user,
+            template_ids=[template.id],
+            status="pending",
+        )
+
+        result = clone_templates_for_term_task(
+            template_ids=[template.id],
+            term_id=new_term.id,
+            job_id=job.id,
+        )
+
+        assert result["courses_created"] == 1
+        job.refresh_from_db()
+        assert job.status == "success"
+        assert job.courses_created == 1
+
+        # Verify publish_progress was called
+        assert mock_publish.called
+
+        # Verify course was created from template
+        new_term_courses = new_term.courses.filter(course_template=template)
+        assert new_term_courses.count() == 1
+
+    @patch("core.tasks.term_transition.publish_progress")
+    def test_clone_empty_template_list(self, mock_publish, student_user_factory, term_factory):
+        """Task with empty template list completes immediately."""
+        from core.models import TermTransitionJob
+        from core.tasks.term_transition import clone_templates_for_term_task
+
+        user = student_user_factory(username="clone_empty")
+        old_term = term_factory(is_active=True)
+        new_term = term_factory(name="Spring 2026", semester="spring", academic_year=2026, is_active=False)
+
+        job = TermTransitionJob.objects.create(
+            old_term=old_term,
+            new_term=new_term,
+            triggered_by=user,
+            template_ids=[],
+            status="pending",
+        )
+
+        result = clone_templates_for_term_task(template_ids=[], term_id=new_term.id, job_id=job.id)
+
+        assert result["courses_created"] == 0
+        job.refresh_from_db()
+        assert job.status == "success"
