@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from core.views.sse import event_stream
 
 router = DefaultRouter()
 router.register(r"universities", views.UniversityViewSet, basename="university")
@@ -36,6 +37,7 @@ router.register(r"permissions", views.InstructorPermissionViewSet, basename="ins
 router.register(r"weight-suggestion", views.WeightSuggestionViewSet, basename="weightsuggestion")
 
 urlpatterns = [
+    path("events/", event_stream, name="event-stream"),
     path("", include(router.urls)),
     path("analytics/program-stats/", views.ProgramStatsView.as_view(), name="program-stats"),
     # Legacy endpoints for backward compatibility
