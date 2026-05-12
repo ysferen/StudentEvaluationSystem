@@ -77,6 +77,8 @@ class TestAuditService:
 
 class TestAuditMiddleware:
     def test_middleware_sets_audit_context(self, rf, student_user_factory):
+        from core.services.audit import get_audit_request
+
         user = student_user_factory(username="mw_audit_test")
         request = rf.get("/some-path/")
         request.user = user
@@ -87,3 +89,4 @@ class TestAuditMiddleware:
         assert hasattr(request, "audit_context")
         assert "ip_address" in request.audit_context
         assert "user_agent" in request.audit_context
+        assert get_audit_request() is request

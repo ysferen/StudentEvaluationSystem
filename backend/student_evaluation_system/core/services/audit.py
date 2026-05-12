@@ -17,8 +17,12 @@ def get_audit_request():
 def log_audit(user, action, model_name, object_id=None, before=None, after=None, metadata=None):
     """Create an audit log entry. Safe to call from views, signals, or tasks."""
     request = get_audit_request()
-    ip = request.audit_context["ip_address"] if (request and hasattr(request, "audit_context")) else None
-    ua = request.audit_context["user_agent"] if (request and hasattr(request, "audit_context")) else ""
+    if request and hasattr(request, "audit_context"):
+        ip = request.audit_context.get("ip_address")
+        ua = request.audit_context.get("user_agent", "")
+    else:
+        ip = None
+        ua = ""
 
     return AuditLog.objects.create(
         user=user,
