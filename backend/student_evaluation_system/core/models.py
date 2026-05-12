@@ -728,3 +728,32 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.action} {self.model_name}#{self.object_id} by {self.user} at {self.timestamp}"
+
+
+class TermTransitionJob(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("failed", "Failed"),
+    ]
+
+    old_term = models.ForeignKey(Term, on_delete=models.PROTECT, related_name="transitions_from")
+    new_term = models.ForeignKey(Term, on_delete=models.PROTECT, related_name="transitions_to")
+    triggered_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="term_transitions")
+    template_ids = models.JSONField(default=list)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
+    courses_created = models.PositiveIntegerField(default=0)
+    celery_task_id = models.CharField(max_length=255, blank=True, null=True)
+    error = models.TextField(blank=True, null=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Term Transition Job"
+        verbose_name_plural = "Term Transition Jobs"
+
+    def __str__(self):
+        return f"TermTransition {self.old_term} -> {self.new_term} ({self.status})"
