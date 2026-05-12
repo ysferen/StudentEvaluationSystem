@@ -702,7 +702,7 @@ class AuditLog(models.Model):
     ]
 
     user = models.ForeignKey(
-        "users.CustomUser",
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="audit_logs",
     )

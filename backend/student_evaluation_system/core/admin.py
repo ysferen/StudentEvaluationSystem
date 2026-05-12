@@ -159,7 +159,6 @@ class AuditLogAdmin(admin.ModelAdmin):
         "user_agent",
         "timestamp",
     ]
-    ordering = ["-timestamp"]
 
     def has_add_permission(self, request):
         return False
