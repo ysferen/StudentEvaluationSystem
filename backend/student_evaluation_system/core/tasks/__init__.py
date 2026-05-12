@@ -14,6 +14,9 @@ from celery import shared_task
 from celery.signals import worker_process_init
 from django.utils import timezone
 
+# Ensure submodule tasks are auto-discovered by Celery
+from core.tasks.term_transition import clone_templates_for_term_task  # noqa: F401
+
 logger = logging.getLogger(__name__)
 
 # Module-level suggester --- loaded once per worker process
