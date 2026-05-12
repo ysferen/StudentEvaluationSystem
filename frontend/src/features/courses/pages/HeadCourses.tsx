@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card } from '../../../shared/components/ui/Card'
+import { ArrowRight } from 'lucide-react'
+import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
+import { NextTermModal } from '@/features/head/components/NextTermModal'
 import {
   BookOpenIcon,
   AcademicCapIcon,
@@ -13,6 +15,7 @@ import {
 import {
   coreCoursesList,
   coreTermsList,
+  useCoreTermsActiveRetrieve,
 } from '../../../shared/api/generated/core/core'
 import {
   useCoreAnalyticsProgramStatsRetrieve
@@ -23,7 +26,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/shadcn/Select'
 
 function formatInstructorNames(
   instructors: readonly Record<string, unknown>[] | undefined,
@@ -45,6 +48,8 @@ const HeadCourses = () => {
 
   const [selectedTermId, setSelectedTermId] = useState<string>('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isNextTermModalOpen, setIsNextTermModalOpen] = useState(false)
+  const { data: activeTerm } = useCoreTermsActiveRetrieve()
 
   const { data: statsData, isLoading: statsLoading } =
     useCoreAnalyticsProgramStatsRetrieve()
@@ -142,6 +147,15 @@ const HeadCourses = () => {
             <PlusIcon className="h-5 w-5" />
             <span>New Course</span>
           </button>
+          {activeTerm && (
+            <button
+              onClick={() => setIsNextTermModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-violet-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <ArrowRight className="h-4 w-4" />
+              Next Term
+            </button>
+          )}
         </div>
       </div>
 
@@ -259,6 +273,10 @@ const HeadCourses = () => {
           // Refetch courses list after creation
           queryClient.invalidateQueries({ queryKey: ['head-courses'] })
         }}
+      />
+      <NextTermModal
+        isOpen={isNextTermModalOpen}
+        onClose={() => setIsNextTermModalOpen(false)}
       />
     </div>
   )

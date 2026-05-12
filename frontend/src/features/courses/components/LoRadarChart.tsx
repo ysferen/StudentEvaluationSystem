@@ -1,5 +1,5 @@
 import React from 'react'
-import { ChartWidget } from '../../../shared/components/ui/ChartWidget'
+import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import type { CoreLearningOutcome } from '../../../shared/api/model'
 
 interface LoRadarChartProps {

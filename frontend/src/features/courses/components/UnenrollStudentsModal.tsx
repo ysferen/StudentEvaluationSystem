@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { evaluationEnrollmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
-import Modal from '../../../shared/components/ui/Modal'
+import Modal from '@/components/ui/custom/Modal'
 
 interface EnrolledStudent {
   id: number

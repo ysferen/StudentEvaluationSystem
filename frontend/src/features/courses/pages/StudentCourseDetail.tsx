@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { Card } from '../../../shared/components/ui/Card'
-import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
+import { Card } from '@/components/ui/custom/Card'
+import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
 import {
   ChartBarIcon,
   AcademicCapIcon,

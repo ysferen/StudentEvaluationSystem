@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import Modal from '../../../shared/components/ui/Modal'
+import Modal from '@/components/ui/custom/Modal'
 import { useCoreCoursesPartialUpdate } from '../../../shared/api/generated/core/core'
 import type { Course } from '../../../shared/api/model'
 import InstructorSelect from './InstructorSelect'

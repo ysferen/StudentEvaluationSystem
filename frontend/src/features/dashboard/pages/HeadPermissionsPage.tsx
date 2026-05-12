@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card } from '../../../shared/components/ui/Card'
-import { Badge } from '../../../shared/components/ui/Badge'
+import { Card } from '@/components/ui/custom/Card'
+import { Badge } from '@/components/ui/custom/Badge'
 import {
   ShieldCheckIcon,
   PencilIcon,

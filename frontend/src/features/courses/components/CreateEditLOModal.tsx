@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import Modal from '../../../shared/components/ui/Modal'
+import Modal from '@/components/ui/custom/Modal'
 import {
   useCoreLearningOutcomesCreate,
   useCoreLearningOutcomesPartialUpdate,

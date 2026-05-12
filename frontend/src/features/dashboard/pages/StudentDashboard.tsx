@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { Card } from '../../../shared/components/ui/Card'
-import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
+import { Card } from '@/components/ui/custom/Card'
+import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
 import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { useQueries } from '@tanstack/react-query'
 import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
@@ -119,6 +119,8 @@ const StudentDashboard = () => {
     },
   }), [poScores, scoreMultiplier])
 
+  const isError = results.some(q => q.isError)
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-96">
@@ -128,6 +130,23 @@ const StudentDashboard = () => {
             Loading your dashboard...
           </p>
         </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    const handleRetry = () => {
+      results.forEach(q => { if (q.isError) q.refetch() })
+    }
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="text-red-800">An error occurred while loading your dashboard data. Please try again.</div>
+        <button
+          onClick={handleRetry}
+          className="mt-3 px-4 py-2 bg-danger-600 text-white text-sm font-semibold rounded-lg hover:bg-danger-700 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     )
   }

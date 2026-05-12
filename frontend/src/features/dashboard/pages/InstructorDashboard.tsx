@@ -1,8 +1,8 @@
 import { useMemo, useState, useCallback } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import FileUploadModal from '../../courses/components/FileUploadModal'
-import { Card } from '../../../shared/components/ui/Card'
-import { ChartWidget } from '../../../shared/components/ui/ChartWidget'
+import { Card } from '@/components/ui/custom/Card'
+import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import { ChevronLeft, ChevronRight, Upload } from 'lucide-react'
 import { useAuth } from '../../auth/hooks/useAuth'
 import {

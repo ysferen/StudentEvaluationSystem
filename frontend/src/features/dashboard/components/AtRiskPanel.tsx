@@ -1,6 +1,6 @@
 import React from 'react'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import { Card } from '../../../shared/components/ui/Card'
+import { Card } from '@/components/ui/custom/Card'
 
 interface AtRiskPanelProps {
   riskCount: number

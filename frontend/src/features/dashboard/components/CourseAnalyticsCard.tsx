@@ -4,7 +4,7 @@ import {
   AcademicCapIcon,
   BookOpenIcon,
 } from '@heroicons/react/24/outline'
-import { Card } from '../../../shared/components/ui/Card'
+import { Card } from '@/components/ui/custom/Card'
 import { AtRiskPanel } from './AtRiskPanel'
 
 interface CourseAnalyticsCardProps {

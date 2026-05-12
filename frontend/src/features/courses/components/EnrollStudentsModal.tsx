@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useUsersUsersList } from '../../../shared/api/generated/users/users'
 import { useEvaluationEnrollmentsBulkEnrollCreate } from '../../../shared/api/generated/evaluation/evaluation'
 import type { UsersUsersListParams } from '../../../shared/api/model/usersUsersListParams'
-import Modal from '../../../shared/components/ui/Modal'
+import Modal from '@/components/ui/custom/Modal'
 
 interface EnrollStudentsModalProps {
   isOpen: boolean

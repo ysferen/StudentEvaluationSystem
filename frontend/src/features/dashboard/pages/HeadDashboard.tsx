@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react'
-import { Card } from '../../../shared/components/ui/Card'
-import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
+import { Card } from '@/components/ui/custom/Card'
+import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
 import {
   UserGroupIcon,
   BookOpenIcon,
@@ -9,7 +9,7 @@ import {
 import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 
 const HeadDashboard = () => {
-  const { data: statsData, isLoading } = useCoreAnalyticsProgramStatsRetrieve()
+  const { data: statsData, isLoading, error, refetch } = useCoreAnalyticsProgramStatsRetrieve()
 
   const [activeChart, setActiveChart] = useState<'gpa' | 'po'>('gpa')
 
@@ -31,6 +31,20 @@ const HeadDashboard = () => {
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="text-red-800">An error occurred while loading the dashboard. Please try again.</div>
+        <button
+          onClick={() => refetch()}
+          className="mt-3 px-4 py-2 bg-danger-600 text-white text-sm font-semibold rounded-lg hover:bg-danger-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
   }
 
   const categories = ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length)

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/shadcn/Button'
+import { Input } from '@/components/ui/shadcn/Input'
+import { Label } from '@/components/ui/shadcn/Label'
 import LoginIllustration from '../components/LoginIllustration'
 
 const LoginPage = () => {

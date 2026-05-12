@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { Card } from '../../../shared/components/ui/Card'
-import { Badge } from '../../../shared/components/ui/Badge'
+import { Card } from '@/components/ui/custom/Card'
+import { Badge } from '@/components/ui/custom/Badge'
 import {
   BookOpenIcon,
   AcademicCapIcon,

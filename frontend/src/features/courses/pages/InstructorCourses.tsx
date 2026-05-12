@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { Card } from '../../../shared/components/ui/Card'
+import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import {
   BookOpenIcon,
@@ -27,7 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/shadcn/Select'
 import { isRecord } from '@/shared/utils/guards'
 
 interface CourseStatsData {
@@ -65,7 +65,7 @@ const InstructorCourses = () => {
   const [selectedTermId, setSelectedTermId] = useState<string>('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const { data: termsData } = useQuery({
+  const { data: termsData, refetch: refetchTerms } = useQuery({
     queryKey: ['terms'],
     queryFn: async () => {
       const response = await coreTermsList()
@@ -80,7 +80,7 @@ const InstructorCourses = () => {
     }
   }, [termsData, selectedTermId])
 
-  const { data: coursesData, isLoading: coursesLoading } = useQuery({
+  const { data: coursesData, isLoading: coursesLoading, error: coursesError, refetch: refetchCourses } = useQuery({
     queryKey: ['instructor-courses', user?.id, selectedTermId],
     queryFn: async () => {
       const response = await coreCoursesList({
@@ -141,7 +141,27 @@ const InstructorCourses = () => {
 
   const totalCredits = coursesData?.reduce((sum, course) => sum + (course.credits || 0), 0) || 0
 
+  const hasError = coursesError || courseStatsQueries.some(q => q.isError)
   const isLoadingData = coursesLoading || courseStatsQueries.some(q => q.isLoading)
+
+  if (hasError) {
+    const handleRetry = () => {
+      if (coursesError) refetchCourses()
+      refetchTerms()
+      courseStatsQueries.forEach(q => { if (q.isError) q.refetch() })
+    }
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="text-red-800">An error occurred while loading your courses. Please try again.</div>
+        <button
+          onClick={handleRetry}
+          className="mt-3 px-4 py-2 bg-danger-600 text-white text-sm font-semibold rounded-lg hover:bg-danger-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
+  }
 
   if (isLoadingData) {
     return (
