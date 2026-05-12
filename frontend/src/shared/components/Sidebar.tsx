@@ -106,7 +106,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
                         {navigation.map((item: NavItem) => {
                             const isHashLink = item.href.startsWith('#')
                             const isActive = isHashLink
-                                ? window.location.hash === item.href
+                                ? location.hash === item.href
                                 : location.pathname === item.href
 
                             if (isHashLink) {

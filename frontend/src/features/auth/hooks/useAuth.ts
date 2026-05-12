@@ -1,4 +1,5 @@
 import React, { useContext, createContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useUsersAuthLoginCreate, useUsersAuthMeRetrieve, usersAuthLogoutCreate, usersAuthMeRetrieve } from '../../../shared/api/generated/authentication/authentication'
 import { useQueryClient } from '@tanstack/react-query'
 import { CustomUser } from '../../../shared/api/model/customUser'
@@ -104,6 +105,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<AuthenticatedUser | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const queryClient = useQueryClient()
+  const location = useLocation()
 
   // Check if user is authenticated on mount
   const {
@@ -114,7 +116,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     query: {
       retry: false,
       // Don't run this query on the login page to avoid unnecessary 401s
-      enabled: typeof window !== 'undefined' && window.location.pathname !== '/login'
+      enabled: location.pathname !== '/login'
     }
   })
 
