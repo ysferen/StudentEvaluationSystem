@@ -1,5 +1,7 @@
 import pytest
 from core.models import AuditLog
+from core.services.audit import log_audit, set_audit_request, set_grade_user
+from core.middleware import audit_context_middleware
 
 
 @pytest.mark.django_db
@@ -37,3 +39,51 @@ class TestAuditLogModel:
         entries = list(AuditLog.objects.all())
         assert entries[0] == newer
         assert entries[1] == older
+
+
+@pytest.mark.django_db
+class TestAuditService:
+    def test_log_audit_creates_entry(self, student_user_factory):
+        user = student_user_factory(username="audit_svc_test")
+        entry = log_audit(user, "CREATE", "TestModel", object_id=1, after={"key": "value"}, metadata={"extra": "data"})
+        assert entry.id is not None
+        assert entry.after_snapshot == {"key": "value"}
+        assert entry.metadata == {"extra": "data"}
+
+    def test_log_audit_without_request(self, student_user_factory):
+        """log_audit works even when no request is in thread-local (e.g., from tests)."""
+        user = student_user_factory(username="audit_no_req")
+        entry = log_audit(user, "DELETE", "TestModel", object_id=99)
+        assert entry.ip_address is None
+        assert entry.user_agent == ""
+
+    def test_set_grade_user_attaches_attribute(self, student_user_factory, student_grade_factory):
+        user = student_user_factory(username="grade_audit_user")
+        grade = student_grade_factory()
+        set_grade_user(grade, user)
+        assert getattr(grade, "_audit_user", None) == user
+
+    def test_request_context_isolation(self, rf, student_user_factory):
+        """Thread-local storage isolates requests correctly."""
+        user = student_user_factory(username="ctx_iso_test")
+        request = rf.get("/")
+        request.audit_context = {"ip_address": "10.0.0.1", "user_agent": "test-agent"}
+        set_audit_request(request)
+
+        entry = log_audit(user, "CREATE", "X", object_id=1)
+        assert entry.ip_address == "10.0.0.1"
+        assert entry.user_agent == "test-agent"
+
+
+class TestAuditMiddleware:
+    def test_middleware_sets_audit_context(self, rf, student_user_factory):
+        user = student_user_factory(username="mw_audit_test")
+        request = rf.get("/some-path/")
+        request.user = user
+
+        middleware = audit_context_middleware(lambda r: None)
+        middleware(request)
+
+        assert hasattr(request, "audit_context")
+        assert "ip_address" in request.audit_context
+        assert "user_agent" in request.audit_context
