@@ -2,7 +2,7 @@ from rest_framework import serializers as drf_serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Avg, Count, F, OuterRef, Subquery, IntegerField, FloatField
+from django.db.models import Avg, Count, F
 from drf_spectacular.utils import extend_schema
 
 from core.permissions import IsAdminOrProgramHead
@@ -261,49 +261,72 @@ class ProgramStatsView(APIView):
                 return Response({"detail": "No program head profile found."}, status=403)
             programs = Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
 
-        # Single annotated queryset replaces N+1 per-program queries
-        program_stats_qs = programs.annotate(
-            total_students=Count("courses__enrollments__student_id", distinct=True),
-            total_courses=Count("courses", distinct=True),
-            po_avg=Subquery(
-                StudentProgramOutcomeScore.objects.filter(program_outcome__program=OuterRef("pk"))
-                .values("program_outcome__program")
-                .annotate(avg=Avg("score"))
-                .values("avg")[:1],
-                output_field=FloatField(),
-            ),
-            lo_count=Subquery(
-                StudentLearningOutcomeScore.objects.filter(learning_outcome__course__program=OuterRef("pk"))
-                .values("learning_outcome__course__program")
-                .annotate(cnt=Count("*"))
-                .values("cnt")[:1],
-                output_field=IntegerField(),
-            ),
-            po_count=Count("program_outcomes__student_scores", distinct=True),
+        # 1. Get the list of programs and their IDs
+        program_list = list(programs)
+        program_ids = [p.id for p in program_list]
+
+        # 2. Fetch aggregations independently and map them by program_id
+        # Total Courses
+        courses_qs = (
+            Course.objects.filter(program__in=program_ids)
+            .values("program")
+            .annotate(total=Count("id"))
+            .values_list("program", "total")
         )
+        courses_map = dict(courses_qs)
 
-        # Batch collect course/PO IDs (2 queries instead of N)
-        all_course_ids = list(Course.objects.filter(program__in=programs).values_list("id", flat=True))
-        all_po_ids = list(ProgramOutcome.objects.filter(program__in=programs).values_list("id", flat=True))
+        # Total Students (Distinct per program)
+        students_qs = (
+            CourseEnrollment.objects.filter(course__program__in=program_ids)
+            .values("course__program")
+            .annotate(total=Count("student_id", distinct=True))
+            .values_list("course__program", "total")
+        )
+        students_map = dict(students_qs)
 
-        # Build response list from annotated queryset
+        # Program Outcome Average and Count
+        po_stats_qs = (
+            StudentProgramOutcomeScore.objects.filter(program_outcome__program__in=program_ids)
+            .values("program_outcome__program")
+            .annotate(avg_score=Avg("score"), total_count=Count("id"))
+            .values_list("program_outcome__program", "avg_score", "total_count")
+        )
+        po_map = {row[0]: {"avg": row[1], "count": row[2]} for row in po_stats_qs}
+
+        # Learning Outcome Count
+        lo_qs = (
+            StudentLearningOutcomeScore.objects.filter(learning_outcome__course__program__in=program_ids)
+            .values("learning_outcome__course__program")
+            .annotate(total=Count("id"))
+            .values_list("learning_outcome__course__program", "total")
+        )
+        lo_map = dict(lo_qs)
+
+        # Batch collect course/PO IDs (just like you had)
+        all_course_ids = list(Course.objects.filter(program__in=program_ids).values_list("id", flat=True))
+        all_po_ids = list(ProgramOutcome.objects.filter(program__in=program_ids).values_list("id", flat=True))
+
+        # 3. Build the final response list in Python (O(N) time complexity)
+        program_stats = []
         max_duration_years = 4
-        result_list = []
-        for p in program_stats_qs:
-            result_list.append(
+
+        for p in program_list:
+            po_data = po_map.get(p.id, {"avg": None, "count": 0})
+            avg_score = round(po_data["avg"], 2) if po_data["avg"] is not None else None
+
+            program_stats.append(
                 {
                     "id": p.id,
                     "code": p.code,
                     "name": p.name,
-                    "total_students": p.total_students,
-                    "total_courses": p.total_courses,
-                    "avg_score": round(p.po_avg, 2) if p.po_avg is not None else None,
-                    "lo_count": p.lo_count or 0,
-                    "po_count": p.po_count,
+                    "total_students": students_map.get(p.id, 0),
+                    "total_courses": courses_map.get(p.id, 0),
+                    "avg_score": avg_score,
+                    "lo_count": lo_map.get(p.id, 0),
+                    "po_count": po_data["count"],
                 }
             )
             max_duration_years = max(max_duration_years, p.duration_years)
-        program_stats = result_list
 
         year_level_breakdown = _calculate_year_level_breakdown(all_course_ids, all_po_ids, max_duration_years)
 
