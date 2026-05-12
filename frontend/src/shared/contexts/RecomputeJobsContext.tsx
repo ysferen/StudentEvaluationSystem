@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { v1EvaluationScoreRecomputeJobsRetrieve } from '@/shared/api/generated/v1/v1'
 
 type RecomputeJobStatus = 'pending' | 'running' | 'success' | 'failed'
 
@@ -102,52 +101,44 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!hasFailed) {
         void queryClient.invalidateQueries()
       }
-      return
     }
+  }, [jobs, queryClient])
 
-    let cancelled = false
+  useEffect(() => {
+    const pendingJobs = jobs.filter(
+      (job) => job.status === 'pending' || job.status === 'running'
+    )
 
-    const poll = async () => {
-      try {
-        const pendingIds = jobs
-          .filter((job) => job.status === 'pending' || job.status === 'running')
-          .map((job) => job.id)
+    if (pendingJobs.length === 0) return
 
-        if (pendingIds.length === 0) return
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    const eventSources: EventSource[] = []
 
-        const updates = await Promise.all(
-          pendingIds.map((jobId) => v1EvaluationScoreRecomputeJobsRetrieve(jobId))
-        )
+    pendingJobs.forEach((job) => {
+      const url = `${baseUrl}/api/core/events/?channels=jobs.${job.id}`
+      const es = new EventSource(url, { withCredentials: true })
 
-        if (cancelled) return
-
-        const updatesById = new Map(
-          updates.map((update) => [Number(update.id), update.status as RecomputeJobStatus])
-        )
-
-        setJobs((prev) => {
-          let changed = false
-          const next = prev.map((job) => {
-            const status = updatesById.get(job.id)
-            if (!status || status === job.status) return job
-            changed = true
-            return { ...job, status }
-          })
-          return changed ? next : prev
-        })
-      } catch {
-        // keep polling; next tick retries
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type === 'complete') {
+            void queryClient.invalidateQueries({ queryKey: ['score-recompute-jobs'] })
+            es.close()
+          }
+        } catch {
+          // Heartbeat — ignore
+        }
       }
-    }
 
-    void poll()
-    const interval = window.setInterval(() => {
-      void poll()
-    }, 1000)
+      es.onerror = () => {
+        // EventSource auto-reconnects by default
+      }
+
+      eventSources.push(es)
+    })
 
     return () => {
-      cancelled = true
-      window.clearInterval(interval)
+      eventSources.forEach((es) => es.close())
     }
   }, [jobs, queryClient])
 
