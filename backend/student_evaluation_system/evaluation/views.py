@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import Assessment, AssessmentLearningOutcomeMapping, StudentGrade, CourseEnrollment, ScoreRecomputeJob
+from core.services.audit import log_audit, set_grade_user
 from .serializers import (
     AssessmentSerializer,
     AssessmentCreateSerializer,
@@ -397,17 +398,34 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         return None
 
     def perform_create(self, serializer):
-        """After creating a grade, recalculate scores."""
+        """After creating a grade, recalculate scores and audit."""
+        set_grade_user(serializer.validated_data, None)  # will be set after save
         grade = serializer.save()
+        set_grade_user(grade, self.request.user)
         calculate_course_scores(grade.assessment.course_id)
 
     def perform_update(self, serializer):
-        """After updating a grade, recalculate scores."""
+        """After updating a grade, recalculate scores and audit."""
+        instance = serializer.instance
+        before = {
+            "score": instance.score,
+            "total_score": instance.assessment.total_score,
+            "assessment_id": instance.assessment_id,
+            "student_id": instance.student_id,
+        }
         grade = serializer.save()
+        after = {
+            "score": grade.score,
+            "total_score": grade.assessment.total_score,
+            "assessment_id": grade.assessment_id,
+            "student_id": grade.student_id,
+        }
+        log_audit(self.request.user, "UPDATE", "StudentGrade", grade.id, before=before, after=after)
         calculate_course_scores(grade.assessment.course_id)
 
     def perform_destroy(self, instance):
-        """After deleting a grade, recalculate scores."""
+        """After deleting a grade, recalculate scores and audit."""
+        set_grade_user(instance, self.request.user)
         course_id = instance.assessment.course_id
         instance.delete()
         calculate_course_scores(course_id)

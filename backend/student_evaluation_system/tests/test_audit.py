@@ -107,7 +107,7 @@ class TestGradeAuditSignals:
         grade.save()
 
         logs = AuditLog.objects.filter(action="CREATE", model_name="StudentGrade")
-        assert logs.count() >= 1
+        assert logs.count() == 1, f"Expected 1 CREATE audit log, got {logs.count()}"
         entry = logs.first()
         assert entry.user == user
         assert entry.after_snapshot["score"] == grade.score
@@ -122,7 +122,7 @@ class TestGradeAuditSignals:
         grade.delete()
 
         logs = AuditLog.objects.filter(action="DELETE", model_name="StudentGrade")
-        assert logs.count() >= 1
+        assert logs.count() == 1, f"Expected 1 DELETE audit log, got {logs.count()}"
         assert logs.first().before_snapshot["score"] == existing_score
 
     def test_grade_save_without_user_does_not_audit(self, student_grade_factory):

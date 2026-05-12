@@ -72,14 +72,13 @@ def audit_grade_save(sender, instance, created, **kwargs):
     if not user:
         return
 
-    after = {
-        "score": instance.score,
-        "total_score": instance.assessment.total_score,
-        "assessment_id": instance.assessment_id,
-        "student_id": instance.student_id,
-    }
-
     if created:
+        after = {
+            "score": instance.score,
+            "total_score": instance.assessment.total_score,
+            "assessment_id": instance.assessment_id,
+            "student_id": instance.student_id,
+        }
         log_audit(user, "CREATE", "StudentGrade", instance.id, before=None, after=after)
 
 
