@@ -12,10 +12,8 @@ import {
 import { coreCoursesRetrieve, coreCoursesLearningOutcomesRetrieve } from '../../../shared/api/generated/core/core'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { evaluationGradesList, evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
+import { isRecord } from '@/shared/utils/guards'
 import type { CoreLearningOutcome } from '../../../shared/api/model'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const getAssessmentType = (assessment: unknown): string => {
   if (!isRecord(assessment)) {

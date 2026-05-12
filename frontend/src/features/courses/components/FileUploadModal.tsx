@@ -4,6 +4,7 @@ import {
   useCoreFileImportAssignmentScoresValidateCreate,
   useCoreFileImportAssignmentScoresResolveCreate,
 } from '../../../shared/api/generated/core/core'
+import { isRecord } from '@/shared/utils/guards'
 import { useRecomputeJobs } from '@/shared/contexts/RecomputeJobsContext'
 import {
   Upload,
@@ -139,9 +140,6 @@ interface UploadResponse {
   errors?: unknown[]
   [key: string]: unknown
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const toValidationResult = (value: unknown, defaultIsValid: boolean): ValidationResult => {
   if (!isRecord(value)) {

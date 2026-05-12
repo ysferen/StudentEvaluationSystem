@@ -13,6 +13,7 @@ import {
   coreStudentLoScoresLoAveragesRetrieve
 } from '../../../shared/api/generated/core/core'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
+import { isRecord } from '@/shared/utils/guards'
 import type { Course } from '../../../shared/api/model/course'
 import {
   UserGroupIcon,
@@ -26,9 +27,6 @@ interface LoAverageItem {
   lo_description?: string
   avg_score: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const toLoAverages = (value: unknown): LoAverageItem[] => {
   if (!Array.isArray(value)) {

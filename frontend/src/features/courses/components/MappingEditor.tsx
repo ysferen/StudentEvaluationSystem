@@ -49,6 +49,7 @@ import type {
   ProgramOutcome,
   WeightSuggestionJobResult,
 } from '../../../shared/api/model'
+import { isRecord } from '@/shared/utils/guards'
 import { useRecomputeJobs } from '../../../shared/contexts/RecomputeJobsContext'
 import { AssessmentDescriptionsModal } from './AssessmentDescriptionsModal'
 
@@ -59,9 +60,6 @@ type DragItemData = {
   name?: string
   code?: string
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const toList = <T,>(value: unknown): T[] => {
   if (Array.isArray(value)) {

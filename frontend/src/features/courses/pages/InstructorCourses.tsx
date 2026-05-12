@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { isRecord } from '@/shared/utils/guards'
 
 interface CourseStatsData {
   courseId: number
@@ -35,9 +36,6 @@ interface CourseStatsData {
   studentIds: number[]
   average: number | null
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const getStudentId = (value: unknown): number | null => {
   if (!isRecord(value)) return null

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import { coreCoursesRetrieve, useCoreCoursesDestroy } from '../../../shared/api/generated/core/core'
 import { coreLearningOutcomesList, coreLearningOutcomesDestroy } from '../../../shared/api/generated/outcomes/outcomes'
+import { isRecord } from '@/shared/utils/guards'
 import FileUploadModal from '../components/FileUploadModal'
 import MappingEditor from '../components/MappingEditor'
 import CourseEditModal from '../components/CourseEditModal'
@@ -65,9 +66,6 @@ interface StudentDetail {
   assessmentScores: { name: string; score: number }[]
   loScores: { code: string; score: number }[]
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const getInstructorName = (instructor: CourseInstructorsItem): string => {
   const firstName = typeof instructor.first_name === 'string' ? instructor.first_name : ''
