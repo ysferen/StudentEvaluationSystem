@@ -1,7 +1,9 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 
 from core.models import Course, InstructorPermission, ResourceArea, PermissionTier
+from core.services.audit import log_audit
+from evaluation.models import StudentGrade
 
 
 # Resource areas where course instructors get full CRUD access (since they teach the course).
@@ -62,3 +64,35 @@ def create_instructor_permissions_on_course_add(sender, instance, action, pk_set
         except InstructorProfile.DoesNotExist:
             continue
         _ensure_permissions(instructor_profile, program_head)
+
+
+@receiver(post_save, sender=StudentGrade)
+def audit_grade_save(sender, instance, created, **kwargs):
+    user = getattr(instance, "_audit_user", None)
+    if not user:
+        return
+
+    after = {
+        "score": instance.score,
+        "total_score": instance.assessment.total_score,
+        "assessment_id": instance.assessment_id,
+        "student_id": instance.student_id,
+    }
+
+    if created:
+        log_audit(user, "CREATE", "StudentGrade", instance.id, before=None, after=after)
+
+
+@receiver(post_delete, sender=StudentGrade)
+def audit_grade_delete(sender, instance, **kwargs):
+    user = getattr(instance, "_audit_user", None)
+    if not user:
+        return
+
+    before = {
+        "score": instance.score,
+        "total_score": instance.assessment.total_score,
+        "assessment_id": instance.assessment_id,
+        "student_id": instance.student_id,
+    }
+    log_audit(user, "DELETE", "StudentGrade", instance.id, before=before, after=None)

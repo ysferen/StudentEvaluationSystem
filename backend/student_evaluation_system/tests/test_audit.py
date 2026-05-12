@@ -2,6 +2,7 @@ import pytest
 from core.models import AuditLog
 from core.services.audit import log_audit, set_audit_request, set_grade_user
 from core.middleware import audit_context_middleware
+from evaluation.models import StudentGrade
 
 
 @pytest.mark.django_db
@@ -90,3 +91,46 @@ class TestAuditMiddleware:
         assert "ip_address" in request.audit_context
         assert "user_agent" in request.audit_context
         assert get_audit_request() is request
+
+
+@pytest.mark.django_db
+class TestGradeAuditSignals:
+    def test_grade_create_triggers_audit(self, student_user_factory, assessment_factory):
+        """Creating a grade with _audit_user set triggers audit log."""
+        user = student_user_factory(username="sig_grade_create")
+        student = student_user_factory(username="sig_grade_student")
+        assessment = assessment_factory()
+        AuditLog.objects.all().delete()
+
+        grade = StudentGrade(score=50.0, student=student, assessment=assessment)
+        set_grade_user(grade, user)
+        grade.save()
+
+        logs = AuditLog.objects.filter(action="CREATE", model_name="StudentGrade")
+        assert logs.count() >= 1
+        entry = logs.first()
+        assert entry.user == user
+        assert entry.after_snapshot["score"] == grade.score
+
+    def test_grade_delete_triggers_audit(self, student_user_factory, student_grade_factory):
+        """Deleting a grade with _audit_user set triggers audit log."""
+        user = student_user_factory(username="sig_grade_delete")
+        AuditLog.objects.all().delete()
+        grade = student_grade_factory()
+        existing_score = grade.score
+        set_grade_user(grade, user)
+        grade.delete()
+
+        logs = AuditLog.objects.filter(action="DELETE", model_name="StudentGrade")
+        assert logs.count() >= 1
+        assert logs.first().before_snapshot["score"] == existing_score
+
+    def test_grade_save_without_user_does_not_audit(self, student_grade_factory):
+        """Grades without _audit_user do not trigger audit logs."""
+        AuditLog.objects.all().delete()
+        grade = student_grade_factory()
+        grade.score = grade.score + 1
+        grade.save()
+
+        logs = AuditLog.objects.filter(model_name="StudentGrade")
+        assert logs.count() == 0
