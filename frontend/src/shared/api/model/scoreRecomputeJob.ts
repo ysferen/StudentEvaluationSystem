@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { TaskTypeEnum } from './taskTypeEnum';
-import type { StatusEnum } from './statusEnum';
+import type { StatusA93Enum } from './statusA93Enum';
 
 export interface ScoreRecomputeJob {
   readonly id: number;
   task_type?: TaskTypeEnum;
-  status?: StatusEnum;
+  status?: StatusA93Enum;
   /** @nullable */
   course?: number | null;
   /** @nullable */

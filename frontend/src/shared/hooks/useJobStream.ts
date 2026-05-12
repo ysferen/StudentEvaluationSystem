@@ -1,25 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
-
-export interface JobProgress {
-  type: 'progress' | 'complete'
-  job_id: number
-  status: 'running' | 'success' | 'failed'
-  current?: number
-  total?: number
-  created?: number
-  courses_created?: number
-  error?: string
-}
+import { baseURL } from '@/shared/api/mutator'
+import type { JobProgressEvent } from '@/shared/api/model/jobProgressEvent'
 
 interface UseJobStreamResult {
-  progress: JobProgress | null
+  progress: JobProgressEvent | null
   isComplete: boolean
   error: string | null
   reconnect: () => void
 }
 
 export function useJobStream(jobId: number | null): UseJobStreamResult {
-  const [progress, setProgress] = useState<JobProgress | null>(null)
+  const [progress, setProgress] = useState<JobProgressEvent | null>(null)
   const [isComplete, setIsComplete] = useState(false)
   const [streamError, setStreamError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
@@ -27,13 +18,12 @@ export function useJobStream(jobId: number | null): UseJobStreamResult {
   const connect = useCallback(() => {
     if (!jobId) return () => {}
 
-    const baseUrl = import.meta.env.VITE_API_URL || ''
-    const url = `${baseUrl}/api/core/events/?channels=jobs.${jobId}`
+    const url = `${baseURL}/core/events/?channels=jobs.${jobId}`
     const eventSource = new EventSource(url, { withCredentials: true })
 
     eventSource.onmessage = (event) => {
       try {
-        const data: JobProgress = JSON.parse(event.data)
+        const data = JSON.parse(event.data) as JobProgressEvent
         setProgress(data)
         if (data.type === 'complete') {
           setIsComplete(true)

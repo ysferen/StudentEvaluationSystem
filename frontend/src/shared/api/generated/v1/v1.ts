@@ -49,6 +49,7 @@ import type {
   InstantiateCourseTemplate,
   InstructorPermission,
   InstructorProfile,
+  JobProgressEvent,
   LearningOutcomeProgramOutcomeMapping,
   PaginatedAssessmentLearningOutcomeMappingList,
   PaginatedAssessmentList,
@@ -4291,7 +4292,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+ * Subscribe to Redis pub/sub channels for real-time job progress updates. Pass comma-separated channel names via the `channels` query parameter (e.g. `?channels=jobs.42,notifications.5`).
+ * @summary Stream job progress via SSE
  */
 export const v1CoreEventsRetrieve = (
 
@@ -4299,7 +4301,7 @@ export const v1CoreEventsRetrieve = (
 ) => {
 
 
-      return customInstance<void>(
+      return customInstance<JobProgressEvent>(
       {url: `/api/v1/core/events/`, method: 'GET', signal
     },
       options);
@@ -4367,6 +4369,9 @@ export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<Ret
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Stream job progress via SSE
+ */
 
 export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>(
   options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
@@ -4431,6 +4436,9 @@ export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1Core
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Stream job progress via SSE
+ */
 
 export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}

@@ -11,7 +11,6 @@ from rest_framework import serializers
 from core.models import (
     Course,
     CourseTemplate,
-    CourseTemplateAssessment,
     CourseTemplateAssessmentLOMapping,
     CourseTemplateLearningOutcome,
     CourseTemplateLOPOMapping,
@@ -533,18 +532,31 @@ class CourseTemplateAssessmentSerializer(serializers.ModelSerializer):
     """Serializer for CourseTemplateAssessment."""
 
     class Meta:
-        model = CourseTemplateAssessment
+        model = WeightSuggestionJob
         fields = [
             "id",
-            "name",
-            "assessment_type",
-            "total_score",
-            "weight",
-            "course_template",
+            "status",
+            "result",
+            "error",
+            "started_at",
+            "finished_at",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class JobProgressEventSerializer(serializers.Serializer):
+    """SSE event payload for job progress and completion events."""
+
+    type = serializers.ChoiceField(choices=["progress", "complete"], help_text="Event type")
+    job_id = serializers.IntegerField(help_text="ID of the job this event relates to")
+    status = serializers.ChoiceField(choices=["running", "success", "failed"], help_text="Current job status")
+    current = serializers.IntegerField(required=False, help_text="Current progress step (progress events)")
+    total = serializers.IntegerField(required=False, help_text="Total steps (progress events)")
+    created = serializers.IntegerField(required=False, help_text="Items created so far (progress events)")
+    courses_created = serializers.IntegerField(required=False, help_text="Total courses created (complete events)")
+    total_templates = serializers.IntegerField(required=False, help_text="Total templates processed (complete events)")
+    error = serializers.CharField(required=False, allow_blank=True, help_text="Error message if status is failed")
 
 
 class CourseTemplateAssessmentLOMappingSerializer(serializers.ModelSerializer):

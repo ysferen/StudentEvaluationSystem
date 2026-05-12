@@ -5,7 +5,7 @@
  * Outcome-based assessment system for academic programs
  * OpenAPI spec version: 1.0.0
  */
-import type { StatusEnum } from './statusEnum';
+import type { StatusA93Enum } from './statusA93Enum';
 import type { PatchedWeightSuggestionJobResult } from './patchedWeightSuggestionJobResult';
 
 /**
@@ -17,7 +17,7 @@ export interface PatchedWeightSuggestionJob {
   course?: number | null;
   /** @nullable */
   triggered_by?: number | null;
-  readonly status?: StatusEnum;
+  readonly status?: StatusA93Enum;
   readonly celery_task_id?: string;
   /** @nullable */
   readonly result?: PatchedWeightSuggestionJobResult;

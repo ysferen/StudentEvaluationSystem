@@ -4,10 +4,12 @@ from collections.abc import Generator
 
 import redis as redis_lib
 from django.http import StreamingHttpResponse
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from core.serializers import JobProgressEventSerializer
 from core.services.sse import get_redis_client
 
 # Channel names must match: {prefix}.{identifier}
@@ -123,6 +125,15 @@ def _event_generator(channel_list: list[str]) -> Generator[bytes, None, None]:
         _cleanup_pubsub(pubsub, client, channel_list)
 
 
+@extend_schema(
+    summary="Stream job progress via SSE",
+    description="Subscribe to Redis pub/sub channels for real-time job progress updates. "
+    "Pass comma-separated channel names via the `channels` query parameter "
+    "(e.g. `?channels=jobs.42,notifications.5`).",
+    responses={
+        (200, "text/event-stream"): JobProgressEventSerializer,
+    },
+)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def event_stream(request):

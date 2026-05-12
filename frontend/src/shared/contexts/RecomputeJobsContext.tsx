@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { baseURL } from '@/shared/api/mutator'
 
 type RecomputeJobStatus = 'pending' | 'running' | 'success' | 'failed'
 
@@ -111,11 +112,10 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (pendingJobs.length === 0) return
 
-    const baseUrl = import.meta.env.VITE_API_URL || ''
     const eventSources: EventSource[] = []
 
     pendingJobs.forEach((job) => {
-      const url = `${baseUrl}/api/core/events/?channels=jobs.${job.id}`
+      const url = `${baseURL}/core/events/?channels=jobs.${job.id}`
       const es = new EventSource(url, { withCredentials: true })
 
       es.onmessage = (event) => {

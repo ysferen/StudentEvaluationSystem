@@ -1274,14 +1274,21 @@ paths:
   /api/core/events/:
     get:
       operationId: core_events_retrieve
-      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      description: Subscribe to Redis pub/sub channels for real-time job progress
+        updates. Pass comma-separated channel names via the `channels` query parameter
+        (e.g. `?channels=jobs.42,notifications.5`).
+      summary: Stream job progress via SSE
       tags:
       - core
       security:
       - jwtCookie: []
       responses:
         '200':
-          description: No response body
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/JobProgressEvent'
+          description: ''
   /api/core/file-import/assignment-scores/resolve/:
     post:
       operationId: core_file_import_assignment_scores_resolve_create
@@ -6699,14 +6706,21 @@ paths:
   /api/v1/core/events/:
     get:
       operationId: v1_core_events_retrieve
-      description: SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5
+      description: Subscribe to Redis pub/sub channels for real-time job progress
+        updates. Pass comma-separated channel names via the `channels` query parameter
+        (e.g. `?channels=jobs.42,notifications.5`).
+      summary: Stream job progress via SSE
       tags:
       - v1
       security:
       - jwtCookie: []
       responses:
         '200':
-          description: No response body
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/JobProgressEvent'
+          description: ''
   /api/v1/core/file-import/assignment-scores/resolve/:
     post:
       operationId: v1_core_file_import_assignment_scores_resolve_create
@@ -11607,6 +11621,62 @@ components:
       - id
       - user
       - user_id
+    JobProgressEvent:
+      type: object
+      description: SSE event payload for job progress and completion events.
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Event type
+
+            * `progress` - progress
+            * `complete` - complete
+        job_id:
+          type: integer
+          description: ID of the job this event relates to
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobProgressEventStatusEnum'
+          description: |-
+            Current job status
+
+            * `running` - running
+            * `success` - success
+            * `failed` - failed
+        current:
+          type: integer
+          description: Current progress step (progress events)
+        total:
+          type: integer
+          description: Total steps (progress events)
+        created:
+          type: integer
+          description: Items created so far (progress events)
+        courses_created:
+          type: integer
+          description: Total courses created (complete events)
+        total_templates:
+          type: integer
+          description: Total templates processed (complete events)
+        error:
+          type: string
+          description: Error message if status is failed
+      required:
+      - job_id
+      - status
+      - type
+    JobProgressEventStatusEnum:
+      enum:
+      - running
+      - success
+      - failed
+      type: string
+      description: |-
+        * `running` - running
+        * `success` - success
+        * `failed` - failed
     LearningOutcomeProgramOutcomeMapping:
       type: object
       description: |-
@@ -12897,7 +12967,7 @@ components:
           nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusA93Enum'
           readOnly: true
         celery_task_id:
           type: string
@@ -13145,7 +13215,7 @@ components:
         task_type:
           $ref: '#/components/schemas/TaskTypeEnum'
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/StatusA93Enum'
         course:
           type: integer
           nullable: true
@@ -13187,7 +13257,7 @@ components:
         * `fall` - Fall
         * `spring` - Spring
         * `summer` - Summer
-    StatusEnum:
+    StatusA93Enum:
       enum:
       - pending
       - running
@@ -13400,6 +13470,14 @@ components:
       - access
       - refresh
       - user
+    TypeEnum:
+      enum:
+      - progress
+      - complete
+      type: string
+      description: |-
+        * `progress` - progress
+        * `complete` - complete
     University:
       type: object
       description: |-
@@ -13467,7 +13545,7 @@ components:
           nullable: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusA93Enum'
           readOnly: true
         celery_task_id:
           type: string
