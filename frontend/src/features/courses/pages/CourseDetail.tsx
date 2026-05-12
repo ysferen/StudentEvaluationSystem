@@ -150,9 +150,11 @@ const CourseDetail = () => {
     queryKey: ['course', courseId],
     queryFn: async () => {
       if (!courseId) throw new Error('Course ID is required')
-      const courseResponse = await coreCoursesRetrieve(Number(courseId))
-      const loResponse = await coreLearningOutcomesList({ course: Number(courseId) })
-      const loScoresResponse = await coreStudentLoScoresList({ course: Number(courseId) })
+      const [courseResponse, loResponse, loScoresResponse] = await Promise.all([
+        coreCoursesRetrieve(Number(courseId)),
+        coreLearningOutcomesList({ course: Number(courseId) }),
+        coreStudentLoScoresList({ course: Number(courseId) }),
+      ])
       return {
         course: courseResponse,
         learningOutcomes: loResponse.results || [],
