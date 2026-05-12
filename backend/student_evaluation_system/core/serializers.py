@@ -569,6 +569,51 @@ class InstantiateCourseTemplateSerializer(serializers.Serializer):
     term_id = serializers.IntegerField()
 
 
+class NextTermSerializer(serializers.Serializer):
+    semester = serializers.ChoiceField(choices=["fall", "spring", "summer"])
+    academic_year = serializers.IntegerField(min_value=2000, max_value=2100)
+    template_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=True, default=list)
+
+    def validate_template_ids(self, value):
+        if not value:
+            return value
+
+        user = self.context["request"].user
+        from core.models import CourseTemplate
+
+        if getattr(user, "is_admin_user", False):
+            templates = CourseTemplate.objects.filter(id__in=value)
+        else:
+            profile = getattr(user, "program_head_profile", None)
+            if profile is None:
+                raise serializers.ValidationError("Unable to determine program access.")
+            templates = CourseTemplate.objects.filter(id__in=value, program_id=profile.program_id)
+
+        found_ids = set(templates.values_list("id", flat=True))
+        missing = set(value) - found_ids
+        if missing:
+            raise serializers.ValidationError(f"Invalid or inaccessible template IDs: {sorted(missing)}")
+        return value
+
+    def create(self, validated_data):
+        from django.db import transaction
+        from core.models import Term
+
+        old_term = self.context["old_term"]
+        with transaction.atomic():
+            old_term.is_active = False
+            old_term.save()
+
+            new_term = Term.objects.create(
+                semester=validated_data["semester"],
+                academic_year=validated_data["academic_year"],
+                name=f"{validated_data['semester'].capitalize()} {validated_data['academic_year']}",
+                is_active=True,
+            )
+
+        return new_term
+
+
 class WeightSuggestionJobSerializer(serializers.ModelSerializer):
     """Serializer for WeightSuggestionJob."""
 

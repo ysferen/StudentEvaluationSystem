@@ -12,6 +12,7 @@ from ..services.file_import import FileImportError
 from ..services.validation import AssignmentScoreValidator
 from ..permissions import IsAdminOrProgramHeadOrReadOnly, InstructorPermissionMixin
 from rest_framework import serializers
+from ..services.audit import log_audit
 
 from ..models import (
     University,
@@ -202,6 +203,65 @@ class TermViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(active_term)
             return Response(serializer.data)
         return Response({"detail": "No active term found."}, status=404)
+
+    @action(detail=False, methods=["post"], url_path="next-term")
+    def next_term(self, request):
+        from core.models import Term, TermTransitionJob
+        from core.serializers import NextTermSerializer
+
+        active_term = Term.objects.filter(is_active=True).first()
+        if not active_term:
+            return Response({"error": "No active term to transition from."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = NextTermSerializer(
+            data=request.data,
+            context={"request": request, "old_term": active_term, "created_by": request.user},
+        )
+        serializer.is_valid(raise_exception=True)
+
+        new_term = serializer.save()
+
+        job = TermTransitionJob.objects.create(
+            old_term=active_term,
+            new_term=new_term,
+            triggered_by=request.user,
+            template_ids=serializer.validated_data["template_ids"],
+            status="pending",
+        )
+
+        template_ids = serializer.validated_data["template_ids"]
+        if template_ids:
+            from core.tasks.term_transition import clone_templates_for_term_task
+
+            task = clone_templates_for_term_task.delay(
+                template_ids=template_ids,
+                term_id=new_term.id,
+                job_id=job.id,
+            )
+            job.celery_task_id = task.id
+            job.save(update_fields=["celery_task_id"])
+
+        log_audit(
+            request.user,
+            "TRANSITION",
+            "Term",
+            new_term.id,
+            before={"id": active_term.id, "name": str(active_term)},
+            after={"id": new_term.id, "name": str(new_term)},
+            metadata={"template_ids": template_ids},
+        )
+
+        return Response(
+            {
+                "job_id": job.id,
+                "old_term_id": active_term.id,
+                "new_term_id": new_term.id,
+                "new_term_name": str(new_term),
+                "template_count": len(template_ids),
+                "message": "Term transition started. Courses are being created from templates.",
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 @extend_schema_view(
