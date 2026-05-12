@@ -6,12 +6,13 @@ from core.services.sse import publish_progress
 
 
 class TestSsePublish:
-    @patch("core.services.sse.redis_lib.Redis.from_url")
-    def test_publish_progress_sends_json(self, mock_from_url):
+    @patch("core.services.sse.redis_lib.ConnectionPool.from_url")
+    @patch("core.services.sse.redis_lib.Redis")
+    def test_publish_progress_sends_json(self, mock_redis_class, mock_pool_from_url):
         mock_client = MagicMock()
-        mock_from_url.return_value = mock_client
+        mock_redis_class.return_value = mock_client
 
-        publish_progress("jobs.42", {"type": "progress", "current": 3, "total": 10})
+        result = publish_progress("jobs.42", {"type": "progress", "current": 3, "total": 10})
 
         mock_client.publish.assert_called_once()
         call_args = mock_client.publish.call_args[0]
@@ -20,6 +21,17 @@ class TestSsePublish:
         assert parsed["type"] == "progress"
         assert parsed["current"] == 3
         assert parsed["total"] == 10
+        assert result is True
+
+    @patch("core.services.sse.redis_lib.ConnectionPool.from_url")
+    @patch("core.services.sse.redis_lib.Redis")
+    def test_publish_progress_handles_connection_error(self, mock_redis_class, mock_pool_from_url):
+        mock_client = MagicMock()
+        mock_client.publish.side_effect = __import__("redis").ConnectionError("down")
+        mock_redis_class.return_value = mock_client
+
+        result = publish_progress("jobs.42", {"type": "progress", "current": 1, "total": 1})
+        assert result is False
 
 
 @pytest.mark.django_db
@@ -30,6 +42,11 @@ class TestEventStreamView:
         assert response.status_code == 400
         assert "channels" in response.json()["error"]
 
+    def test_invalid_channel_name_returns_400(self, authenticated_client):
+        client, user = authenticated_client("sse_bad_ch")
+        response = client.get("/api/core/events/?channels=invalid")
+        assert response.status_code == 400
+
     def test_unauthorized_notification_channel(self, authenticated_client, student_user_factory):
         """User cannot subscribe to another user's notification channel."""
         other_user = student_user_factory(username="sse_other")
@@ -37,26 +54,53 @@ class TestEventStreamView:
         response = client.get(f"/api/core/events/?channels=notifications.{other_user.id}")
         assert response.status_code == 403
 
+    def test_own_notification_channel_returns_200(self, authenticated_client):
+        """User can subscribe to their own notification channel."""
+        client, user = authenticated_client("sse_self_notify")
+        chan = f"notifications.{user.id}"
+
+        with patch("core.views.sse.get_redis_client") as mock_get_redis:
+            mock_pubsub = MagicMock()
+            mock_pubsub.get_message.return_value = None
+            mock_client = MagicMock()
+            mock_client.pubsub.return_value = mock_pubsub
+            mock_get_redis.return_value = mock_client
+
+            response = client.get(f"/api/core/events/?channels={chan}")
+            assert response.status_code == 200
+            assert response["Content-Type"] == "text/event-stream"
+
     @patch("core.views.sse.get_redis_client")
-    def test_valid_channel_returns_sse_stream(self, mock_get_redis, authenticated_client):
+    def test_stream_yields_heartbeat(self, mock_get_redis, authenticated_client, admin_user_factory):
+        """With an admin user, a job channel stream should yield heartbeat comments."""
+        admin = admin_user_factory(username="sse_admin")
+        client, user = authenticated_client("sse_someuser")
+        # Log in as admin for job channel permission
+        client.force_authenticate(user=admin)
+
         mock_pubsub = MagicMock()
-        mock_pubsub.get_message.return_value = None  # No messages, just heartbeats
+        mock_pubsub.get_message.return_value = None
         mock_client = MagicMock()
         mock_client.pubsub.return_value = mock_pubsub
         mock_get_redis.return_value = mock_client
 
-        client, user = authenticated_client("sse_stream_test")
         response = client.get("/api/core/events/?channels=jobs.1")
-
         assert response.status_code == 200
         assert response["Content-Type"] == "text/event-stream"
         assert response["Cache-Control"] == "no-cache"
 
-    @patch("core.views.sse.get_redis_client")
-    def test_stream_receives_published_message(self, mock_get_redis, authenticated_client):
-        mock_pubsub = MagicMock()
+        chunks = list(itertools.islice(response.streaming_content, 3))
+        content = b"".join(chunks)
+        assert b"heartbeat" in content
 
-        # Return one message then None for subsequent calls (heartbeats)
+    @patch("core.views.sse.get_redis_client")
+    def test_stream_receives_message(self, mock_get_redis, authenticated_client, admin_user_factory):
+        """Messages published to Redis are forwarded as SSE data events."""
+        admin = admin_user_factory(username="sse_admin2")
+        client, user = authenticated_client("sse_msgtest")
+        client.force_authenticate(user=admin)
+
+        mock_pubsub = MagicMock()
         _call_count = [0]
         messages = [
             {"type": "message", "data": json.dumps({"type": "progress", "current": 1, "total": 5}).encode()},
@@ -74,9 +118,7 @@ class TestEventStreamView:
         mock_client.pubsub.return_value = mock_pubsub
         mock_get_redis.return_value = mock_client
 
-        client, user = authenticated_client("sse_msg_test")
         response = client.get("/api/core/events/?channels=jobs.1")
-        # Consume only a few chunks from the infinite stream
         chunks = list(itertools.islice(response.streaming_content, 5))
         content = b"".join(chunks)
 
