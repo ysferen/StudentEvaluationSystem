@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { Card } from '../../../shared/components/ui/Card'
 import FileUploadModal from '../../courses/components/FileUploadModal'
@@ -204,8 +204,14 @@ const InstructorDashboard = () => {
     }
   })
 
-  const nextCourse = () => setCurrentIndex((prev) => (prev + 1) % coursesWithAnalytics.length)
-  const prevCourse = () => setCurrentIndex((prev) => (prev - 1 + coursesWithAnalytics.length) % coursesWithAnalytics.length)
+  const nextCourse = useCallback(
+    () => setCurrentIndex((prev) => (prev + 1) % courses.length),
+    [courses.length]
+  )
+  const prevCourse = useCallback(
+    () => setCurrentIndex((prev) => (prev - 1 + courses.length) % courses.length),
+    [courses.length]
+  )
 
   const course = coursesWithAnalytics[currentIndex] || {
     code: 'No Course',

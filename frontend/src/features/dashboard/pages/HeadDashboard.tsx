@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { Card } from '../../../shared/components/ui/Card'
 import { LazyChartWidget as ChartWidget } from '../../../shared/components/ui/LazyChartWidget'
 import {
@@ -12,6 +12,9 @@ const HeadDashboard = () => {
   const { data: statsData, isLoading } = useCoreAnalyticsProgramStatsRetrieve()
 
   const [activeChart, setActiveChart] = useState<'gpa' | 'po'>('gpa')
+
+  const handleSetGpaChart = useCallback(() => setActiveChart('gpa'), [])
+  const handleSetPoChart = useCallback(() => setActiveChart('po'), [])
 
   const programs = useMemo(() => statsData?.programs || [], [statsData])
 
@@ -102,7 +105,7 @@ const HeadDashboard = () => {
             <h2 className="text-lg font-semibold text-gray-900">Score Averages by Year</h2>
             <div className="flex gap-2">
               <button
-                onClick={() => setActiveChart('gpa')}
+                onClick={handleSetGpaChart}
                 className={`px-3 py-1.5 text-sm rounded-lg transition ${
                   activeChart === 'gpa'
                     ? 'bg-primary-600 text-white'
@@ -112,7 +115,7 @@ const HeadDashboard = () => {
                 GPA Averages
               </button>
               <button
-                onClick={() => setActiveChart('po')}
+                onClick={handleSetPoChart}
                 className={`px-3 py-1.5 text-sm rounded-lg transition ${
                   activeChart === 'po'
                     ? 'bg-primary-600 text-white'

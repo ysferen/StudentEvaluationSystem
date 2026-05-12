@@ -167,9 +167,9 @@ const CourseDetail = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const courseTemplateId: number | null = (data as any)?.course?.course_template_id ?? null
 
-  const handleUploadComplete = () => {
+  const handleUploadComplete = useCallback(() => {
     refetch()
-  }
+  }, [refetch])
 
   const getInstructorNames = () => {
     if (!data?.course?.instructors || data.course.instructors.length === 0) {
