@@ -62,10 +62,8 @@ def _check_permissions(request: Request, channel_list: list[str]) -> Response | 
                     status=403,
                 )
         elif ch.startswith("jobs."):
-            # For job channels, verify user is admin or job owner
             if getattr(request.user, "is_admin_user", False):
                 continue
-            from core.models import TermTransitionJob
 
             try:
                 job_id = int(ch.split(".", 1)[1])
@@ -74,7 +72,8 @@ def _check_permissions(request: Request, channel_list: list[str]) -> Response | 
                     {"error": f"Invalid job channel: {ch}"},
                     status=400,
                 )
-            if not TermTransitionJob.objects.filter(id=job_id, triggered_by=request.user).exists():
+
+            if not _job_owned_by_user(job_id, request.user):
                 return Response(
                     {"error": "Cannot subscribe to another user's job channel"},
                     status=403,
@@ -83,13 +82,24 @@ def _check_permissions(request: Request, channel_list: list[str]) -> Response | 
     return None
 
 
-def _subscribe(client, pubsub, channel_list: list[str]) -> bool:
+def _job_owned_by_user(job_id: int, user) -> bool:
+    """Check whether the given job ID belongs to any known job model owned by the user."""
+    from core.models import TermTransitionJob, WeightSuggestionJob
+    from evaluation.models import ScoreRecomputeJob
+
+    for model in (TermTransitionJob, ScoreRecomputeJob, WeightSuggestionJob):
+        if model.objects.filter(id=job_id, triggered_by=user).exists():
+            return True
+    return False
+
+
+def _subscribe(client, pubsub, channel_list: list[str]):
     """Subscribe to channels. Yields error event on failure. Returns True on success."""
     try:
         pubsub.subscribe(*channel_list)
     except redis_lib.ConnectionError:
         yield b'event: error\ndata: {"error": "Redis unavailable"}\n\n'
-        yield False  # signal failure
+        yield False
         return
     except Exception:
         yield False
@@ -110,30 +120,29 @@ def _cleanup_pubsub(pubsub, client, channel_list):
             pass
 
 
-def _emit_initial_state(channel_list: list[str], request: Request) -> Generator[bytes, None, None]:
-    """Emit the current DB state for each jobs.* channel so the client always
-    receives the latest status, even if Redis pub/sub messages were lost."""
-    from core.models import TermTransitionJob
+def _get_job_for_channel(job_id: int) -> object | None:
+    """Fetch any known job model instance by ID. Returns None if not found."""
+    from core.models import TermTransitionJob, WeightSuggestionJob
+    from evaluation.models import ScoreRecomputeJob
 
-    for ch in channel_list:
-        if not ch.startswith("jobs."):
-            continue
+    for model in (TermTransitionJob, ScoreRecomputeJob, WeightSuggestionJob):
         try:
-            job_id = int(ch.split(".", 1)[1])
-        except ValueError:
+            return model.objects.get(id=job_id)
+        except model.DoesNotExist:
             continue
+    return None
 
-        try:
-            job = TermTransitionJob.objects.get(id=job_id)
-        except TermTransitionJob.DoesNotExist:
-            continue
 
-        if not getattr(request.user, "is_admin_user", False) and job.triggered_by_id != request.user.id:
-            continue
+def _build_initial_event(job) -> dict | None:
+    """Build an SSE event payload representing the current state of a job."""
+    from core.models import TermTransitionJob, WeightSuggestionJob
+    from evaluation.models import ScoreRecomputeJob
 
+    is_terminal = job.status in ("success", "failed")
+
+    if isinstance(job, TermTransitionJob):
         total = len(job.template_ids) if job.template_ids else 0
-
-        if job.status in ("success", "failed"):
+        if is_terminal:
             event = {
                 "type": "complete",
                 "job_id": job.id,
@@ -141,8 +150,6 @@ def _emit_initial_state(channel_list: list[str], request: Request) -> Generator[
                 "courses_created": job.courses_created,
                 "total_templates": total,
             }
-            if job.error:
-                event["error"] = job.error
         else:
             event = {
                 "type": "progress",
@@ -152,6 +159,50 @@ def _emit_initial_state(channel_list: list[str], request: Request) -> Generator[
                 "total": total,
                 "created": job.courses_created,
             }
+    elif isinstance(job, ScoreRecomputeJob):
+        event = {
+            "type": "complete" if is_terminal else "progress",
+            "job_id": job.id,
+            "status": job.status,
+            "task_type": job.task_type,
+        }
+    elif isinstance(job, WeightSuggestionJob):
+        event = {
+            "type": "complete" if is_terminal else "progress",
+            "job_id": job.id,
+            "status": job.status,
+        }
+        if job.result is not None:
+            event["result"] = job.result
+    else:
+        return None
+
+    if job.error:
+        event["error"] = job.error
+    return event
+
+
+def _emit_initial_state(channel_list: list[str], request: Request) -> Generator[bytes, None, None]:
+    """Emit the current DB state for each jobs.* channel so the client always
+    receives the latest status, even if Redis pub/sub messages were lost."""
+    for ch in channel_list:
+        if not ch.startswith("jobs."):
+            continue
+        try:
+            job_id = int(ch.split(".", 1)[1])
+        except ValueError:
+            continue
+
+        job = _get_job_for_channel(job_id)
+        if job is None:
+            continue
+
+        if not getattr(request.user, "is_admin_user", False) and job.triggered_by_id != request.user.id:
+            continue
+
+        event = _build_initial_event(job)
+        if event is None:
+            continue
 
         yield f"data: {json.dumps(event)}\n\n".encode()
 

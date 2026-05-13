@@ -14,6 +14,7 @@ import threading
 from celery import shared_task
 from celery.signals import worker_ready
 from django.utils import timezone
+from core.services.sse import publish_progress
 
 # Ensure submodule tasks are auto-discovered by Celery
 from core.tasks.term_transition import clone_templates_for_term_task  # noqa: F401
@@ -118,6 +119,15 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
                 finished_at=timezone.now(),
                 error=str(exc),
             )
+            publish_progress(
+                f"jobs.{job_id}",
+                {
+                    "type": "complete",
+                    "job_id": job_id,
+                    "status": "failed",
+                    "error": str(exc),
+                },
+            )
         raise
 
     if job_id:
@@ -125,6 +135,14 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             status=WeightSuggestionJob.STATUS_SUCCESS,
             finished_at=timezone.now(),
             result=result,
+        )
+        publish_progress(
+            f"jobs.{job_id}",
+            {
+                "type": "complete",
+                "job_id": job_id,
+                "status": "success",
+            },
         )
 
     logger.info(f"TASK SENT AT: {time.time()}")
