@@ -426,10 +426,15 @@ class FileImportService:
 
         missing_assessments = self._find_missing_assessments(assessment_columns, assessment_lookup)
         if missing_assessments:
-            available = ", ".join([assessment.name for assessment in course_assessments])
-            raise FileImportError(
-                f"Assessments not found in database: {', '.join(missing_assessments)}. Available assessments: {available}"
-            )
+            if policy.get("skip_missing_assessments"):
+                assessment_columns = [c for c in assessment_columns if c not in set(missing_assessments)]
+                if not assessment_columns:
+                    raise FileImportError("All assessment columns were skipped — none found in database.")
+            else:
+                available = ", ".join([assessment.name for assessment in course_assessments])
+                raise FileImportError(
+                    f"Assessments not found in database: {', '.join(missing_assessments)}. Available assessments: {available}"
+                )
 
         return (
             transformed_df,

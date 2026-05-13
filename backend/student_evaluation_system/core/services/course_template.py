@@ -11,11 +11,37 @@ from core.models import (
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     CourseTemplate,
+    ProgramOutcome,
 )
 from evaluation.models import Assessment, AssessmentLearningOutcomeMapping
 
 
-def clone_course_from_template(template: CourseTemplate, term, user=None) -> Course:
+def clone_program_outcomes_for_term(old_term, new_term, program, user=None) -> dict[int, "ProgramOutcome"]:
+    """
+    Clone all ProgramOutcomes from old_term to new_term for a given program.
+
+    Returns a mapping of old PO id → new PO instance for use in LO-PO mapping cloning.
+    """
+    old_pos = ProgramOutcome.objects.filter(program=program, term=old_term)
+    po_map: dict[int, ProgramOutcome] = {}
+    for old_po in old_pos:
+        new_po, _ = ProgramOutcome.objects.get_or_create(
+            code=old_po.code,
+            program=program,
+            term=new_term,
+            defaults={
+                "description": old_po.description,
+                "weight": old_po.weight,
+                "created_by": user,
+            },
+        )
+        po_map[old_po.id] = new_po
+    return po_map
+
+
+def clone_course_from_template(
+    template: CourseTemplate, term, user=None, po_map: dict[int, ProgramOutcome] | None = None
+) -> Course:
     """
     Create a new Course for the given term by cloning all data from a CourseTemplate.
 
@@ -83,13 +109,16 @@ def clone_course_from_template(template: CourseTemplate, term, user=None) -> Cou
                 weight=mapping.weight,
             )
 
-    # 5. Clone LO-PO mappings
+    # 5. Clone LO-PO mappings — use new-term POs when a po_map is provided
     for template_lo in template.learning_outcomes.all():
         for mapping in template_lo.po_mappings.all():
+            program_outcome = po_map.get(mapping.program_outcome_id) if po_map else mapping.program_outcome
+            if program_outcome is None:
+                continue
             LearningOutcomeProgramOutcomeMapping.objects.create(
                 course=course,
                 learning_outcome=lo_map[template_lo.id],
-                program_outcome=mapping.program_outcome,
+                program_outcome=program_outcome,
                 weight=mapping.weight,
             )
 

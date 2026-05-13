@@ -1,8 +1,8 @@
 from celery import shared_task
 from django.utils import timezone
-from core.models import Term, CourseTemplate, TermTransitionJob
+from core.models import Term, CourseTemplate, TermTransitionJob, Program
 from core.services.sse import publish_progress
-from core.services.course_template import clone_course_from_template
+from core.services.course_template import clone_course_from_template, clone_program_outcomes_for_term
 
 
 @shared_task(
@@ -23,9 +23,18 @@ def clone_templates_for_term_task(self, template_ids: list[int], term_id: int, j
     total = len(templates)
     created = 0
 
+    # Clone program outcomes from old term to new term for each program used by templates
+    old_term = job.old_term
+    program_ids = set(t.program_id for t in templates if t.program_id)
+    po_map: dict[int, int] = {}
+    for pid in program_ids:
+        program = Program.objects.get(id=pid)
+        program_po_map = clone_program_outcomes_for_term(old_term, term, program)
+        po_map.update(program_po_map)
+
     for i, template in enumerate(templates, start=1):
         try:
-            clone_course_from_template(template, term)
+            clone_course_from_template(template, term, po_map=po_map)
             created += 1
         except Exception as e:
             # Log error but continue — one bad template shouldn't fail all
