@@ -31,7 +31,10 @@ export default {
         'sidebar-accent-foreground': 'var(--sidebar-accent-foreground)',
         'sidebar-border': 'var(--sidebar-border)',
         'sidebar-ring': 'var(--sidebar-ring)',
+        'primary-foreground': 'var(--primary-foreground)',
+        'secondary-foreground': 'var(--secondary-foreground)',
         primary: {
+          DEFAULT: '#0d9488',
           50: '#f0fdfa',
           100: '#ccfbf1',
           200: '#99f6e4',
@@ -44,6 +47,7 @@ export default {
           900: '#134e4a',
         },
         secondary: {
+          DEFAULT: '#64748b',
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -56,6 +60,7 @@ export default {
           900: '#0f172a',
         },
         violet: {
+          DEFAULT: '#7c3aed',
           50: '#faf5ff',
           100: '#f3e8ff',
           200: '#e9d5ff',
@@ -68,6 +73,7 @@ export default {
           900: '#4c1d95',
         },
         success: {
+          DEFAULT: '#16a34a',
           50: '#f0fdf4',
           100: '#dcfce7',
           200: '#bbf7d0',
@@ -80,6 +86,7 @@ export default {
           900: '#14532d',
         },
         warning: {
+          DEFAULT: '#d97706',
           50: '#fffbeb',
           100: '#fef3c7',
           200: '#fde68a',
@@ -92,6 +99,7 @@ export default {
           900: '#78350f',
         },
         danger: {
+          DEFAULT: '#dc2626',
           50: '#fef2f2',
           100: '#fee2e2',
           200: '#fecaca',
