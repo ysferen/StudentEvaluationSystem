@@ -73,7 +73,7 @@ class TestNextTermEndpoint:
         assert response.status_code == 202
         result = response.json()
         assert "job_id" in result
-        assert result["new_term_name"] == "Spring 2026 (Active)"
+        assert result["new_term_name"] == "Bahar 2025-2026 (Active)"
         assert result["template_count"] == 1
 
         # Old term should now be inactive

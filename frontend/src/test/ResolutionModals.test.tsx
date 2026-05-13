@@ -9,7 +9,30 @@ import {
 } from '@/features/courses/components/ResolutionModals'
 
 const renderModal = (ui: React.ReactElement) => {
+  // shadcn Dialog portals to document.body; render into a container
+  // but search the full document for portaled content
   return render(ui)
+}
+
+const findModalContainer = () => {
+  const allDivs = Array.from(document.querySelectorAll('div'))
+  return allDivs.find((el) =>
+    el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
+  )
+}
+
+const findScrollRegion = () => {
+  const allDivs = Array.from(document.querySelectorAll('div'))
+  return allDivs.find((el) =>
+    el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
+  )
+}
+
+const findFooter = () => {
+  const allDivs = Array.from(document.querySelectorAll('div'))
+  return allDivs.find((el) =>
+    el.className.includes('border-t') && el.className.includes('sm:flex-row') && el.className.includes('sm:justify-end')
+  )
 }
 
 describe('MissingAssessmentsModal', () => {
@@ -63,25 +86,16 @@ describe('MissingAssessmentsModal', () => {
   })
 
   it('uses scrollable content region and sticky action footer layout', () => {
-    const { container } = renderModal(<MissingAssessmentsModal {...defaultProps} />)
+    renderModal(<MissingAssessmentsModal {...defaultProps} />)
 
-    const card = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
-    )
+    const card = findModalContainer()
     expect(card).toBeTruthy()
 
-    const scrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
-    )
+    const scrollRegion = findScrollRegion()
     expect(scrollRegion).toBeTruthy()
 
-    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('sticky')
-      && el.className.includes('bottom-0')
-      && el.className.includes('bg-white')
-      && el.className.includes('border-t')
-    )
-    expect(stickyFooter).toBeTruthy()
+    const footer = findFooter()
+    expect(footer).toBeTruthy()
   })
 })
 
@@ -123,25 +137,16 @@ describe('MissingStudentsModal', () => {
   })
 
   it('uses scrollable table region and sticky action footer layout', () => {
-    const { container } = renderModal(<MissingStudentsModal {...defaultProps} />)
+    renderModal(<MissingStudentsModal {...defaultProps} />)
 
-    const card = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
-    )
+    const card = findModalContainer()
     expect(card).toBeTruthy()
 
-    const tableScrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
-    )
-    expect(tableScrollRegion).toBeTruthy()
+    const scrollRegion = findScrollRegion()
+    expect(scrollRegion).toBeTruthy()
 
-    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('sticky')
-      && el.className.includes('bottom-0')
-      && el.className.includes('bg-white')
-      && el.className.includes('border-t')
-    )
-    expect(stickyFooter).toBeTruthy()
+    const footer = findFooter()
+    expect(footer).toBeTruthy()
   })
 })
 
@@ -180,25 +185,16 @@ describe('UnenrolledStudentsModal', () => {
   })
 
   it('uses scrollable table region and sticky action footer layout', () => {
-    const { container } = renderModal(<UnenrolledStudentsModal {...defaultProps} />)
+    renderModal(<UnenrolledStudentsModal {...defaultProps} />)
 
-    const card = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
-    )
+    const card = findModalContainer()
     expect(card).toBeTruthy()
 
-    const tableScrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
-    )
-    expect(tableScrollRegion).toBeTruthy()
+    const scrollRegion = findScrollRegion()
+    expect(scrollRegion).toBeTruthy()
 
-    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('sticky')
-      && el.className.includes('bottom-0')
-      && el.className.includes('bg-white')
-      && el.className.includes('border-t')
-    )
-    expect(stickyFooter).toBeTruthy()
+    const footer = findFooter()
+    expect(footer).toBeTruthy()
   })
 })
 
@@ -240,24 +236,15 @@ describe('InvalidScoresModal', () => {
   })
 
   it('uses scrollable table region and sticky action footer layout', () => {
-    const { container } = renderModal(<InvalidScoresModal {...defaultProps} />)
+    renderModal(<InvalidScoresModal {...defaultProps} />)
 
-    const card = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('max-h-[90vh]') && el.className.includes('flex') && el.className.includes('flex-col')
-    )
+    const card = findModalContainer()
     expect(card).toBeTruthy()
 
-    const scrollRegion = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('overflow-auto') && el.className.includes('max-h-[50vh]')
-    )
+    const scrollRegion = findScrollRegion()
     expect(scrollRegion).toBeTruthy()
 
-    const stickyFooter = Array.from(container.querySelectorAll('div')).find((el) =>
-      el.className.includes('sticky')
-      && el.className.includes('bottom-0')
-      && el.className.includes('bg-white')
-      && el.className.includes('border-t')
-    )
-    expect(stickyFooter).toBeTruthy()
+    const footer = findFooter()
+    expect(footer).toBeTruthy()
   })
 })

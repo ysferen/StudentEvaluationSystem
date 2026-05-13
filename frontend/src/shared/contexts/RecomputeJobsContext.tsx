@@ -122,6 +122,13 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const data = JSON.parse(event.data)
           if (data.type === 'complete') {
+            setJobs((prev) =>
+              prev.map((j) =>
+                j.id === job.id
+                  ? { ...j, status: (data.status === 'success' || data.status === 'failed') ? data.status : 'success' }
+                  : j,
+              ),
+            )
             void queryClient.invalidateQueries({ queryKey: ['score-recompute-jobs'] })
             es.close()
           }

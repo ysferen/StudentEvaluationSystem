@@ -56,7 +56,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
     const navItems = getNavItems()
 
     return (
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-secondary-200 sticky top-0 z-30">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-secondary-200 sticky top-0 z-[10]">
             <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between relative">
                 {/* Mobile menu button */}
                 <button

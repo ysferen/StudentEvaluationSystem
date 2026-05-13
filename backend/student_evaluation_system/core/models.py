@@ -40,13 +40,13 @@ class Term(models.Model):
         is_active (bool): Whether this is the currently active term.
     """
 
-    name = models.CharField(max_length=100, help_text="e.g., Fall 2025")
+    name = models.CharField(max_length=100, help_text="e.g., Güz 2024-2025")
     is_active = models.BooleanField(default=False, db_index=True)
     academic_year = models.IntegerField(
-        null=True, blank=True, help_text="The calendar year the academic year starts (e.g., 2024 for AY 2024-2025)"
+        null=True, blank=True, help_text="The calendar year the semester starts (e.g., 2024 for Güz 2024-2025)"
     )
     semester = models.CharField(
-        max_length=10, choices=[("fall", "Fall"), ("spring", "Spring"), ("summer", "Summer")], default="fall"
+        max_length=10, choices=[("fall", "Güz"), ("spring", "Bahar"), ("summer", "Yaz")], default="fall"
     )
 
     class Meta:

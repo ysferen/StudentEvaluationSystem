@@ -1,6 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import { X } from 'lucide-react'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/shadcn/Dialog'
+import {
   useCoreCourseTemplatesList,
   useCoreTermsActiveRetrieve,
   useCoreTermsNextTermCreate,
@@ -32,7 +39,6 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
 
   const templates = (templatesData as any)?.results ?? (templatesData as any) ?? []
 
-  // Auto-calculate next semester when modal opens
   useMemo(() => {
     if (activeTerm && isOpen) {
       const nextSem = SEMESTER_CYCLE[activeTerm.semester ?? 'fall'] ?? 'fall'
@@ -41,6 +47,11 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
       setAcademicYear(year)
     }
   }, [activeTerm, isOpen])
+
+  const academicYearRange = useMemo(() => {
+    if (semester === 'fall') return `${academicYear}–${academicYear + 1}`
+    return `${academicYear - 1}–${academicYear}`
+  }, [semester, academicYear])
 
   const toggleTemplate = (id: number) => {
     setSelectedTemplates((prev) => {
@@ -84,20 +95,17 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
     window.location.reload()
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
-          <h2 className="text-xl font-bold text-secondary-900">Start New Term</h2>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
+          <DialogTitle className="text-xl font-bold text-secondary-900">Start New Term</DialogTitle>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="h-5 w-5" />
           </button>
-        </div>
+        </DialogHeader>
 
-        <div className="p-6 space-y-6">
+        <div className="space-y-4">
           {activeTerm && (
             <p className="text-sm text-secondary-500">
               Current active term: <span className="font-medium text-secondary-700">{activeTerm.name}</span>
@@ -115,9 +123,9 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
               className="block w-full rounded-xl border border-secondary-300 px-4 py-2.5 text-sm text-secondary-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
               aria-label="Semester"
             >
-              <option value="fall">Fall</option>
-              <option value="spring">Spring</option>
-              <option value="summer">Summer</option>
+              <option value="fall">Güz</option>
+              <option value="spring">Bahar</option>
+              <option value="summer">Yaz</option>
             </select>
           </div>
 
@@ -125,15 +133,18 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
             <label htmlFor="academicYear" className="block text-sm font-medium text-secondary-700 mb-2">
               Academic Year
             </label>
-            <input
-              id="academicYear"
-              type="number"
-              value={academicYear}
-              onChange={(e) => setAcademicYear(Number(e.target.value))}
-              min={2000}
-              max={2100}
-              className="block w-full rounded-xl border border-secondary-300 px-4 py-2.5 text-sm text-secondary-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
-            />
+            <div className="flex items-center gap-3">
+              <input
+                id="academicYear"
+                type="number"
+                value={academicYear}
+                onChange={(e) => setAcademicYear(Number(e.target.value))}
+                min={2000}
+                max={2100}
+                className="w-24 rounded-xl border border-secondary-300 px-4 py-2.5 text-sm text-secondary-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition"
+              />
+              <span className="text-sm text-secondary-500">→ {academicYearRange}</span>
+            </div>
           </div>
 
           <div>
@@ -182,7 +193,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
         </div>
 
         {!jobId && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-secondary-200">
+          <DialogFooter>
             <button onClick={onClose} disabled={submitting} className="px-4 py-2 text-sm font-medium text-secondary-600 hover:text-secondary-900 transition-colors">
               Cancel
             </button>
@@ -194,9 +205,9 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
             >
               {submitting ? 'Starting...' : 'Start New Term'}
             </button>
-          </div>
+          </DialogFooter>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -616,10 +616,17 @@ class NextTermSerializer(serializers.Serializer):
             old_term.is_active = False
             old_term.save()
 
+            semester_tr = {"fall": "Güz", "spring": "Bahar", "summer": "Yaz"}[validated_data["semester"]]
+            ay = validated_data["academic_year"]
+            if validated_data["semester"] == "fall":
+                name = f"{semester_tr} {ay}-{ay + 1}"
+            else:
+                name = f"{semester_tr} {ay - 1}-{ay}"
+
             new_term = Term.objects.create(
                 semester=validated_data["semester"],
-                academic_year=validated_data["academic_year"],
-                name=f"{validated_data['semester'].capitalize()} {validated_data['academic_year']}",
+                academic_year=ay,
+                name=name,
                 is_active=True,
             )
 

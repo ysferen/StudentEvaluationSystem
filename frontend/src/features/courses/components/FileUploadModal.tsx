@@ -7,6 +7,12 @@ import {
 import { isRecord } from '@/shared/utils/guards'
 import { useRecomputeJobs } from '@/shared/contexts/RecomputeJobsContext'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/shadcn/Dialog'
+import {
   Upload,
   X,
   Check,
@@ -953,20 +959,17 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     )
   }
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isAnyUploadPending && !isAnyValidatePending && !isResolving) {
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isAnyUploadPending && !isAnyValidatePending && !isResolving) {
       handleModalClose()
     }
   }
 
   return (
-    <div
-      onClick={handleBackdropClick}
-      className={`fixed inset-0 z-20 isolate overflow-auto bg-secondary-900/60 flex items-center justify-center p-4 ${isOpen ? '' : 'hidden'}`}
-    >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
-          <h2 className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</h2>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
+          <DialogTitle className="text-xl font-bold text-secondary-900">Import {getTypeDisplayName(type)} - {course}</DialogTitle>
           <button
             onClick={handleModalClose}
             disabled={isAnyUploadPending || isAnyValidatePending || isResolving}
@@ -974,9 +977,9 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           >
             <X className="w-6 h-6" />
           </button>
-        </div>
+        </DialogHeader>
 
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {renderModalError()}
 
           {type === 'assignment_scores' && (
@@ -1156,8 +1159,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             }}
           />
         )}
-      </div>
-    </div>
+    </DialogContent>
+  </Dialog>
   )
 }
 

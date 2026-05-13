@@ -3,6 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card } from '@/components/ui/custom/Card'
 import { Badge } from '@/components/ui/custom/Badge'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/shadcn/Dialog'
+import {
   ShieldCheckIcon,
   PencilIcon,
   CheckIcon,
@@ -279,32 +286,32 @@ const HeadPermissionsPage = () => {
       )}
 
       {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 bg-secondary-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-secondary-900 mb-2">Confirm Permission Changes</h3>
-            <p className="text-secondary-600 mb-6">
-              You are about to update {changedPermissions.length} permission{changedPermissions.length !== 1 ? 's' : ''}.
-              {editMode && ' Click a column header while editing to change all instructors in that column.'}
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSave}
-                disabled={bulkPartialUpdateMutation.isPending}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-              >
-                {bulkPartialUpdateMutation.isPending ? 'Saving...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={showConfirmDialog} onOpenChange={(open) => { if (!open) setShowConfirmDialog(false) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Permission Changes</DialogTitle>
+          </DialogHeader>
+          <p className="text-secondary-600">
+            You are about to update {changedPermissions.length} permission{changedPermissions.length !== 1 ? 's' : ''}.
+            {editMode && ' Click a column header while editing to change all instructors in that column.'}
+          </p>
+          <DialogFooter>
+            <button
+              onClick={() => setShowConfirmDialog(false)}
+              className="px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmSave}
+              disabled={bulkPartialUpdateMutation.isPending}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            >
+              {bulkPartialUpdateMutation.isPending ? 'Saving...' : 'Confirm'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

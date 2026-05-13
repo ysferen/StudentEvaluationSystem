@@ -1,5 +1,12 @@
 import React, { useState } from 'react'
 import { X, AlertTriangle, Users, BookOpen, FileX } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/shadcn/Dialog'
 
 interface MissingAssessmentsModalProps {
   isOpen: boolean
@@ -20,8 +27,6 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
     new Set(missingAssessments.map(a => a.parsed_name))
   )
 
-  if (!isOpen) return null
-
   const handleConfirm = () => {
     if (selectedForCreation.size > 0) {
       onResolve('create', Array.from(selectedForCreation))
@@ -31,21 +36,19 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
   }
 
   return (
-    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
           <div className="flex items-center gap-3">
             <BookOpen className="w-5 h-5 text-warning-500" />
-            <h2 className="text-lg font-bold text-secondary-900">Missing Assessments</h2>
+            <DialogTitle className="text-lg font-bold text-secondary-900">Missing Assessments</DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="text-secondary-400 hover:text-secondary-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
-        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
           <p className="text-sm text-secondary-600">
             {missingAssessments.length} assessment(s) in the file were not found in the database.
           </p>
@@ -81,25 +84,24 @@ export const MissingAssessmentsModal: React.FC<MissingAssessmentsModalProps> = (
               <p className="text-sm text-secondary-700">{availableInDatabase.join(', ')}</p>
             </div>
           )}
-          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
-            <div className="flex gap-3">
-            <button
-              onClick={() => onResolve('skip', [])}
-              className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
-            >
-              Skip All
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
-            >
-              Create & Continue ({selectedForCreation.size})
-            </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <button
+            onClick={() => onResolve('skip', [])}
+            className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
+          >
+            Skip All
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
+          >
+            Create & Continue ({selectedForCreation.size})
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -116,24 +118,20 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
   onClose,
   onResolve
 }) => {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-danger-500" />
-            <h2 className="text-lg font-bold text-secondary-900">Missing Students</h2>
+            <DialogTitle className="text-lg font-bold text-secondary-900">Missing Students</DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="text-secondary-400 hover:text-secondary-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
-        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
           <p className="text-sm text-secondary-600">
             {missingStudents.length} student(s) in the file were not found in the database. They will be created with temporary passwords.
           </p>
@@ -155,25 +153,24 @@ export const MissingStudentsModal: React.FC<MissingStudentsModalProps> = ({
               </tbody>
             </table>
           </div>
-          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
-            <div className="flex gap-3">
-            <button
-              onClick={() => onResolve('skip', [])}
-              className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
-            >
-              Skip All
-            </button>
-            <button
-              onClick={() => onResolve('create', missingStudents)}
-              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
-            >
-              Create All ({missingStudents.length})
-            </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <button
+            onClick={() => onResolve('skip', [])}
+            className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
+          >
+            Skip All
+          </button>
+          <button
+            onClick={() => onResolve('create', missingStudents)}
+            className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
+          >
+            Create All ({missingStudents.length})
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -190,24 +187,20 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
   onClose,
   onResolve
 }) => {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-warning-500" />
-            <h2 className="text-lg font-bold text-secondary-900">Unenrolled Students</h2>
+            <DialogTitle className="text-lg font-bold text-secondary-900">Unenrolled Students</DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="text-secondary-400 hover:text-secondary-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
-        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
           <p className="text-sm text-secondary-600">
             {unenrolledStudents.length} student(s) exist in the database but are not enrolled in this course.
           </p>
@@ -229,25 +222,24 @@ export const UnenrolledStudentsModal: React.FC<UnenrolledStudentsModalProps> = (
               </tbody>
             </table>
           </div>
-          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
-            <div className="flex gap-3">
-            <button
-              onClick={() => onResolve('skip', [])}
-              className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
-            >
-              Skip All
-            </button>
-            <button
-              onClick={() => onResolve('enroll', unenrolledStudents.map(s => s.student_id))}
-              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
-            >
-              Enroll All ({unenrolledStudents.length})
-            </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <button
+            onClick={() => onResolve('skip', [])}
+            className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
+          >
+            Skip All
+          </button>
+          <button
+            onClick={() => onResolve('enroll', unenrolledStudents.map(s => s.student_id))}
+            className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors"
+          >
+            Enroll All ({unenrolledStudents.length})
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -264,24 +256,20 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
   onClose,
   onResolve
 }) => {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-[25] bg-secondary-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200 shrink-0">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
           <div className="flex items-center gap-3">
             <FileX className="w-5 h-5 text-danger-500" />
-            <h2 className="text-lg font-bold text-secondary-900">Invalid Scores</h2>
+            <DialogTitle className="text-lg font-bold text-secondary-900">Invalid Scores</DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="text-secondary-400 hover:text-secondary-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
-        </div>
-        <div className="p-6 pt-4 flex-1 min-h-0 flex flex-col gap-4">
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
           <p className="text-sm text-secondary-600">
             {invalidScores.length} score(s) have invalid values. They must be fixed or handled before import.
           </p>
@@ -314,24 +302,23 @@ export const InvalidScoresModal: React.FC<InvalidScoresModalProps> = ({
               Showing 20 of {invalidScores.length} invalid scores
             </p>
           )}
-          <div className="sticky bottom-0 bg-white border-t border-secondary-200 -mx-6 px-6 pt-4 pb-2 shrink-0">
-            <div className="flex gap-3">
-            <button
-              onClick={() => onResolve('skip')}
-              className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
-            >
-              Skip Invalid Rows
-            </button>
-            <button
-              onClick={() => onResolve('clamp')}
-              className="flex-1 px-4 py-2.5 bg-warning-500 text-white rounded-lg hover:bg-warning-600 font-medium transition-colors"
-            >
-              Clamp to Range
-            </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <button
+            onClick={() => onResolve('skip')}
+            className="flex-1 px-4 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors"
+          >
+            Skip Invalid Rows
+          </button>
+          <button
+            onClick={() => onResolve('clamp')}
+            className="flex-1 px-4 py-2.5 bg-warning-500 text-white rounded-lg hover:bg-warning-600 font-medium transition-colors"
+          >
+            Clamp to Range
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

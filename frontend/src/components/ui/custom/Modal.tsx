@@ -1,4 +1,11 @@
 import React from 'react'
+import { X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/shadcn/Dialog'
 
 interface ModalProps {
   isOpen: boolean
@@ -8,42 +15,35 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
+const sizeClasses: Record<string, string> = {
+  sm: 'sm:max-w-md',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
+}
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
   children,
-  size = 'md'
+  size = 'md',
 }) => {
-  if (!isOpen) return null
-
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
-  }
-
   return (
-    <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} relative`}>
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className={sizeClasses[size]} showCloseButton={false}>
+        <DialogHeader className="flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
-        </div>
-
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    </div>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
   )
 }
 

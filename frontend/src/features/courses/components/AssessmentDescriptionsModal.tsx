@@ -1,4 +1,12 @@
 import { useState, useEffect } from 'react'
+import { X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/shadcn/Dialog'
 import { useEvaluationAssessmentsBulkDescriptionsCreate } from '../../../shared/api/generated/evaluation/evaluation'
 import type { Assessment } from '../../../shared/api/model'
 
@@ -55,21 +63,22 @@ export const AssessmentDescriptionsModal = ({
     }
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Assessment Descriptions</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Enter a brief description for each assessment to get accurate weight suggestions.
-          </p>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="flex-row items-start justify-between border-b border-gray-200 pb-4">
+          <div>
+            <DialogTitle className="text-xl font-bold text-gray-900">Assessment Descriptions</DialogTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              Enter a brief description for each assessment to get accurate weight suggestions.
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+            <X className="h-5 w-5" />
+          </button>
+        </DialogHeader>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-4">
           {assessments.map(assessment => (
             <div key={assessment.id}>
               <div className="flex items-center gap-2 mb-1.5">
@@ -89,8 +98,7 @@ export const AssessmentDescriptionsModal = ({
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t border-gray-200">
+        <DialogFooter>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -104,9 +112,9 @@ export const AssessmentDescriptionsModal = ({
           >
             {isSubmitting ? 'Saving...' : 'Submit & Get Suggestions'}
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

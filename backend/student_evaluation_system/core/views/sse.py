@@ -1,3 +1,4 @@
+import json
 import re
 import time
 from collections.abc import Generator
@@ -109,8 +110,56 @@ def _cleanup_pubsub(pubsub, client, channel_list):
             pass
 
 
-def _event_generator(channel_list: list[str]) -> Generator[bytes, None, None]:
+def _emit_initial_state(channel_list: list[str], request: Request) -> Generator[bytes, None, None]:
+    """Emit the current DB state for each jobs.* channel so the client always
+    receives the latest status, even if Redis pub/sub messages were lost."""
+    from core.models import TermTransitionJob
+
+    for ch in channel_list:
+        if not ch.startswith("jobs."):
+            continue
+        try:
+            job_id = int(ch.split(".", 1)[1])
+        except ValueError:
+            continue
+
+        try:
+            job = TermTransitionJob.objects.get(id=job_id)
+        except TermTransitionJob.DoesNotExist:
+            continue
+
+        if not getattr(request.user, "is_admin_user", False) and job.triggered_by_id != request.user.id:
+            continue
+
+        total = len(job.template_ids) if job.template_ids else 0
+
+        if job.status in ("success", "failed"):
+            event = {
+                "type": "complete",
+                "job_id": job.id,
+                "status": job.status,
+                "courses_created": job.courses_created,
+                "total_templates": total,
+            }
+            if job.error:
+                event["error"] = job.error
+        else:
+            event = {
+                "type": "progress",
+                "job_id": job.id,
+                "status": job.status,
+                "current": job.courses_created if job.status == "running" else 0,
+                "total": total,
+                "created": job.courses_created,
+            }
+
+        yield f"data: {json.dumps(event)}\n\n".encode()
+
+
+def _event_generator(channel_list: list[str], request: Request) -> Generator[bytes, None, None]:
     """Yield SSE-formatted events from Redis pub/sub channels."""
+    yield from _emit_initial_state(channel_list, request)
+
     client = get_redis_client()
     pubsub = client.pubsub()
     sub_gen = _subscribe(client, pubsub, channel_list)
@@ -163,7 +212,7 @@ def event_stream(request):
         return permission_error
 
     response = StreamingHttpResponse(
-        _event_generator(channels_or_error),
+        _event_generator(channels_or_error, request),
         content_type="text/event-stream",
     )
     response["Cache-Control"] = "no-cache"
