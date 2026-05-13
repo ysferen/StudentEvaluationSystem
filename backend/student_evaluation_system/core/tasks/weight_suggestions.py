@@ -9,6 +9,7 @@ so subsequent invocations are instant (no 8s reload).
 import logging
 import os
 import time
+import threading
 
 from celery import shared_task
 from celery.signals import worker_ready
@@ -21,19 +22,22 @@ logger = logging.getLogger(__name__)
 
 # Module-level suggester --- loaded once per worker process
 _suggester = None
+_suggester_lock = threading.Lock()
 
 
 def get_weight_suggester():
     """Lazy loader for the ML model."""
     global _suggester
     if _suggester is None:
-        logger.info("Loading SentenceTransformer model into memory...")
-        from sentence_transformers import SentenceTransformer
-        from core.services.weight_suggestion import WeightSuggester
+        with _suggester_lock:
+            if _suggester is None:
+                logger.info("Loading SentenceTransformer model into memory...")
+                from sentence_transformers import SentenceTransformer
+                from core.services.weight_suggestion import WeightSuggester
 
-        model_name = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
-        model = SentenceTransformer(model_name)
-        _suggester = WeightSuggester(encoder=model)
+                model_name = os.getenv("SENTENCE_TRANSFORMER_MODEL", "all-MiniLM-L6-v2")
+                model = SentenceTransformer(model_name)
+                _suggester = WeightSuggester(encoder=model)
     return _suggester
 
 

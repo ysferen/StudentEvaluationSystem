@@ -123,11 +123,22 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
           const data = JSON.parse(event.data)
           if (data.type === 'complete') {
             setJobs((prev) =>
-              prev.map((j) =>
-                j.id === job.id
-                  ? { ...j, status: (data.status === 'success' || data.status === 'failed') ? data.status : 'success' }
-                  : j,
-              ),
+              prev.map((j) => {
+                if (j.id !== job.id) {
+                  return j
+                }
+
+                if (data.status === 'success' || data.status === 'failed') {
+                  return { ...j, status: data.status }
+                }
+
+                console.warn('Unexpected recompute job status', {
+                  jobId: job.id,
+                  status: data.status,
+                })
+
+                return { ...j, status: 'failed' }
+              }),
             )
             void queryClient.invalidateQueries({ queryKey: ['score-recompute-jobs'] })
             es.close()

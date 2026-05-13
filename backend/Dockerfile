@@ -7,6 +7,10 @@ RUN groupadd -g 1000 django && \
     useradd -m -u 1000 -g django django
 
 RUN mkdir -p /app && chown django:django /app
+
+RUN mkdir -p /huggingface_cache
+RUN chown -R django:django /huggingface_cache
+
 WORKDIR /app
 
 USER django

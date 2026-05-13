@@ -65,7 +65,7 @@ export const AssessmentDescriptionsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col !z-[10000]" overlayClassName="!z-[10000]" showCloseButton={false}>
         <DialogHeader className="flex-row items-start justify-between border-b border-gray-200 pb-4">
           <div>
             <DialogTitle className="text-xl font-bold text-gray-900">Assessment Descriptions</DialogTitle>

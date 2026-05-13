@@ -172,6 +172,7 @@ cd backend/student_evaluation_system
 uv run python manage.py check
 uv run python manage.py makemigrations
 uv run python manage.py migrate
+uv run python manage.py seed_data
 uv run pytest
 uv run pytest --cov=student_evaluation_system
 uv run ruff check .

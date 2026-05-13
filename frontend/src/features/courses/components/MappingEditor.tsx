@@ -209,7 +209,7 @@ const WeightModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm !z-[10000]" overlayClassName="!z-[10000]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -1280,7 +1280,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       )}
       {/* Close Confirmation Dialog */}
       <Dialog open={showCloseConfirm} onOpenChange={(open) => { if (!open) setShowCloseConfirm(false) }}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm !z-[10000]" overlayClassName="!z-[10000]">
           <DialogHeader>
             <DialogTitle>Unsaved Changes</DialogTitle>
           </DialogHeader>

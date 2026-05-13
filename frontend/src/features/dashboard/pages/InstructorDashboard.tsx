@@ -156,13 +156,15 @@ const InstructorDashboard = () => {
     }
   })
 
+  const courseCount = coursesWithAnalytics.length
+
   const nextCourse = useCallback(
-    () => setCurrentIndex((prev) => (prev + 1) % courses.length),
-    [courses.length]
+    () => setCurrentIndex((prev) => (courseCount > 0 ? (prev + 1) % courseCount : 0)),
+    [courseCount]
   )
   const prevCourse = useCallback(
-    () => setCurrentIndex((prev) => (prev - 1 + courses.length) % courses.length),
-    [courses.length]
+    () => setCurrentIndex((prev) => (courseCount > 0 ? (prev - 1 + courseCount) % courseCount : 0)),
+    [courseCount]
   )
 
   const course = coursesWithAnalytics[currentIndex] || {
