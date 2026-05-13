@@ -56,12 +56,12 @@ class TestWeightSuggestionCreate:
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_queues_celery_task(self, api_client, instructor_factory, course_with_los):
-        """The POST should call task.delay() with the right args."""
+        """The POST should call task.apply_async() with the right args on ml_queue."""
         instructor = instructor_factory("ws_instructor2")
         api_client.force_authenticate(user=instructor.user)
 
-        with patch("core.views.weight_suggestion.suggest_assessment_lo_weights_task.delay") as mock_delay:
-            mock_delay.return_value.id = "fake-task-id-123"
+        with patch("core.views.weight_suggestion.suggest_assessment_lo_weights_task.apply_async") as mock_async:
+            mock_async.return_value.id = "fake-task-id-123"
             url = reverse(ENDPOINT_LIST)
             response = api_client.post(
                 url,
@@ -70,9 +70,10 @@ class TestWeightSuggestionCreate:
             )
 
             assert response.status_code == status.HTTP_201_CREATED
-            mock_delay.assert_called_once()
-            call_kwargs = mock_delay.call_args[1]
-            assert call_kwargs["course_id"] == course_with_los["course"].id
+            mock_async.assert_called_once()
+            call_kwargs = mock_async.call_args[1]
+            assert call_kwargs["kwargs"]["course_id"] == course_with_los["course"].id
+            assert call_kwargs["queue"] == "ml_queue"
 
     def test_create_requires_course_id(self, api_client, instructor_factory):
         """POST without course_id should return 400."""

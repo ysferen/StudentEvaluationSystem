@@ -36,7 +36,7 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = []
 
         with (
-            patch("core.tasks._suggester", mock_suggester),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.ProgramOutcome") as mock_po_model,
         ):
@@ -71,11 +71,11 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = []
 
         with (
-            patch("core.tasks._suggester", mock_suggester),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.WeightSuggestionJob") as mock_job_model,
             patch("core.models.ProgramOutcome") as mock_po_model,
-            patch("core.tasks.timezone") as mock_tz,
+            patch("core.tasks.weight_suggestions.timezone") as mock_tz,
         ):
             mock_course_model.objects.get.return_value = mock_course
             mock_filter = MagicMock()
@@ -107,10 +107,10 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = []
 
         with (
-            patch("core.tasks._suggester", mock_suggester),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.WeightSuggestionJob") as mock_job_model,
-            patch("core.tasks.timezone") as mock_tz,
+            patch("core.tasks.weight_suggestions.timezone") as mock_tz,
         ):
             mock_course_model.objects.get.return_value = mock_course
             mock_filter = MagicMock()
@@ -152,7 +152,7 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = [mock_a]
 
         with (
-            patch("core.tasks._suggester", mock_suggester),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.ProgramOutcome") as mock_po_model,
         ):
@@ -189,7 +189,7 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = [mock_a, mock_b]
 
         with (
-            patch("core.tasks._suggester", mock_suggester),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
             patch("core.models.Course") as mock_course_model,
             patch("core.models.ProgramOutcome") as mock_po_model,
         ):
@@ -206,7 +206,7 @@ class TestSuggestAssessmentLOTask:
             assert call_kwargs["assessment_keys"] == ["Midterm", "Final"]
 
     def test_task_raises_when_suggester_not_initialized(self):
-        """Task should raise RuntimeError when _suggester stays None after init."""
+        """Task should raise RuntimeError when get_weight_suggester returns None."""
         from core.tasks import suggest_assessment_lo_weights_task
 
         mock_course = MagicMock()
@@ -215,8 +215,7 @@ class TestSuggestAssessmentLOTask:
         mock_course.assessments.all.return_value = []
 
         with (
-            patch("core.tasks._suggester", None),
-            patch("core.tasks._init_weight_suggester"),
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=None),
             patch("core.models.Course") as mock_course_model,
         ):
             mock_course_model.objects.get.return_value = mock_course
@@ -225,39 +224,65 @@ class TestSuggestAssessmentLOTask:
                 suggest_assessment_lo_weights_task(course_id=42)
 
 
-class TestWorkerInit:
-    """Tests for the worker_process_init signal handler."""
+class TestWeightSuggesterInit:
+    """Tests for the lazy weight suggester loader."""
 
-    def test_init_worker_creates_suggester(self):
-        """Verify the signal handler sets _suggester."""
-        import core.tasks as tasks_module
+    def setup_method(self):
+        """Reset the cached suggester before each test so patches take effect."""
+        import core.tasks.weight_suggestions as ws
+
+        ws._suggester = None
+
+    def test_get_suggester_creates_model(self):
+        """Verify the lazy loader creates SentenceTransformer and WeightSuggester."""
+        from core.tasks.weight_suggestions import get_weight_suggester
 
         with (
             patch("sentence_transformers.SentenceTransformer") as mock_st,
             patch("core.services.weight_suggestion.WeightSuggester") as mock_ws_cls,
-            patch.object(tasks_module, "os") as mock_os,
+            patch("core.tasks.weight_suggestions.os") as mock_os,
         ):
             mock_os.getenv.return_value = "test-model"
             mock_ws_cls.return_value = "mock-suggester-instance"
 
-            tasks_module._init_weight_suggester()
+            result = get_weight_suggester()
 
             mock_st.assert_called_once_with("test-model")
             mock_ws_cls.assert_called_once()
             call_kwargs = mock_ws_cls.call_args[1]
             assert "encoder" in call_kwargs
+            assert result == "mock-suggester-instance"
 
-    def test_init_worker_default_model(self):
+    def test_get_suggester_default_model(self):
         """Verify default model name when env var is not set."""
-        import core.tasks as tasks_module
+        from core.tasks.weight_suggestions import get_weight_suggester
 
         with (
             patch("sentence_transformers.SentenceTransformer") as mock_st,
             patch("core.services.weight_suggestion.WeightSuggester"),
-            patch.object(tasks_module, "os") as mock_os,
+            patch("core.tasks.weight_suggestions.os") as mock_os,
         ):
             mock_os.getenv = lambda key, default=None: default
 
-            tasks_module._init_weight_suggester()
+            get_weight_suggester()
 
             mock_st.assert_called_once_with("all-MiniLM-L6-v2")
+
+    def test_get_suggester_returns_cached_instance(self):
+        """Verify cached suggester is returned on second call without re-creating."""
+        from core.tasks.weight_suggestions import get_weight_suggester
+
+        with (
+            patch("sentence_transformers.SentenceTransformer"),
+            patch("core.services.weight_suggestion.WeightSuggester") as mock_ws_cls,
+            patch("core.tasks.weight_suggestions.os") as mock_os,
+        ):
+            mock_os.getenv.return_value = "test-model"
+            mock_ws_cls.return_value = "mock-suggester-instance"
+
+            first = get_weight_suggester()
+            second = get_weight_suggester()
+
+            assert first == second
+            # Only created once
+            mock_ws_cls.assert_called_once()

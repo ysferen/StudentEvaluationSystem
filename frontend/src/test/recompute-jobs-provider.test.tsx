@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
@@ -22,6 +22,8 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('@/shared/api/generated/v1/v1', () => ({
   v1EvaluationScoreRecomputeJobsRetrieve: recomputeRetrieveMock,
 }))
+
+let eventSourceInstances: any[]
 
 const Trigger: React.FC = () => {
   const { enqueueJobs, showAlert } = useRecomputeJobs()
@@ -50,14 +52,26 @@ const Trigger: React.FC = () => {
 describe('RecomputeJobsProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    eventSourceInstances = []
+    const mockEventSource = vi.fn().mockImplementation(function (url: string, config?: any) {
+      const instance = {
+        url,
+        config,
+        onmessage: null as any,
+        onerror: null as any,
+        close: vi.fn(),
+      }
+      eventSourceInstances.push(instance)
+      return instance
+    })
+    vi.stubGlobal('EventSource', mockEventSource)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('shows upload success alert and independent job alert that transitions to success', async () => {
-    recomputeRetrieveMock
-      .mockResolvedValueOnce({ id: 501, status: 'running' })
-      .mockResolvedValueOnce({ id: 501, status: 'running' })
-      .mockResolvedValueOnce({ id: 501, status: 'success' })
-
     const user = userEvent.setup()
 
     render(
@@ -74,8 +88,13 @@ describe('RecomputeJobsProvider', () => {
     expect(screen.getByTestId('global-job-alert')).toHaveClass('transition-all')
     expect(screen.getAllByTestId('global-job-alert')).toHaveLength(1)
 
+    // Simulate SSE "complete" event arriving
     await waitFor(() => {
-      expect(recomputeRetrieveMock).toHaveBeenCalledWith(501)
+      expect(eventSourceInstances.length).toBeGreaterThan(0)
+    })
+    const es = eventSourceInstances[0]
+    es.onmessage({
+      data: JSON.stringify({ type: 'complete', job_id: 501, status: 'success' }),
     })
 
     await waitFor(() => {
