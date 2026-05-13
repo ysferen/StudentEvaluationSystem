@@ -230,16 +230,15 @@ class TermViewSet(viewsets.ModelViewSet):
         )
 
         template_ids = serializer.validated_data["template_ids"]
-        if template_ids:
-            from core.tasks.term_transition import clone_templates_for_term_task
+        from core.tasks.term_transition import clone_templates_for_term_task
 
-            task = clone_templates_for_term_task.delay(
-                template_ids=template_ids,
-                term_id=new_term.id,
-                job_id=job.id,
-            )
-            job.celery_task_id = task.id
-            job.save(update_fields=["celery_task_id"])
+        task = clone_templates_for_term_task.delay(
+            template_ids=template_ids,
+            term_id=new_term.id,
+            job_id=job.id,
+        )
+        job.celery_task_id = task.id
+        job.save(update_fields=["celery_task_id"])
 
         log_audit(
             request.user,

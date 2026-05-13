@@ -18,7 +18,7 @@ export function useJobStream(jobId: number | null): UseJobStreamResult {
   const connect = useCallback(() => {
     if (!jobId) return () => {}
 
-    const url = `${baseURL}/core/events/?channels=jobs.${jobId}`
+    const url = `${baseURL}/api/core/events/?channels=jobs.${jobId}`
     const eventSource = new EventSource(url, { withCredentials: true })
 
     eventSource.onmessage = (event) => {

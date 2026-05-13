@@ -38,7 +38,7 @@ describe('useJobStream', () => {
     expect(mockEventSource).toHaveBeenCalled()
     const url = mockEventSource.mock.calls[0][0] as string
     expect(url).toContain('channels=jobs.42')
-    expect(url).toContain('/core/events/')
+    expect(url).toContain('/api/core/events/')
   })
 
   it('sets isComplete when complete event received', () => {

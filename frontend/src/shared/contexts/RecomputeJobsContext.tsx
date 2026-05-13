@@ -115,7 +115,7 @@ export const RecomputeJobsProvider: React.FC<{ children: React.ReactNode }> = ({
     const eventSources: EventSource[] = []
 
     pendingJobs.forEach((job) => {
-      const url = `${baseURL}/core/events/?channels=jobs.${job.id}`
+      const url = `${baseURL}/api/core/events/?channels=jobs.${job.id}`
       const es = new EventSource(url, { withCredentials: true })
 
       es.onmessage = (event) => {

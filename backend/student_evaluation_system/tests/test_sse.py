@@ -70,6 +70,24 @@ class TestEventStreamView:
             assert response.status_code == 200
             assert response["Content-Type"] == "text/event-stream"
 
+    def test_accepts_event_stream_content_type(self, authenticated_client):
+        """EventSource sends Accept: text/event-stream — must return 200, not 406."""
+        client, user = authenticated_client("sse_accept_hdr")
+
+        with patch("core.views.sse.get_redis_client") as mock_get_redis:
+            mock_pubsub = MagicMock()
+            mock_pubsub.get_message.return_value = None
+            mock_client = MagicMock()
+            mock_client.pubsub.return_value = mock_pubsub
+            mock_get_redis.return_value = mock_client
+
+            response = client.get(
+                f"/api/core/events/?channels=notifications.{user.id}",
+                HTTP_ACCEPT="text/event-stream",
+            )
+            assert response.status_code == 200
+            assert response["Content-Type"] == "text/event-stream"
+
     @patch("core.views.sse.get_redis_client")
     def test_stream_yields_heartbeat(self, mock_get_redis, authenticated_client, admin_user_factory):
         """With an admin user, a job channel stream should yield heartbeat comments."""

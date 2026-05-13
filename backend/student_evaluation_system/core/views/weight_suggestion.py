@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from ..models import WeightSuggestionJob
 from ..serializers import WeightSuggestionJobSerializer
-from ..tasks import suggest_assessment_lo_weights_task
+from ..tasks.weight_suggestions import suggest_assessment_lo_weights_task
 
 
 class WeightSuggestionViewSet(viewsets.ModelViewSet):
@@ -53,7 +53,9 @@ class WeightSuggestionViewSet(viewsets.ModelViewSet):
             status=WeightSuggestionJob.STATUS_PENDING,
         )
 
-        task = suggest_assessment_lo_weights_task.delay(course_id=course_id, job_id=job.id)
+        task = suggest_assessment_lo_weights_task.apply_async(
+            kwargs={"course_id": course_id, "job_id": job.id}, queue="ml_queue"
+        )
         job.celery_task_id = task.id
         job.save(update_fields=["celery_task_id"])
 

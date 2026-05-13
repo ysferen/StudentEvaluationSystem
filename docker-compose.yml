@@ -34,7 +34,7 @@ services:
   celery_worker:
     build: ./backend
     container_name: ses-celery-worker
-    command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker --loglevel=info
+    command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker -Q celery -c 4 --loglevel=info
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv
@@ -50,6 +50,31 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+
+  celery_worker_ml:
+    build: ./backend
+    container_name: ses-celery-worker-ml
+    command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker -Q ml_queue --pool=solo --loglevel=info
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/student_evaluation
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      IS_ML_WORKER: "true"
+      OMP_NUM_THREADS: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   backend:
     build: ./backend
     container_name: ses-backend

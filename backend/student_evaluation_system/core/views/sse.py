@@ -5,12 +5,27 @@ from collections.abc import Generator
 import redis as redis_lib
 from django.http import StreamingHttpResponse
 from drf_spectacular.utils import extend_schema
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
 from core.serializers import JobProgressEventSerializer
 from core.services.sse import get_redis_client
+
+
+class SSERenderer(BaseRenderer):
+    """Minimal renderer that accepts text/event-stream so DRF content negotiation
+    does not reject EventSource requests before the view runs."""
+
+    media_type = "text/event-stream"
+    format = "sse"
+    charset = None
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        # The view returns StreamingHttpResponse directly, so this is never called.
+        return data
+
 
 # Channel names must match: {prefix}.{identifier}
 # Prefix: letters only (e.g. 'jobs', 'notifications')
@@ -135,6 +150,7 @@ def _event_generator(channel_list: list[str]) -> Generator[bytes, None, None]:
     },
 )
 @api_view(["GET"])
+@renderer_classes([JSONRenderer, SSERenderer])
 @permission_classes([IsAuthenticated])
 def event_stream(request):
     """SSE endpoint. Subscribe via ?channels=jobs.42,notifications.5"""
@@ -152,5 +168,6 @@ def event_stream(request):
     )
     response["Cache-Control"] = "no-cache"
     response["X-Accel-Buffering"] = "no"
-    response["Connection"] = "keep-alive"
+    # NOTE: Do NOT set Connection: keep-alive — wsgiref (Django dev server)
+    # prohibits hop-by-hop headers. SSE connections are persistent by default.
     return response
