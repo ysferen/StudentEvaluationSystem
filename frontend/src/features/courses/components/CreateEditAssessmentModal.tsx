@@ -207,7 +207,7 @@ const CreateEditAssessmentModal: React.FC<CreateEditAssessmentModalProps> = ({
             <label className="block text-sm font-medium text-secondary-700 mb-1">Assessment Template</label>
             <select value={templateAssessmentId} onChange={(e) => setTemplateAssessmentId(e.target.value === '' ? '' : Number(e.target.value))} className={inputClass}>
               <option value="">Select a template...</option>
-              {templateItems.map((t: { id: number; name: string }) => (
+              {templateItems.map((t: TemplateAssessment) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>

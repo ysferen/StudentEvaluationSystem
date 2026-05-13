@@ -208,7 +208,7 @@ const CreateEditLOModal: React.FC<CreateEditLOModalProps> = ({
               className={inputClass}
             >
               <option value="">Select a template...</option>
-              {templateLOItems.map((t: { id: number; code: string; description?: string }) => (
+              {templateLOItems.map((t: TemplateLearningOutcome) => (
                 <option key={t.id} value={t.id}>{t.code} - {t.description}</option>
               ))}
             </select>
