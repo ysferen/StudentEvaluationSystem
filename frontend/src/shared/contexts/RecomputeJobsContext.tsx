@@ -23,6 +23,7 @@ interface RecomputeJobsContextValue {
 
 const RecomputeJobsContext = createContext<RecomputeJobsContextValue | undefined>(undefined)
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRecomputeJobs = (): RecomputeJobsContextValue => {
   const ctx = useContext(RecomputeJobsContext)
   if (!ctx) {

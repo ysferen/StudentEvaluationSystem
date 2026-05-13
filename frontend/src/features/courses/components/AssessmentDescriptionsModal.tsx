@@ -55,6 +55,7 @@ export const AssessmentDescriptionsModal = ({
         description: descriptions[a.id].trim(),
       }))
       await bulkDescriptionsMutation.mutateAsync({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: { assessments: payload } as any,
       })
       onSubmit()

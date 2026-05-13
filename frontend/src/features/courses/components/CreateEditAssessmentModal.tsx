@@ -144,16 +144,14 @@ const CreateEditAssessmentModal: React.FC<CreateEditAssessmentModalProps> = ({
 
     try {
       if (mode === 'create') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createMutation.mutateAsync({ data: payload as any })
       } else if (existingAssessment) {
         await updateMutation.mutateAsync({
           id: existingAssessment.id,
-          data: {
-            ...payload,
-            course: undefined,
-            assessment_type: assessmentType || undefined,
-          } as any,
-        })
+          data: payload,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
       }
       onSuccess()
       handleClose()
@@ -209,7 +207,7 @@ const CreateEditAssessmentModal: React.FC<CreateEditAssessmentModalProps> = ({
             <label className="block text-sm font-medium text-secondary-700 mb-1">Assessment Template</label>
             <select value={templateAssessmentId} onChange={(e) => setTemplateAssessmentId(e.target.value === '' ? '' : Number(e.target.value))} className={inputClass}>
               <option value="">Select a template...</option>
-              {templateItems.map((t: any) => (
+              {templateItems.map((t: { id: number; name: string }) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>

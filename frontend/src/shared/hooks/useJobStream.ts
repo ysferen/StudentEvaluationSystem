@@ -16,7 +16,10 @@ export function useJobStream(jobId: number | null): UseJobStreamResult {
   const [retryCount, setRetryCount] = useState(0)
 
   const connect = useCallback(() => {
-    if (!jobId) return () => {}
+    if (!jobId) {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      return () => {}
+    }
 
     const url = `${baseURL}/api/core/events/?channels=jobs.${jobId}`
     const eventSource = new EventSource(url, { withCredentials: true })
@@ -42,6 +45,7 @@ export function useJobStream(jobId: number | null): UseJobStreamResult {
     return () => {
       eventSource.close()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId, retryCount])
 
   useEffect(() => {

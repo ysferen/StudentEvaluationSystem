@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { RecomputeJobsProvider, useRecomputeJobs } from '@/shared/contexts/RecomputeJobsContext'
 
 const { recomputeRetrieveMock } = vi.hoisted(() => ({

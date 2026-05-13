@@ -289,7 +289,9 @@ const CourseDetail = () => {
     enabled: !!courseId
   })
 
-  const assignments = (gradesData as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }> })?.assignments || []
+  const assignments = useMemo(() => {
+    return (gradesData as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }> })?.assignments || []
+  }, [gradesData])
 
   const { data: enrollmentsData, error: enrollmentsError } = useQuery({
     queryKey: ['enrollments', courseId],
@@ -338,9 +340,12 @@ const CourseDetail = () => {
       if (!studentMap.has(studentName)) {
         studentMap.set(studentName, { name: studentName, scores: {} })
       }
-      const total = assessmentMap.get(aId)!.totalScore
+      const assessment = assessmentMap.get(aId)
+      const studentEntry = studentMap.get(studentName)
+      if (!assessment || !studentEntry) continue
+      const total = assessment.totalScore
       const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
-      studentMap.get(studentName)!.scores[aId] = pct
+      studentEntry.scores[aId] = pct
     }
 
     const assessments = Array.from(assessmentMap.values()).sort((a, b) => a.id - b.id)
@@ -365,7 +370,8 @@ const CourseDetail = () => {
       if (!map.has(name)) {
         map.set(name, { name, loScores: [], assessmentScores: [], overallScore: 0 })
       }
-      const entry = map.get(name)!
+      const entry = map.get(name)
+      if (!entry) continue
       const total = grade.assessment.total_score ?? 100
       const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
       entry.assessmentScores.push({ name: grade.assessment.name, score: pct })
@@ -375,7 +381,8 @@ const CourseDetail = () => {
       if (!map.has(student.studentName)) {
         map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: 0 })
       }
-      const entry = map.get(student.studentName)!
+      const entry = map.get(student.studentName)
+      if (!entry) continue
       entry.loScores = Object.entries(student.loScores).map(([code, score]) => ({ code, score }))
     }
 
@@ -397,9 +404,11 @@ const CourseDetail = () => {
       if (!map.has(aId)) {
         map.set(aId, { name: grade.assessment.name, scores: [] })
       }
+      const entry = map.get(aId)
+      if (!entry) continue
       const total = grade.assessment.total_score ?? 100
       const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
-      map.get(aId)!.scores.push(pct)
+      entry.scores.push(pct)
     }
     return Array.from(map.values()).map(a => ({
       id: Array.from(map.keys()).find(k => map.get(k) === a) || 0,
@@ -427,7 +436,9 @@ const CourseDetail = () => {
       const aId = grade.assessment.id
       if (!grouped.has(aId)) grouped.set(aId, [])
       const total = grade.assessment.total_score ?? 100
-      grouped.get(aId)!.push(total > 0 ? (grade.score / total) * 100 : 0)
+      const scores = grouped.get(aId)
+      if (!scores) continue
+      scores.push(total > 0 ? (grade.score / total) * 100 : 0)
       names.set(aId, grade.assessment.name)
     }
 

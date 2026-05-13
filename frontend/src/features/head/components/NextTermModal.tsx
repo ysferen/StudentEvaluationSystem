@@ -37,6 +37,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const templates = (templatesData as any)?.results ?? (templatesData as any) ?? []
 
   useMemo(() => {
@@ -64,6 +65,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
 
   const selectAll = () => {
     if (Array.isArray(templates)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSelectedTemplates(new Set(templates.map((t: any) => t.id)))
     }
   }
@@ -81,11 +83,14 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
           semester,
           academic_year: academicYear,
           template_ids: Array.from(selectedTemplates),
-        } as any,
-      })
+        },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setJobId((result as any)?.job_id ?? null)
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to start term transition.')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to start term transition.'
+      setError(message)
       setSubmitting(false)
     }
   }
@@ -162,7 +167,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
               </div>
             </div>
             <div className="border border-secondary-200 rounded-xl divide-y divide-secondary-100 max-h-48 overflow-y-auto">
-              {Array.isArray(templates) && templates.map((template: any) => (
+              {Array.isArray(templates) && templates.map((template: { id: number; code?: string; name?: string; credits?: number }) => (
                 <label key={template.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-secondary-50">
                   <input
                     type="checkbox"

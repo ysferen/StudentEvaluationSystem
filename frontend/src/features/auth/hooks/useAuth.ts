@@ -181,7 +181,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     if (!userLoading) {
       setIsLoading(false)
     }
-  }, [currentUser, userLoading, userError, logout])
+  }, [currentUser, userLoading, userError, logout, user])
 
   /**
    * Authenticates a user with username and password.

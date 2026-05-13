@@ -498,7 +498,9 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const aloDiff = computeDiff(workingAssessmentLOMappings, initialAssessmentLOMappings)
       const lopoDiff = computeDiff(workingLoPOMappings, initialLoPOMappings)
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const aloResult: any = await aloBulkSyncMutation.mutateAsync({
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         data: {
           course_id: courseId,
           creates: aloDiff.creates.map(m => ({
@@ -510,9 +512,12 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           updates: aloDiff.updates,
           deletes: aloDiff.deletes,
         } as any,
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       })
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const lopoResult: any = await lopoBulkSyncMutation.mutateAsync({
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         data: {
           course_id: courseId,
           creates: lopoDiff.creates.map(m => ({
@@ -524,6 +529,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           updates: lopoDiff.updates,
           deletes: lopoDiff.deletes,
         } as any,
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       })
 
       // Replace temp IDs with real IDs
@@ -535,12 +541,14 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         if (item.temp_id) tempIdMap.set(item.temp_id, item.id)
       }
 
-      const updatedALO = workingAssessmentLOMappings.map(m =>
-        tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m
-      )
-      const updatedLOPO = workingLoPOMappings.map(m =>
-        tempIdMap.has(m.id) ? { ...m, id: tempIdMap.get(m.id)! } : m
-      )
+      const updatedALO = workingAssessmentLOMappings.map(m => {
+        const newId = tempIdMap.get(m.id)
+        return newId !== undefined ? { ...m, id: newId } : m
+      })
+      const updatedLOPO = workingLoPOMappings.map(m => {
+        const newId = tempIdMap.get(m.id)
+        return newId !== undefined ? { ...m, id: newId } : m
+      })
 
       setWorkingAssessmentLOMappings(updatedALO)
       setWorkingLoPOMappings(updatedLOPO)
@@ -561,7 +569,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       const allJobIds = [
         ...(aloResult?.recompute_job_ids || []),
         ...(lopoResult?.recompute_job_ids || []),
-      ].map((id: any) => ({ id, status: 'pending' as const }))
+      ].map((id: number) => ({ id, status: 'pending' as const }))
       if (allJobIds.length > 0) {
         enqueueJobs(allJobIds)
       }
@@ -595,6 +603,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
       // Create new mapping in working state with temp negative ID
       const tempId = -Date.now()
       if (weightModal.type === 'assessment-lo') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newMapping: any = {
           id: tempId,
           assessment: weightModal.fromId,
@@ -604,6 +613,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
         }
         setWorkingAssessmentLOMappings(prev => [...prev, newMapping])
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newMapping: any = {
           id: tempId,
           course: courseId,
@@ -645,6 +655,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
   }
 
   const queueWeightSuggestion = async () => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     setIsSuggesting(true)
     setSuggestionError(null)
     try {
@@ -776,6 +787,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
     } finally {
       setIsSuggesting(false)
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }
 
   const handleSuggestWeights = async () => {

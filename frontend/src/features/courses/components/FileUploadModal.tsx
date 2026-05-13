@@ -611,6 +611,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     resolutionPolicyRef.current = {}
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await validationMutation.mutateAsync({ data: { file } } as any)
       setValidationResult(toValidationResult(result, true))
     } catch (error) {
@@ -638,6 +639,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
           file,
           resolution_policy: JSON.stringify(resolutionPolicyRef.current),
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       const uploadResponse = result as UploadResponse

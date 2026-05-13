@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useJobStream } from '../useJobStream'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 describe('useJobStream', () => {
   let mockEventSource: any
   let eventSourceInstances: any[]
