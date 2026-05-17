@@ -865,7 +865,7 @@ const CourseDetail = () => {
                       </span>
                     </div>
                     {a.weight !== undefined && a.weight !== null && (
-                      <span className="text-xs text-secondary-500 mb-1">Credits: {a.weight}</span>
+                      <span className="text-xs text-secondary-500 mb-1">Assessment weight: {a.weight}</span>
                     )}
                     {a.description && (
                       <span className="text-secondary-700 text-sm leading-snug line-clamp-2">{a.description}</span>

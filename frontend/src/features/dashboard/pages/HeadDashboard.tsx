@@ -29,7 +29,7 @@ const HeadDashboard = () => {
   const yearLevelBreakdown = useMemo(() => statsData?.year_level_breakdown || [], [statsData])
   const gpaByYear = useMemo(() => statsData?.gpa_by_year || [], [statsData])
   const weakestYearLevelPoScore = useMemo(() => {
-    return yearLevelBreakdown
+    return [...yearLevelBreakdown]
       .filter(item => item.avg_score !== null)
       .sort((a, b) => (a.avg_score ?? 0) - (b.avg_score ?? 0))[0] ?? null
   }, [yearLevelBreakdown])
