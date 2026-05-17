@@ -9,17 +9,23 @@ import { AtRiskPanel } from './AtRiskPanel'
 
 interface CourseAnalyticsCardProps {
   studentCount: number
-  avgScore: number
+  averageCourseGrade: number | null
   studentsAtRisk: number
+  atRiskStudentRatio?: number
   credits?: number
+  courseCount?: number
 }
 
 export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
   studentCount,
-  avgScore,
+  averageCourseGrade,
   studentsAtRisk,
+  atRiskStudentRatio,
   credits,
+  courseCount,
 }) => {
+  const hasAverageCourseGrade = averageCourseGrade !== null
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card variant="flat" className="bg-white border-secondary-200">
@@ -39,8 +45,11 @@ export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
             <AcademicCapIcon className="h-8 w-8 text-violet-600" />
           </div>
           <div>
-            <p className="text-sm text-secondary-600 font-medium">Avg Score</p>
-            <p className="text-3xl font-bold text-secondary-900">{avgScore}<span className="text-lg text-secondary-400">/100</span></p>
+            <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
+            <p className="text-3xl font-bold text-secondary-900">
+              {hasAverageCourseGrade ? averageCourseGrade : 'N/A'}
+              {hasAverageCourseGrade && <span className="text-lg text-secondary-400">/100</span>}
+            </p>
           </div>
         </div>
       </Card>
@@ -51,8 +60,11 @@ export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
             <BookOpenIcon className="h-8 w-8 text-violet-600" />
           </div>
           <div>
-            <p className="text-sm text-secondary-600 font-medium">Credits</p>
-            <p className="text-3xl font-bold text-secondary-900">{credits ?? 0}</p>
+            <p className="text-sm text-secondary-600 font-medium">{courseCount === undefined ? 'Credits' : 'Courses'}</p>
+            <p className="text-3xl font-bold text-secondary-900">{courseCount ?? credits ?? 0}</p>
+            {atRiskStudentRatio !== undefined && (
+              <p className="text-xs text-secondary-500 mt-1">{atRiskStudentRatio}% at-risk by average course grade</p>
+            )}
           </div>
         </div>
       </Card>

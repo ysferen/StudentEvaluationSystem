@@ -116,7 +116,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
               <AcademicCapIcon className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Avg Score</p>
+              <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
               <p className={`text-3xl font-bold ${scoreTextColor}`}>{avgScore}</p>
             </div>
           </div>

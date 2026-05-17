@@ -3,7 +3,7 @@ import { useQuery, useQueries } from '@tanstack/react-query'
 import FileUploadModal from '../../courses/components/FileUploadModal'
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
-import { ChevronLeft, ChevronRight, Upload } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import { useAuth } from '../../auth/hooks/useAuth'
 import {
   coreCoursesList,
@@ -12,11 +12,18 @@ import {
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
 import { isRecord } from '@/shared/utils/guards'
 import { CourseAnalyticsCard } from '../components/CourseAnalyticsCard'
+import { CourseHealthMatrix } from '../components/CourseHealthMatrix'
+import { CourseAttentionList } from '../components/CourseAttentionList'
 import { GradeDistributionChart } from '../components/GradeDistributionChart'
 import {
   calculateGradeDistribution,
-  calculateAverageScore,
-  identifyStudentsAtRisk,
+  calculateAverageCourseGrade,
+  countAtRiskStudentsByCourseGrade,
+  calculateAtRiskRatioByCourseGrade,
+  findWeakestLoAverageScore,
+  normalizeCourseGradeAverages,
+  normalizeLoAverages,
+  type CourseInsightSummary,
 } from '../utils/analytics'
 import type { Course } from '../../../shared/api/model/course'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
@@ -47,7 +54,7 @@ const toLoAverages = (value: unknown): LoAverageItem[] => {
 
 interface CourseWithAnalytics extends Course {
   students?: number
-  avgScore?: number
+  averageCourseGrade?: number | null
   studentsAtRisk?: number
   weight?: number
   loScores?: Array<{ lo: string; description: string; score: number }>
@@ -102,23 +109,24 @@ const InstructorDashboard = () => {
   const currentAnalytics = analyticsQueries[currentIndex]
   const analyticsError = currentAnalytics?.isError ?? false
 
-  // Combine course data with analytics
-  // Create a Map for O(1) lookup of analytics by course ID
-  const analyticsMap = new Map<number, CourseAnalytics>()
-  analyticsQueries.forEach((query, index) => {
-    if (query.data && courses[index]) {
-      analyticsMap.set(courses[index].id, query.data as CourseAnalytics)
-    }
-  })
+  const analyticsMap = useMemo(() => {
+    const map = new Map<number, CourseAnalytics>()
+    analyticsQueries.forEach((query, index) => {
+      if (query.data && courses[index]) {
+        map.set(courses[index].id, query.data as CourseAnalytics)
+      }
+    })
+    return map
+  }, [analyticsQueries, courses])
 
-  const coursesWithAnalytics: CourseWithAnalytics[] = courses.map((course: Course) => {
+  const coursesWithAnalytics: CourseWithAnalytics[] = useMemo(() => courses.map((course: Course) => {
     const analytics = analyticsMap.get(course.id)
 
     if (!analytics) {
       return {
         ...course,
         students: 0,
-        avgScore: 0,
+        averageCourseGrade: null,
         studentsAtRisk: 0,
         weight: course.credits || 1,
         loScores: [],
@@ -126,52 +134,64 @@ const InstructorDashboard = () => {
       }
     }
 
-    // Format LO averages for radar chart
-    const aggregatedLOScores = analytics.loAverages.map((lo) => ({
-      lo: lo.lo_code,
-      description: lo.lo_description || '',
-      score: Math.round(lo.avg_score)
+    const courseGradeAverages = normalizeCourseGradeAverages(analytics.gradeAverages)
+    const aggregatedLOScores = normalizeLoAverages(analytics.loAverages).map((lo) => ({
+      lo: lo.loCode,
+      description: lo.loDescription || '',
+      score: Math.round(lo.averageLoScore)
     }))
-
-    // Grade distribution based on grade averages
-    const gradeDistribution = calculateGradeDistribution(analytics.gradeAverages)
-
-    // Average score from grade averages
-    const avgScore = calculateAverageScore(analytics.gradeAverages)
-
-    // Students at risk from grade averages
-    const studentsAtRisk = identifyStudentsAtRisk(analytics.gradeAverages)
-
-    // Count unique students from grade averages
-    const studentCount = analytics.gradeAverages.length
 
     return {
       ...course,
-      students: studentCount,
-      avgScore,
-      studentsAtRisk,
+      students: courseGradeAverages.length,
+      averageCourseGrade: calculateAverageCourseGrade(courseGradeAverages),
+      studentsAtRisk: countAtRiskStudentsByCourseGrade(courseGradeAverages),
       weight: course.credits || 1,
       loScores: aggregatedLOScores,
-      gradeDistribution
+      gradeDistribution: calculateGradeDistribution(courseGradeAverages)
     }
-  })
+  }), [analyticsMap, courses])
 
-  const courseCount = coursesWithAnalytics.length
+  const courseInsightSummaries = useMemo<CourseInsightSummary[]>(() => {
+    return courses.map((course: Course) => {
+      const analytics = analyticsMap.get(course.id)
+      const gradeAverages = normalizeCourseGradeAverages(analytics?.gradeAverages ?? [])
+      const weakestLo = findWeakestLoAverageScore(normalizeLoAverages(analytics?.loAverages ?? []))
 
-  const nextCourse = useCallback(
-    () => setCurrentIndex((prev) => (courseCount > 0 ? (prev + 1) % courseCount : 0)),
-    [courseCount]
-  )
-  const prevCourse = useCallback(
-    () => setCurrentIndex((prev) => (courseCount > 0 ? (prev - 1 + courseCount) % courseCount : 0)),
-    [courseCount]
-  )
+      return {
+        courseId: course.id,
+        courseCode: course.code,
+        courseName: course.name,
+        studentCount: gradeAverages.length,
+        averageCourseGrade: calculateAverageCourseGrade(gradeAverages),
+        atRiskStudentCount: countAtRiskStudentsByCourseGrade(gradeAverages),
+        atRiskStudentRatio: calculateAtRiskRatioByCourseGrade(gradeAverages),
+        ...weakestLo,
+      }
+    })
+  }, [analyticsMap, courses])
+
+  const overallCourseGradeAverages = useMemo(() => {
+    return courses.flatMap((course: Course) => (
+      normalizeCourseGradeAverages(analyticsMap.get(course.id)?.gradeAverages ?? [])
+    ))
+  }, [analyticsMap, courses])
+
+  const totalInstructorStudents = overallCourseGradeAverages.length
+  const overallAverageCourseGrade = calculateAverageCourseGrade(overallCourseGradeAverages)
+  const totalAtRiskStudents = countAtRiskStudentsByCourseGrade(overallCourseGradeAverages)
+  const overallAtRiskStudentRatio = calculateAtRiskRatioByCourseGrade(overallCourseGradeAverages)
+
+  const selectCourseById = useCallback((courseId: number) => {
+    const nextIndex = coursesWithAnalytics.findIndex(item => item.id === courseId)
+    if (nextIndex >= 0) setCurrentIndex(nextIndex)
+  }, [coursesWithAnalytics])
 
   const course = coursesWithAnalytics[currentIndex] || {
     code: 'No Course',
     name: 'No courses available',
     students: 0,
-    avgScore: 0,
+    averageCourseGrade: null,
     studentsAtRisk: 0,
     weight: 0,
     loScores: [],
@@ -198,82 +218,69 @@ const InstructorDashboard = () => {
     <>
       {/* Main Content */}
       <main className="p-6 max-w-7xl mx-auto space-y-8">
-        {/* Hero/Welcome Section with Course Selector */}
+        {/* Hero/Welcome Section */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-primary-800 p-8 text-white shadow-lg">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">{course.code}</h1>
-              <p className="text-primary-100 text-lg">{course.name}</p>
+              <h1 className="text-3xl font-bold mb-2">Instructor Dashboard</h1>
+              <p className="text-primary-100 text-lg">Cross-course insight summary and selected-course detail</p>
             </div>
-            {coursesWithAnalytics.length > 1 && (
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={prevCourse}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={nextCourse}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </div>
-            )}
           </div>
           <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-right" />
           <div className="absolute right-20 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-bottom-right" />
         </div>
 
-        {/* Course indicator dots */}
-        {coursesWithAnalytics.length > 1 && (
-          <div className="flex justify-center gap-2">
-            {coursesWithAnalytics.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className={`w-3 h-3 rounded-full transition ${
-                  i === currentIndex ? 'bg-primary-600' : 'bg-secondary-300 hover:bg-secondary-400'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
         {/* Stats Row */}
         <CourseAnalyticsCard
-          studentCount={course.students ?? 0}
-          avgScore={course.avgScore ?? 0}
-          studentsAtRisk={course.studentsAtRisk ?? 0}
-          credits={course.credits}
+          studentCount={totalInstructorStudents}
+          averageCourseGrade={overallAverageCourseGrade}
+          studentsAtRisk={totalAtRiskStudents}
+          atRiskStudentRatio={overallAtRiskStudentRatio}
+          courseCount={courseInsightSummaries.length}
         />
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <CourseHealthMatrix
+            courses={courseInsightSummaries}
+            selectedCourseId={course.id}
+            onSelectCourse={selectCourseById}
+          />
+          <CourseAttentionList
+            courses={courseInsightSummaries}
+            selectedCourseId={course.id}
+            onSelectCourse={selectCourseById}
+          />
+        </div>
 
         {/* Chart Card */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b border-secondary-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveChart('radar')}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                    activeChart === 'radar'
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                  }`}
-                >
-                  LO Scores
-                </button>
-                <button
-                  onClick={() => setActiveChart('bar')}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                    activeChart === 'bar'
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                  }`}
-                >
-                  Grade Distribution
-                </button>
+              <div>
+                <h2 className="text-lg font-semibold text-secondary-900">Selected Course: {course.code}</h2>
+                <p className="text-sm text-secondary-500 mt-1">{course.name}</p>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => setActiveChart('radar')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                      activeChart === 'radar'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                    }`}
+                  >
+                    Average LO score
+                  </button>
+                  <button
+                    onClick={() => setActiveChart('bar')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                      activeChart === 'bar'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                    }`}
+                  >
+                    Course grade distribution
+                  </button>
+                </div>
               </div>
               <button
                 onClick={() => setIsFileUploadModalOpen(true)}
@@ -311,7 +318,7 @@ const InstructorDashboard = () => {
                   title=""
                   type="radar"
                   series={[{
-                    name: 'Score',
+                    name: 'Average LO score',
                     data: (course.loScores || []).map(lo => lo.score)
                   }]}
                   options={{

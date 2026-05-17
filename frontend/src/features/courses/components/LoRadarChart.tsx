@@ -33,7 +33,7 @@ export const LoRadarChart: React.FC<LoRadarChartProps> = ({
       title=""
       type="radar"
       series={[{
-        name: 'Average Score',
+        name: 'Average LO score',
         data: learningOutcomes.map(lo => Math.round(getLOPerformance(lo.code, loScores) * 10) / 10)
       }]}
       options={{

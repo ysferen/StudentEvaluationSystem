@@ -21,9 +21,14 @@ import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsD
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import { CourseHeader } from '../components/CourseHeader'
+import { CourseInsightCards } from '../components/CourseInsightCards'
 import { BoxPlotChart, BoxPlotLegend } from '../components/BoxPlotChart'
 import { StudentHeatmap, AssessmentHeatmap } from '../components/StudentHeatmap'
 import { LoRadarChart } from '../components/LoRadarChart'
+import {
+  calculateCourseGradeFromAssessmentGrades,
+  findWeakestLoAverageScore,
+} from '../utils/courseInsights'
 import type { BoxPlotData } from '../components/BoxPlotChart'
 import type { HeatmapData } from '../components/StudentHeatmap'
 import type {
@@ -46,7 +51,7 @@ interface CourseDetailQueryData {
 
 interface StudentDetail {
   name: string
-  overallScore: number
+  overallScore: number | null
   assessmentScores: { name: string; score: number }[]
   loScores: { code: string; score: number }[]
 }
@@ -77,6 +82,8 @@ const getQuantile = (arr: number[], q: number): number => {
   return arr[base]
 }
 
+const atRiskCourseGradeThreshold = 60
+
 const CourseDetail = () => {
   const { id: courseId } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -86,7 +93,7 @@ const CourseDetail = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [loChartView, setLoChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
-  const [assessmentChartView, setAssessmentChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
+  const [assessmentChartView, setAssessmentChartView] = useState<'bar' | 'radar' | 'boxplot' | 'heatmap'>('bar')
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
 
   const canEdit = user?.permissions?.includes('courses.change_course') ?? false
@@ -368,7 +375,7 @@ const CourseDetail = () => {
     for (const grade of gradesData?.results || []) {
       const name = grade.student.replace(/ \([^)]+\)$/, '')
       if (!map.has(name)) {
-        map.set(name, { name, loScores: [], assessmentScores: [], overallScore: 0 })
+        map.set(name, { name, loScores: [], assessmentScores: [], overallScore: null })
       }
       const entry = map.get(name)
       if (!entry) continue
@@ -379,18 +386,24 @@ const CourseDetail = () => {
 
     for (const student of heatmapData.students) {
       if (!map.has(student.studentName)) {
-        map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: 0 })
+        map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: null })
       }
       const entry = map.get(student.studentName)
       if (!entry) continue
       entry.loScores = Object.entries(student.loScores).map(([code, score]) => ({ code, score }))
     }
 
-    for (const entry of map.values()) {
-      const scores = entry.assessmentScores.map(s => s.score)
-      entry.overallScore = scores.length > 0
-        ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
-        : 0
+    const gradesByStudent = new Map<string, NonNullable<typeof gradesData>['results']>()
+
+    for (const grade of gradesData?.results || []) {
+      const studentName = grade.student.replace(/ \([^)]+\)$/, '')
+      const existingGrades = gradesByStudent.get(studentName) ?? []
+      existingGrades.push(grade)
+      gradesByStudent.set(studentName, existingGrades)
+    }
+
+    for (const [studentName, entry] of map.entries()) {
+      entry.overallScore = calculateCourseGradeFromAssessmentGrades(gradesByStudent.get(studentName) ?? [])
     }
 
     return map
@@ -469,6 +482,30 @@ const CourseDetail = () => {
     })
   }, [gradesData])
 
+  const weakestLoInsight = useMemo(() => {
+    if (!data?.learningOutcomes || !data?.loScores) return { code: null, averageLoScore: null }
+
+    return findWeakestLoAverageScore(data.learningOutcomes, data.loScores)
+  }, [data?.learningOutcomes, data?.loScores])
+
+  const assessmentDifficultyInsights = useMemo(() => {
+    const rankedByAverage = [...assessmentRadarData].sort((a, b) => a.avg - b.avg)
+    const rankedBySpread = [...assessmentBoxPlotData]
+      .map(item => ({ name: item.code, spread: Math.round((item.max - item.min) * 10) / 10 }))
+      .sort((a, b) => b.spread - a.spread)
+
+    return {
+      mostDifficultAssessment: rankedByAverage[0] ?? null,
+      highestSpreadAssessment: rankedBySpread[0] ?? null,
+    }
+  }, [assessmentRadarData, assessmentBoxPlotData])
+
+  const studentsBelowCourseGradeThreshold = useMemo(() => {
+    return Array.from(studentDataMap.values())
+      .filter(student => student.overallScore !== null && student.overallScore < atRiskCourseGradeThreshold)
+      .length
+  }, [studentDataMap])
+
   const handleStudentClick = useCallback((studentName: string) => {
     const info = studentDataMap.get(studentName)
     if (info) {
@@ -541,6 +578,17 @@ const CourseDetail = () => {
         onDelete={() => setIsDeleteConfirmOpen(true)}
         onImport={() => setIsFileUploadModalOpen(true)}
         getInstructorNames={getInstructorNames}
+      />
+
+      <CourseInsightCards
+        weakestLoCode={weakestLoInsight.code}
+        weakestLoAverageScore={weakestLoInsight.averageLoScore}
+        mostDifficultAssessmentName={assessmentDifficultyInsights.mostDifficultAssessment?.name ?? null}
+        mostDifficultAssessmentAverageScore={assessmentDifficultyInsights.mostDifficultAssessment?.avg ?? null}
+        highestVarianceAssessmentName={assessmentDifficultyInsights.highestSpreadAssessment?.name ?? null}
+        highestVarianceAssessmentSpread={assessmentDifficultyInsights.highestSpreadAssessment?.spread ?? null}
+        studentsBelowThresholdCount={studentsBelowCourseGradeThreshold}
+        atRiskThreshold={atRiskCourseGradeThreshold}
       />
 
       <Card>
@@ -681,7 +729,17 @@ const CourseDetail = () => {
             </button>
           )}
         </div>
-<div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setAssessmentChartView('bar')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'bar'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Difficulty Bars
+          </button>
           <button
             onClick={() => setAssessmentChartView('radar')}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -713,16 +771,29 @@ const CourseDetail = () => {
             Heatmap
           </button>
         </div>
-{assessmentRadarData.length > 0 || assignments.length > 0 ? (
+        {assessmentRadarData.length > 0 || assignments.length > 0 ? (
           <>
             {assessmentRadarData.length > 0 && (
               <>
+            {assessmentChartView === 'bar' && (
+              <div className="space-y-3">
+                {[...assessmentRadarData].sort((a, b) => a.avg - b.avg).map(assessment => (
+                  <div key={assessment.id} className="grid grid-cols-[12rem_1fr_4rem] items-center gap-3">
+                    <span className="text-sm font-medium text-secondary-700 truncate">{assessment.name}</span>
+                    <div className="h-3 rounded-full bg-secondary-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.min(100, assessment.avg)}%` }} />
+                    </div>
+                    <span className="text-sm font-semibold text-secondary-900 text-right">{assessment.avg}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {assessmentChartView === 'radar' && (
               <ChartWidget
                 title=""
                 type="radar"
                 series={[{
-                  name: 'Average Score',
+                  name: 'Assessment average score',
                   data: assessmentRadarData.map(a => a.avg)
                 }]}
                 options={{
@@ -867,7 +938,7 @@ const CourseDetail = () => {
               <thead>
                 <tr className="bg-secondary-100">
                   <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Student Name</th>
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Current Score</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Current course grade</th>
                   <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Enrollment Term</th>
                 </tr>
               </thead>
@@ -882,7 +953,7 @@ const CourseDetail = () => {
                       onClick={() => handleStudentClick(studentName)}
                     >
                       <td className="px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-secondary-200">{studentName}</td>
-                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 0}</td>
+                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 'N/A'}</td>
                       <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{data?.course?.term?.name ?? '—'}</td>
                     </tr>
                   )
@@ -1033,8 +1104,8 @@ const CourseDetail = () => {
       >
         <div className="space-y-6">
           <div>
-            <p className="text-sm text-secondary-600 font-medium">Overall Course Score</p>
-            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 0}</p>
+            <p className="text-sm text-secondary-600 font-medium">Overall course grade</p>
+            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 'N/A'}</p>
           </div>
 
           {selectedStudent && selectedStudent.assessmentScores.length > 0 && (
@@ -1045,7 +1116,7 @@ const CourseDetail = () => {
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment score (%)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1069,7 +1140,7 @@ const CourseDetail = () => {
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Learning Outcome</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">LO score (%)</th>
                     </tr>
                   </thead>
                   <tbody>
