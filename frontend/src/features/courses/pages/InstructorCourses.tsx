@@ -261,7 +261,7 @@ const InstructorCourses = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Code</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Course</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Students</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Avg Score</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Average course grade</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Credits</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider"></th>
               </tr>
@@ -270,7 +270,7 @@ const InstructorCourses = () => {
               {coursesData.map((course, index) => {
                 const statsData = courseStatsQueries[index]?.data
                 const studentCount = statsData?.studentCount ?? 0
-                const avgScore = statsData?.average ? Math.round(statsData.average) : null
+                const averageCourseGrade = statsData?.average ? Math.round(statsData.average) : null
 
                 return (
                   <tr
@@ -296,10 +296,10 @@ const InstructorCourses = () => {
                         <div className="flex-1 bg-secondary-100 rounded-full h-1.5">
                           <div
                             className="h-full rounded-full"
-                            style={{ width: `${avgScore ?? 0}%`, backgroundColor: getScoreColor(avgScore) }}
+                            style={{ width: `${averageCourseGrade ?? 0}%`, backgroundColor: getScoreColor(averageCourseGrade) }}
                           />
                         </div>
-                        <span className={getScoreTextColor(avgScore)}>{avgScore ?? '—'}</span>
+                        <span className={getScoreTextColor(averageCourseGrade)}>{averageCourseGrade ?? '—'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

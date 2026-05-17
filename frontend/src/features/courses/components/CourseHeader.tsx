@@ -10,7 +10,7 @@ import type { Course } from '../../../shared/api/model'
 
 interface CourseHeaderProps {
   course: Course
-  avgScore: number
+  averageCourseGrade: number
   loCount: number
   canEdit: boolean
   canDelete: boolean
@@ -20,16 +20,16 @@ interface CourseHeaderProps {
   getInstructorNames: () => string
 }
 
-const getScoreTextColor = (avgScore: number): string => {
-  if (avgScore >= 70) return 'text-emerald-700'
-  if (avgScore >= 50) return 'text-amber-700'
-  if (avgScore === 0) return 'text-secondary-400'
+const getCourseGradeTextColor = (averageCourseGrade: number): string => {
+  if (averageCourseGrade >= 70) return 'text-emerald-700'
+  if (averageCourseGrade >= 50) return 'text-amber-700'
+  if (averageCourseGrade === 0) return 'text-secondary-400'
   return 'text-red-700'
 }
 
 export const CourseHeader: React.FC<CourseHeaderProps> = ({
   course,
-  avgScore,
+  averageCourseGrade,
   loCount,
   canEdit,
   canDelete,
@@ -38,7 +38,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
   onImport,
   getInstructorNames,
 }) => {
-  const scoreTextColor = getScoreTextColor(avgScore)
+  const courseGradeTextColor = getCourseGradeTextColor(averageCourseGrade)
 
   return (
     <>
@@ -117,7 +117,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
-              <p className={`text-3xl font-bold ${scoreTextColor}`}>{avgScore}</p>
+              <p className={`text-3xl font-bold ${courseGradeTextColor}`}>{averageCourseGrade}</p>
             </div>
           </div>
         </Card>

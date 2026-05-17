@@ -169,7 +169,7 @@ const CourseDetail = () => {
     return data.course.instructors.map(getInstructorName).join(', ')
   }
 
-  const getAverageScore = (): number => {
+  const getAverageCourseGrade = (): number => {
     return (gradesData as { course_average?: number })?.course_average ?? 0
   }
 
@@ -564,13 +564,13 @@ const CourseDetail = () => {
     )
   }
 
-  const avgScore = getAverageScore()
+  const averageCourseGrade = getAverageCourseGrade()
 
   return (
     <div className="space-y-6">
       <CourseHeader
         course={data.course}
-        avgScore={avgScore}
+        averageCourseGrade={averageCourseGrade}
         loCount={data.learningOutcomes?.length || 0}
         canEdit={canEdit}
         canDelete={canDelete}

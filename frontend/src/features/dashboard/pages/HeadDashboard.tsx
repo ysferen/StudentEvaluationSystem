@@ -96,7 +96,7 @@ const HeadDashboard = () => {
               <ChartBarIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Average PO Score</p>
+              <p className="text-sm text-secondary-600 font-medium">Average PO score</p>
               <p className="text-3xl font-bold text-secondary-900">
                 {overallAveragePoScore !== null ? overallAveragePoScore.toFixed(2) : 'N/A'}
               </p>
@@ -104,7 +104,7 @@ const HeadDashboard = () => {
           </div>
         </Card>
         <Card variant="flat" className="bg-amber-50 border-amber-200">
-          <p className="text-sm text-amber-700 font-medium">Weakest Year-Level PO Score</p>
+          <p className="text-sm text-amber-700 font-medium">Weakest year-level PO score</p>
           <p className="text-3xl font-bold text-amber-900">
             {weakestYearLevelPoScore ? `Year ${weakestYearLevelPoScore.year}` : 'N/A'}
           </p>
@@ -152,7 +152,7 @@ const HeadDashboard = () => {
                     : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                 }`}
               >
-                Average PO Score
+                Average PO score
               </button>
             </div>
           </div>
@@ -161,7 +161,7 @@ const HeadDashboard = () => {
         <div className="p-6">
           {activeChart === 'gpa' ? (
             <ChartWidget
-              title="Average GPA by Year Level"
+              title="Average GPA by year level"
               subtitle="Credit-weighted average GPA on the 4.0 scale"
               type="bar"
               series={[{
@@ -181,11 +181,11 @@ const HeadDashboard = () => {
             />
           ) : (
             <ChartWidget
-              title="Average PO Score by Year Level"
+              title="Average PO score by year level"
               subtitle="Average program outcome score by enrolled student year level"
               type="bar"
               series={[{
-                name: 'Average PO Score',
+                name: 'Average PO score',
                 data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
               }]}
               options={{
