@@ -369,6 +369,66 @@ class TestCalculateGpaByYear:
 
 @pytest.mark.django_db
 class TestProgramStatsPerformance:
+    def test_program_stats_counts_actual_outcome_rows(
+        self,
+        authenticated_client,
+        program_factory,
+        course_factory,
+        learning_outcome_factory,
+        program_outcome_factory,
+        student_user_factory,
+    ):
+        from core.models import StudentProgramOutcomeScore
+
+        client, _ = authenticated_client("analytics_counts_admin", "admin")
+        active_term = Term.objects.create(name="Stats Active", is_active=True, academic_year=2025)
+        program = program_factory(duration_years=4)
+        po = program_outcome_factory(program=program, term=active_term)
+        student_one = student_user_factory()
+        student_two = student_user_factory()
+
+        StudentProgramOutcomeScore.objects.create(student=student_one, program_outcome=po, term=active_term, score=80)
+        StudentProgramOutcomeScore.objects.create(student=student_two, program_outcome=po, term=active_term, score=90)
+
+        response = client.get("/api/core/analytics/program-stats/")
+        assert response.status_code == 200
+
+        stat = next(item for item in response.data["programs"] if item["id"] == program.id)
+        assert stat["lo_count"] == 1
+        assert stat["po_count"] == 1
+        assert stat["avg_score"] == 85
+
+    def test_program_stats_counts_active_term_enrolled_students(
+        self,
+        authenticated_client,
+        program_factory,
+        course_factory,
+        course_enrollment_factory,
+        term_factory,
+        student_user_factory,
+    ):
+        client, _ = authenticated_client("analytics_students_admin", "admin")
+        active_term = Term.objects.create(name="Current Academic Year", is_active=True, academic_year=2025)
+        inactive_term = term_factory(name="Past Academic Year", academic_year=2024)
+        program = program_factory(duration_years=4)
+        active_course = course_factory(program=program, term=active_term)
+        inactive_course = course_factory(program=program, term=inactive_term)
+
+        current_student = student_user_factory()
+        course_enrollment_factory(student=current_student, course=active_course, status="active")
+
+        inactive_term_student = student_user_factory()
+        course_enrollment_factory(student=inactive_term_student, course=inactive_course, status="active")
+
+        dropped_student = student_user_factory()
+        course_enrollment_factory(student=dropped_student, course=active_course, status="dropped")
+
+        response = client.get("/api/core/analytics/program-stats/")
+        assert response.status_code == 200
+
+        stat = next(item for item in response.data["programs"] if item["id"] == program.id)
+        assert stat["total_students"] == 1
+
     def test_program_stats_uses_constant_queries(self, authenticated_client, program_factory, term_factory):
         """Program stats endpoint should not scale queries with number of programs."""
         from core.models import Department, DegreeLevel

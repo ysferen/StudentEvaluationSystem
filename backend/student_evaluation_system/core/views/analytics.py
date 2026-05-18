@@ -6,7 +6,7 @@ from django.db.models import Avg, Count, F
 from drf_spectacular.utils import extend_schema
 
 from core.permissions import IsAdminOrProgramHead
-from core.models import Program, StudentLearningOutcomeScore, StudentProgramOutcomeScore, Course, ProgramOutcome, Term
+from core.models import Program, StudentProgramOutcomeScore, Course, ProgramOutcome, Term, LearningOutcome
 from evaluation.models import CourseEnrollment, StudentGrade
 
 
@@ -236,6 +236,24 @@ def _calculate_gpa_by_year(prog_course_ids, duration_years):
     return _build_gpa_by_year_response(students_by_year, student_gpa, duration_years)
 
 
+def _get_active_term_student_counts_by_program(program_ids, active_term):
+    """Count distinct students with active enrollments in active-term courses."""
+    if not active_term:
+        return {program_id: 0 for program_id in program_ids}
+
+    counts = (
+        CourseEnrollment.objects.filter(
+            course__program__in=program_ids,
+            course__term=active_term,
+            status="active",
+        )
+        .values("course__program")
+        .annotate(total=Count("student_id", distinct=True))
+        .values_list("course__program", "total")
+    )
+    return {**{program_id: 0 for program_id in program_ids}, **dict(counts)}
+
+
 @extend_schema(
     responses=ProgramStatsResponseSerializer,
     tags=["Analytics"],
@@ -268,21 +286,15 @@ class ProgramStatsView(APIView):
         # 2. Fetch aggregations independently and map them by program_id
         # Total Courses
         courses_qs = (
-            Course.objects.filter(program__in=program_ids)
+            Course.objects.filter(program__in=program_ids, term__is_active=True)
             .values("program")
             .annotate(total=Count("id"))
             .values_list("program", "total")
         )
         courses_map = dict(courses_qs)
 
-        # Total Students (Distinct per program)
-        students_qs = (
-            CourseEnrollment.objects.filter(course__program__in=program_ids)
-            .values("course__program")
-            .annotate(total=Count("student_id", distinct=True))
-            .values_list("course__program", "total")
-        )
-        students_map = dict(students_qs)
+        active_term = Term.objects.filter(is_active=True).first()
+        students_map = _get_active_term_student_counts_by_program(program_ids, active_term)
 
         # Program Outcome Average and Count
         po_stats_qs = (
@@ -293,12 +305,21 @@ class ProgramStatsView(APIView):
         )
         po_map = {row[0]: {"avg": row[1], "count": row[2]} for row in po_stats_qs}
 
+        # Program Outcome Count
+        po_count_qs = (
+            ProgramOutcome.objects.filter(program__in=program_ids, term__is_active=True)
+            .values("program")
+            .annotate(total=Count("id"))
+            .values_list("program", "total")
+        )
+        po_count_map = dict(po_count_qs)
+
         # Learning Outcome Count
         lo_qs = (
-            StudentLearningOutcomeScore.objects.filter(learning_outcome__course__program__in=program_ids)
-            .values("learning_outcome__course__program")
+            LearningOutcome.objects.filter(course__program__in=program_ids, course__term__is_active=True)
+            .values("course__program")
             .annotate(total=Count("id"))
-            .values_list("learning_outcome__course__program", "total")
+            .values_list("course__program", "total")
         )
         lo_map = dict(lo_qs)
 
@@ -323,7 +344,7 @@ class ProgramStatsView(APIView):
                     "total_courses": courses_map.get(p.id, 0),
                     "avg_score": avg_score,
                     "lo_count": lo_map.get(p.id, 0),
-                    "po_count": po_data["count"],
+                    "po_count": po_count_map.get(p.id, 0),
                 }
             )
             max_duration_years = max(max_duration_years, p.duration_years)
