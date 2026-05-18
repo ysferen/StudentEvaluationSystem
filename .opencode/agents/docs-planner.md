@@ -5,7 +5,17 @@ model: openai/gpt-5.4
 color: secondary
 permission:
   bash:
-    "*": ask
+    "*": allow
+    "rm *": ask
+    "sudo *": ask
+    "chmod *": ask
+    "chown *": ask
+    "git push*": ask
+    "git reset*": ask
+    "git clean*": ask
+    "git checkout*": ask
+    "git restore*": ask
+    "git rebase*": ask
     "git status*": allow
     "git diff*": allow
     "git log*": allow

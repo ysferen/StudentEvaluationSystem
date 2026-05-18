@@ -19,11 +19,40 @@
     "tail_turns": 8
   },
   "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "ask",
+      "*.env.*": "ask",
+      "*.env.example": "allow"
+    },
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "edit": "allow",
+    "task": "allow",
+    "todowrite": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "lsp": "allow",
+    "skill": "allow",
     "external_directory": {
-      "*": "ask"
+      "*": "ask",
+      "~/projects/**": "allow",
+      "/home/erenimo/projects/**": "allow",
+      "/tmp/opencode/**": "allow"
     },
     "bash": {
-      "*": "ask",
+      "*": "allow",
+      "rm *": "ask",
+      "sudo *": "ask",
+      "chmod *": "ask",
+      "chown *": "ask",
+      "git push*": "ask",
+      "git reset*": "ask",
+      "git clean*": "ask",
+      "git checkout*": "ask",
+      "git restore*": "ask",
+      "git rebase*": "ask",
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",

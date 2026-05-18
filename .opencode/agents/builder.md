@@ -7,7 +7,17 @@ color: "#4f9cf7"
 permission:
   edit: allow
   bash:
-    "*": ask
+    "*": allow
+    "rm *": ask
+    "sudo *": ask
+    "chmod *": ask
+    "chown *": ask
+    "git push*": ask
+    "git reset*": ask
+    "git clean*": ask
+    "git checkout*": ask
+    "git restore*": ask
+    "git rebase*": ask
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -15,6 +25,7 @@ permission:
     "npm run test*": allow
     "uv run ruff check*": allow
     "uv run pytest*": allow
+    "npm run build*": allow
   webfetch: allow
 ---
 You are a focused implementation agent. You write clean, idiomatic code following the specific conventions of the repository you are working in.
