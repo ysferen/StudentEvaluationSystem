@@ -47,6 +47,7 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = CourseTemplateSerializer
     permission_classes = [AllowAny, InstructorPermissionMixin]
     resource_area = "course_templates"
+    action_resource_areas = {"instantiate": "courses"}
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -84,6 +85,8 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
 
         try:
             course = clone_course_from_template(template, term, user=request.user)
+            if getattr(request.user, "is_instructor", False):
+                course.instructors.add(request.user)
         except Exception as exc:
             return Response(
                 {"error": f"Failed to instantiate course: {str(exc)}"},

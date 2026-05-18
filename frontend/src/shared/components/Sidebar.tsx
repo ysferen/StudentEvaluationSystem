@@ -28,48 +28,76 @@ interface NavItem {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
 
-const roleConfig: Record<Role, NavItem[]> = {
-    student: [
-        { name: 'Analytics', href: '/student/analytics', icon: ChartBarIcon },
-        { name: 'Assignments', href: '/student/assignments', icon: ClipboardDocumentListIcon },
-        { name: 'Outcomes', href: '/student/outcomes', icon: ChartPieIcon },
-    ],
-    instructor: [
-        { name: 'Assessments', href: '/instructor/assessments', icon: DocumentTextIcon },
-        { name: 'Outcomes', href: '/instructor/outcomes', icon: ChartBarIcon },
-        { name: 'Students', href: '/instructor/students', icon: UsersIcon },
-        { name: 'Analytics', href: '/instructor/analytics', icon: ChartBarIcon },
-    ],
-    program_head: [
-        { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
-        { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
-        { name: 'Students', href: '/head/students', icon: UsersIcon },
-        { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
-        { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
-        { name: 'My Department', href: '/head/analytics', icon: BuildingOfficeIcon },
-    ],
-    admin: [
-        { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
-        { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
-        { name: 'Students', href: '/head/students', icon: UsersIcon },
-        { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
-        { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
-        { name: 'All Departments', href: '/head/analytics', icon: BuildingOfficeIcon },
-    ],
-    guest: [],
+interface RoleNavigation {
+    default: NavItem[]
+    courseDetail?: NavItem[]
 }
 
-const getNavigationForRole = (role: string | null): NavItem[] => {
+const courseDetailNavigation: NavItem[] = [
+    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
+    { name: 'Assessments', href: '#assessments', icon: DocumentTextIcon },
+    { name: 'Students', href: '#students', icon: UsersIcon },
+    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+]
+
+const roleConfig: Record<Role, RoleNavigation> = {
+    student: {
+        default: [
+            { name: 'Analytics', href: '/student/analytics', icon: ChartBarIcon },
+            { name: 'Assignments', href: '/student/assignments', icon: ClipboardDocumentListIcon },
+            { name: 'Outcomes', href: '/student/outcomes', icon: ChartPieIcon },
+        ],
+    },
+    instructor: {
+        default: [
+            { name: 'Assessments', href: '/instructor/assessments', icon: DocumentTextIcon },
+            { name: 'Outcomes', href: '/instructor/outcomes', icon: ChartBarIcon },
+            { name: 'Students', href: '/instructor/students', icon: UsersIcon },
+            { name: 'Analytics', href: '/instructor/analytics', icon: ChartBarIcon },
+        ],
+        courseDetail: courseDetailNavigation,
+    },
+    program_head: {
+        default: [
+            { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
+            { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
+            { name: 'Students', href: '/head/students', icon: UsersIcon },
+            { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+            { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+            { name: 'My Department', href: '/head/analytics', icon: BuildingOfficeIcon },
+        ],
+        courseDetail: courseDetailNavigation,
+    },
+    admin: {
+        default: [
+            { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
+            { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
+            { name: 'Students', href: '/head/students', icon: UsersIcon },
+            { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+            { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+            { name: 'All Departments', href: '/head/analytics', icon: BuildingOfficeIcon },
+        ],
+        courseDetail: courseDetailNavigation,
+    },
+    guest: {
+        default: [],
+    },
+}
+
+const getNavigationForRole = (role: string | null, isCourseDetailPage: boolean): NavItem[] => {
     if (!role) return [{ name: 'Dashboard', href: '/', icon: HomeIcon }]
-    return roleConfig[role as Role] ?? []
+    const config = roleConfig[role as Role]
+    if (!config) return []
+    return isCourseDetailPage ? (config.courseDetail ?? config.default) : config.default
 }
 
 export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: SidebarProps) => {
     const { user } = useAuth()
     const location = useLocation()
+    const isCourseDetailPage = /^\/(instructor|head)\/course\/\d+\/?$/.test(location.pathname)
 
     let navigation: NavItem[] = []
-    navigation = showOnlyCoreItems ? [] : getNavigationForRole(user?.role || null)
+    navigation = showOnlyCoreItems ? [] : getNavigationForRole(user?.role || null, isCourseDetailPage)
 
     const inAccountArea = location.pathname.startsWith('/settings') || location.pathname.startsWith('/security')
     if (inAccountArea) {
@@ -77,7 +105,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
             { name: 'Account', href: '/settings', icon: Cog6ToothIcon },
             { name: 'Security', href: '/security', icon: ShieldCheckIcon },
         ]
-    } else if (user && !showOnlyCoreItems) {
+    } else if (user && !showOnlyCoreItems && !isCourseDetailPage) {
         const hasSettings = navigation.some(n => n.href === '/settings' || n.name === 'Settings')
         if (!hasSettings) {
             navigation.push({ name: 'Settings', href: '/settings', icon: Cog6ToothIcon })
@@ -96,7 +124,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
 
             {/* Sidebar */}
             <aside className={clsx(
-                "fixed inset-y-0 left-0 z-10 w-64 h-screen bg-white/80 backdrop-blur-md border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:h-auto lg:min-h-full lg:translate-x-0 lg:static lg:inset-auto",
+                "fixed inset-y-0 left-0 z-30 w-[var(--sidebar-width)] bg-white/80 backdrop-blur-md border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:top-16 lg:bottom-0 lg:translate-x-0",
                 isOpen ? 'translate-x-0' : '-translate-x-full'
             )}>
                 <div className="min-h-full flex flex-col">
@@ -111,11 +139,16 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
 
                             if (isHashLink) {
                                 return (
-                                    <a
+                                    <button
                                         key={item.name}
-                                        href={item.href}
+                                        type="button"
+                                        onClick={() => {
+                                            const target = document.getElementById(item.href.slice(1))
+                                            target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                            window.history.replaceState(null, '', item.href)
+                                        }}
                                         className={clsx(
-                                            "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group",
+                                            "w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group text-left",
                                             isActive
                                                 ? 'bg-primary-50 text-primary-700 shadow-sm'
                                                 : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
@@ -126,7 +159,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
                                             isActive ? 'text-primary-600' : 'text-secondary-400 group-hover:text-secondary-600'
                                         )} />
                                         <span>{item.name}</span>
-                                    </a>
+                                    </button>
                                 )
                             }
 

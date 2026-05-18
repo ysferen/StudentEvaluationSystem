@@ -6,6 +6,7 @@ from core.models import (
     Department,
     University,
     ProgramOutcome,
+    ProgramOutcomeTemplate,
     Course,
     CourseTemplate,
     CourseTemplateAssessment,
@@ -58,6 +59,16 @@ class ProgramAdmin(admin.ModelAdmin):
 class ProgramOutcomeAdmin(admin.ModelAdmin):
     list_display = ["code", "short_description", "program", "term"]
     list_filter = ["program", "term"]
+    search_fields = ["code", "description"]
+
+    def short_description(self, obj):
+        return obj.description[:50] + "..." if len(obj.description) > 50 else obj.description
+
+
+@admin.register(ProgramOutcomeTemplate)
+class ProgramOutcomeTemplateAdmin(admin.ModelAdmin):
+    list_display = ["code", "short_description", "program"]
+    list_filter = ["program"]
     search_fields = ["code", "description"]
 
     def short_description(self, obj):

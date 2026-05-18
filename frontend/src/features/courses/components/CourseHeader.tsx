@@ -17,6 +17,7 @@ interface CourseHeaderProps {
   onEdit: () => void
   onDelete: () => void
   onImport: () => void
+  onGenerateReport?: () => void
   getInstructorNames: () => string
 }
 
@@ -36,6 +37,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
   onEdit,
   onDelete,
   onImport,
+  onGenerateReport,
   getInstructorNames,
 }) => {
   const courseGradeTextColor = getCourseGradeTextColor(averageCourseGrade)
@@ -81,6 +83,16 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <span>Import File</span>
+          </button>
+          <button
+            type="button"
+            onClick={onGenerateReport}
+            className="bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 flex items-center space-x-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Generate Report</span>
           </button>
         </div>
       </div>

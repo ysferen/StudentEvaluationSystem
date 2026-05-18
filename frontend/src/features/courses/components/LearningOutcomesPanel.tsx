@@ -20,6 +20,8 @@ export interface LearningOutcomeScore {
 interface LearningOutcomesPanelProps {
   title?: string
   subtitle?: string
+  outcomeShortLabel?: string
+  outcomeLongLabel?: string
   learningOutcomes: LearningOutcomePanelItem[]
   loScores?: LearningOutcomeScore[]
   averageScoresByCode?: Record<string, number>
@@ -74,6 +76,8 @@ const getLoAverage = (
 export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
   title = 'Learning Outcomes',
   subtitle,
+  outcomeShortLabel = 'LO',
+  outcomeLongLabel = 'Learning Outcome',
   learningOutcomes,
   loScores,
   averageScoresByCode,
@@ -109,7 +113,7 @@ export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
 
   const emptyState = (
     <div className="rounded-xl border border-secondary-200 bg-secondary-50 px-5 py-8 text-center">
-      <h3 className="text-base font-semibold text-secondary-900">No Learning Outcome data available</h3>
+      <h3 className="text-base font-semibold text-secondary-900">No {outcomeLongLabel} data available</h3>
       <p className="mt-2 text-sm text-secondary-500">{emptyMessage}</p>
     </div>
   )
@@ -174,7 +178,7 @@ export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
               title=""
               type="radar"
               series={[{
-                name: 'Average LO score',
+                name: `Average ${outcomeShortLabel} score`,
                 data: outcomesWithScores.map(lo => Math.round(lo.score * 10) / 10),
               }]}
               options={{
@@ -211,10 +215,10 @@ export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
                       </div>
                     </div>
                     <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold ${getScoreTone(lo.score)}`}>
-                      Average score: {lo.score}%
+                      Average {outcomeShortLabel} score: {lo.score}%
                     </span>
                   </div>
-                  <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-secondary-100" aria-label={`${lo.code} average LO score ${lo.score}%`}>
+                  <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-secondary-100" aria-label={`${lo.code} average ${outcomeShortLabel} score ${lo.score}%`}>
                     <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.min(100, Math.max(0, lo.score))}%` }} />
                   </div>
                 </div>

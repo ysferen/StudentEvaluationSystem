@@ -15,6 +15,7 @@ from core.models import (
     CourseTemplateLearningOutcome,
     CourseTemplateLOPOMapping,
     ProgramOutcome,
+    ProgramOutcomeTemplate,
     Department,
     University,
     WeightSuggestionJob,
@@ -153,10 +154,51 @@ class ProgramOutcomeSerializer(serializers.ModelSerializer):
 
     program = serializers.PrimaryKeyRelatedField(read_only=True)
     term = serializers.PrimaryKeyRelatedField(read_only=True)
+    program_outcome_template_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProgramOutcomeTemplate.objects.all(),
+        source="program_outcome_template",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ProgramOutcome
-        fields = ["id", "code", "description", "program", "term", "weight", "created_at"]
+        fields = [
+            "id",
+            "code",
+            "description",
+            "program",
+            "term",
+            "weight",
+            "program_outcome_template_id",
+            "created_at",
+        ]
+
+
+class ProgramOutcomeTemplateSerializer(serializers.ModelSerializer):
+    """Serializer for reusable program outcome templates."""
+
+    program = ProgramSerializer(read_only=True)
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
+    instance_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProgramOutcomeTemplate
+        fields = [
+            "id",
+            "code",
+            "description",
+            "weight",
+            "program",
+            "program_id",
+            "instance_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_instance_count(self, obj: ProgramOutcomeTemplate) -> int:
+        return obj.instances.count()
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -572,7 +614,17 @@ class CourseTemplateLOPOMappingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CourseTemplateLOPOMapping
-        fields = ["id", "template_learning_outcome", "program_outcome", "weight"]
+        fields = ["id", "template_learning_outcome", "program_outcome", "program_outcome_template", "weight"]
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        program_outcome = attrs.get("program_outcome") or getattr(self.instance, "program_outcome", None)
+        program_outcome_template = attrs.get("program_outcome_template") or getattr(
+            self.instance, "program_outcome_template", None
+        )
+        if bool(program_outcome) == bool(program_outcome_template):
+            raise serializers.ValidationError("Provide exactly one of program_outcome or program_outcome_template.")
+        return attrs
 
 
 class InstantiateCourseTemplateSerializer(serializers.Serializer):

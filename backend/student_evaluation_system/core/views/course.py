@@ -21,6 +21,7 @@ from ..models import (
     Course,
     Program,
     ProgramOutcome,
+    ProgramOutcomeTemplate,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     Term,
@@ -28,6 +29,7 @@ from ..models import (
 from ..serializers import (
     CourseSerializer,
     ProgramOutcomeSerializer,
+    ProgramOutcomeTemplateSerializer,
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
     BulkLOPOMappingSerializer,
@@ -195,6 +197,24 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(program_id=program_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
+
+        return queryset
+
+
+class ProgramOutcomeTemplateViewSet(viewsets.ModelViewSet):
+    """CRUD operations for reusable program outcome templates."""
+
+    queryset = ProgramOutcomeTemplate.objects.select_related("program").all()
+    serializer_class = ProgramOutcomeTemplateSerializer
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "program_outcomes"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        program_id = self.request.query_params.get("program", None)
+
+        if program_id:
+            queryset = queryset.filter(program_id=program_id)
 
         return queryset
 

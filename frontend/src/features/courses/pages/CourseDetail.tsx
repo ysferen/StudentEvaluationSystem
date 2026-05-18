@@ -593,32 +593,35 @@ const CourseDetail = () => {
         atRiskThreshold={atRiskCourseGradeThreshold}
       />
 
-      <LearningOutcomesPanel
-        learningOutcomes={data.learningOutcomes}
-        loScores={data.loScores}
-        boxPlotData={boxPlotData}
-        heatmapData={heatmapData}
-        courseId={data.course.id}
-        canCreate={canCreateLO}
-        canEdit={canEditLO}
-        canDelete={canDeleteLO}
-        onCreate={() => setLoCreateModalOpen(true)}
-        onEdit={(lo) => setLoEditTarget(lo as CoreLearningOutcome)}
-        onDelete={(lo) => setLoDeleteTarget(lo as CoreLearningOutcome)}
-        onStudentClick={handleStudentClick}
-        headerAction={(
-          <button
-            onClick={() => setIsMappingEditorOpen(true)}
-            className="flex items-center space-x-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            <span>Outcome Mapping</span>
-          </button>
-        )}
-      />
+      <section id="outcomes" className="scroll-mt-24">
+        <LearningOutcomesPanel
+          learningOutcomes={data.learningOutcomes}
+          loScores={data.loScores}
+          boxPlotData={boxPlotData}
+          heatmapData={heatmapData}
+          courseId={data.course.id}
+          canCreate={canCreateLO}
+          canEdit={canEditLO}
+          canDelete={canDeleteLO}
+          onCreate={() => setLoCreateModalOpen(true)}
+          onEdit={(lo) => setLoEditTarget(lo as CoreLearningOutcome)}
+          onDelete={(lo) => setLoDeleteTarget(lo as CoreLearningOutcome)}
+          onStudentClick={handleStudentClick}
+          headerAction={(
+            <button
+              onClick={() => setIsMappingEditorOpen(true)}
+              className="flex items-center space-x-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <span>Outcome Mapping</span>
+            </button>
+          )}
+        />
+      </section>
 
+      <section id="assessments" className="scroll-mt-24">
       <Card>
         <h2 className="text-xl font-bold text-secondary-900 mb-2">Assessments</h2>
         <div className="flex items-center gap-2 mb-4">
@@ -830,7 +833,9 @@ const CourseDetail = () => {
           <p className="text-secondary-500 text-center py-4">No assessments defined for this course</p>
         )}
       </Card>
+      </section>
 
+      <section id="students" className="scroll-mt-24">
       <Card>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-secondary-900">Students</h2>
@@ -890,6 +895,7 @@ const CourseDetail = () => {
           <p className="text-secondary-500 text-center py-8">No students enrolled in this course</p>
         )}
       </Card>
+      </section>
 
       <FileUploadModal
         course={data.course.name}
