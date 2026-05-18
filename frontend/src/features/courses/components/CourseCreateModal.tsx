@@ -44,12 +44,18 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     name: string; code: string; credits: number | undefined; program_id: number
   } | null>(null)
 
+  const resolvedInstructorIds = useMemo(() => {
+    if (instructorIds.length > 0) return instructorIds
+    if (user?.role === 'instructor' && typeof user.id === 'number') return [user.id]
+    return []
+  }, [instructorIds, user])
+
   // Fetch program head's program stats to resolve program for "My program" option
   const { data: statsData } = useCoreAnalyticsProgramStatsRetrieve({
     query: { enabled: isOpen && user?.role === 'program_head' }
   })
 
-  const myProgramId = useMemo(() => {
+  const profileProgramId = useMemo(() => {
     // For program heads, the program comes from the analytics stats endpoint
     if (user?.role === 'program_head') {
       return statsData?.programs?.[0]?.id ?? null
@@ -68,17 +74,29 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     query: { enabled: isOpen && flowType === 'template' }
   })
 
+  const selectedTemplate = useMemo(() => {
+    if (flowType !== 'template' || courseTemplateId === '' || !templatesData?.results) {
+      return null
+    }
+    return templatesData.results.find((t: CourseTemplate) => t.id === Number(courseTemplateId)) ?? null
+  }, [courseTemplateId, flowType, templatesData])
+
+  const myProgramId = useMemo(() => {
+    if (profileProgramId) return profileProgramId
+    if (flowType === 'template' && selectedTemplate) {
+      return selectedTemplate.program?.id ?? selectedTemplate.program_id ?? null
+    }
+    return null
+  }, [flowType, profileProgramId, selectedTemplate])
+
   // Auto-populate name/code/credits when a template is selected
   useEffect(() => {
-    if (flowType === 'template' && courseTemplateId !== '' && templatesData?.results) {
-      const template = templatesData.results.find((t: CourseTemplate) => t.id === Number(courseTemplateId))
-      if (template) {
-        setName(template.name)
-        setCode(template.code)
-        setCredits(template.credits ?? 3)
-      }
+    if (selectedTemplate) {
+      setName(selectedTemplate.name)
+      setCode(selectedTemplate.code)
+      setCredits(selectedTemplate.credits ?? 3)
     }
-  }, [flowType, courseTemplateId, templatesData])
+  }, [selectedTemplate])
 
   const { data: programsData } = useCoreProgramsList(undefined, {
     query: { enabled: isOpen && programOption === 'select' }
@@ -107,7 +125,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
               code: code.trim(),
               credits: credits === '' ? undefined : Number(credits),
               program_id: programOption === 'my_program' && myProgramId ? myProgramId : (programId === '' ? undefined : Number(programId)),
-              instructor_ids: instructorIds,
+              instructor_ids: resolvedInstructorIds,
             }
           })
           onSuccess()
@@ -208,7 +226,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
           credits: credits === '' ? undefined : Number(credits),
           program_id: resolvedProgramId,
           term_id: resolvedTermId,
-          instructor_ids: instructorIds,
+          instructor_ids: resolvedInstructorIds,
         }
       })
       setTemplatePromptCourse({
@@ -230,7 +248,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
         }
       })
     }
-  }, [name, code, credits, instructorIds, flowType, programOption, myProgramId, programId, termOption, activeTerm, termId, courseTemplateId, createMutation, instantiateMutation])
+  }, [name, code, credits, flowType, programOption, myProgramId, programId, termOption, activeTerm, termId, courseTemplateId, createMutation, instantiateMutation, resolvedInstructorIds])
 
   if (showTemplatePrompt) {
     return (
