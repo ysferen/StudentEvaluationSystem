@@ -1,19 +1,19 @@
 import { useMemo, useState, useCallback } from 'react'
-import { useQuery, useQueries } from '@tanstack/react-query'
-import FileUploadModal from '../../courses/components/FileUploadModal'
-import { Card } from '@/components/ui/custom/Card'
-import { Upload } from 'lucide-react'
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query'
+import ConfirmDeleteModal from '@/components/ui/custom/ConfirmDeleteModal'
+import CreateEditLOModal from '../../courses/components/CreateEditLOModal'
+import { LearningOutcomesPanel } from '../../courses/components/LearningOutcomesPanel'
 import { useAuth } from '../../auth/hooks/useAuth'
 import {
   coreCoursesList,
   coreStudentLoScoresLoAveragesRetrieve
 } from '../../../shared/api/generated/core/core'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
+import { coreLearningOutcomesDestroy, coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
 import { isRecord } from '@/shared/utils/guards'
 import { CourseAnalyticsCard } from '../components/CourseAnalyticsCard'
 import { CourseHealthMatrix } from '../components/CourseHealthMatrix'
 import { CourseAttentionList } from '../components/CourseAttentionList'
-import { GradeDistributionChart } from '../components/GradeDistributionChart'
 import {
   calculateGradeDistribution,
   calculateAverageCourseGrade,
@@ -25,7 +25,7 @@ import {
   type CourseInsightSummary,
 } from '../utils/analytics'
 import type { Course } from '../../../shared/api/model/course'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import type { CoreLearningOutcome } from '../../../shared/api/model/coreLearningOutcome'
 
 interface LoAverageItem {
   lo_code: string
@@ -58,12 +58,14 @@ interface CourseWithAnalytics extends Course {
   weight?: number
   loScores?: Array<{ lo: string; description: string; score: number }>
   gradeDistribution?: Array<{ grade: string; count: number; color: string }>
+  learningOutcomes?: CoreLearningOutcome[]
 }
 
 interface CourseAnalytics {
   courseId: number
   loAverages: LoAverageItem[]
   gradeAverages: Array<{ weighted_average: number | null }>
+  learningOutcomes: CoreLearningOutcome[]
 }
 
 const countValidCourseGradeAverages = (
@@ -72,9 +74,15 @@ const countValidCourseGradeAverages = (
 
 const InstructorDashboard = () => {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [activeChart, setActiveChart] = useState<'lo' | 'bar'>('lo')
-  const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
+  const [loCreateModalOpen, setLoCreateModalOpen] = useState(false)
+  const [loEditTarget, setLoEditTarget] = useState<CoreLearningOutcome | null>(null)
+  const [loDeleteTarget, setLoDeleteTarget] = useState<CoreLearningOutcome | null>(null)
+
+  const canCreateLO = user?.permissions?.includes('learning_outcomes.add_learningoutcome') ?? false
+  const canEditLO = user?.permissions?.includes('learning_outcomes.change_learningoutcome') ?? false
+  const canDeleteLO = user?.permissions?.includes('learning_outcomes.delete_learningoutcome') ?? false
 
   // Fetch courses for the instructor using orval
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
@@ -94,14 +102,16 @@ const InstructorDashboard = () => {
     queries: courses.map((course: Course) => ({
       queryKey: ['course-analytics', course.id],
       queryFn: async (): Promise<CourseAnalytics> => {
-        const [loAveragesRes, gradeAveragesRes] = await Promise.all([
+        const [loAveragesRes, gradeAveragesRes, learningOutcomesRes] = await Promise.all([
           coreStudentLoScoresLoAveragesRetrieve({ params: { course: course.id } }),
-          evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true })
+          evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true }),
+          coreLearningOutcomesList({ course: course.id }),
         ])
         return {
           courseId: course.id,
           loAverages: toLoAverages(loAveragesRes),
-          gradeAverages: Array.isArray(gradeAveragesRes) ? gradeAveragesRes : []
+          gradeAverages: Array.isArray(gradeAveragesRes) ? gradeAveragesRes : [],
+          learningOutcomes: learningOutcomesRes.results || [],
         }
       },
       retry: 1,
@@ -133,7 +143,8 @@ const InstructorDashboard = () => {
         studentsAtRisk: 0,
         weight: course.credits || 1,
         loScores: [],
-        gradeDistribution: []
+        gradeDistribution: [],
+        learningOutcomes: [],
       }
     }
 
@@ -153,7 +164,8 @@ const InstructorDashboard = () => {
       studentsAtRisk: countAtRiskStudentsByCourseGrade(courseGradeAverages),
       weight: course.credits || 1,
       loScores: aggregatedLOScores,
-      gradeDistribution: calculateGradeDistribution(courseGradeAverages)
+      gradeDistribution: calculateGradeDistribution(courseGradeAverages),
+      learningOutcomes: analytics.learningOutcomes,
     }
   }), [analyticsMap, courses])
 
@@ -209,14 +221,32 @@ const InstructorDashboard = () => {
     gradeDistribution: []
   }
 
-  const rankedLoScores = useMemo(() => (
-    [...(course.loScores || [])].sort((a, b) => a.score - b.score)
+  const selectedCourseLearningOutcomes = course.learningOutcomes || []
+
+  const selectedCourseAverageScoresByCode = useMemo(() => (
+    (course.loScores || []).reduce<Record<string, number>>((acc, lo) => {
+      acc[lo.lo] = lo.score
+      return acc
+    }, {})
   ), [course.loScores])
 
   // Get loading state for current course analytics
   const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length
     ? analyticsQueries[currentIndex]?.isLoading
     : false
+
+  const handleLOSuccess = useCallback(() => {
+    setLoCreateModalOpen(false)
+    setLoEditTarget(null)
+    queryClient.invalidateQueries({ queryKey: ['course-analytics', course.id] })
+  }, [course.id, queryClient])
+
+  const handleLODelete = useCallback(async () => {
+    if (!loDeleteTarget) return
+    await coreLearningOutcomesDestroy(loDeleteTarget.id)
+    setLoDeleteTarget(null)
+    queryClient.invalidateQueries({ queryKey: ['course-analytics', course.id] })
+  }, [course.id, loDeleteTarget, queryClient])
 
   // Loading state
   if (coursesLoading) {
@@ -269,129 +299,52 @@ const InstructorDashboard = () => {
           />
         </div>
 
-        {/* Chart Card */}
-        <Card className="overflow-hidden">
-          <div className="border-b border-secondary-200 px-5 py-4 sm:px-6 sm:py-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 space-y-3">
-                <div className="space-y-0.5">
-                  <h2 className="text-lg font-semibold text-secondary-900">Selected Course: {course.code}</h2>
-                  <p className="text-sm text-secondary-500">{course.name}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setActiveChart('lo')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                      activeChart === 'lo'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                    }`}
-                  >
-                    LO average score ranking
-                  </button>
-                  <button
-                    onClick={() => setActiveChart('bar')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                      activeChart === 'bar'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                    }`}
-                  >
-                    Course grade distribution
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsFileUploadModalOpen(true)}
-                className="inline-flex items-center gap-2 self-start rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Import Data</span>
-              </button>
-            </div>
-          </div>
+        <LearningOutcomesPanel
+          title={`Selected Course: ${course.code}`}
+          subtitle={course.name}
+          learningOutcomes={selectedCourseLearningOutcomes}
+          averageScoresByCode={selectedCourseAverageScoresByCode}
+          courseId={course.id}
+          isLoading={currentCourseAnalyticsLoading}
+          errorMessage={analyticsError ? 'Failed to load analytics for this course' : null}
+          canCreate={canCreateLO && Boolean(course.id)}
+          canEdit={canEditLO}
+          canDelete={canDeleteLO}
+          onCreate={() => setLoCreateModalOpen(true)}
+          onEdit={(lo) => setLoEditTarget(lo as CoreLearningOutcome)}
+          onDelete={(lo) => setLoDeleteTarget(lo as CoreLearningOutcome)}
+          emptyMessage="Learning outcomes for this course will appear here once defined."
+        />
 
-          {/* Chart Display */}
-          <div className="px-5 py-4 sm:px-6 sm:py-5">
-            {analyticsError && (
-              <Card className="mb-4 rounded-xl border border-danger-200 bg-danger-50 p-3.5">
-                <div className="flex items-center gap-2">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-danger-600" />
-                  <p className="text-danger-800 text-sm font-medium">
-                    Failed to load analytics for this course
-                  </p>
-                </div>
-              </Card>
-            )}
-            {currentCourseAnalyticsLoading ? (
-              <div className="flex min-h-56 items-center justify-center rounded-xl border border-dashed border-secondary-200 bg-secondary-50/60 px-4 py-8">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary-600 mx-auto" />
-                  <p className="mt-3 text-sm font-medium text-secondary-600">Loading chart data...</p>
-                </div>
-              </div>
-            ) : activeChart === 'lo' ? (
-              rankedLoScores.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-secondary-900">Average LO score by learning outcome</h3>
-                    <p className="text-sm text-secondary-500">Sorted weakest average first</p>
-                  </div>
-                  <div className="space-y-2.5">
-                    {rankedLoScores.map((lo, idx) => (
-                      <div key={`${lo.lo}-${idx}`} className="rounded-xl border border-secondary-200 bg-white p-3.5 shadow-sm">
-                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.lo}</span>
-                              <span className="text-xs font-medium text-secondary-500">Rank {idx + 1}</span>
-                            </div>
-                            <p className="mt-1.5 text-sm leading-snug text-secondary-700">{lo.description || 'No description available'}</p>
-                          </div>
-                          <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
-                            lo.score >= 80 ? 'bg-emerald-100 text-emerald-700' : lo.score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
-                          }`}>
-                            Average LO score: {lo.score}%
-                          </span>
-                        </div>
-                        <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-secondary-100" aria-label={`${lo.lo} average LO score ${lo.score}%`}>
-                          <div
-                            className="h-full rounded-full bg-primary-500"
-                            style={{ width: `${Math.min(100, Math.max(0, lo.score))}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-secondary-200 bg-secondary-50 px-5 py-8 text-center">
-                  <h3 className="text-base font-semibold text-secondary-900">No Learning Outcome data available</h3>
-                  <p className="mt-2 text-sm text-secondary-500">Average LO score data will appear here after outcomes and grades are available for this course.</p>
-                </div>
-              )
-            ) : activeChart === 'bar' ? (
-              <GradeDistributionChart
-                data={course.gradeDistribution || []}
-                courseId={course.id}
-              />
-            ) : null}
-          </div>
-        </Card>
-
-        {/* FileUploadModal */}
         {course.id && (
-          <FileUploadModal
-            course={course.name}
-            courseCode={course.code}
-            termId={course.term?.id ?? 1}
-            isOpen={isFileUploadModalOpen}
-            type="assignment_scores"
-            onClose={() => setIsFileUploadModalOpen(false)}
-            onUploadComplete={() => {
-              setIsFileUploadModalOpen(false)
-            }}
-          />
+          <>
+            <CreateEditLOModal
+              isOpen={loCreateModalOpen}
+              onClose={() => setLoCreateModalOpen(false)}
+              onSuccess={handleLOSuccess}
+              mode="create"
+              courseId={course.id}
+              courseTemplateId={course.course_template_id ?? null}
+            />
+            <CreateEditLOModal
+              isOpen={!!loEditTarget}
+              onClose={() => setLoEditTarget(null)}
+              onSuccess={handleLOSuccess}
+              mode="edit"
+              courseId={course.id}
+              courseTemplateId={course.course_template_id ?? null}
+              existingLo={loEditTarget ? { id: loEditTarget.id, code: loEditTarget.code, description: loEditTarget.description } : null}
+            />
+            <ConfirmDeleteModal
+              isOpen={!!loDeleteTarget}
+              onClose={() => setLoDeleteTarget(null)}
+              onConfirm={handleLODelete}
+              title="Delete Learning Outcome"
+              itemName={loDeleteTarget?.code ?? ''}
+              confirmText={loDeleteTarget?.code ?? ''}
+              inputLabel="LO code"
+            />
+          </>
         )}
       </main>
     </>
