@@ -37,6 +37,9 @@ vi.mock('../features/dashboard/pages/InstructorDashboard', () => ({
 vi.mock('../features/dashboard/pages/HeadDashboard', () => ({
   default: () => <div>Head Dashboard</div>,
 }));
+vi.mock('../features/dashboard/pages/ProgramPage', () => ({
+  default: () => <div>Program Page</div>,
+}));
 vi.mock('../features/courses/pages/StudentCourses', () => ({
   default: () => <div>Student Courses</div>,
 }));
@@ -102,5 +105,15 @@ describe('App routes', () => {
     );
 
     expect(await screen.findByText('Landing Page')).toBeInTheDocument();
+  });
+
+  it('renders head program route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/head/program']}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Program Page')).toBeInTheDocument();
   });
 });

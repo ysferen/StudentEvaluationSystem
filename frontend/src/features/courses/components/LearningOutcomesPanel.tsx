@@ -22,6 +22,7 @@ interface LearningOutcomesPanelProps {
   subtitle?: string
   outcomeShortLabel?: string
   outcomeLongLabel?: string
+  createButtonLabel?: string
   learningOutcomes: LearningOutcomePanelItem[]
   loScores?: LearningOutcomeScore[]
   averageScoresByCode?: Record<string, number>
@@ -78,6 +79,7 @@ export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
   subtitle,
   outcomeShortLabel = 'LO',
   outcomeLongLabel = 'Learning Outcome',
+  createButtonLabel = 'New LO',
   learningOutcomes,
   loScores,
   averageScoresByCode,
@@ -134,7 +136,7 @@ export const LearningOutcomesPanel: React.FC<LearningOutcomesPanelProps> = ({
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span>New LO</span>
+              <span>{createButtonLabel}</span>
             </button>
           )}
           {headerAction}

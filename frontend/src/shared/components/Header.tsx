@@ -46,6 +46,7 @@ export const Header = ({ setSidebarOpen, showOnlyCoreItems = false }: HeaderProp
             case 'program_head':
                 return [
                     { to: '/head', label: 'Homepage' },
+                    { to: '/head/program', label: 'Program' },
                     { to: '/head/courses', label: 'Courses' },
                     { to: '/head/permissions', label: 'Permissions' }
                 ]
