@@ -2,7 +2,6 @@ import { useMemo, useState, useCallback } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import FileUploadModal from '../../courses/components/FileUploadModal'
 import { Card } from '@/components/ui/custom/Card'
-import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import { Upload } from 'lucide-react'
 import { useAuth } from '../../auth/hooks/useAuth'
 import {
@@ -67,10 +66,14 @@ interface CourseAnalytics {
   gradeAverages: Array<{ weighted_average: number | null }>
 }
 
+const countValidCourseGradeAverages = (
+  courseGradeAverages: Array<{ averageCourseGrade: number | null }>
+): number => courseGradeAverages.filter(({ averageCourseGrade }) => averageCourseGrade !== null).length
+
 const InstructorDashboard = () => {
   const { user } = useAuth()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [activeChart, setActiveChart] = useState('radar')
+  const [activeChart, setActiveChart] = useState<'lo' | 'bar'>('lo')
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false)
 
   // Fetch courses for the instructor using orval
@@ -141,9 +144,11 @@ const InstructorDashboard = () => {
       score: Math.round(lo.averageLoScore)
     }))
 
+    const studentCountWithGradeData = countValidCourseGradeAverages(courseGradeAverages)
+
     return {
       ...course,
-      students: courseGradeAverages.length,
+      students: studentCountWithGradeData,
       averageCourseGrade: calculateAverageCourseGrade(courseGradeAverages),
       studentsAtRisk: countAtRiskStudentsByCourseGrade(courseGradeAverages),
       weight: course.credits || 1,
@@ -157,12 +162,13 @@ const InstructorDashboard = () => {
       const analytics = analyticsMap.get(course.id)
       const gradeAverages = normalizeCourseGradeAverages(analytics?.gradeAverages ?? [])
       const weakestLo = findWeakestLoAverageScore(normalizeLoAverages(analytics?.loAverages ?? []))
+      const studentCountWithGradeData = countValidCourseGradeAverages(gradeAverages)
 
       return {
         courseId: course.id,
         courseCode: course.code,
         courseName: course.name,
-        studentCount: gradeAverages.length,
+        studentCount: studentCountWithGradeData,
         averageCourseGrade: calculateAverageCourseGrade(gradeAverages),
         atRiskStudentCount: countAtRiskStudentsByCourseGrade(gradeAverages),
         atRiskStudentRatio: calculateAtRiskRatioByCourseGrade(gradeAverages),
@@ -177,10 +183,15 @@ const InstructorDashboard = () => {
     ))
   }, [analyticsMap, courses])
 
-  const totalInstructorStudents = overallCourseGradeAverages.length
+  const totalInstructorStudents = countValidCourseGradeAverages(overallCourseGradeAverages)
   const overallAverageCourseGrade = calculateAverageCourseGrade(overallCourseGradeAverages)
   const totalAtRiskStudents = countAtRiskStudentsByCourseGrade(overallCourseGradeAverages)
   const overallAtRiskStudentRatio = calculateAtRiskRatioByCourseGrade(overallCourseGradeAverages)
+  const attentionCourseCount = courseInsightSummaries.filter(course => (
+    course.atRiskStudentRatio >= 30
+    || (course.averageCourseGrade ?? 100) < 65
+    || ((course.weakestLoAverageScore ?? 100) < 65 && Boolean(course.weakestLoCode))
+  )).length
 
   const selectCourseById = useCallback((courseId: number) => {
     const nextIndex = coursesWithAnalytics.findIndex(item => item.id === courseId)
@@ -197,6 +208,11 @@ const InstructorDashboard = () => {
     loScores: [],
     gradeDistribution: []
   }
+
+  const rankedLoScores = useMemo(() => (
+    [...(course.loScores || [])].sort((a, b) => a.score - b.score)
+  ), [course.loScores])
+
   // Get loading state for current course analytics
   const currentCourseAnalyticsLoading = courses.length > 0 && currentIndex < analyticsQueries.length
     ? analyticsQueries[currentIndex]?.isLoading
@@ -237,6 +253,7 @@ const InstructorDashboard = () => {
           studentsAtRisk={totalAtRiskStudents}
           atRiskStudentRatio={overallAtRiskStudentRatio}
           courseCount={courseInsightSummaries.length}
+          attentionCourseCount={attentionCourseCount}
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -254,25 +271,27 @@ const InstructorDashboard = () => {
 
         {/* Chart Card */}
         <Card className="overflow-hidden">
-          <div className="p-6 border-b border-secondary-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-secondary-900">Selected Course: {course.code}</h2>
-                <p className="text-sm text-secondary-500 mt-1">{course.name}</p>
-                <div className="flex gap-2 mt-4">
+          <div className="border-b border-secondary-200 px-5 py-4 sm:px-6 sm:py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-3">
+                <div className="space-y-0.5">
+                  <h2 className="text-lg font-semibold text-secondary-900">Selected Course: {course.code}</h2>
+                  <p className="text-sm text-secondary-500">{course.name}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setActiveChart('radar')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                      activeChart === 'radar'
+                    onClick={() => setActiveChart('lo')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                      activeChart === 'lo'
                         ? 'bg-primary-600 text-white'
                         : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                     }`}
                   >
-                    Average LO score
+                    LO average score ranking
                   </button>
                   <button
                     onClick={() => setActiveChart('bar')}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                    className={`px-3 py-1.5 text-sm rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
                       activeChart === 'bar'
                         ? 'bg-primary-600 text-white'
                         : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
@@ -284,7 +303,7 @@ const InstructorDashboard = () => {
               </div>
               <button
                 onClick={() => setIsFileUploadModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+                className="inline-flex items-center gap-2 self-start rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               >
                 <Upload className="w-4 h-4" />
                 <span>Import Data</span>
@@ -293,9 +312,9 @@ const InstructorDashboard = () => {
           </div>
 
           {/* Chart Display */}
-          <div className="p-6">
+          <div className="px-5 py-4 sm:px-6 sm:py-5">
             {analyticsError && (
-              <Card className="bg-danger-50 border border-danger-200 rounded-xl p-4 mb-4">
+              <Card className="mb-4 rounded-xl border border-danger-200 bg-danger-50 p-3.5">
                 <div className="flex items-center gap-2">
                   <ExclamationTriangleIcon className="h-5 w-5 text-danger-600" />
                   <p className="text-danger-800 text-sm font-medium">
@@ -305,78 +324,53 @@ const InstructorDashboard = () => {
               </Card>
             )}
             {currentCourseAnalyticsLoading ? (
-              <div className="h-80 flex items-center justify-center">
+              <div className="flex min-h-56 items-center justify-center rounded-xl border border-dashed border-secondary-200 bg-secondary-50/60 px-4 py-8">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary-600 mx-auto" />
-                  <p className="mt-4 text-secondary-600 font-medium">Loading chart data...</p>
+                  <p className="mt-3 text-sm font-medium text-secondary-600">Loading chart data...</p>
                 </div>
               </div>
-            ) : activeChart === 'radar' ? (
-              <>
-                <ChartWidget
-                  key={`radar-chart-${course.id}`}
-                  title=""
-                  type="radar"
-                  series={[{
-                    name: 'Average LO score',
-                    data: (course.loScores || []).map(lo => lo.score)
-                  }]}
-                  options={{
-                    xaxis: {
-                      categories: (course.loScores || []).map(lo => lo.lo)
-                    },
-                    yaxis: {
-                      show : false,
-                      min: 0,
-                      max: 100
-                    },
-                    fill: {
-                      opacity: 0.3,
-                      colors: ['#6366f1']
-                    },
-                    stroke: {
-                      colors: ['#6366f1']
-                    },
-                    colors: ['#6366f1'],
-                    markers: {
-                      size: 4
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      background: {
-                        enabled: true,
-                        borderRadius:2,
-                      }
-                    },
-                    plotOptions: {
-                      radar: {
-                        polygons: {
-                          strokeColors: '#e5e7eb',
-                          connectorColors: '#e5e7eb',
-                        }
-                      }
-                    }
-                  }}
-                  height={320}
-                  className="shadow-none border-0 p-0 [&>div]:p-0"
-                />
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(course.loScores || []).map((lo, idx) => (
-                    <div key={idx} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.lo}</span>
-                        <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
-                          lo.score >= 80 ? 'bg-emerald-100 text-emerald-700' : lo.score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
-                        }`}>
-                          {lo.score}%
-                        </span>
+            ) : activeChart === 'lo' ? (
+              rankedLoScores.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-secondary-900">Average LO score by learning outcome</h3>
+                    <p className="text-sm text-secondary-500">Sorted weakest average first</p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {rankedLoScores.map((lo, idx) => (
+                      <div key={`${lo.lo}-${idx}`} className="rounded-xl border border-secondary-200 bg-white p-3.5 shadow-sm">
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.lo}</span>
+                              <span className="text-xs font-medium text-secondary-500">Rank {idx + 1}</span>
+                            </div>
+                            <p className="mt-1.5 text-sm leading-snug text-secondary-700">{lo.description || 'No description available'}</p>
+                          </div>
+                          <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
+                            lo.score >= 80 ? 'bg-emerald-100 text-emerald-700' : lo.score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                          }`}>
+                            Average LO score: {lo.score}%
+                          </span>
+                        </div>
+                        <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-secondary-100" aria-label={`${lo.lo} average LO score ${lo.score}%`}>
+                          <div
+                            className="h-full rounded-full bg-primary-500"
+                            style={{ width: `${Math.min(100, Math.max(0, lo.score))}%` }}
+                          />
+                        </div>
                       </div>
-                      <span className="text-secondary-700 text-sm leading-snug">{lo.description || 'No description available'}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </>
-            ) : activeChart === 'bar' || activeChart === 'pie' ? (
+              ) : (
+                <div className="rounded-xl border border-secondary-200 bg-secondary-50 px-5 py-8 text-center">
+                  <h3 className="text-base font-semibold text-secondary-900">No Learning Outcome data available</h3>
+                  <p className="mt-2 text-sm text-secondary-500">Average LO score data will appear here after outcomes and grades are available for this course.</p>
+                </div>
+              )
+            ) : activeChart === 'bar' ? (
               <GradeDistributionChart
                 data={course.gradeDistribution || []}
                 courseId={course.id}
