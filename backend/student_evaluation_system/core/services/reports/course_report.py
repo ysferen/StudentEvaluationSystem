@@ -196,7 +196,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
     story.append(
         _chart_panel(
             "Learning Outcome Achievement",
-            _chart_image(_lo_average_figure(data), 168 * mm, 80 * mm, pixel_width=1080, pixel_height=680),
+            _chart_image(_lo_average_figure(data), 168 * mm, 80 * mm, pixel_width=1260, pixel_height=600),
             width=180 * mm,
             note="Outcome averages are ordered from lowest to highest. Color bands follow the institutional threshold legend.",
         )
@@ -240,10 +240,16 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         [
             _chart_panel(
                 "Intervention Priority Heatmap",
-                _chart_image(_student_heatmap_figure(data), 174 * mm, 74 * mm, pixel_width=1220, pixel_height=640),
+                _chart_image(
+                    _student_heatmap_figure(data),
+                    174 * mm,
+                    74 * mm,
+                    pixel_width=1392,
+                    pixel_height=544,
+                ),
                 width=180 * mm,
                 note=(
-                    "Rows are the 14 students with the lowest course averages. "
+                    "Rows are the 10 students with the lowest course averages. "
                     "Use this view to target outcome-specific support."
                 ),
             ),
@@ -477,17 +483,108 @@ def _build_interpretation_panel(data, styles):
         f"suggesting that {escape(weakest_lo.title.lower())} should receive additional reinforcement. "
         f"{len(at_risk)} student{'s' if len(at_risk) != 1 else ''} are below the intervention threshold."
     )
-    legend = "Threshold legend: danger < 60, warning 60-69, developing 70-79, success >= 80."
     table = Table(
         [
             [Paragraph("Summary Interpretation", styles["SectionTitle"])],
             [Paragraph(text, styles["BodyTextSmall"])],
-            [Paragraph(legend, styles["Meta"])],
+            [_build_threshold_legend(styles)],
         ],
         colWidths=[92 * mm],
     )
     table.setStyle(_panel_style(colors))
     return table
+
+
+def _build_threshold_legend(styles):
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, Table, TableStyle
+
+    title_style = ParagraphStyle(
+        "ThresholdLegendTitle",
+        parent=styles["KpiLabel"],
+        alignment=TA_CENTER,
+        fontSize=7.4,
+        leading=9,
+        textColor=colors.HexColor(BRAND["teal"]),
+    )
+    label_style = ParagraphStyle(
+        "ThresholdLegendLabel",
+        parent=styles["BodyTextSmall"],
+        fontSize=7.0,
+        leading=8.2,
+        alignment=TA_CENTER,
+    )
+
+    items = [
+        (BRAND["red"], "Danger", "&lt; 60", "Immediate action"),
+        (BRAND["amber"], "Warning", "60-69", "At risk"),
+        (BRAND["blue"], "Developing", "70-79", "On track"),
+        (BRAND["teal"], "Success", "&gt;= 80", "Meets target"),
+    ]
+
+    item_tables = []
+    for color, label, score_range, note in items:
+        swatch = Table([[""]], colWidths=[3 * mm], rowHeights=[3 * mm])
+        swatch.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(color)),
+                    ("BOX", (0, 0), (-1, -1), 0.2, colors.HexColor(color)),
+                ]
+            )
+        )
+        item = Table(
+            [
+                [swatch],
+                [
+                    Paragraph(
+                        f"<b>{label}</b><br/>{score_range}<br/><font color='{BRAND['muted']}'>{note}</font>",
+                        label_style,
+                    )
+                ],
+            ],
+            colWidths=[17 * mm],
+        )
+        item.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0.5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0.5),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
+                ]
+            )
+        )
+        item_tables.append(item)
+
+    legend = Table(
+        [
+            [Paragraph("THRESHOLD LEGEND", title_style), "", "", ""],
+            item_tables,
+        ],
+        colWidths=[19 * mm, 19 * mm, 19 * mm, 19 * mm],
+    )
+    legend.setStyle(
+        TableStyle(
+            [
+                ("SPAN", (0, 0), (-1, 0)),
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
+                ("BOX", (0, 0), (-1, -1), 0.7, colors.HexColor(BRAND["teal"])),
+                ("INNERGRID", (0, 1), (-1, -1), 0.35, colors.HexColor(BRAND["line"])),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
+            ]
+        )
+    )
+    return legend
 
 
 def _build_recommendations_panel(data, styles):
@@ -631,7 +728,7 @@ def _lo_box_figure(data):
 def _student_heatmap_figure(data):
     import plotly.graph_objects as go
 
-    weakest_students = sorted(data.students, key=lambda item: item.course_grade)[:14]
+    weakest_students = sorted(data.students, key=lambda item: item.course_grade)[:10]
     lo_codes = [lo.code for lo in data.learning_outcomes]
     z = [[student.lo_scores.get(code, 0) for code in lo_codes] for student in weakest_students]
     fig = go.Figure(

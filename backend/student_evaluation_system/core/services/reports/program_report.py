@@ -91,7 +91,13 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
     story.append(
         _chart_panel(
             "Program Outcome Achievement",
-            _chart_image(_po_average_figure(data), 168 * mm, 80 * mm, pixel_width=1080, pixel_height=680),
+            _chart_image(
+                _po_average_figure(data),
+                168 * mm,
+                80 * mm,
+                pixel_width=1260,
+                pixel_height=600,
+            ),
             width=180 * mm,
             note="Program outcomes are ordered from lowest to highest. Color bands follow the institutional threshold legend.",
         )
@@ -103,8 +109,14 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
                 [
                     _chart_panel(
                         "Course Contribution Overview",
-                        _chart_image(_course_contribution_figure(data), 78 * mm, 43 * mm, pixel_width=860, pixel_height=520),
-                        width=84 * mm,
+                        _chart_image(
+                            _course_contribution_figure(data),
+                            78 * mm,
+                            43 * mm,
+                            pixel_width=860,
+                            pixel_height=520,
+                        ),
+                        width=86 * mm,
                     ),
                     _build_interpretation_panel(data, styles),
                 ]
@@ -137,10 +149,16 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
                 [
                     _chart_panel(
                         "Intervention Priority Heatmap",
-                        _chart_image(_student_heatmap_figure(data), 174 * mm, 74 * mm, pixel_width=1220, pixel_height=640),
+                        _chart_image(
+                            _student_heatmap_figure(data),
+                            174 * mm,
+                            68 * mm,
+                            pixel_width=1392,
+                            pixel_height=544,
+                        ),
                         width=180 * mm,
                         note=(
-                            "Rows are the 14 students with the lowest program averages. "
+                            "Rows are the 10 students with the lowest program averages. "
                             "Use this view to target PO-specific support."
                         ),
                     ),
@@ -159,7 +177,7 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
 
 
 def mock_program_report_data() -> ProgramReportData:
-    po_codes = [f"PO{i}" for i in range(1, 9)]
+    po_codes = [f"PO{i}" for i in range(1, 18)]
     descriptions = [
         "Apply mathematics, science, and engineering knowledge",
         "Design and conduct experiments",
@@ -169,6 +187,15 @@ def mock_program_report_data() -> ProgramReportData:
         "Understand professional and ethical responsibility",
         "Communicate effectively",
         "Use modern engineering tools",
+        "Engage in life-long learning",
+        "Understand impact of engineering solutions in global context",
+        "Recognize need for sustainable design",
+        "Apply engineering principles to complex societal issues",
+        "Demonstrate leadership in engineering contexts",
+        "Innovate and adapt to emerging technologies",
+        "Apply knowledge in a major engineering specialization",
+        "Conduct research and interpret data",
+        "Contribute to engineering knowledge with original work",
     ]
     po_scores = [
         [82, 78, 91, 63, 72, 88, 69, 94, 75, 81, 58, 86, 77, 90, 66, 73, 84, 61, 92, 79],
@@ -179,6 +206,15 @@ def mock_program_report_data() -> ProgramReportData:
         [91, 86, 95, 73, 80, 93, 78, 97, 84, 88, 69, 90, 82, 96, 76, 81, 89, 72, 98, 85],
         [79, 75, 86, 60, 69, 84, 70, 91, 76, 78, 56, 83, 74, 88, 65, 71, 85, 59, 92, 77],
         [84, 79, 90, 64, 73, 87, 71, 93, 78, 82, 60, 85, 76, 91, 68, 74, 86, 62, 94, 80],
+        [76, 70, 83, 57, 63, 79, 65, 88, 71, 74, 50, 78, 69, 85, 58, 64, 80, 55, 86, 72],
+        [89, 84, 94, 71, 78, 90, 77, 95, 82, 87, 67, 91, 80, 97, 74, 79, 88, 69, 98, 83],
+        [73, 68, 80, 54, 62, 77, 63, 86, 68, 71, 48, 75, 66, 82, 57, 61, 78, 53, 84, 70],
+        [85, 80, 91, 66, 71, 88, 73, 94, 79, 83, 62, 87, 77, 92, 69, 75, 86, 64, 95, 78],
+        [78, 73, 85, 59, 67, 81, 68, 89, 72, 76, 54, 80, 71, 86, 60, 65, 82, 58, 88, 74],
+        [90, 85, 96, 74, 81, 92, 79, 98, 85, 89, 70, 91, 83, 97, 77, 82, 90, 73, 99, 86],
+        [80, 76, 88, 62, 70, 84, 69, 90, 77, 80, 57, 82, 72, 87, 63, 68, 84, 56, 89, 75],
+        [87, 82, 93, 69, 75, 89, 74, 95, 81, 86, 65, 88, 78, 91, 94, 70, 77, 85, 61, 96],
+        [92, 88, 97, 76, 83, 94, 80, 99, 86, 90, 72, 93, 85, 98, 79, 84, 91, 68, 100, 87],
     ]
     names = [
         "Aylin K.",
@@ -443,19 +479,112 @@ def _build_interpretation_panel(data, styles):
         f"The program outcome average is <b>{avg_po:.1f}%</b>. "
         f"<b>{escape(weakest_po.code)}</b> is the weakest outcome at <b>{_avg(weakest_po.scores):.1f}%</b>, "
         f"suggesting that curriculum evidence for {escape(weakest_po.description.lower())} needs review. "
-        f"{at_risk} student{'s' if at_risk != 1 else ''} are below the intervention threshold."
+        f"{at_risk} student{'s' if at_risk != 1 else ''} "
+        f"{'are' if at_risk != 1 else 'is'} below the intervention threshold."
     )
-    legend = "Threshold legend: danger < 60, warning 60-69, developing 70-79, success >= 80."
+
     table = Table(
         [
             [Paragraph("Summary Interpretation", styles["SectionTitle"])],
             [Paragraph(text, styles["BodyTextSmall"])],
-            [Paragraph(legend, styles["Meta"])],
+            [_build_threshold_legend(styles)],
         ],
-        colWidths=[92 * mm],
+        colWidths=[94 * mm],
     )
     table.setStyle(_panel_style(colors))
     return table
+
+
+def _build_threshold_legend(styles):
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, Table, TableStyle
+
+    title_style = ParagraphStyle(
+        "ThresholdLegendTitle",
+        parent=styles["KpiLabel"],
+        alignment=TA_CENTER,
+        fontSize=7.4,
+        leading=9,
+        textColor=colors.HexColor(BRAND["teal"]),
+    )
+    label_style = ParagraphStyle(
+        "ThresholdLegendLabel",
+        parent=styles["BodyTextSmall"],
+        fontSize=7.0,
+        leading=8.2,
+        alignment=TA_CENTER,
+    )
+
+    items = [
+        (BRAND["red"], "Danger", "&lt; 60", "Immediate action"),
+        (BRAND["amber"], "Warning", "60-69", "At risk"),
+        (BRAND["blue"], "Developing", "70-79", "On track"),
+        (BRAND["teal"], "Success", "&gt;= 80", "Meets target"),
+    ]
+
+    item_tables = []
+    for color, label, score_range, note in items:
+        swatch = Table([[""]], colWidths=[3 * mm], rowHeights=[3 * mm])
+        swatch.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(color)),
+                    ("BOX", (0, 0), (-1, -1), 0.2, colors.HexColor(color)),
+                ]
+            )
+        )
+        item = Table(
+            [
+                [swatch],
+                [
+                    Paragraph(
+                        f"<b>{label}</b><br/>{score_range}<br/><font color='{BRAND['muted']}'>{note}</font>",
+                        label_style,
+                    )
+                ],
+            ],
+            colWidths=[17 * mm],
+        )
+        item.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0.5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0.5),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
+                ]
+            )
+        )
+        item_tables.append(item)
+
+    legend = Table(
+        [
+            [Paragraph("THRESHOLD LEGEND", title_style), "", "", ""],
+            item_tables,
+        ],
+        colWidths=[19 * mm, 19 * mm, 19 * mm, 19 * mm],
+    )
+    legend.setStyle(
+        TableStyle(
+            [
+                ("SPAN", (0, 0), (-1, 0)),
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
+                ("BOX", (0, 0), (-1, -1), 0.7, colors.HexColor(BRAND["teal"])),
+                ("INNERGRID", (0, 1), (-1, -1), 0.35, colors.HexColor(BRAND["line"])),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
+            ]
+        )
+    )
+    return legend
 
 
 def _build_recommendations_panel(data, styles):
@@ -556,7 +685,7 @@ def _coverage_figure(data):
 def _student_heatmap_figure(data):
     import plotly.graph_objects as go
 
-    weakest_students = sorted(data.students, key=lambda item: item.program_average)[:14]
+    weakest_students = sorted(data.students, key=lambda item: item.program_average)[:10]
     po_codes = [po.code for po in data.program_outcomes]
     z = [[student.po_scores.get(code, 0) for code in po_codes] for student in weakest_students]
     fig = go.Figure(
