@@ -167,7 +167,7 @@ packaging==26.0
     #   kombu
     #   pytest
     #   transformers
-pandas==2.3.3
+pandas==3.0.3
     # via backend
 pillow==12.2.0
     # via sentence-transformers
