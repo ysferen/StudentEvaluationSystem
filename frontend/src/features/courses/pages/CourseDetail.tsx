@@ -19,6 +19,7 @@ import Modal from '@/components/ui/custom/Modal'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { downloadReportPdf } from '@/shared/api/reportDownloads'
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import { CourseHeader } from '../components/CourseHeader'
@@ -94,6 +95,8 @@ const CourseDetail = () => {
   const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
   const [assessmentChartView, setAssessmentChartView] = useState<'bar' | 'radar' | 'boxplot' | 'distribution' | 'heatmap'>('bar')
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
 
@@ -515,6 +518,25 @@ const CourseDetail = () => {
     }
   }, [studentDataMap])
 
+  const handleGenerateReport = useCallback(async () => {
+    const id = Number(courseId)
+    if (!Number.isFinite(id) || !data?.course) return
+
+    setReportError(null)
+    setIsGeneratingReport(true)
+    try {
+      await downloadReportPdf({
+        kind: 'course',
+        id,
+        fallbackFilename: `${data.course.code}-course-report.pdf`,
+      })
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Failed to generate report.')
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }, [courseId, data?.course])
+
   const handleLODelete = useCallback(async () => {
     if (loDeleteTarget) {
       try {
@@ -579,8 +601,16 @@ const CourseDetail = () => {
         onEdit={() => setIsEditModalOpen(true)}
         onDelete={() => setIsDeleteConfirmOpen(true)}
         onImport={() => setIsFileUploadModalOpen(true)}
+        onGenerateReport={handleGenerateReport}
+        isGeneratingReport={isGeneratingReport}
         getInstructorNames={getInstructorNames}
       />
+
+      {reportError && (
+        <div className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
+          {reportError}
+        </div>
+      )}
 
       <CourseInsightCards
         weakestLoCode={weakestLoInsight.code}

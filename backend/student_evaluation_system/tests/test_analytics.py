@@ -1,16 +1,16 @@
 """
-Unit tests for GPA calculation functions in core.views.analytics.
+Unit tests for GPA calculation functions in core.services.analytics.program.
 """
 
 import pytest
 
-from core.views.analytics import (
-    _percentage_to_gpa,
-    _get_student_course_grade_map,
-    _get_student_gpa_by_id,
-    _calculate_gpa_by_year,
-    _get_term_course_ids,
-    _get_term_po_ids,
+from core.services.analytics.program import (
+    calculate_gpa_by_year as _calculate_gpa_by_year,
+    get_student_course_grade_map as _get_student_course_grade_map,
+    get_student_gpa_by_id as _get_student_gpa_by_id,
+    get_term_course_ids as _get_term_course_ids,
+    get_term_po_ids as _get_term_po_ids,
+    percentage_to_gpa as _percentage_to_gpa,
 )
 from core.models import Term
 from evaluation.models import StudentGrade

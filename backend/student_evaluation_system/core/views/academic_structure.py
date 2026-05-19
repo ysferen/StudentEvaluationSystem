@@ -10,7 +10,8 @@ from django.db.models import Avg
 from django.http import HttpResponse
 from ..services.file_import import FileImportService
 from ..services.file_import import FileImportError
-from ..services.reports.program_report import generate_program_report_pdf, mock_program_report_data
+from ..services.reports.course_report import ReportDataError
+from ..services.reports.program_report import build_program_report_data, generate_program_report_pdf
 from ..services.validation import AssignmentScoreValidator
 from ..permissions import IsAdminOrProgramHeadOrReadOnly, InstructorPermissionMixin
 from rest_framework import serializers
@@ -185,12 +186,17 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    @action(detail=False, methods=["get"], url_path="report-preview")
-    def report_preview(self, request):
-        """Generate the mock Program Outcome Report PDF."""
-        pdf_bytes = generate_program_report_pdf(mock_program_report_data())
+    @action(detail=True, methods=["get"])
+    def report(self, request, pk=None):
+        """Generate the real Program Outcome Report PDF."""
+        program = self.get_object()
+        try:
+            data = build_program_report_data(program.id, term_id=request.query_params.get("term"))
+        except ReportDataError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        pdf_bytes = generate_program_report_pdf(data)
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = 'inline; filename="mock-program-outcome-report.pdf"'
+        response["Content-Disposition"] = f'inline; filename="{program.code}-{data.term}-program-report.pdf"'
         return response
 
 

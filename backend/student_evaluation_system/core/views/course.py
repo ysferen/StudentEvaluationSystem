@@ -36,7 +36,7 @@ from ..serializers import (
     BulkLOPOMappingSerializer,
 )
 from ..permissions import InstructorPermissionMixin
-from ..services.reports.course_report import generate_course_report_pdf, mock_course_report_data
+from ..services.reports.course_report import ReportDataError, build_course_report_data, generate_course_report_pdf
 
 
 @extend_schema_view(
@@ -157,12 +157,17 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = CoreLearningOutcomeSerializer(outcomes, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["get"], url_path="report-preview")
-    def report_preview(self, request):
-        """Generate the mock Course Performance Snapshot PDF."""
-        pdf_bytes = generate_course_report_pdf(mock_course_report_data())
+    @action(detail=True, methods=["get"])
+    def report(self, request, pk=None):
+        """Generate the real Course Performance Snapshot PDF."""
+        course = self.get_object()
+        try:
+            data = build_course_report_data(course.id)
+        except ReportDataError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        pdf_bytes = generate_course_report_pdf(data)
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = 'inline; filename="mock-course-performance-snapshot.pdf"'
+        response["Content-Disposition"] = f'inline; filename="{course.code}-course-report.pdf"'
         return response
 
 

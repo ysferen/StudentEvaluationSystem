@@ -4,8 +4,15 @@ from dataclasses import dataclass
 from datetime import date
 from html import escape
 from io import BytesIO
+from pathlib import Path
 from statistics import mean
 from typing import Sequence
+
+from django.db.models import F
+from django.utils import timezone
+
+from core.models import Course, LearningOutcome, StudentLearningOutcomeScore
+from evaluation.models import Assessment, CourseEnrollment, StudentGrade
 
 
 @dataclass(frozen=True)
@@ -45,6 +52,10 @@ class CourseReportData:
     students: Sequence[StudentRiskReportData]
 
 
+class ReportDataError(ValueError):
+    """Raised when report data cannot be built from the selected DB slice."""
+
+
 BRAND = {
     "ink": "#172033",
     "muted": "#64748B",
@@ -57,6 +68,56 @@ BRAND = {
     "red": "#DC2626",
     "green": "#16A34A",
 }
+
+PDF_FONT_REGULAR = "SES-DejaVuSans"
+PDF_FONT_BOLD = "SES-DejaVuSans-Bold"
+PDF_FONT_FAMILY = "DejaVu Sans"
+_FONT_REGISTERED = False
+
+
+def ensure_pdf_fonts() -> None:
+    """Register a Unicode font family so Turkish characters render in PDFs."""
+    global _FONT_REGISTERED
+    if _FONT_REGISTERED:
+        return
+
+    try:
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+    except ImportError as exc:  # pragma: no cover - dependency guard
+        raise RuntimeError("PDF reports require reportlab to be installed.") from exc
+
+    regular_path = _find_font_path("DejaVuSans.ttf")
+    bold_path = _find_font_path("DejaVuSans-Bold.ttf")
+    pdfmetrics.registerFont(TTFont(PDF_FONT_REGULAR, str(regular_path)))
+    pdfmetrics.registerFont(TTFont(PDF_FONT_BOLD, str(bold_path)))
+    pdfmetrics.registerFontFamily(
+        PDF_FONT_FAMILY,
+        normal=PDF_FONT_REGULAR,
+        bold=PDF_FONT_BOLD,
+        italic=PDF_FONT_REGULAR,
+        boldItalic=PDF_FONT_BOLD,
+    )
+    pdfmetrics.registerFontFamily(
+        PDF_FONT_REGULAR,
+        normal=PDF_FONT_REGULAR,
+        bold=PDF_FONT_BOLD,
+        italic=PDF_FONT_REGULAR,
+        boldItalic=PDF_FONT_BOLD,
+    )
+    _FONT_REGISTERED = True
+
+
+def _find_font_path(filename: str) -> Path:
+    candidates = [
+        Path("/usr/share/fonts/truetype/dejavu") / filename,
+        Path("/usr/local/share/fonts") / filename,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise RuntimeError(f"PDF reports require {filename} to be installed.")
+
 
 THEME = {
     "thresholds": {
@@ -90,6 +151,8 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
     except ImportError as exc:  # pragma: no cover - dependency guard
         raise RuntimeError("Course PDF reports require reportlab to be installed.") from exc
 
+    ensure_pdf_fonts()
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -106,7 +169,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="ReportTitle",
             parent=styles["Title"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=18,
             leading=22,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -118,7 +181,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="Eyebrow",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=8,
             leading=10,
             textColor=colors.HexColor(BRAND["teal"]),
@@ -130,6 +193,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="Meta",
             parent=styles["Normal"],
+            fontName=PDF_FONT_REGULAR,
             fontSize=8.5,
             leading=11,
             textColor=colors.HexColor(BRAND["muted"]),
@@ -139,6 +203,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="BodyTextSmall",
             parent=styles["Normal"],
+            fontName=PDF_FONT_REGULAR,
             fontSize=8.4,
             leading=11.2,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -148,7 +213,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="CalloutTitle",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=8.5,
             leading=10.5,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -158,7 +223,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="SectionTitle",
             parent=styles["Heading2"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=11,
             leading=13,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -169,7 +234,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="KpiLabel",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=6.8,
             leading=8,
             textColor=colors.HexColor(BRAND["muted"]),
@@ -180,7 +245,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
         ParagraphStyle(
             name="KpiValue",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=17,
             leading=19,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -270,78 +335,92 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
     return buffer.getvalue()
 
 
-def mock_course_report_data() -> CourseReportData:
-    lo_codes = ["LO1", "LO2", "LO3", "LO4", "LO5"]
-    lo_titles = [
-        "Algorithmic thinking",
-        "Data modeling",
-        "System design",
-        "Testing and validation",
-        "Communication",
+def build_course_report_data(course_id) -> CourseReportData:
+    course = Course.objects.select_related("program", "term").prefetch_related("instructors").get(pk=course_id)
+    enrollments = list(CourseEnrollment.objects.filter(course=course).select_related("student").order_by("student__username"))
+    assessments = list(Assessment.objects.filter(course=course).order_by("date", "id"))
+    learning_outcomes = list(LearningOutcome.objects.filter(course=course).order_by("code", "id"))
+
+    if not enrollments:
+        raise ReportDataError("Course report requires at least one enrollment.")
+    if not assessments:
+        raise ReportDataError("Course report requires at least one assessment.")
+    if not learning_outcomes:
+        raise ReportDataError("Course report requires at least one learning outcome.")
+
+    student_ids = [enrollment.student_id for enrollment in enrollments]
+    student_names = {enrollment.student_id: _display_name(enrollment.student) for enrollment in enrollments}
+    assessment_ids = [assessment.id for assessment in assessments]
+
+    grade_rows = list(
+        StudentGrade.objects.filter(student_id__in=student_ids, assessment_id__in=assessment_ids)
+        .annotate(percentage=F("score") * 100.0 / F("assessment__total_score"))
+        .values("student_id", "assessment_id", "percentage", "assessment__weight")
+    )
+    assessment_scores = {assessment.id: [] for assessment in assessments}
+    course_grade_parts = {student_id: [0.0, 0.0] for student_id in student_ids}
+
+    for row in grade_rows:
+        percentage = float(row["percentage"] or 0)
+        assessment_scores[row["assessment_id"]].append(percentage)
+        weight = float(row["assessment__weight"] or 0)
+        if weight > 0:
+            course_grade_parts[row["student_id"]][0] += percentage * weight
+            course_grade_parts[row["student_id"]][1] += weight
+
+    lo_ids = [lo.id for lo in learning_outcomes]
+    lo_score_rows = StudentLearningOutcomeScore.objects.filter(
+        student_id__in=student_ids,
+        learning_outcome_id__in=lo_ids,
+    ).values("student_id", "learning_outcome_id", "score")
+    lo_score_map = {(row["student_id"], row["learning_outcome_id"]): float(row["score"] or 0) for row in lo_score_rows}
+
+    assessment_data = [
+        AssessmentReportData(
+            name=assessment.name,
+            assessment_type=assessment.assessment_type,
+            weight=float(assessment.weight or 0),
+            scores=assessment_scores[assessment.id],
+        )
+        for assessment in assessments
     ]
-    lo_scores = [
-        [82, 78, 91, 63, 72, 88, 69, 94, 75, 81, 58, 86, 77, 90, 66, 73, 84, 61, 92, 79],
-        [74, 69, 82, 55, 61, 80, 64, 87, 70, 72, 49, 76, 68, 84, 59, 62, 78, 54, 85, 71],
-        [88, 81, 92, 68, 74, 91, 72, 96, 80, 84, 63, 89, 79, 93, 71, 76, 86, 66, 94, 83],
-        [70, 65, 77, 52, 59, 74, 61, 81, 66, 69, 45, 73, 62, 79, 56, 60, 75, 51, 82, 67],
-        [91, 86, 95, 73, 80, 93, 78, 97, 84, 88, 69, 90, 82, 96, 76, 81, 89, 72, 98, 85],
+    learning_outcome_data = [
+        LearningOutcomeReportData(
+            code=lo.code,
+            title=lo.description,
+            scores=[lo_score_map.get((student_id, lo.id), 0.0) for student_id in student_ids],
+        )
+        for lo in learning_outcomes
     ]
     students = []
-    names = [
-        "Aylin K.",
-        "Berk S.",
-        "Cem A.",
-        "Deniz Y.",
-        "Ela T.",
-        "Furkan D.",
-        "Gizem O.",
-        "Hakan M.",
-        "Ipek C.",
-        "Kerem B.",
-        "Lara P.",
-        "Mert E.",
-        "Nehir T.",
-        "Ozan R.",
-        "Selin N.",
-        "Tuna V.",
-        "Yagmur L.",
-        "Ece G.",
-        "Can U.",
-        "Duru H.",
-    ]
-    for idx, name in enumerate(names):
-        values = {code: lo_scores[pos][idx] for pos, code in enumerate(lo_codes)}
-        students.append(StudentRiskReportData(name=name, course_grade=round(mean(values.values()), 1), lo_scores=values))
+    for student_id in student_ids:
+        weighted_sum, total_weight = course_grade_parts[student_id]
+        course_grade = weighted_sum / total_weight if total_weight > 0 else 0.0
+        students.append(
+            StudentRiskReportData(
+                name=student_names[student_id],
+                course_grade=round(course_grade, 1),
+                lo_scores={lo.code: lo_score_map.get((student_id, lo.id), 0.0) for lo in learning_outcomes},
+            )
+        )
 
     return CourseReportData(
-        course_code="CSE342",
-        course_name="Software Engineering",
-        term="Spring 2026",
-        program="Computer Engineering",
-        credits=4,
-        instructors=["Dr. Eren Kaya", "Asst. Prof. Melis Arslan"],
-        generated_on=date(2026, 5, 19),
-        enrolled_students=len(students),
-        assessments=[
-            AssessmentReportData(
-                "Quiz Set", "quiz", 0.10, [72, 68, 91, 55, 63, 79, 62, 90, 70, 71, 48, 77, 69, 88, 58, 65, 81, 51, 93, 74]
-            ),
-            AssessmentReportData(
-                "Midterm", "midterm", 0.25, [78, 71, 86, 59, 66, 83, 68, 92, 74, 76, 52, 80, 72, 89, 61, 69, 84, 57, 91, 77]
-            ),
-            AssessmentReportData(
-                "Project", "project", 0.35, [88, 82, 94, 70, 76, 90, 75, 97, 83, 85, 65, 89, 80, 95, 72, 78, 91, 68, 96, 84]
-            ),
-            AssessmentReportData(
-                "Final", "final", 0.30, [75, 69, 82, 54, 62, 80, 64, 88, 71, 73, 50, 79, 68, 86, 59, 63, 77, 53, 89, 70]
-            ),
-        ],
-        learning_outcomes=[
-            LearningOutcomeReportData(code=code, title=title, scores=scores)
-            for code, title, scores in zip(lo_codes, lo_titles, lo_scores, strict=True)
-        ],
+        course_code=course.code,
+        course_name=course.name,
+        term=course.term.name,
+        program=course.program.name,
+        credits=course.credits,
+        instructors=[_display_name(instructor) for instructor in course.instructors.all()] or ["Unassigned"],
+        generated_on=timezone.localdate(),
+        enrolled_students=len(enrollments),
+        assessments=assessment_data,
+        learning_outcomes=learning_outcome_data,
         students=students,
     )
+
+
+def _display_name(user) -> str:
+    return user.get_full_name() or user.username
 
 
 def _build_header(data, styles):
@@ -411,7 +490,7 @@ def _build_insight_table(data, styles):
 
     weakest_lo = min(data.learning_outcomes, key=lambda item: _avg(item.scores))
     difficult_assessment = min(data.assessments, key=lambda item: _avg(item.scores))
-    volatile_assessment = max(data.assessments, key=lambda item: max(item.scores) - min(item.scores))
+    volatile_assessment = max(data.assessments, key=lambda item: _score_range(item.scores))
     at_risk = len([student for student in data.students if student.course_grade < 60])
     rows = [
         [
@@ -429,7 +508,7 @@ def _build_insight_table(data, styles):
             ),
             _insight(
                 "Consistency check",
-                f"{volatile_assessment.name} · {max(volatile_assessment.scores) - min(volatile_assessment.scores):.0f} pts",
+                f"{volatile_assessment.name} · {_score_range(volatile_assessment.scores):.0f} pts",
                 "Check rubric consistency or student segmentation",
                 styles,
             ),
@@ -630,7 +709,7 @@ def _chart_panel(title, image, width, note=None):
 
     title_style = ParagraphStyle(
         f"{title}Style",
-        fontName="Helvetica-Bold",
+        fontName=PDF_FONT_BOLD,
         fontSize=9.5,
         leading=11,
         textColor=colors.HexColor(BRAND["ink"]),
@@ -639,7 +718,7 @@ def _chart_panel(title, image, width, note=None):
     if note:
         note_style = ParagraphStyle(
             f"{title}Note",
-            fontName="Helvetica",
+            fontName=PDF_FONT_REGULAR,
             fontSize=7.3,
             leading=9,
             textColor=colors.HexColor(BRAND["muted"]),
@@ -755,7 +834,7 @@ def _style_fig(fig, x_title="", y_title="", margin=None):
     fig.update_layout(
         template="plotly_white",
         margin=margin,
-        font={"family": "Arial", "size": 15, "color": BRAND["ink"]},
+        font={"family": PDF_FONT_FAMILY, "size": 15, "color": BRAND["ink"]},
         paper_bgcolor="white",
         plot_bgcolor="white",
         showlegend=False,
@@ -777,7 +856,8 @@ def _draw_page_frame(canvas, doc):
     canvas.setFillColor(colors.HexColor(BRAND["teal"]))
     canvas.rect(0, height - 5 * mm, width, 5 * mm, fill=1, stroke=0)
     canvas.setFillColor(colors.HexColor(BRAND["muted"]))
-    canvas.setFont("Helvetica", 7)
+    ensure_pdf_fonts()
+    canvas.setFont(PDF_FONT_REGULAR, 7)
     canvas.drawRightString(width - 12 * mm, 6 * mm, f"Page {doc.page} · SES Analytics")
     canvas.restoreState()
 
@@ -828,6 +908,10 @@ def score_color(score: float) -> str:
 
 def _avg(values: Sequence[float]) -> float:
     return float(mean(values)) if values else 0.0
+
+
+def _score_range(values: Sequence[float]) -> float:
+    return max(values) - min(values) if values else 0.0
 
 
 def _grade_coverage(data: CourseReportData) -> float:

@@ -7,8 +7,18 @@ from io import BytesIO
 from statistics import mean
 from typing import Sequence
 
+from django.db.models import Count
+from django.utils import timezone
+
+from core.models import Course, LearningOutcomeProgramOutcomeMapping, Program, ProgramOutcome, StudentProgramOutcomeScore, Term
+from core.services.analytics.program import get_active_term, get_student_course_grade_map
+from evaluation.models import CourseEnrollment
+
 from .course_report import (
     BRAND,
+    PDF_FONT_BOLD,
+    PDF_FONT_FAMILY,
+    PDF_FONT_REGULAR,
     THEME,
     _avg,
     _chart_image,
@@ -16,6 +26,8 @@ from .course_report import (
     _draw_page_frame,
     _gridless_table_style,
     _panel_style,
+    ReportDataError,
+    ensure_pdf_fonts,
     score_color,
 )
 
@@ -69,6 +81,8 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
         from reportlab.platypus import PageBreak, SimpleDocTemplate, Spacer, Table
     except ImportError as exc:  # pragma: no cover - dependency guard
         raise RuntimeError("Program PDF reports require reportlab to be installed.") from exc
+
+    ensure_pdf_fonts()
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -176,96 +190,119 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
     return buffer.getvalue()
 
 
-def mock_program_report_data() -> ProgramReportData:
-    po_codes = [f"PO{i}" for i in range(1, 18)]
-    descriptions = [
-        "Apply mathematics, science, and engineering knowledge",
-        "Design and conduct experiments",
-        "Design systems under realistic constraints",
-        "Function effectively on multidisciplinary teams",
-        "Identify and solve engineering problems",
-        "Understand professional and ethical responsibility",
-        "Communicate effectively",
-        "Use modern engineering tools",
-        "Engage in life-long learning",
-        "Understand impact of engineering solutions in global context",
-        "Recognize need for sustainable design",
-        "Apply engineering principles to complex societal issues",
-        "Demonstrate leadership in engineering contexts",
-        "Innovate and adapt to emerging technologies",
-        "Apply knowledge in a major engineering specialization",
-        "Conduct research and interpret data",
-        "Contribute to engineering knowledge with original work",
+def build_program_report_data(program_id, term_id=None) -> ProgramReportData:
+    program = Program.objects.select_related("department", "degree_level").get(pk=program_id)
+    try:
+        term = Term.objects.filter(pk=term_id).first() if term_id else get_active_term()
+    except (TypeError, ValueError):
+        term = None
+    if term is None:
+        raise ReportDataError("Program report requires an existing term.")
+
+    courses = list(Course.objects.filter(program=program, term=term).order_by("code", "id"))
+    program_outcomes = list(ProgramOutcome.objects.filter(program=program, term=term).order_by("code", "id"))
+    if not courses:
+        raise ReportDataError("Program report requires at least one course in the selected term.")
+    if not program_outcomes:
+        raise ReportDataError("Program report requires at least one program outcome in the selected term.")
+
+    course_ids = [course.id for course in courses]
+    po_ids = [po.id for po in program_outcomes]
+    enrollments = list(
+        CourseEnrollment.objects.filter(course__program=program, course__term=term, status="active")
+        .select_related("student")
+        .order_by("student__username")
+    )
+    students_by_id = {}
+    for enrollment in enrollments:
+        students_by_id[enrollment.student_id] = enrollment.student
+    student_ids = list(students_by_id)
+
+    course_grade_map = get_student_course_grade_map(student_ids, course_ids)
+    course_averages = _course_averages(course_grade_map, course_ids)
+    coverage_by_course = _course_po_coverage(course_ids, po_ids)
+    coverage_by_po = _po_course_coverage(course_ids, po_ids)
+
+    po_score_rows = StudentProgramOutcomeScore.objects.filter(
+        student_id__in=student_ids,
+        program_outcome_id__in=po_ids,
+        term=term,
+    ).values("student_id", "program_outcome_id", "score")
+    po_score_map = {(row["student_id"], row["program_outcome_id"]): float(row["score"] or 0) for row in po_score_rows}
+
+    active_courses = [
+        ProgramCourseReportData(
+            code=course.code,
+            name=course.name,
+            average_score=round(course_averages.get(course.id, 0.0), 1),
+            outcome_coverage=coverage_by_course.get(course.id, 0),
+        )
+        for course in courses
     ]
-    po_scores = [
-        [82, 78, 91, 63, 72, 88, 69, 94, 75, 81, 58, 86, 77, 90, 66, 73, 84, 61, 92, 79],
-        [74, 69, 82, 55, 61, 80, 64, 87, 70, 72, 49, 76, 68, 84, 59, 62, 78, 54, 85, 71],
-        [88, 81, 92, 68, 74, 91, 72, 96, 80, 84, 63, 89, 79, 93, 71, 76, 86, 66, 94, 83],
-        [70, 65, 77, 52, 59, 74, 61, 81, 66, 69, 45, 73, 62, 79, 56, 60, 75, 51, 82, 67],
-        [77, 72, 84, 58, 66, 82, 67, 89, 73, 75, 53, 81, 70, 87, 62, 68, 83, 57, 90, 76],
-        [91, 86, 95, 73, 80, 93, 78, 97, 84, 88, 69, 90, 82, 96, 76, 81, 89, 72, 98, 85],
-        [79, 75, 86, 60, 69, 84, 70, 91, 76, 78, 56, 83, 74, 88, 65, 71, 85, 59, 92, 77],
-        [84, 79, 90, 64, 73, 87, 71, 93, 78, 82, 60, 85, 76, 91, 68, 74, 86, 62, 94, 80],
-        [76, 70, 83, 57, 63, 79, 65, 88, 71, 74, 50, 78, 69, 85, 58, 64, 80, 55, 86, 72],
-        [89, 84, 94, 71, 78, 90, 77, 95, 82, 87, 67, 91, 80, 97, 74, 79, 88, 69, 98, 83],
-        [73, 68, 80, 54, 62, 77, 63, 86, 68, 71, 48, 75, 66, 82, 57, 61, 78, 53, 84, 70],
-        [85, 80, 91, 66, 71, 88, 73, 94, 79, 83, 62, 87, 77, 92, 69, 75, 86, 64, 95, 78],
-        [78, 73, 85, 59, 67, 81, 68, 89, 72, 76, 54, 80, 71, 86, 60, 65, 82, 58, 88, 74],
-        [90, 85, 96, 74, 81, 92, 79, 98, 85, 89, 70, 91, 83, 97, 77, 82, 90, 73, 99, 86],
-        [80, 76, 88, 62, 70, 84, 69, 90, 77, 80, 57, 82, 72, 87, 63, 68, 84, 56, 89, 75],
-        [87, 82, 93, 69, 75, 89, 74, 95, 81, 86, 65, 88, 78, 91, 94, 70, 77, 85, 61, 96],
-        [92, 88, 97, 76, 83, 94, 80, 99, 86, 90, 72, 93, 85, 98, 79, 84, 91, 68, 100, 87],
-    ]
-    names = [
-        "Aylin K.",
-        "Berk S.",
-        "Cem A.",
-        "Deniz Y.",
-        "Ela T.",
-        "Furkan D.",
-        "Gizem O.",
-        "Hakan M.",
-        "Ipek C.",
-        "Kerem B.",
-        "Lara P.",
-        "Mert E.",
-        "Nehir T.",
-        "Ozan R.",
-        "Selin N.",
-        "Tuna V.",
-        "Yagmur L.",
-        "Ece G.",
-        "Can U.",
-        "Duru H.",
+    program_outcome_data = [
+        ProgramOutcomeReportData(
+            code=po.code,
+            description=po.description,
+            scores=[po_score_map.get((student_id, po.id), 0.0) for student_id in student_ids],
+            contributing_courses=coverage_by_po.get(po.id, 0),
+        )
+        for po in program_outcomes
     ]
     students = []
-    for idx, name in enumerate(names):
-        values = {code: po_scores[pos][idx] for pos, code in enumerate(po_codes)}
+    for student_id, student in students_by_id.items():
+        po_values = {po.code: po_score_map.get((student_id, po.id), 0.0) for po in program_outcomes}
         students.append(
-            ProgramStudentRiskReportData(name=name, program_average=round(mean(values.values()), 1), po_scores=values)
+            ProgramStudentRiskReportData(
+                name=_display_name(student),
+                program_average=round(mean(po_values.values()), 1) if po_values else 0.0,
+                po_scores=po_values,
+            )
         )
 
     return ProgramReportData(
-        program_code="CE-BS",
-        program_name="Computer Engineering",
-        department="Engineering Faculty",
-        degree_level="Bachelor of Science",
-        term="Spring 2026",
-        generated_on=date(2026, 5, 19),
-        enrolled_students=len(students),
-        active_courses=[
-            ProgramCourseReportData("CSE214", "Data Structures", 78.2, 5),
-            ProgramCourseReportData("CSE301", "Algorithms", 74.8, 4),
-            ProgramCourseReportData("CSE342", "Software Engineering", 76.1, 6),
-            ProgramCourseReportData("CSE426", "Computer Networks", 81.4, 3),
-            ProgramCourseReportData("CSE492", "Graduation Project", 84.7, 7),
-        ],
-        program_outcomes=[
-            ProgramOutcomeReportData(code=code, description=description, scores=scores, contributing_courses=3 + (idx % 5))
-            for idx, (code, description, scores) in enumerate(zip(po_codes, descriptions, po_scores, strict=True))
-        ],
+        program_code=program.code,
+        program_name=program.name,
+        department=program.department.name,
+        degree_level=program.degree_level.name,
+        term=term.name,
+        generated_on=timezone.localdate(),
+        enrolled_students=len(students_by_id),
+        active_courses=active_courses,
+        program_outcomes=program_outcome_data,
         students=students,
     )
+
+
+def _course_averages(course_grade_map, course_ids):
+    scores_by_course = {course_id: [] for course_id in course_ids}
+    for (_student_id, course_id), (weighted_sum, total_weight, _credits) in course_grade_map.items():
+        if total_weight > 0:
+            scores_by_course[course_id].append(weighted_sum / total_weight)
+    return {course_id: mean(scores) if scores else 0.0 for course_id, scores in scores_by_course.items()}
+
+
+def _course_po_coverage(course_ids, po_ids):
+    rows = (
+        LearningOutcomeProgramOutcomeMapping.objects.filter(course_id__in=course_ids, program_outcome_id__in=po_ids)
+        .values("course_id")
+        .annotate(total=Count("program_outcome_id", distinct=True))
+        .values_list("course_id", "total")
+    )
+    return {**{course_id: 0 for course_id in course_ids}, **dict(rows)}
+
+
+def _po_course_coverage(course_ids, po_ids):
+    rows = (
+        LearningOutcomeProgramOutcomeMapping.objects.filter(course_id__in=course_ids, program_outcome_id__in=po_ids)
+        .values("program_outcome_id")
+        .annotate(total=Count("course_id", distinct=True))
+        .values_list("program_outcome_id", "total")
+    )
+    return {**{po_id: 0 for po_id in po_ids}, **dict(rows)}
+
+
+def _display_name(user) -> str:
+    return user.get_full_name() or user.username
 
 
 def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
@@ -273,7 +310,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="ReportTitle",
             parent=styles["Title"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=18,
             leading=22,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -285,7 +322,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="Eyebrow",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=8,
             leading=10,
             textColor=colors.HexColor(BRAND["teal"]),
@@ -297,6 +334,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="Meta",
             parent=styles["Normal"],
+            fontName=PDF_FONT_REGULAR,
             fontSize=8.5,
             leading=11,
             textColor=colors.HexColor(BRAND["muted"]),
@@ -306,6 +344,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="BodyTextSmall",
             parent=styles["Normal"],
+            fontName=PDF_FONT_REGULAR,
             fontSize=8.4,
             leading=11.2,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -315,7 +354,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="SectionTitle",
             parent=styles["Heading2"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=11,
             leading=13,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -326,7 +365,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="KpiLabel",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=6.8,
             leading=8,
             textColor=colors.HexColor(BRAND["muted"]),
@@ -337,7 +376,7 @@ def _build_styles(colors, paragraph_style_cls, styles, ta_left, ta_center):
         paragraph_style_cls(
             name="KpiValue",
             parent=styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=PDF_FONT_BOLD,
             fontSize=17,
             leading=19,
             textColor=colors.HexColor(BRAND["ink"]),
@@ -712,7 +751,7 @@ def _style_program_fig(fig, x_title="", y_title="", margin=None):
     fig.update_layout(
         template="plotly_white",
         margin=margin,
-        font={"family": "Arial", "size": 15, "color": BRAND["ink"]},
+        font={"family": PDF_FONT_FAMILY, "size": 15, "color": BRAND["ink"]},
         paper_bgcolor="white",
         plot_bgcolor="white",
         showlegend=False,

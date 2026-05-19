@@ -25,6 +25,7 @@ import {
   useCoreProgramOutcomesPartialUpdate,
 } from '@/shared/api/generated/outcomes/outcomes'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { downloadReportPdf } from '@/shared/api/reportDownloads'
 import type { ProgramOutcome, StudentProgramOutcomeScore } from '@/shared/api/model'
 
 const getQuantile = (arr: number[], q: number): number => {
@@ -207,6 +208,8 @@ const ProgramPage = () => {
   const [poCreateModalOpen, setPoCreateModalOpen] = useState(false)
   const [poEditTarget, setPoEditTarget] = useState<ProgramOutcome | null>(null)
   const [poDeleteTarget, setPoDeleteTarget] = useState<ProgramOutcome | null>(null)
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
   const deletePoMutation = useCoreProgramOutcomesDestroy()
 
   const handleSetGpaChart = useCallback(() => setActiveChart('gpa'), [])
@@ -216,6 +219,7 @@ const ProgramPage = () => {
   const primaryProgramId = programs[0]?.id
   const programName = programs.length === 1 ? programs[0].name : 'Program'
   const programSubtitle = programs.length === 1 ? programs[0].code : 'All assigned programs'
+  const canGenerateProgramReport = programs.length === 1 && typeof primaryProgramId === 'number'
   const canCreatePO = user?.role === 'admin' || user?.role === 'program_head' || (user?.permissions?.includes('program_outcomes.add_programoutcome') ?? false)
   const canEditPO = user?.role === 'admin' || user?.role === 'program_head' || (user?.permissions?.includes('program_outcomes.change_programoutcome') ?? false)
   const canDeletePO = user?.role === 'admin' || user?.role === 'program_head' || (user?.permissions?.includes('program_outcomes.delete_programoutcome') ?? false)
@@ -391,6 +395,25 @@ const ProgramPage = () => {
     handleProgramOutcomeSuccess()
   }, [deletePoMutation, handleProgramOutcomeSuccess, poDeleteTarget])
 
+  const handleGenerateReport = useCallback(async () => {
+    if (!canGenerateProgramReport || !primaryProgramId) return
+
+    setReportError(null)
+    setIsGeneratingReport(true)
+    try {
+      await downloadReportPdf({
+        kind: 'program',
+        id: primaryProgramId,
+        termId: activeTerm?.id,
+        fallbackFilename: `${programSubtitle}-${activeTerm?.name ?? 'active-term'}-program-report.pdf`,
+      })
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Failed to generate report.')
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }, [activeTerm?.id, activeTerm?.name, canGenerateProgramReport, primaryProgramId, programSubtitle])
+
   if (loading) {
     return <div className="flex justify-center items-center h-96">Loading program details...</div>
   }
@@ -426,13 +449,21 @@ const ProgramPage = () => {
           </button>
           <button
             type="button"
-            className="bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 flex items-center space-x-2 transition-colors"
+            onClick={handleGenerateReport}
+            disabled={!canGenerateProgramReport || isGeneratingReport}
+            className="bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 flex items-center space-x-2 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
             <DocumentChartBarIcon className="h-5 w-5" />
-            <span>Generate Report</span>
+            <span>{isGeneratingReport ? 'Generating...' : 'Generate Report'}</span>
           </button>
         </div>
       </div>
+
+      {reportError && (
+        <div className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
+          {reportError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card variant="flat" className="bg-primary-50 border-primary-200">
