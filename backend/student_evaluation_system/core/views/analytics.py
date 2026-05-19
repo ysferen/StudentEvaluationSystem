@@ -39,9 +39,9 @@ class ProgramStatsResponseSerializer(drf_serializers.Serializer):
     gpa_by_year = GpaByYearSerializer(many=True)
 
 
-def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years):
+def _calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years, active_term=None):
     """Calculate year-level breakdown for a program's enrolled students."""
-    active_term = Term.objects.filter(is_active=True).first()
+    active_term = active_term or Term.objects.filter(is_active=True).first()
     year_level_breakdown = []
 
     if not active_term or not active_term.academic_year:
@@ -200,7 +200,7 @@ def _build_gpa_by_year_response(students_by_year, student_gpa, duration_years):
     return gpa_by_year
 
 
-def _calculate_gpa_by_year(prog_course_ids, duration_years):
+def _calculate_gpa_by_year(prog_course_ids, duration_years, active_term=None):
     """
     Calculate GPA per year level using Turkish letter grade scale.
 
@@ -210,7 +210,7 @@ def _calculate_gpa_by_year(prog_course_ids, duration_years):
       3. Compute credit-weighted cumulative GPA across all courses.
     Then average cumulative GPAs by year level.
     """
-    active_term = Term.objects.filter(is_active=True).first()
+    active_term = active_term or Term.objects.filter(is_active=True).first()
 
     if not active_term or not active_term.academic_year or not prog_course_ids:
         gpa_by_year = []
@@ -254,6 +254,111 @@ def _get_active_term_student_counts_by_program(program_ids, active_term):
     return {**{program_id: 0 for program_id in program_ids}, **dict(counts)}
 
 
+def _get_programs_for_user(user):
+    """Return the programs visible to an admin or program head."""
+    if user.is_admin_user:
+        return Program.objects.select_related("department", "degree_level").all()
+
+    head_profile = getattr(user, "program_head_profile", None)
+    if head_profile is None:
+        return None
+    return Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
+
+
+def _get_active_term():
+    return Term.objects.filter(is_active=True).first()
+
+
+def _get_term_course_ids(program_ids, term):
+    if not term:
+        return []
+    return list(Course.objects.filter(program__in=program_ids, term=term).values_list("id", flat=True))
+
+
+def _get_term_po_ids(program_ids, term):
+    if not term:
+        return []
+    return list(ProgramOutcome.objects.filter(program__in=program_ids, term=term).values_list("id", flat=True))
+
+
+def _get_term_course_counts_by_program(program_ids, term):
+    if not term:
+        return {program_id: 0 for program_id in program_ids}
+
+    counts = (
+        Course.objects.filter(program__in=program_ids, term=term)
+        .values("program")
+        .annotate(total=Count("id"))
+        .values_list("program", "total")
+    )
+    return {**{program_id: 0 for program_id in program_ids}, **dict(counts)}
+
+
+def _get_term_po_score_stats_by_program(program_ids, term):
+    defaults = {program_id: {"avg": None, "count": 0} for program_id in program_ids}
+    if not term:
+        return defaults
+
+    stats = (
+        StudentProgramOutcomeScore.objects.filter(program_outcome__program__in=program_ids, term=term)
+        .values("program_outcome__program")
+        .annotate(avg_score=Avg("score"), total_count=Count("id"))
+        .values_list("program_outcome__program", "avg_score", "total_count")
+    )
+    return {**defaults, **{row[0]: {"avg": row[1], "count": row[2]} for row in stats}}
+
+
+def _get_term_po_counts_by_program(program_ids, term):
+    if not term:
+        return {program_id: 0 for program_id in program_ids}
+
+    counts = (
+        ProgramOutcome.objects.filter(program__in=program_ids, term=term)
+        .values("program")
+        .annotate(total=Count("id"))
+        .values_list("program", "total")
+    )
+    return {**{program_id: 0 for program_id in program_ids}, **dict(counts)}
+
+
+def _get_term_lo_counts_by_program(program_ids, term):
+    if not term:
+        return {program_id: 0 for program_id in program_ids}
+
+    counts = (
+        LearningOutcome.objects.filter(course__program__in=program_ids, course__term=term)
+        .values("course__program")
+        .annotate(total=Count("id"))
+        .values_list("course__program", "total")
+    )
+    return {**{program_id: 0 for program_id in program_ids}, **dict(counts)}
+
+
+def _build_program_stats(program_list, students_map, courses_map, po_score_map, po_count_map, lo_map):
+    program_stats = []
+    max_duration_years = 4
+
+    for program in program_list:
+        po_data = po_score_map.get(program.id, {"avg": None, "count": 0})
+        avg_score = round(po_data["avg"], 2) if po_data["avg"] is not None else None
+
+        program_stats.append(
+            {
+                "id": program.id,
+                "code": program.code,
+                "name": program.name,
+                "total_students": students_map.get(program.id, 0),
+                "total_courses": courses_map.get(program.id, 0),
+                "avg_score": avg_score,
+                "lo_count": lo_map.get(program.id, 0),
+                "po_count": po_count_map.get(program.id, 0),
+            }
+        )
+        max_duration_years = max(max_duration_years, program.duration_years)
+
+    return program_stats, max_duration_years
+
+
 @extend_schema(
     responses=ProgramStatsResponseSerializer,
     tags=["Analytics"],
@@ -271,87 +376,38 @@ class ProgramStatsView(APIView):
         """
         user = request.user
 
-        if user.is_admin_user:
-            programs = Program.objects.select_related("department", "degree_level").all()
-        else:
-            head_profile = getattr(user, "program_head_profile", None)
-            if head_profile is None:
-                return Response({"detail": "No program head profile found."}, status=403)
-            programs = Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
+        programs = _get_programs_for_user(user)
+        if programs is None:
+            return Response({"detail": "No program head profile found."}, status=403)
 
-        # 1. Get the list of programs and their IDs
         program_list = list(programs)
         program_ids = [p.id for p in program_list]
 
-        # 2. Fetch aggregations independently and map them by program_id
-        # Total Courses
-        courses_qs = (
-            Course.objects.filter(program__in=program_ids, term__is_active=True)
-            .values("program")
-            .annotate(total=Count("id"))
-            .values_list("program", "total")
-        )
-        courses_map = dict(courses_qs)
-
-        active_term = Term.objects.filter(is_active=True).first()
+        active_term = _get_active_term()
+        courses_map = _get_term_course_counts_by_program(program_ids, active_term)
         students_map = _get_active_term_student_counts_by_program(program_ids, active_term)
-
-        # Program Outcome Average and Count
-        po_stats_qs = (
-            StudentProgramOutcomeScore.objects.filter(program_outcome__program__in=program_ids)
-            .values("program_outcome__program")
-            .annotate(avg_score=Avg("score"), total_count=Count("id"))
-            .values_list("program_outcome__program", "avg_score", "total_count")
+        po_score_map = _get_term_po_score_stats_by_program(program_ids, active_term)
+        po_count_map = _get_term_po_counts_by_program(program_ids, active_term)
+        lo_map = _get_term_lo_counts_by_program(program_ids, active_term)
+        active_course_ids = _get_term_course_ids(program_ids, active_term)
+        active_po_ids = _get_term_po_ids(program_ids, active_term)
+        program_stats, max_duration_years = _build_program_stats(
+            program_list,
+            students_map,
+            courses_map,
+            po_score_map,
+            po_count_map,
+            lo_map,
         )
-        po_map = {row[0]: {"avg": row[1], "count": row[2]} for row in po_stats_qs}
 
-        # Program Outcome Count
-        po_count_qs = (
-            ProgramOutcome.objects.filter(program__in=program_ids, term__is_active=True)
-            .values("program")
-            .annotate(total=Count("id"))
-            .values_list("program", "total")
+        year_level_breakdown = _calculate_year_level_breakdown(
+            active_course_ids,
+            active_po_ids,
+            max_duration_years,
+            active_term=active_term,
         )
-        po_count_map = dict(po_count_qs)
 
-        # Learning Outcome Count
-        lo_qs = (
-            LearningOutcome.objects.filter(course__program__in=program_ids, course__term__is_active=True)
-            .values("course__program")
-            .annotate(total=Count("id"))
-            .values_list("course__program", "total")
-        )
-        lo_map = dict(lo_qs)
-
-        # Batch collect course/PO IDs (just like you had)
-        all_course_ids = list(Course.objects.filter(program__in=program_ids).values_list("id", flat=True))
-        all_po_ids = list(ProgramOutcome.objects.filter(program__in=program_ids).values_list("id", flat=True))
-
-        # 3. Build the final response list in Python (O(N) time complexity)
-        program_stats = []
-        max_duration_years = 4
-
-        for p in program_list:
-            po_data = po_map.get(p.id, {"avg": None, "count": 0})
-            avg_score = round(po_data["avg"], 2) if po_data["avg"] is not None else None
-
-            program_stats.append(
-                {
-                    "id": p.id,
-                    "code": p.code,
-                    "name": p.name,
-                    "total_students": students_map.get(p.id, 0),
-                    "total_courses": courses_map.get(p.id, 0),
-                    "avg_score": avg_score,
-                    "lo_count": lo_map.get(p.id, 0),
-                    "po_count": po_count_map.get(p.id, 0),
-                }
-            )
-            max_duration_years = max(max_duration_years, p.duration_years)
-
-        year_level_breakdown = _calculate_year_level_breakdown(all_course_ids, all_po_ids, max_duration_years)
-
-        gpa_by_year = _calculate_gpa_by_year(all_course_ids, max_duration_years)
+        gpa_by_year = _calculate_gpa_by_year(active_course_ids, max_duration_years, active_term=active_term)
 
         return Response(
             {
