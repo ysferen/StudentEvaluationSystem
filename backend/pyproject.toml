@@ -37,7 +37,10 @@ dev = [
 [tool.ruff]
 line-length = 127
 target-version = "py312"
-exclude = ["**/migrations/**"]
+exclude = [
+    "**/migrations/**",
+    "**/docs**"
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90"]
