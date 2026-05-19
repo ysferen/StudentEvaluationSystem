@@ -9,6 +9,7 @@ Contains ViewSets for managing:
 """
 
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -35,6 +36,7 @@ from ..serializers import (
     BulkLOPOMappingSerializer,
 )
 from ..permissions import InstructorPermissionMixin
+from ..services.reports.course_report import generate_course_report_pdf, mock_course_report_data
 
 
 @extend_schema_view(
@@ -154,6 +156,14 @@ class CourseViewSet(viewsets.ModelViewSet):
         outcomes = course.learning_outcomes.all()
         serializer = CoreLearningOutcomeSerializer(outcomes, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="report-preview")
+    def report_preview(self, request):
+        """Generate the mock Course Performance Snapshot PDF."""
+        pdf_bytes = generate_course_report_pdf(mock_course_report_data())
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="mock-course-performance-snapshot.pdf"'
+        return response
 
 
 @extend_schema_view(

@@ -7,8 +7,10 @@ from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Avg
+from django.http import HttpResponse
 from ..services.file_import import FileImportService
 from ..services.file_import import FileImportError
+from ..services.reports.program_report import generate_program_report_pdf, mock_program_report_data
 from ..services.validation import AssignmentScoreValidator
 from ..permissions import IsAdminOrProgramHeadOrReadOnly, InstructorPermissionMixin
 from rest_framework import serializers
@@ -182,6 +184,14 @@ class ProgramViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(degree_level_id=degree_level_id)
 
         return queryset
+
+    @action(detail=False, methods=["get"], url_path="report-preview")
+    def report_preview(self, request):
+        """Generate the mock Program Outcome Report PDF."""
+        pdf_bytes = generate_program_report_pdf(mock_program_report_data())
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="mock-program-outcome-report.pdf"'
+        return response
 
 
 class TermViewSet(viewsets.ModelViewSet):

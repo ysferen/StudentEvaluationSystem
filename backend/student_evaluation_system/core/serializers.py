@@ -154,6 +154,8 @@ class ProgramOutcomeSerializer(serializers.ModelSerializer):
 
     program = serializers.PrimaryKeyRelatedField(read_only=True)
     term = serializers.PrimaryKeyRelatedField(read_only=True)
+    program_id = serializers.PrimaryKeyRelatedField(queryset=Program.objects.all(), source="program", write_only=True)
+    term_id = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all(), source="term", write_only=True)
     program_outcome_template_id = serializers.PrimaryKeyRelatedField(
         queryset=ProgramOutcomeTemplate.objects.all(),
         source="program_outcome_template",
@@ -170,6 +172,8 @@ class ProgramOutcomeSerializer(serializers.ModelSerializer):
             "description",
             "program",
             "term",
+            "program_id",
+            "term_id",
             "weight",
             "program_outcome_template_id",
             "created_at",

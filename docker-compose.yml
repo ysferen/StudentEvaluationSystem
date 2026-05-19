@@ -34,7 +34,7 @@ services:
   celery_worker:
     build: ./backend
     container_name: ses-celery-worker
-    command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker -Q celery -c 4 --loglevel=info
+    command: uv run celery --workdir student_evaluation_system -A student_evaluation_system worker -Q celery -c 4 --loglevel=info
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv
@@ -54,7 +54,7 @@ services:
   celery_worker_ml:
     build: ./backend
     container_name: ses-celery-worker-ml
-    command: uv run --no-sync celery --workdir student_evaluation_system -A student_evaluation_system worker -Q ml_queue --pool=solo --loglevel=info
+    command: uv run celery --workdir student_evaluation_system -A student_evaluation_system worker -Q ml_queue --pool=solo --loglevel=info
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv
@@ -83,7 +83,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv
-    command: "uv run --no-sync python student_evaluation_system/manage.py runserver 0.0.0.0:8000"
+    command: "uv run python student_evaluation_system/manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     environment:
