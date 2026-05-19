@@ -7,11 +7,21 @@ color: "#a855f7"
 permission:
   edit: allow
   bash:
+    "*": allow
+    "rm *": ask
+    "sudo *": ask
+    "chmod *": ask
+    "chown *": ask
+    "git push*": ask
+    "git reset*": ask
+    "git clean*": ask
+    "git checkout*": ask
+    "git restore*": ask
+    "git rebase*": ask
     "npm run *": allow
     "npx *": allow
     "git diff*": allow
     "git status*": allow
-    "*": ask
   webfetch: allow
 ---
 You are a styling and visual design agent. You specialize in responsive layouts, animations, and visual polish.

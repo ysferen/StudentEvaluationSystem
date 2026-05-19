@@ -241,6 +241,14 @@ class ProgramOutcome(TimeStampedModel):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="created_program_outcomes"
     )
+    program_outcome_template = models.ForeignKey(
+        "ProgramOutcomeTemplate",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="instances",
+        help_text="Template this program outcome was instantiated from (if any)",
+    )
 
     class Meta:
         ordering = ["code"]
@@ -251,6 +259,33 @@ class ProgramOutcome(TimeStampedModel):
     def __str__(self) -> str:
         """Return formatted string with code and truncated description."""
         return f"{self.code}: {self.description[:50]}"
+
+
+class ProgramOutcomeTemplate(TimeStampedModel):
+    """
+    Canonical program outcome definition shared across terms.
+
+    Concrete ProgramOutcome rows are instantiated from this template for
+    each term, mirroring the course template workflow.
+    """
+
+    description = models.TextField()
+    code = models.CharField(max_length=10)
+    weight = models.FloatField(
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="0.0 to 1.0",
+    )
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name="program_outcome_templates", db_index=True)
+
+    class Meta:
+        ordering = ["code"]
+        constraints = [models.UniqueConstraint(fields=["code", "program"], name="unique_po_template_code_per_program")]
+        verbose_name = "Program Outcome Template"
+        verbose_name_plural = "Program Outcome Templates"
+
+    def __str__(self) -> str:
+        return f"{self.code}: {self.description[:50]} (Template)"
 
 
 class Course(TimeStampedModel):
@@ -442,7 +477,12 @@ class CourseTemplateLOPOMapping(models.Model):
     template_learning_outcome = models.ForeignKey(
         CourseTemplateLearningOutcome, on_delete=models.CASCADE, related_name="po_mappings"
     )
-    program_outcome = models.ForeignKey(ProgramOutcome, on_delete=models.CASCADE, related_name="template_lo_mappings")
+    program_outcome = models.ForeignKey(
+        ProgramOutcome, on_delete=models.CASCADE, related_name="template_lo_mappings", null=True, blank=True
+    )
+    program_outcome_template = models.ForeignKey(
+        ProgramOutcomeTemplate, on_delete=models.CASCADE, related_name="template_lo_mappings", null=True, blank=True
+    )
     weight = models.FloatField(
         help_text="0 to 5",
         validators=[MinValueValidator(0), MaxValueValidator(5)],
@@ -453,10 +493,29 @@ class CourseTemplateLOPOMapping(models.Model):
             models.UniqueConstraint(
                 fields=["template_learning_outcome", "program_outcome"],
                 name="unique_template_lo_po_mapping",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["template_learning_outcome", "program_outcome_template"],
+                name="unique_template_lo_po_template_mapping",
+            ),
         ]
         verbose_name = "Course Template LO-PO Mapping"
         verbose_name_plural = "Course Template LO-PO Mappings"
+
+    def clean(self):
+        super().clean()
+        if not self.program_outcome_id and not self.program_outcome_template_id:
+            raise ValidationError("Either program_outcome or program_outcome_template is required")
+        if self.program_outcome_id and self.program_outcome_template_id:
+            raise ValidationError("Use either program_outcome or program_outcome_template, not both")
+        if self.template_learning_outcome_id and self.program_outcome_id:
+            template_program_id = self.template_learning_outcome.course_template.program_id
+            if self.program_outcome.program_id != template_program_id:
+                raise ValidationError("Program Outcome must belong to the same program as the course template")
+        if self.template_learning_outcome_id and self.program_outcome_template_id:
+            template_program_id = self.template_learning_outcome.course_template.program_id
+            if self.program_outcome_template.program_id != template_program_id:
+                raise ValidationError("Program Outcome Template must belong to the same program as the course template")
 
 
 class LearningOutcome(TimeStampedModel):

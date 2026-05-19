@@ -12,18 +12,26 @@ import CreateEditLOModal from '../components/CreateEditLOModal'
 import CreateEditAssessmentModal from '../components/CreateEditAssessmentModal'
 import EnrollStudentsModal from '../components/EnrollStudentsModal'
 import UnenrollStudentsModal from '../components/UnenrollStudentsModal'
+import { LearningOutcomesPanel } from '../components/LearningOutcomesPanel'
 
 import ConfirmDeleteModal from '@/components/ui/custom/ConfirmDeleteModal'
 import Modal from '@/components/ui/custom/Modal'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { downloadReportPdf } from '@/shared/api/reportDownloads'
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
 import { CourseHeader } from '../components/CourseHeader'
+import { CourseInsightCards } from '../components/CourseInsightCards'
 import { BoxPlotChart, BoxPlotLegend } from '../components/BoxPlotChart'
-import { StudentHeatmap, AssessmentHeatmap } from '../components/StudentHeatmap'
-import { LoRadarChart } from '../components/LoRadarChart'
+import { AssessmentHeatmap } from '../components/StudentHeatmap'
+import { GradeDistributionChart } from '../../dashboard/components/GradeDistributionChart'
+import {
+  calculateCourseGradeFromAssessmentGrades,
+  findWeakestLoAverageScore,
+} from '../utils/courseInsights'
+import { calculateGradeDistribution } from '../../dashboard/utils/analytics'
 import type { BoxPlotData } from '../components/BoxPlotChart'
 import type { HeatmapData } from '../components/StudentHeatmap'
 import type {
@@ -46,7 +54,7 @@ interface CourseDetailQueryData {
 
 interface StudentDetail {
   name: string
-  overallScore: number
+  overallScore: number | null
   assessmentScores: { name: string; score: number }[]
   loScores: { code: string; score: number }[]
 }
@@ -77,6 +85,8 @@ const getQuantile = (arr: number[], q: number): number => {
   return arr[base]
 }
 
+const atRiskCourseGradeThreshold = 60
+
 const CourseDetail = () => {
   const { id: courseId } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -85,12 +95,16 @@ const CourseDetail = () => {
   const [isMappingEditorOpen, setIsMappingEditorOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
-  const [loChartView, setLoChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
-  const [assessmentChartView, setAssessmentChartView] = useState<'radar' | 'boxplot' | 'heatmap'>('radar')
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
+  const [assessmentChartView, setAssessmentChartView] = useState<'bar' | 'radar' | 'boxplot' | 'distribution' | 'heatmap'>('bar')
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
 
   const canEdit = user?.permissions?.includes('courses.change_course') ?? false
   const canDelete = user?.permissions?.includes('courses.delete_course') ?? false
+  const canCreateLO = user?.permissions?.includes('learning_outcomes.add_learningoutcome') ?? false
+  const canEditLO = user?.permissions?.includes('learning_outcomes.change_learningoutcome') ?? false
+  const canDeleteLO = user?.permissions?.includes('learning_outcomes.delete_learningoutcome') ?? false
 
   // LO section state
   const [loCreateModalOpen, setLoCreateModalOpen] = useState(false)
@@ -162,18 +176,8 @@ const CourseDetail = () => {
     return data.course.instructors.map(getInstructorName).join(', ')
   }
 
-  const getAverageScore = (): number => {
+  const getAverageCourseGrade = (): number => {
     return (gradesData as { course_average?: number })?.course_average ?? 0
-  }
-
-  const getLOPerformance = (loCode: string) => {
-    if (!data?.loScores) return 0
-    const loScoresFiltered = data.loScores.filter((score) =>
-      score.learning_outcome.code === loCode
-    )
-    if (loScoresFiltered.length === 0) return 0
-    const total = loScoresFiltered.reduce((sum, score) => sum + (score.score ?? 0), 0)
-    return Math.round((total / loScoresFiltered.length) * 100) / 100
   }
 
   const boxPlotData = useMemo((): BoxPlotData[] => {
@@ -368,7 +372,7 @@ const CourseDetail = () => {
     for (const grade of gradesData?.results || []) {
       const name = grade.student.replace(/ \([^)]+\)$/, '')
       if (!map.has(name)) {
-        map.set(name, { name, loScores: [], assessmentScores: [], overallScore: 0 })
+        map.set(name, { name, loScores: [], assessmentScores: [], overallScore: null })
       }
       const entry = map.get(name)
       if (!entry) continue
@@ -379,18 +383,24 @@ const CourseDetail = () => {
 
     for (const student of heatmapData.students) {
       if (!map.has(student.studentName)) {
-        map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: 0 })
+        map.set(student.studentName, { name: student.studentName, loScores: [], assessmentScores: [], overallScore: null })
       }
       const entry = map.get(student.studentName)
       if (!entry) continue
       entry.loScores = Object.entries(student.loScores).map(([code, score]) => ({ code, score }))
     }
 
-    for (const entry of map.values()) {
-      const scores = entry.assessmentScores.map(s => s.score)
-      entry.overallScore = scores.length > 0
-        ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
-        : 0
+    const gradesByStudent = new Map<string, NonNullable<typeof gradesData>['results']>()
+
+    for (const grade of gradesData?.results || []) {
+      const studentName = grade.student.replace(/ \([^)]+\)$/, '')
+      const existingGrades = gradesByStudent.get(studentName) ?? []
+      existingGrades.push(grade)
+      gradesByStudent.set(studentName, existingGrades)
+    }
+
+    for (const [studentName, entry] of map.entries()) {
+      entry.overallScore = calculateCourseGradeFromAssessmentGrades(gradesByStudent.get(studentName) ?? [])
     }
 
     return map
@@ -469,12 +479,63 @@ const CourseDetail = () => {
     })
   }, [gradesData])
 
+  const weakestLoInsight = useMemo(() => {
+    if (!data?.learningOutcomes || !data?.loScores) return { code: null, averageLoScore: null }
+
+    return findWeakestLoAverageScore(data.learningOutcomes, data.loScores)
+  }, [data?.learningOutcomes, data?.loScores])
+
+  const assessmentDifficultyInsights = useMemo(() => {
+    const rankedByAverage = [...assessmentRadarData].sort((a, b) => a.avg - b.avg)
+    const rankedBySpread = [...assessmentBoxPlotData]
+      .map(item => ({ name: item.code, spread: Math.round((item.max - item.min) * 10) / 10 }))
+      .sort((a, b) => b.spread - a.spread)
+
+    return {
+      mostDifficultAssessment: rankedByAverage[0] ?? null,
+      highestSpreadAssessment: rankedBySpread[0] ?? null,
+    }
+  }, [assessmentRadarData, assessmentBoxPlotData])
+
+  const studentsBelowCourseGradeThreshold = useMemo(() => {
+    return Array.from(studentDataMap.values())
+      .filter(student => student.overallScore !== null && student.overallScore < atRiskCourseGradeThreshold)
+      .length
+  }, [studentDataMap])
+
+  const courseGradeDistribution = useMemo(() => (
+    calculateGradeDistribution(
+      Array.from(studentDataMap.values()).map(student => ({
+        averageCourseGrade: student.overallScore,
+      }))
+    )
+  ), [studentDataMap])
+
   const handleStudentClick = useCallback((studentName: string) => {
     const info = studentDataMap.get(studentName)
     if (info) {
       setSelectedStudent(info)
     }
   }, [studentDataMap])
+
+  const handleGenerateReport = useCallback(async () => {
+    const id = Number(courseId)
+    if (!Number.isFinite(id) || !data?.course) return
+
+    setReportError(null)
+    setIsGeneratingReport(true)
+    try {
+      await downloadReportPdf({
+        kind: 'course',
+        id,
+        fallbackFilename: `${data.course.code}-course-report.pdf`,
+      })
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Failed to generate report.')
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }, [courseId, data?.course])
 
   const handleLODelete = useCallback(async () => {
     if (loDeleteTarget) {
@@ -527,145 +588,70 @@ const CourseDetail = () => {
     )
   }
 
-  const avgScore = getAverageScore()
+  const averageCourseGrade = getAverageCourseGrade()
 
   return (
     <div className="space-y-6">
       <CourseHeader
         course={data.course}
-        avgScore={avgScore}
+        averageCourseGrade={averageCourseGrade}
         loCount={data.learningOutcomes?.length || 0}
         canEdit={canEdit}
         canDelete={canDelete}
         onEdit={() => setIsEditModalOpen(true)}
         onDelete={() => setIsDeleteConfirmOpen(true)}
         onImport={() => setIsFileUploadModalOpen(true)}
+        onGenerateReport={handleGenerateReport}
+        isGeneratingReport={isGeneratingReport}
         getInstructorNames={getInstructorNames}
       />
 
-      <Card>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-secondary-900">Learning Outcomes</h2>
-          <button
-            onClick={() => setIsMappingEditorOpen(true)}
-            className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1 text-sm transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            <span>Outcome Mapping</span>
-          </button>
+      {reportError && (
+        <div className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
+          {reportError}
         </div>
-        <div className="flex items-center gap-2 mb-4">
-          {canEdit && (
+      )}
+
+      <CourseInsightCards
+        weakestLoCode={weakestLoInsight.code}
+        weakestLoAverageScore={weakestLoInsight.averageLoScore}
+        mostDifficultAssessmentName={assessmentDifficultyInsights.mostDifficultAssessment?.name ?? null}
+        mostDifficultAssessmentAverageScore={assessmentDifficultyInsights.mostDifficultAssessment?.avg ?? null}
+        highestVarianceAssessmentName={assessmentDifficultyInsights.highestSpreadAssessment?.name ?? null}
+        highestVarianceAssessmentSpread={assessmentDifficultyInsights.highestSpreadAssessment?.spread ?? null}
+        studentsBelowThresholdCount={studentsBelowCourseGradeThreshold}
+        atRiskThreshold={atRiskCourseGradeThreshold}
+      />
+
+      <section id="outcomes" className="scroll-mt-24">
+        <LearningOutcomesPanel
+          learningOutcomes={data.learningOutcomes}
+          loScores={data.loScores}
+          boxPlotData={boxPlotData}
+          heatmapData={heatmapData}
+          courseId={data.course.id}
+          canCreate={canCreateLO}
+          canEdit={canEditLO}
+          canDelete={canDeleteLO}
+          onCreate={() => setLoCreateModalOpen(true)}
+          onEdit={(lo) => setLoEditTarget(lo as CoreLearningOutcome)}
+          onDelete={(lo) => setLoDeleteTarget(lo as CoreLearningOutcome)}
+          onStudentClick={handleStudentClick}
+          headerAction={(
             <button
-              onClick={() => setLoCreateModalOpen(true)}
-              className="bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 flex items-center space-x-1.5 transition-colors text-sm"
+              onClick={() => setIsMappingEditorOpen(true)}
+              className="flex items-center space-x-1 rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
-              <span>Create</span>
+              <span>Outcome Mapping</span>
             </button>
           )}
-        </div>
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => setLoChartView('radar')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${
-              loChartView === 'radar'
-                ? 'bg-primary-600 text-white'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            }`}
-          >
-            Radar
-          </button>
-          <button
-            onClick={() => setLoChartView('boxplot')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${
-              loChartView === 'boxplot'
-                ? 'bg-primary-600 text-white'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            }`}
-          >
-            Box Plot
-          </button>
-          <button
-            onClick={() => setLoChartView('heatmap')}
-            className={`px-3 py-1.5 text-sm rounded-lg transition ${
-              loChartView === 'heatmap'
-                ? 'bg-primary-600 text-white'
-                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-            }`}
-          >
-            Heatmap
-          </button>
-        </div>
-        {data.learningOutcomes && data.learningOutcomes.length > 0 ? (
-          <>
-            {loChartView === 'radar' && (
-              <LoRadarChart
-                learningOutcomes={data.learningOutcomes}
-                loScores={data.loScores}
-              />
-            )}
-            {loChartView === 'boxplot' && <BoxPlotChart data={boxPlotData} />}
-            {loChartView === 'heatmap' && (
-              <StudentHeatmap
-                loCodes={heatmapData.loCodes}
-                students={heatmapData.students}
-                onStudentClick={handleStudentClick}
-              />
-            )}
-            {boxPlotData.length > 0 && loChartView === 'boxplot' && (
-              <div className="mt-5 pt-4 border-t border-secondary-100">
-                <BoxPlotLegend />
-              </div>
-            )}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {data.learningOutcomes.map((lo) => {
-                const score = getLOPerformance(lo.code)
-                return (
-                  <div key={lo.id} className="flex flex-col p-3 rounded-xl border border-secondary-200 bg-white shadow-sm relative group">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-xs">{lo.code}</span>
-                      <span className={`font-bold px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${
-                        score >= 80 ? 'bg-emerald-100 text-emerald-700' : score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
-                      }`}>
-                        {score}%
-                      </span>
-                    </div>
-                    <span className="text-secondary-700 text-sm leading-snug">{lo.description}</span>
-                      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setLoEditTarget(lo) }}
-                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setLoDeleteTarget(lo) }}
-                          className="p-1 rounded-md bg-secondary-100 text-secondary-600 hover:bg-danger-100 hover:text-danger-700 transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                )
-              })}
-            </div>
-          </>
-        ) : (
-          <p className="text-secondary-500 text-center py-4">No learning outcomes defined for this course</p>
-        )}
-      </Card>
+        />
+      </section>
 
+      <section id="assessments" className="scroll-mt-24">
       <Card>
         <h2 className="text-xl font-bold text-secondary-900 mb-2">Assessments</h2>
         <div className="flex items-center gap-2 mb-4">
@@ -681,7 +667,17 @@ const CourseDetail = () => {
             </button>
           )}
         </div>
-<div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setAssessmentChartView('bar')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'bar'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Difficulty Bars
+          </button>
           <button
             onClick={() => setAssessmentChartView('radar')}
             className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -712,17 +708,50 @@ const CourseDetail = () => {
           >
             Heatmap
           </button>
+          <button
+            onClick={() => setAssessmentChartView('distribution')}
+            className={`px-3 py-1.5 text-sm rounded-lg transition ${
+              assessmentChartView === 'distribution'
+                ? 'bg-primary-600 text-white'
+                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            }`}
+          >
+            Distribution
+          </button>
         </div>
-{assessmentRadarData.length > 0 || assignments.length > 0 ? (
+        {assessmentRadarData.length > 0 || assignments.length > 0 || courseGradeDistribution.length > 0 ? (
           <>
+            {assessmentChartView === 'distribution' && (
+              courseGradeDistribution.length > 0 ? (
+                <GradeDistributionChart
+                  data={courseGradeDistribution}
+                  courseId={data.course.id}
+                />
+              ) : (
+                <p className="text-secondary-500 text-center py-4">No grade distribution data available</p>
+              )
+            )}
             {assessmentRadarData.length > 0 && (
               <>
+            {assessmentChartView === 'bar' && (
+              <div className="space-y-3">
+                {[...assessmentRadarData].sort((a, b) => a.avg - b.avg).map(assessment => (
+                  <div key={assessment.id} className="grid grid-cols-[12rem_1fr_4rem] items-center gap-3">
+                    <span className="text-sm font-medium text-secondary-700 truncate">{assessment.name}</span>
+                    <div className="h-3 rounded-full bg-secondary-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-primary-500" style={{ width: `${Math.min(100, assessment.avg)}%` }} />
+                    </div>
+                    <span className="text-sm font-semibold text-secondary-900 text-right">{assessment.avg}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {assessmentChartView === 'radar' && (
               <ChartWidget
                 title=""
                 type="radar"
                 series={[{
-                  name: 'Average Score',
+                  name: 'Assessment average score',
                   data: assessmentRadarData.map(a => a.avg)
                 }]}
                 options={{
@@ -794,7 +823,7 @@ const CourseDetail = () => {
                       </span>
                     </div>
                     {a.weight !== undefined && a.weight !== null && (
-                      <span className="text-xs text-secondary-500 mb-1">Credits: {a.weight}</span>
+                      <span className="text-xs text-secondary-500 mb-1">Assessment weight: {a.weight}</span>
                     )}
                     {a.description && (
                       <span className="text-secondary-700 text-sm leading-snug line-clamp-2">{a.description}</span>
@@ -834,7 +863,9 @@ const CourseDetail = () => {
           <p className="text-secondary-500 text-center py-4">No assessments defined for this course</p>
         )}
       </Card>
+      </section>
 
+      <section id="students" className="scroll-mt-24">
       <Card>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-secondary-900">Students</h2>
@@ -867,7 +898,7 @@ const CourseDetail = () => {
               <thead>
                 <tr className="bg-secondary-100">
                   <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Student Name</th>
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Current Score</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Current course grade</th>
                   <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Enrollment Term</th>
                 </tr>
               </thead>
@@ -882,7 +913,7 @@ const CourseDetail = () => {
                       onClick={() => handleStudentClick(studentName)}
                     >
                       <td className="px-2 py-1.5 text-sm font-medium text-secondary-900 border-b border-secondary-200">{studentName}</td>
-                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 0}</td>
+                      <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{info?.overallScore ?? 'N/A'}</td>
                       <td className="px-2 py-1.5 text-sm text-secondary-700 border-b border-secondary-200">{data?.course?.term?.name ?? '—'}</td>
                     </tr>
                   )
@@ -894,6 +925,7 @@ const CourseDetail = () => {
           <p className="text-secondary-500 text-center py-8">No students enrolled in this course</p>
         )}
       </Card>
+      </section>
 
       <FileUploadModal
         course={data.course.name}
@@ -1033,8 +1065,8 @@ const CourseDetail = () => {
       >
         <div className="space-y-6">
           <div>
-            <p className="text-sm text-secondary-600 font-medium">Overall Course Score</p>
-            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 0}</p>
+            <p className="text-sm text-secondary-600 font-medium">Overall course grade</p>
+            <p className="text-3xl font-bold text-secondary-900">{selectedStudent?.overallScore ?? 'N/A'}</p>
           </div>
 
           {selectedStudent && selectedStudent.assessmentScores.length > 0 && (
@@ -1045,7 +1077,7 @@ const CourseDetail = () => {
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment score (%)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1069,7 +1101,7 @@ const CourseDetail = () => {
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Learning Outcome</th>
-                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Score</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">LO score (%)</th>
                     </tr>
                   </thead>
                   <tbody>

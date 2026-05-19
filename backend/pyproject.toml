@@ -19,6 +19,9 @@ dependencies = [
     "redis==5.2.1",
     "openpyxl>=3.1.5",
     "sentence-transformers==2.7.0",
+    "plotly>=5.24.1",
+    "kaleido==0.2.1",
+    "reportlab>=4.2.5",
 ]
 
 [dependency-groups]
@@ -34,7 +37,10 @@ dev = [
 [tool.ruff]
 line-length = 127
 target-version = "py312"
-exclude = ["**/migrations/**"]
+exclude = [
+    "**/migrations/**",
+    "**/docs**"
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90"]

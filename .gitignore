@@ -84,6 +84,7 @@ Thumbs.db
 .opencode/old-skills/
 openspec/
 .superpowers/
+*.obsidian
 
 # =============================================================================
 # Build / Cache (Frontend)

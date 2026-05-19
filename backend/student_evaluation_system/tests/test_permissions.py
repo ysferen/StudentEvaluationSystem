@@ -552,6 +552,30 @@ class TestInstructorPermissionMixin:
             request.user = setup_data["instr_full"]
             assert perm.has_permission(request, view) is True
 
+    def test_custom_action_can_use_action_resource_area(self, setup_data):
+        """Custom actions can opt into another resource area's tier checks."""
+        from core.permissions import InstructorPermissionMixin
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        perm = InstructorPermissionMixin()
+        view = type(
+            "View",
+            (),
+            {
+                "action": "instantiate",
+                "resource_area": "course_templates",
+                "action_resource_areas": {"instantiate": "courses"},
+            },
+        )()
+
+        request = factory.post("/api/core/course-templates/1/instantiate/")
+        request.user = setup_data["instr_full"]
+        assert perm.has_permission(request, view) is True
+
+        request.user = setup_data["instr_edit"]
+        assert perm.has_permission(request, view) is False
+
     def test_no_permission_entry_defaults_to_view(self, setup_data):
         """Instructors without a permission entry default to 'view' tier."""
         from core.permissions import InstructorPermissionMixin

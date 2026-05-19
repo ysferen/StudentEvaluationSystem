@@ -17,11 +17,13 @@ from core.models import (
     CourseTemplateLearningOutcome,
     CourseTemplateAssessment,
     CourseTemplateAssessmentLOMapping,
+    CourseTemplateLOPOMapping,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     ProgramOutcome,
+    ProgramOutcomeTemplate,
 )
-from core.services.course_template import clone_course_from_template
+from core.services.course_template import clone_course_from_template, instantiate_program_outcomes_from_templates
 from evaluation.models import AssessmentLearningOutcomeMapping, CourseEnrollment, StudentGrade
 from evaluation.services import calculate_course_scores
 from . import data
@@ -54,7 +56,7 @@ class Command(BaseCommand):
             self.stdout.write("Clearing existing data...")
             self.clear_data()
 
-        step_count = "[6/6]" if skip_students else "[9/9]"
+        step_count = "6" if skip_students else "9"
         self.stdout.write(self.style.WARNING(f"\n=== Starting Data Seeding ({'light' if skip_students else 'full'}) ===\n"))
 
         self.create_superuser()
@@ -84,15 +86,21 @@ class Command(BaseCommand):
             self._create_instructor_permissions(instructors, head_profile)
             self.stdout.write(f"  ✓ {len(instructors)} instructors with full permissions")
 
-            # ── Course templates + instantiate into terms ──
-            self.stdout.write(f"\n[4/{step_count}] Creating CourseTemplates and instantiating courses...")
-            all_courses, courses_by_sem_cohort = self._build_curriculum(program, terms, instructors, head_user)
-
-            # ── Program outcomes ──
-            self.stdout.write(f"\n[5/{step_count}] Creating program outcomes...")
+            # ── Program outcome templates + instantiate into terms ──
+            self.stdout.write(f"\n[4/{step_count}] Creating ProgramOutcomeTemplates and program outcomes...")
+            po_templates = self._create_program_outcome_templates(program)
             pos = []
+            po_by_term = {}
             for term in terms:
-                pos.extend(self._create_program_outcomes(program, term, head_user))
+                term_pos = self._create_program_outcomes(program, term, head_user)
+                pos.extend(term_pos)
+                po_by_term[term.id] = {po.program_outcome_template_id: po for po in term_pos if po.program_outcome_template_id}
+
+            # ── Course templates + instantiate into terms ──
+            self.stdout.write(f"\n[5/{step_count}] Creating CourseTemplates and instantiating courses...")
+            all_courses, courses_by_sem_cohort = self._build_curriculum(
+                program, terms, instructors, head_user, po_templates, po_by_term
+            )
 
             # ── LOs, assessments, mappings ──
             self.stdout.write(f"\n[6/{step_count}] Creating learning outcomes, assessments, and mappings...")
@@ -107,8 +115,8 @@ class Command(BaseCommand):
                 if not los:
                     continue
 
-                # Map LOs to random POs
-                self._create_lo_po_mappings(los, pos)
+                if course.lo_po_mappings.count() == 0:
+                    self._create_lo_po_mappings(los, pos)
 
                 # Assessments were already cloned from template — map them to LOs
                 for assessment in course.assessments.all():
@@ -119,15 +127,15 @@ class Command(BaseCommand):
 
             if not skip_students:
                 # ── Students (4 cohorts × 20) ──
-                self.stdout.write("\n[7/9] Creating students and enrollments...")
+                self.stdout.write(f"\n[7/{step_count}] Creating students and enrollments...")
                 all_students = self._create_student_cohorts(dept, program, uni, terms, all_courses, courses_by_sem_cohort)
 
                 # ── Grades ──
-                self.stdout.write("\n[8/9] Generating grades...")
+                self.stdout.write(f"\n[8/{step_count}] Generating grades...")
                 self._generate_student_grades(all_students, all_assessments)
 
                 # ── Scores ──
-                self.stdout.write("\n[9/9] Calculating scores...")
+                self.stdout.write(f"\n[9/{step_count}] Calculating scores...")
                 self._calculate_all_scores(all_courses)
 
         total = time.time() - start_time
@@ -146,6 +154,7 @@ class Command(BaseCommand):
         Program.objects.all().delete()
         Term.objects.all().delete()
         CourseTemplate.objects.all().delete()
+        ProgramOutcomeTemplate.objects.all().delete()
         Course.objects.all().delete()
         ProgramOutcome.objects.all().delete()
         LearningOutcome.objects.all().delete()
@@ -200,10 +209,13 @@ class Command(BaseCommand):
 
         terms = []
         for year in range(min_acad_year, max_acad_year + 1):
-            for sem, name in [("fall", f"Güz {year - 1}-{year}"), ("spring", f"Bahar {year - 1}-{year}")]:
+            for sem, name, acad_year in [
+                ("fall", f"Güz {year - 1}-{year}", year - 1),
+                ("spring", f"Bahar {year - 1}-{year}", year),
+            ]:
                 t, _ = Term.objects.get_or_create(
                     name=name,
-                    defaults={"is_active": False, "academic_year": year, "semester": sem},
+                    defaults={"is_active": False, "academic_year": acad_year, "semester": sem},
                 )
                 terms.append(t)
 
@@ -273,7 +285,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ {created} permissions")
 
     @staticmethod
-    def _ensure_template_data(template, los, assessments):
+    def _ensure_template_data(template, los, assessments, po_templates=None):
         """Create template LOs and assessments if not already present."""
         if template.learning_outcomes.count() == 0:
             for i, lo_desc in enumerate(los, 1):
@@ -301,7 +313,20 @@ class Command(BaseCommand):
                         defaults={"weight": 3},
                     )
 
-    def _build_curriculum(self, program, terms, instructors, head_user):
+        if (
+            po_templates
+            and CourseTemplateLOPOMapping.objects.filter(template_learning_outcome__course_template=template).count() == 0
+        ):
+            for tlo in template.learning_outcomes.all():
+                k = min(random.randint(2, 4), len(po_templates))
+                for po_template in random.sample(list(po_templates), k=k):
+                    CourseTemplateLOPOMapping.objects.get_or_create(
+                        template_learning_outcome=tlo,
+                        program_outcome_template=po_template,
+                        defaults={"weight": random.randint(1, 5)},
+                    )
+
+    def _build_curriculum(self, program, terms, instructors, head_user, po_templates, po_by_term):
         """Create CourseTemplates from CURRICULUM, clone into every term
         where ANY cohort takes that semester."""
         all_courses = []
@@ -320,7 +345,7 @@ class Command(BaseCommand):
                     program=program,
                     defaults={"name": name, "credits": credits},
                 )
-                self._ensure_template_data(template, los, assessments)
+                self._ensure_template_data(template, los, assessments, po_templates)
 
                 # Clone into each cohort's term for this semester
                 for cohort_idx in range(data.NUM_COHORTS):
@@ -335,7 +360,9 @@ class Command(BaseCommand):
                         course = existing
                     else:
                         try:
-                            course = clone_course_from_template(template, term, user=head_user)
+                            course = clone_course_from_template(
+                                template, term, user=head_user, po_map=po_by_term.get(term.id, {})
+                            )
                         except IntegrityError:
                             course = Course.objects.get(code=code, program=program, term=term)
 
@@ -353,16 +380,22 @@ class Command(BaseCommand):
         self.stdout.write(f"  ✓ {len(all_courses)} total course instances")
         return all_courses, courses_by_sem_cohort
 
-    def _create_program_outcomes(self, program, term, head_user):
-        outcomes = []
+    def _create_program_outcome_templates(self, program):
+        templates = []
         for i, desc in enumerate(data.PROGRAM_OUTCOME_DESCRIPTIONS):
-            po, _ = ProgramOutcome.objects.get_or_create(
+            template, _ = ProgramOutcomeTemplate.objects.get_or_create(
                 code=f"PO{i + 1}",
                 program=program,
-                term=term,
-                defaults={"description": desc, "created_by": head_user},
+                defaults={"description": desc},
             )
-            outcomes.append(po)
+            templates.append(template)
+        self.stdout.write(f"  ✓ {len(templates)} program outcome templates")
+        return templates
+
+    def _create_program_outcomes(self, program, term, head_user):
+        outcomes = []
+        po_map = instantiate_program_outcomes_from_templates(term, program, user=head_user)
+        outcomes.extend(po_map.values())
         self.stdout.write(f"  ✓ {len(outcomes)} program outcomes")
         return outcomes
 
@@ -480,8 +513,6 @@ class Command(BaseCommand):
 
     def _generate_student_grades(self, students, assessments):
         grades_to_create = []
-        total = len(students) * len(assessments)
-        self.stdout.write(f"  → Generating {total} grades...")
 
         for student_data in students:
             for assessment in assessments:

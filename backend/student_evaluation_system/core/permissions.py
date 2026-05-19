@@ -575,6 +575,7 @@ class InstructorPermissionMixin(BasePermission):
     TIER_MAP = {
         "create": "full",
         "destroy": "full",
+        "instantiate": "full",
         "update": "edit",
         "partial_update": "edit",
         "bulk_sync": "full",
@@ -592,13 +593,17 @@ class InstructorPermissionMixin(BasePermission):
         if user.is_admin_user or user.is_program_head:
             return True
 
-        resource_area = getattr(self, "resource_area", None)
+        action = getattr(view, "action", None)
+
+        action_resource_areas = getattr(view, "action_resource_areas", {})
+        resource_area = action_resource_areas.get(action)
+        if resource_area is None:
+            resource_area = getattr(self, "resource_area", None)
         if resource_area is None:
             resource_area = getattr(view, "resource_area", None)
         if resource_area is None:
             return False
 
-        action = getattr(view, "action", None)
         required_tier = self.TIER_MAP.get(action)
 
         if required_tier is None:

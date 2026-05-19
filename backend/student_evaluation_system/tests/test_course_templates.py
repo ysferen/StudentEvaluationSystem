@@ -12,6 +12,7 @@ from core.models import (
     CourseTemplateAssessmentLOMapping,
     CourseTemplateLOPOMapping,
     Course,
+    InstructorPermission,
     LearningOutcomeProgramOutcomeMapping,
 )
 from evaluation.models import AssessmentLearningOutcomeMapping
@@ -364,6 +365,27 @@ class TestCourseTemplateAPI:
         assert course.course_template == template
         assert course.learning_outcomes.count() == 1
         assert course.assessments.count() == 1
+
+    def test_instructor_with_full_courses_permission_can_instantiate(self, api_client, db_setup, instructor_user_factory):
+        instructor_user = instructor_user_factory(username="template_instructor")
+        profile = instructor_user.instructor_profile
+        InstructorPermission.objects.create(
+            instructor=profile,
+            resource_area="courses",
+            permission_tier="full",
+        )
+        api_client.force_authenticate(user=instructor_user)
+        template = CourseTemplate.objects.create(name="CS102", code="CS102", credits=3, program=db_setup["program"])
+
+        response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert response.data["code"] == "CS102"
+        assert Course.objects.get(id=response.data["id"]).instructors.filter(id=instructor_user.id).exists()
 
     def test_instantiate_missing_term_id(self, api_client, db_setup, fb_admin_factory):
         admin = fb_admin_factory()

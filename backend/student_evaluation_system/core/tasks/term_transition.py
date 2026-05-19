@@ -29,7 +29,7 @@ def clone_templates_for_term_task(self, template_ids: list[int], term_id: int, j
     po_map: dict[int, int] = {}
     for pid in program_ids:
         program = Program.objects.get(id=pid)
-        program_po_map = clone_program_outcomes_for_term(old_term, term, program)
+        program_po_map = clone_program_outcomes_for_term(old_term, term, program, user=job.triggered_by)
         po_map.update(program_po_map)
 
     for i, template in enumerate(templates, start=1):

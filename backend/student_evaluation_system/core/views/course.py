@@ -9,6 +9,7 @@ Contains ViewSets for managing:
 """
 
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -21,6 +22,7 @@ from ..models import (
     Course,
     Program,
     ProgramOutcome,
+    ProgramOutcomeTemplate,
     LearningOutcome,
     LearningOutcomeProgramOutcomeMapping,
     Term,
@@ -28,11 +30,13 @@ from ..models import (
 from ..serializers import (
     CourseSerializer,
     ProgramOutcomeSerializer,
+    ProgramOutcomeTemplateSerializer,
     CoreLearningOutcomeSerializer,
     LearningOutcomeProgramOutcomeMappingSerializer,
     BulkLOPOMappingSerializer,
 )
 from ..permissions import InstructorPermissionMixin
+from ..services.reports.course_report import ReportDataError, build_course_report_data, generate_course_report_pdf
 
 
 @extend_schema_view(
@@ -153,6 +157,19 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = CoreLearningOutcomeSerializer(outcomes, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["get"])
+    def report(self, request, pk=None):
+        """Generate the real Course Performance Snapshot PDF."""
+        course = self.get_object()
+        try:
+            data = build_course_report_data(course.id)
+        except ReportDataError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        pdf_bytes = generate_course_report_pdf(data)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{course.code}-course-report.pdf"'
+        return response
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -195,6 +212,24 @@ class ProgramOutcomeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(program_id=program_id)
         if term_id:
             queryset = queryset.filter(term_id=term_id)
+
+        return queryset
+
+
+class ProgramOutcomeTemplateViewSet(viewsets.ModelViewSet):
+    """CRUD operations for reusable program outcome templates."""
+
+    queryset = ProgramOutcomeTemplate.objects.select_related("program").all()
+    serializer_class = ProgramOutcomeTemplateSerializer
+    permission_classes = [AllowAny, InstructorPermissionMixin]
+    resource_area = "program_outcomes"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        program_id = self.request.query_params.get("program", None)
+
+        if program_id:
+            queryset = queryset.filter(program_id=program_id)
 
         return queryset
 

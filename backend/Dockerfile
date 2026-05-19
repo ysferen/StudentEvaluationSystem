@@ -3,6 +3,12 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 LABEL project="ses" service="backend"
 
+USER root
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fonts-dejavu-core && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -g 1000 django && \
     useradd -m -u 1000 -g django django
 

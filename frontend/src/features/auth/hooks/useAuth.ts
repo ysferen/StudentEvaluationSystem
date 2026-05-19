@@ -165,23 +165,24 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   }, [queryClient])
 
   useEffect(() => {
-    // Update user state when user data is fetched
     if (currentUser) {
       setUser(normalizePermissions(currentUser))
     }
+  }, [currentUser])
 
-    // Handle authentication errors by logging out
-    // Only logout if user was previously authenticated (user !== null)
-    // This prevents redirect loops on public pages like /login
+  useEffect(() => {
+    // Only logout if user was previously authenticated. This prevents redirect
+    // loops on public pages like /login.
     if (userError instanceof Error && user !== null) {
       void logout()
     }
+  }, [userError, logout, user])
 
-    // Mark loading as complete when user fetch finishes
+  useEffect(() => {
     if (!userLoading) {
       setIsLoading(false)
     }
-  }, [currentUser, userLoading, userError, logout, user])
+  }, [userLoading])
 
   /**
    * Authenticates a user with username and password.

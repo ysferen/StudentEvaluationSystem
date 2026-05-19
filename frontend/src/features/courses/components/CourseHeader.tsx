@@ -10,35 +10,39 @@ import type { Course } from '../../../shared/api/model'
 
 interface CourseHeaderProps {
   course: Course
-  avgScore: number
+  averageCourseGrade: number
   loCount: number
   canEdit: boolean
   canDelete: boolean
   onEdit: () => void
   onDelete: () => void
   onImport: () => void
+  onGenerateReport?: () => void
+  isGeneratingReport?: boolean
   getInstructorNames: () => string
 }
 
-const getScoreTextColor = (avgScore: number): string => {
-  if (avgScore >= 70) return 'text-emerald-700'
-  if (avgScore >= 50) return 'text-amber-700'
-  if (avgScore === 0) return 'text-secondary-400'
+const getCourseGradeTextColor = (averageCourseGrade: number): string => {
+  if (averageCourseGrade >= 70) return 'text-emerald-700'
+  if (averageCourseGrade >= 50) return 'text-amber-700'
+  if (averageCourseGrade === 0) return 'text-secondary-400'
   return 'text-red-700'
 }
 
 export const CourseHeader: React.FC<CourseHeaderProps> = ({
   course,
-  avgScore,
+  averageCourseGrade,
   loCount,
   canEdit,
   canDelete,
   onEdit,
   onDelete,
   onImport,
+  onGenerateReport,
+  isGeneratingReport = false,
   getInstructorNames,
 }) => {
-  const scoreTextColor = getScoreTextColor(avgScore)
+  const courseGradeTextColor = getCourseGradeTextColor(averageCourseGrade)
 
   return (
     <>
@@ -82,6 +86,17 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
             </svg>
             <span>Import File</span>
           </button>
+          <button
+            type="button"
+            onClick={onGenerateReport}
+            disabled={!onGenerateReport || isGeneratingReport}
+            className="bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 flex items-center space-x-2 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>{isGeneratingReport ? 'Generating...' : 'Generate Report'}</span>
+          </button>
         </div>
       </div>
 
@@ -116,8 +131,8 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
               <AcademicCapIcon className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Avg Score</p>
-              <p className={`text-3xl font-bold ${scoreTextColor}`}>{avgScore}</p>
+              <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
+              <p className={`text-3xl font-bold ${courseGradeTextColor}`}>{averageCourseGrade}</p>
             </div>
           </div>
         </Card>

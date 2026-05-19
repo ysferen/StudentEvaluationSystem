@@ -1,14 +1,16 @@
 """
-Unit tests for GPA calculation functions in core.views.analytics.
+Unit tests for GPA calculation functions in core.services.analytics.program.
 """
 
 import pytest
 
-from core.views.analytics import (
-    _percentage_to_gpa,
-    _get_student_course_grade_map,
-    _get_student_gpa_by_id,
-    _calculate_gpa_by_year,
+from core.services.analytics.program import (
+    calculate_gpa_by_year as _calculate_gpa_by_year,
+    get_student_course_grade_map as _get_student_course_grade_map,
+    get_student_gpa_by_id as _get_student_gpa_by_id,
+    get_term_course_ids as _get_term_course_ids,
+    get_term_po_ids as _get_term_po_ids,
+    percentage_to_gpa as _percentage_to_gpa,
 )
 from core.models import Term
 from evaluation.models import StudentGrade
@@ -369,6 +371,128 @@ class TestCalculateGpaByYear:
 
 @pytest.mark.django_db
 class TestProgramStatsPerformance:
+    def test_program_stats_counts_actual_outcome_rows(
+        self,
+        authenticated_client,
+        program_factory,
+        course_factory,
+        learning_outcome_factory,
+        program_outcome_factory,
+        term_factory,
+        student_user_factory,
+    ):
+        from core.models import StudentProgramOutcomeScore
+
+        client, _ = authenticated_client("analytics_counts_admin", "admin")
+        active_term = Term.objects.create(name="Stats Active", is_active=True, academic_year=2025)
+        inactive_term = term_factory(name="Stats Past", academic_year=2024)
+        program = program_factory(duration_years=4)
+        course = course_factory(program=program, term=active_term)
+        learning_outcome_factory(course=course)
+        po = program_outcome_factory(program=program, term=active_term)
+        old_po = program_outcome_factory(program=program, term=inactive_term)
+        student_one = student_user_factory()
+        student_two = student_user_factory()
+        old_student = student_user_factory()
+
+        StudentProgramOutcomeScore.objects.create(student=student_one, program_outcome=po, term=active_term, score=80)
+        StudentProgramOutcomeScore.objects.create(student=student_two, program_outcome=po, term=active_term, score=90)
+        StudentProgramOutcomeScore.objects.create(student=old_student, program_outcome=old_po, term=inactive_term, score=10)
+
+        response = client.get("/api/core/analytics/program-stats/")
+        assert response.status_code == 200
+
+        stat = next(item for item in response.data["programs"] if item["id"] == program.id)
+        assert stat["lo_count"] == 1
+        assert stat["po_count"] == 1
+        assert stat["avg_score"] == 85
+
+    def test_program_stats_counts_active_term_enrolled_students(
+        self,
+        authenticated_client,
+        program_factory,
+        course_factory,
+        course_enrollment_factory,
+        term_factory,
+        student_user_factory,
+    ):
+        client, _ = authenticated_client("analytics_students_admin", "admin")
+        active_term = Term.objects.create(name="Current Academic Year", is_active=True, academic_year=2025)
+        inactive_term = term_factory(name="Past Academic Year", academic_year=2024)
+        program = program_factory(duration_years=4)
+        active_course = course_factory(program=program, term=active_term)
+        inactive_course = course_factory(program=program, term=inactive_term)
+
+        current_student = student_user_factory()
+        course_enrollment_factory(student=current_student, course=active_course, status="active")
+
+        inactive_term_student = student_user_factory()
+        course_enrollment_factory(student=inactive_term_student, course=inactive_course, status="active")
+
+        dropped_student = student_user_factory()
+        course_enrollment_factory(student=dropped_student, course=active_course, status="dropped")
+
+        response = client.get("/api/core/analytics/program-stats/")
+        assert response.status_code == 200
+
+        stat = next(item for item in response.data["programs"] if item["id"] == program.id)
+        assert stat["total_students"] == 1
+
+    def test_program_stats_year_and_gpa_use_active_term_courses(
+        self,
+        authenticated_client,
+        program_factory,
+        course_factory,
+        assessment_factory,
+        course_enrollment_factory,
+        term_factory,
+        student_user_factory,
+    ):
+        client, _ = authenticated_client("analytics_gpa_admin", "admin")
+        active_term = Term.objects.create(name="Current Stats Term", is_active=True, academic_year=2025)
+        inactive_term = term_factory(name="Past Stats Term", academic_year=2024)
+        program = program_factory(duration_years=4)
+        active_course = course_factory(program=program, term=active_term, credits=3)
+        inactive_course = course_factory(program=program, term=inactive_term, credits=3)
+
+        current_student = student_user_factory()
+        current_student.student_profile.enrollment_term = active_term
+        current_student.student_profile.save()
+        course_enrollment_factory(student=current_student, course=active_course, status="active")
+        active_assessment = assessment_factory(course=active_course, total_score=100, weight=1.0)
+        StudentGrade.objects.create(student=current_student, assessment=active_assessment, score=85.0)
+
+        old_student = student_user_factory()
+        old_student.student_profile.enrollment_term = active_term
+        old_student.student_profile.save()
+        course_enrollment_factory(student=old_student, course=inactive_course, status="active")
+        inactive_assessment = assessment_factory(course=inactive_course, total_score=100, weight=1.0)
+        StudentGrade.objects.create(student=old_student, assessment=inactive_assessment, score=50.0)
+
+        response = client.get("/api/core/analytics/program-stats/")
+        assert response.status_code == 200
+
+        assert response.data["gpa_by_year"][0]["student_count"] == 1
+        assert response.data["gpa_by_year"][0]["gpa"] == 3.5
+
+    def test_term_id_helpers_exclude_other_terms(
+        self,
+        program_factory,
+        course_factory,
+        program_outcome_factory,
+        term_factory,
+    ):
+        active_term = Term.objects.create(name="Helper Active Term", is_active=True, academic_year=2025)
+        inactive_term = term_factory(name="Helper Past Term", academic_year=2024)
+        program = program_factory(duration_years=4)
+        active_course = course_factory(program=program, term=active_term)
+        course_factory(program=program, term=inactive_term)
+        active_po = program_outcome_factory(program=program, term=active_term)
+        program_outcome_factory(program=program, term=inactive_term)
+
+        assert _get_term_course_ids([program.id], active_term) == [active_course.id]
+        assert _get_term_po_ids([program.id], active_term) == [active_po.id]
+
     def test_program_stats_uses_constant_queries(self, authenticated_client, program_factory, term_factory):
         """Program stats endpoint should not scale queries with number of programs."""
         from core.models import Department, DegreeLevel

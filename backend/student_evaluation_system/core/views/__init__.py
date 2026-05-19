@@ -24,6 +24,7 @@ from .academic_structure import (
 from .course import (
     CourseViewSet,
     ProgramOutcomeViewSet,
+    ProgramOutcomeTemplateViewSet,
     LearningOutcomeViewSet,
     LearningOutcomeProgramOutcomeMappingViewSet,
 )
@@ -69,6 +70,7 @@ __all__ = [
     # Course & Outcomes
     "CourseViewSet",
     "ProgramOutcomeViewSet",
+    "ProgramOutcomeTemplateViewSet",
     "LearningOutcomeViewSet",
     "LearningOutcomeProgramOutcomeMappingViewSet",
     # Course Templates

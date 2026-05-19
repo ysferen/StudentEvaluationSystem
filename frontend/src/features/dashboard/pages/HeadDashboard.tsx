@@ -20,7 +20,7 @@ const HeadDashboard = () => {
 
   const totalStudents = useMemo(() => programs.reduce((sum, p) => sum + p.total_students, 0), [programs])
   const totalCourses = useMemo(() => programs.reduce((sum, p) => sum + p.total_courses, 0), [programs])
-  const overallAvg = useMemo(() => {
+  const overallAveragePoScore = useMemo(() => {
     const scored = programs.filter(p => p.avg_score !== null)
     if (scored.length === 0) return null
     return scored.reduce((sum, p) => sum + (p.avg_score ?? 0), 0) / scored.length
@@ -28,6 +28,11 @@ const HeadDashboard = () => {
 
   const yearLevelBreakdown = useMemo(() => statsData?.year_level_breakdown || [], [statsData])
   const gpaByYear = useMemo(() => statsData?.gpa_by_year || [], [statsData])
+  const weakestYearLevelPoScore = useMemo(() => {
+    return [...yearLevelBreakdown]
+      .filter(item => item.avg_score !== null)
+      .sort((a, b) => (a.avg_score ?? 0) - (b.avg_score ?? 0))[0] ?? null
+  }, [yearLevelBreakdown])
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>
@@ -62,7 +67,7 @@ const HeadDashboard = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-sky-100 rounded-xl">
@@ -91,32 +96,43 @@ const HeadDashboard = () => {
               <ChartBarIcon className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-secondary-600 font-medium">Program Average</p>
+              <p className="text-sm text-secondary-600 font-medium">Average PO score</p>
               <p className="text-3xl font-bold text-secondary-900">
-                {overallAvg !== null ? overallAvg.toFixed(2) : 'N/A'}
+                {overallAveragePoScore !== null ? overallAveragePoScore.toFixed(2) : 'N/A'}
               </p>
             </div>
           </div>
         </Card>
+        <Card variant="flat" className="bg-amber-50 border-amber-200">
+          <p className="text-sm text-amber-700 font-medium">Weakest year-level PO score</p>
+          <p className="text-3xl font-bold text-amber-900">
+            {weakestYearLevelPoScore ? `Year ${weakestYearLevelPoScore.year}` : 'N/A'}
+          </p>
+          <p className="text-sm text-amber-700 mt-1">
+            Average PO score: {weakestYearLevelPoScore?.avg_score ?? 'N/A'}
+          </p>
+        </Card>
       </div>
 
-      {/* Year-Level Breakdown */}
-      <ChartWidget
-        title="Year-Level Breakdown"
-        subtitle="Student distribution by year"
-        type="pie"
-        series={yearLevelBreakdown.map(y => y.student_count)}
-        options={{
-          labels: categories,
-          colors: ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981'],
-        }}
-      />
+      {/* Year-Level Context */}
+      <Card variant="flat" className="bg-white border-secondary-200">
+        <h2 className="text-lg font-semibold text-secondary-900 mb-4">Year-Level Context</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {yearLevelBreakdown.map(item => (
+            <div key={item.year} className="rounded-xl bg-secondary-50 p-3">
+              <p className="text-xs text-secondary-500">Year {item.year}</p>
+              <p className="text-xl font-bold text-secondary-900">{item.student_count}</p>
+              <p className="text-xs text-secondary-500">students</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Chart Toggle */}
       <Card className="overflow-hidden">
         <div className="p-6 border-b border-secondary-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">Score Averages by Year</h2>
+            <h2 className="text-lg font-semibold text-gray-900">GPA and PO Scores by Year</h2>
             <div className="flex gap-2">
               <button
                 onClick={handleSetGpaChart}
@@ -126,7 +142,7 @@ const HeadDashboard = () => {
                     : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                 }`}
               >
-                GPA Averages
+                Average GPA
               </button>
               <button
                 onClick={handleSetPoChart}
@@ -136,7 +152,7 @@ const HeadDashboard = () => {
                     : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                 }`}
               >
-                PO Scores
+                Average PO score
               </button>
             </div>
           </div>
@@ -145,11 +161,11 @@ const HeadDashboard = () => {
         <div className="p-6">
           {activeChart === 'gpa' ? (
             <ChartWidget
-              title="GPA Averages by Year"
-              subtitle="Weighted grade point average per year level"
+              title="Average GPA by year level"
+              subtitle="Credit-weighted average GPA on the 4.0 scale"
               type="bar"
               series={[{
-                name: 'Avg GPA',
+                name: 'Average GPA',
                 data: gpaByYear.map(y => y.gpa ?? 0),
               }]}
               options={{
@@ -165,11 +181,11 @@ const HeadDashboard = () => {
             />
           ) : (
             <ChartWidget
-              title="PO Score Averages by Year"
-              subtitle="Average program outcome score per year level"
+              title="Average PO score by year level"
+              subtitle="Average program outcome score by enrolled student year level"
               type="bar"
               series={[{
-                name: 'Avg PO Score',
+                name: 'Average PO score',
                 data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
               }]}
               options={{

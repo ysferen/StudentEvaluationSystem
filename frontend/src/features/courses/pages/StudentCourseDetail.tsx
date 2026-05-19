@@ -339,7 +339,7 @@ const StudentCourseDetail = () => {
                 <Card className="bg-primary-50 border-primary-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Average Score</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">Your course grade</h3>
                     </div>
                     <p className="text-3xl font-bold text-primary-600">
                       {Math.round(weightedAverage)}
