@@ -205,6 +205,44 @@ class TestSuggestAssessmentLOTask:
             ]
             assert call_kwargs["assessment_keys"] == ["Midterm", "Final"]
 
+    def test_task_can_request_raw_embedding_debug_payload(self):
+        """Task should pass debug mode through to both suggestion calls."""
+        from core.tasks import suggest_assessment_lo_weights_task
+
+        mock_suggester = MagicMock()
+        mock_suggester.suggest_assessment_lo.return_value = {
+            "assessment_lo": {"Midterm": {"LO1": 3}},
+            "debug": {"assessment_lo": {"cosine_similarity": [[0.2]]}},
+        }
+        mock_suggester.suggest_lo_po.return_value = {
+            "lo_po": {"LO1": {"PO1": 4}},
+            "debug": {"lo_po": {"cosine_similarity": [[0.8]]}},
+        }
+
+        mock_course = MagicMock()
+        mock_course.name = "Test Course"
+        mock_course.term = "2025-fall"
+        mock_course.learning_outcomes.values_list.return_value = ["LO1: desc"]
+        mock_a = MagicMock()
+        mock_a.name = "Midterm"
+        mock_a.description = "tests theoretical knowledge"
+        mock_course.assessments.all.return_value = [mock_a]
+
+        with (
+            patch("core.tasks.weight_suggestions.get_weight_suggester", return_value=mock_suggester),
+            patch("core.models.Course") as mock_course_model,
+            patch("core.models.ProgramOutcome") as mock_po_model,
+        ):
+            mock_course_model.objects.get.return_value = mock_course
+            mock_po_model.objects.filter.return_value.values_list.return_value = ["PO1: desc"]
+
+            result = suggest_assessment_lo_weights_task(course_id=42, include_raw_embeddings=True)
+
+            assert mock_suggester.suggest_assessment_lo.call_args[1]["include_raw_embeddings"] is True
+            assert mock_suggester.suggest_lo_po.call_args[1]["include_raw_embeddings"] is True
+            assert result["debug"]["assessment_lo"]["cosine_similarity"] == [[0.2]]
+            assert result["debug"]["lo_po"]["cosine_similarity"] == [[0.8]]
+
     def test_task_raises_when_suggester_not_initialized(self):
         """Task should raise RuntimeError when get_weight_suggester returns None."""
         from core.tasks import suggest_assessment_lo_weights_task

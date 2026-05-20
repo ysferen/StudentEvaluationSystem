@@ -30,7 +30,7 @@ class WeightSuggester:
     # Public API
     # ------------------------------------------------------------------
 
-    def suggest_assessment_lo(self, course_name, los, assessments, assessment_keys=None):
+    def suggest_assessment_lo(self, course_name, los, assessments, assessment_keys=None, include_raw_embeddings=False):
         """
         Suggest weights mapping assessment methods to learning outcomes.
 
@@ -44,24 +44,36 @@ class WeightSuggester:
                              If None, uses `assessments` as the keys.
                              e.g. ["Midterm", "Final", "Project"]
 
+            include_raw_embeddings: When True, include embedding vectors,
+                cosine similarities, and normalization values under a
+                "debug" key.
+
         Returns:
             dict with shape: {"assessment_lo": {key: {LO_key: weight}}}
         """
         if not assessments:
-            return {"assessment_lo": {}}
+            result = {"assessment_lo": {}}
+            if include_raw_embeddings:
+                result["debug"] = {"assessment_lo": self._empty_debug_payload(assessments, los)}
+            return result
 
         keys = assessment_keys if assessment_keys is not None else assessments
         lo_keys = [f"LO{i + 1}" for i in range(len(los))]
-        weights = self._similarity_weights(assessments, los)
+        weights, debug = self._similarity_weights(assessments, los, include_debug=include_raw_embeddings)
 
-        return {
+        result = {
             "assessment_lo": {
                 keys[row_index]: {lo_key: weights[row_index][col_index] for col_index, lo_key in enumerate(lo_keys)}
                 for row_index in range(len(keys))
             }
         }
+        if include_raw_embeddings:
+            debug["source_keys"] = list(keys)
+            debug["target_keys"] = lo_keys
+            result["debug"] = {"assessment_lo": debug}
+        return result
 
-    def suggest_lo_po(self, course_name, los, pos):
+    def suggest_lo_po(self, course_name, los, pos, include_raw_embeddings=False):
         """
         Suggest weights mapping learning outcomes to program outcomes.
 
@@ -76,25 +88,59 @@ class WeightSuggester:
         """
         lo_keys = [f"LO{i + 1}" for i in range(len(los))]
         po_keys = [f"PO{i + 1}" for i in range(len(pos))]
-        weights = self._similarity_weights(los, pos)
+        weights, debug = self._similarity_weights(los, pos, include_debug=include_raw_embeddings)
 
-        return {
+        result = {
             "lo_po": {
                 lo_key: {po_key: weights[row_index][col_index] for col_index, po_key in enumerate(po_keys)}
                 for row_index, lo_key in enumerate(lo_keys)
             }
         }
+        if include_raw_embeddings:
+            debug["source_keys"] = lo_keys
+            debug["target_keys"] = po_keys
+            result["debug"] = {"lo_po": debug}
+        return result
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _similarity_weights(self, source_texts, target_texts):
+    def _similarity_weights(self, source_texts, target_texts, include_debug=False):
         """Compute 0-5 weights from cosine similarity between text lists."""
         source_embeddings = self._encode_texts(source_texts)
         target_embeddings = self._encode_texts(target_texts)
         similarity_matrix = np.matmul(source_embeddings, target_embeddings.T)
-        return [self._normalize_scores(row) for row in similarity_matrix]
+        weights = []
+        rows = []
+        for row_index, row in enumerate(similarity_matrix):
+            row_weights, components = self._normalize_scores_with_components(row)
+            weights.append(row_weights)
+            if include_debug:
+                rows.append(
+                    {
+                        "source_index": row_index,
+                        "source_text": source_texts[row_index],
+                        "cosine_similarity": components["cosine_similarity"],
+                        "raw_scores_0_1": components["raw_scores_0_1"],
+                        "row_normalized_scores": components["row_normalized_scores"],
+                        "rank_scores": components["rank_scores"],
+                        "blended_scores": components["blended_scores"],
+                        "weights": row_weights,
+                    }
+                )
+
+        if not include_debug:
+            return weights, None
+
+        return weights, {
+            "source_texts": list(source_texts),
+            "target_texts": list(target_texts),
+            "source_embeddings": source_embeddings.tolist(),
+            "target_embeddings": target_embeddings.tolist(),
+            "cosine_similarity": similarity_matrix.tolist(),
+            "rows": rows,
+        }
 
     def _encode_texts(self, texts):
         """Encode texts and return normalized embeddings as a NumPy array."""
@@ -110,30 +156,57 @@ class WeightSuggester:
     def _normalize_scores(scores):
         """Normalize similarity scores to 0-5 integer weights.
 
-        Blends raw cosine similarity with rank-based normalization so that
-        the relative ordering within each assessment/LO creates contrast,
-        while the absolute similarity still anchors the general level.
+        Blends row-wise min/max normalization with rank-based normalization
+        so that narrow cosine ranges still create useful 0-5 contrast.
 
         Configurable via env vars:
           WEIGHT_SUGGESTION_BLEND  — rank influence (0=raw only, 1=rank only)
                                      default 0.5 balances both.
         """
-        scores = np.asarray(scores, dtype=np.float32)
+        weights, _components = WeightSuggester._normalize_scores_with_components(scores)
+        return weights
+
+    @staticmethod
+    def _normalize_scores_with_components(scores):
+        """Normalize scores and return the intermediate values used."""
+        cosine_scores = np.asarray(scores, dtype=np.float32)
         # Cosine similarity [-1, 1] → [0, 1]
-        raw_scores = (scores + 1.0) / 2.0
+        raw_scores = (cosine_scores + 1.0) / 2.0
         raw_scores = np.clip(raw_scores, 0.0, 1.0)
+        score_range = float(raw_scores.max() - raw_scores.min()) if raw_scores.size else 0.0
+        if score_range > 1e-6:
+            row_normalized_scores = (raw_scores - raw_scores.min()) / score_range
+        else:
+            row_normalized_scores = raw_scores.copy()
 
         # Rank scores within this row: 0 = lowest similarity, 1 = highest
         n = len(raw_scores) - 1
-        if n > 0:
+        if n > 0 and score_range > 1e-6:
             ranks = np.argsort(np.argsort(raw_scores)).astype(np.float32)
             rank_scores = ranks / n
         else:
-            rank_scores = np.zeros_like(raw_scores)
+            rank_scores = row_normalized_scores.copy()
 
         blend = float(os.getenv("WEIGHT_SUGGESTION_BLEND", "0.5"))
-        scores = (1.0 - blend) * raw_scores + blend * rank_scores
+        blended_scores = (1.0 - blend) * row_normalized_scores + blend * rank_scores
 
-        weights = np.rint(scores * 5.0).astype(int)
+        weights = np.rint(blended_scores * 5.0).astype(int)
         weights = np.clip(weights, 0, 5)
-        return [int(weight) for weight in weights]
+        return [int(weight) for weight in weights], {
+            "cosine_similarity": cosine_scores.tolist(),
+            "raw_scores_0_1": raw_scores.tolist(),
+            "row_normalized_scores": row_normalized_scores.tolist(),
+            "rank_scores": rank_scores.tolist(),
+            "blended_scores": blended_scores.tolist(),
+        }
+
+    @staticmethod
+    def _empty_debug_payload(source_texts, target_texts):
+        return {
+            "source_texts": list(source_texts),
+            "target_texts": list(target_texts),
+            "source_embeddings": [],
+            "target_embeddings": [],
+            "cosine_similarity": [],
+            "rows": [],
+        }

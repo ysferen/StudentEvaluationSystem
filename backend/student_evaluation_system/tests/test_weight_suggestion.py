@@ -276,3 +276,64 @@ def test_assessment_keys_separates_descriptions_from_response_keys(
     for text in descriptive_texts:
         if text not in short_keys:
             assert text not in result["assessment_lo"], f"Descriptive text '{text}' leaked into response key"
+
+
+def test_raw_embedding_debug_payload_includes_similarity_components(
+    sample_course_name,
+    sample_los,
+    dummy_encoder,
+):
+    """Debug mode should expose the values used to turn embeddings into weights."""
+    from core.services.weight_suggestion import WeightSuggester
+
+    assessments = ["Midterm: tests theoretical knowledge"]
+    embeddings = {
+        assessments[0]: [1.0, 0.0],
+        sample_los[0]: [1.0, 0.0],
+        sample_los[1]: [0.0, 1.0],
+    }
+    suggester = WeightSuggester(encoder=dummy_encoder(embeddings))
+
+    result = suggester.suggest_assessment_lo(
+        course_name=sample_course_name,
+        los=sample_los,
+        assessments=assessments,
+        assessment_keys=["Midterm"],
+        include_raw_embeddings=True,
+    )
+
+    debug = result["debug"]["assessment_lo"]
+    assert debug["source_keys"] == ["Midterm"]
+    assert debug["target_keys"] == ["LO1", "LO2"]
+    assert debug["source_embeddings"] == [[1.0, 0.0]]
+    assert debug["target_embeddings"] == [[1.0, 0.0], [0.0, 1.0]]
+    assert debug["cosine_similarity"] == [[1.0, 0.0]]
+    assert debug["rows"][0]["cosine_similarity"] == [1.0, 0.0]
+    assert debug["rows"][0]["row_normalized_scores"] == [1.0, 0.0]
+    assert debug["rows"][0]["weights"] == list(result["assessment_lo"]["Midterm"].values())
+
+
+def test_narrow_cosine_range_still_uses_full_weight_scale():
+    """Rows with close cosine values should not collapse into only 2-4 weights."""
+    from core.services.weight_suggestion import WeightSuggester
+
+    cosine_scores = [
+        0.42571017146110535,
+        0.35203468799591064,
+        0.24981698393821716,
+        0.3938533365726471,
+        0.3333739638328552,
+        0.3489070236682892,
+        0.3085215091705322,
+        0.23956027626991272,
+        0.24618500471115112,
+        0.4000246524810791,
+        0.20198729634284973,
+    ]
+
+    weights, components = WeightSuggester._normalize_scores_with_components(cosine_scores)
+
+    assert min(weights) == 0
+    assert max(weights) == 5
+    assert components["row_normalized_scores"][0] == 1.0
+    assert components["row_normalized_scores"][-1] == 0.0

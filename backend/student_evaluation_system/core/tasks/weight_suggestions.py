@@ -55,7 +55,12 @@ def bootstrap_model(sender, **kwargs):
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
-def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None = None) -> dict:
+def suggest_assessment_lo_weights_task(
+    self,
+    course_id: int,
+    job_id: int | None = None,
+    include_raw_embeddings: bool = False,
+) -> dict:
     """
     Suggest assessment-to-LO weight mappings for a course.
 
@@ -66,6 +71,8 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
     Args:
         course_id: ID of the Course to suggest weights for.
         job_id: Optional WeightSuggestionJob ID for status tracking.
+        include_raw_embeddings: Include embedding vectors, cosine
+            similarities, and normalization values in the returned result.
 
     Returns:
         dict with shape: {"assessment_lo": {assessment_name: {LO_key: weight}}}
@@ -101,6 +108,7 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
             los=los,
             assessments=assessment_texts,
             assessment_keys=assessment_names,
+            include_raw_embeddings=include_raw_embeddings,
         )
 
         pos = list(ProgramOutcome.objects.filter(term=course.term).values_list("description", flat=True))
@@ -109,8 +117,11 @@ def suggest_assessment_lo_weights_task(self, course_id: int, job_id: int | None 
                 course_name=course.name,
                 los=los,
                 pos=pos,
+                include_raw_embeddings=include_raw_embeddings,
             )
             result["lo_po"] = lo_po_result["lo_po"]
+            if include_raw_embeddings:
+                result.setdefault("debug", {})["lo_po"] = lo_po_result.get("debug", {}).get("lo_po", {})
 
     except Exception as exc:
         if job_id:
