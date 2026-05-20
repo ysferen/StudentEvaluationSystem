@@ -1,0 +1,11 @@
+Gömülü Sistemler
+CSE452
+
+LOs
+
+LO1	Gömülü bir sisteme olan ihtiyacı anlayın
+LO2 	İşlemciler/denetleyiciler ve seçim kriterleri hakkında bilgi edinin
+
+Ara Sınav 	Gömülü sistemlerin temel kavramları, kullanım ihtiyaçları, işlemci/denetleyici yapıları ve seçim kriterlerine ilişkin teorik bilgiyi ölçer.
+Proje		Belirli bir probleme yönelik gömülü sistem ihtiyacını analiz etmeyi, uygun işlemci/denetleyici seçiminigerekçelendirmeyi ve çözüm tasarımını uygulamalı olarak değerlendirmeyi amaçlar.
+Final Sınavı 	Gömülü sistem gereksinimlerinin belirlenmesi, işlemci ve denetleyici karşılaştırmaları ile uygun donanım seçimi konularındaki bütüncül bilgi ve yorumlama becerisini ölçer.

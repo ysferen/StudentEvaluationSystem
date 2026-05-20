@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Upload } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import { NextTermModal } from '@/features/head/components/NextTermModal'
@@ -11,6 +11,7 @@ import {
   AcademicCapIcon,
   UsersIcon,
   ChartBarIcon,
+  ArrowUpTrayIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import {
@@ -176,10 +177,10 @@ const HeadCourses = () => {
           </button>
           <button
             onClick={() => setIsTemplateImportModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
           >
-            <Upload className="h-4 w-4" />
-            Import Templates
+            <ArrowUpTrayIcon className="h-5 w-5" />
+            <span>Import Templates</span>
           </button>
           {activeTerm && (
             <button

@@ -3,7 +3,6 @@ import type { FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AcademicCapIcon,
-  ArrowUpTrayIcon,
   BookOpenIcon,
   ChartBarIcon,
   DocumentChartBarIcon,
@@ -460,13 +459,6 @@ const ProgramPage = () => {
           <p className="text-secondary-500 mt-1">{programSubtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
-          >
-            <ArrowUpTrayIcon className="h-5 w-5" />
-            <span>Import File</span>
-          </button>
           <button
             type="button"
             onClick={handleGenerateReport}
