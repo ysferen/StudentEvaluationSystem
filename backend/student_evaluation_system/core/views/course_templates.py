@@ -2,7 +2,7 @@
 Course Template ViewSets.
 """
 
-from django.db import models
+from django.db import IntegrityError, models
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -11,6 +11,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiPara
 from drf_spectacular.types import OpenApiTypes
 
 from core.models import (
+    Course,
     Term,
     CourseTemplate,
     CourseTemplateAssessmentLOMapping,
@@ -97,6 +98,21 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
             course = clone_course_from_template(template, term, user=request.user)
             if getattr(request.user, "is_instructor", False):
                 course.instructors.add(request.user)
+        except IntegrityError:
+            existing_course = Course.objects.filter(
+                code=template.code,
+                program=template.program,
+                term=term,
+                course_template=template,
+            ).first()
+            if existing_course:
+                serializer = CourseSerializer(existing_course)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            return Response(
+                {"error": f'Course "{template.code}" already exists for {template.program.name} in {term.name}.'},
+                status=status.HTTP_409_CONFLICT,
+            )
         except Exception as exc:
             return Response(
                 {"error": f"Failed to instantiate course: {str(exc)}"},

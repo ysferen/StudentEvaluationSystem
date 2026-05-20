@@ -366,6 +366,34 @@ class TestCourseTemplateAPI:
         assert course.learning_outcomes.count() == 1
         assert course.assessments.count() == 1
 
+    def test_instantiate_same_template_same_term_is_idempotent(self, api_client, db_setup, fb_admin_factory):
+        admin = fb_admin_factory()
+        api_client.force_authenticate(user=admin)
+        template = CourseTemplate.objects.create(name="CHE 101", code="CHE 101", credits=4, program=db_setup["program"])
+        CourseTemplateLearningOutcome.objects.create(
+            code="LO1",
+            description="Basics",
+            course_template=template,
+        )
+
+        first_response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+        second_response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+
+        assert first_response.status_code == 201
+        assert second_response.status_code == 200
+        assert second_response.data["id"] == first_response.data["id"]
+        assert Course.objects.filter(code="CHE 101", program=db_setup["program"], term=db_setup["term"]).count() == 1
+        course = Course.objects.get(id=first_response.data["id"])
+        assert course.learning_outcomes.count() == 1
+
     def test_instructor_with_full_courses_permission_can_instantiate(self, api_client, db_setup, instructor_user_factory):
         instructor_user = instructor_user_factory(username="template_instructor")
         profile = instructor_user.instructor_profile
