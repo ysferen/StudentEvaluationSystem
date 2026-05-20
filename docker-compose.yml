@@ -33,6 +33,7 @@ services:
 
   celery_worker:
     build: ./backend
+    image: ghcr.io/ysferen/ses-backend:latest
     container_name: ses-celery-worker
     command: uv run celery --workdir student_evaluation_system -A student_evaluation_system worker -Q celery -c 4 --loglevel=info
     volumes:
@@ -53,6 +54,7 @@ services:
 
   celery_worker_ml:
     build: ./backend
+    image: ghcr.io/ysferen/ses-backend:latest
     container_name: ses-celery-worker-ml
     command: uv run celery --workdir student_evaluation_system -A student_evaluation_system worker -Q ml_queue --pool=solo --loglevel=info
     volumes:
@@ -79,6 +81,7 @@ services:
 
   backend:
     build: ./backend
+    image: ghcr.io/ysferen/ses-backend:latest
     container_name: ses-backend
     volumes:
       - ./backend:/app
@@ -103,6 +106,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: ghcr.io/ysferen/ses-frontend:latest
     container_name: ses-frontend
     volumes:
       - ./frontend:/app
