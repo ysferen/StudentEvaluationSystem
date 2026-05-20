@@ -25,7 +25,7 @@ User = get_user_model()
 
 
 def _compute_student_lo_scores(student_id, assessments, learning_outcomes, matrix_map, assessment_mapping_totals, grade_map):
-    """Compute LO scores for a single student using normalized mapping weights."""
+    """Compute LO scores for a single student using normalized assessment-LO mapping weights."""
     lo_score_objects = []
     for lo in learning_outcomes:
         total_score = 0
@@ -38,7 +38,7 @@ def _compute_student_lo_scores(student_id, assessments, learning_outcomes, matri
                 normalized_mapping_weight = mapping_weight / ass_total
             else:
                 normalized_mapping_weight = 0
-            weight = (assessment.weight or 0) * normalized_mapping_weight
+            weight = normalized_mapping_weight
             if weight > 0:
                 score = grade_map.get((student_id, assessment.id), 0) or 0
                 total_score += score * weight
@@ -60,9 +60,9 @@ def calculate_course_scores(course_id: int) -> Dict[str, Any]:
     4. Stores scores in the database (replacing old LO values for this course)
 
     The calculation uses weighted aggregation where:
-    - Each assessment has a weight (e.g., Midterm 30%, Final 40%)
-    - Each assessment-LO mapping has a weight (contribution to that LO)
-    - Final LO score = Σ(assessment_score × assessment_weight × mapping_weight) / Σ(weights)
+    - Assessment-LO mappings define contribution to each LO
+    - Assessment GPA weights are intentionally ignored for LO scoring
+    - Final LO score = Σ(assessment_score × mapping_weight) / Σ(mapping_weights)
 
     Args:
         course_id (int): ID of the course to calculate scores for.

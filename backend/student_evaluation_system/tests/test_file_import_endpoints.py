@@ -589,3 +589,38 @@ class TestUploadEndpoint:
         assert len(data["recompute_jobs"]) >= 1
         assert data["recompute_jobs"][0]["status"] in {"pending", "failed"}
         assert "message" in data
+
+    @pytest.mark.django_db
+    @patch("evaluation.tasks.recompute_course_scores_task.delay")
+    def test_upload_accepts_space_separated_course_code_in_query(
+        self, delay_mock, api_client, course, term, student, assessments
+    ):
+        class DummyAsyncResult:
+            id = "test-celery-task-id"
+
+        delay_mock.return_value = DummyAsyncResult()
+        course.code = "BME 224"
+        course.save(update_fields=["code"])
+
+        df = pd.DataFrame(
+            {
+                "öğrenci no": [student.student_profile.student_id],
+                "adı": [student.first_name],
+                "soyadı": [student.last_name],
+                "Midterm Exam(%30)_0833AB": [85.5],
+                "Final Exam(%40)_0833AB": [90.0],
+                "Project(%30)_0833AB": [88.0],
+            }
+        )
+        buffer = create_excel_buffer(df)
+        buffer.name = "upload_space_course_code_scores.xlsx"
+
+        response = api_client.post(
+            f"/api/v1/core/file-import/assignment-scores/upload/?course_code=BME+224&term_id={term.id}",
+            {"file": buffer},
+            format="multipart",
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.data["created"]["grades"] == 3
+        assert "Invalid input parameters" not in str(response.data)

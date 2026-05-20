@@ -311,6 +311,7 @@ const HeadCourses = () => {
       <NextTermModal
         isOpen={isNextTermModalOpen}
         onClose={() => setIsNextTermModalOpen(false)}
+        programId={userProgramId}
       />
       <ProgramTemplateImportModal
         isOpen={isTemplateImportModalOpen}
