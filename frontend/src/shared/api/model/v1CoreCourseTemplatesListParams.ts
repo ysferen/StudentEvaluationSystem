@@ -15,4 +15,8 @@ page?: number;
  * Filter templates by program ID
  */
 program?: number;
+/**
+ * Search templates by code or name
+ */
+search?: string;
 };

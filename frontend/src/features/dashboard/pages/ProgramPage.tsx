@@ -16,7 +16,7 @@ import Modal from '@/components/ui/custom/Modal'
 import { LearningOutcomesPanel } from '@/features/courses/components/LearningOutcomesPanel'
 import type { BoxPlotData } from '@/features/courses/components/BoxPlotChart'
 import type { HeatmapData } from '@/features/courses/components/StudentHeatmap'
-import { coreCoursesList, coreStudentPoScoresList, useCoreTermsActiveRetrieve } from '@/shared/api/generated/core/core'
+import { coreCoursesList, useCoreTermsActiveRetrieve } from '@/shared/api/generated/core/core'
 import { useCoreAnalyticsProgramStatsRetrieve } from '@/shared/api/generated/analytics/analytics'
 import {
   coreProgramOutcomesList,
@@ -24,9 +24,25 @@ import {
   useCoreProgramOutcomesDestroy,
   useCoreProgramOutcomesPartialUpdate,
 } from '@/shared/api/generated/outcomes/outcomes'
+import { coreStudentPoScoresList } from '@/shared/api/generated/scores/scores'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { downloadReportPdf } from '@/shared/api/reportDownloads'
-import type { ProgramOutcome, StudentProgramOutcomeScore } from '@/shared/api/model'
+import type { CoreStudentPoScoresListParams, ProgramOutcome, StudentProgramOutcomeScore } from '@/shared/api/model'
+
+const fetchAllStudentPoScores = async (params: Omit<CoreStudentPoScoresListParams, 'page'>) => {
+  const results: StudentProgramOutcomeScore[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const response = await coreStudentPoScoresList({ ...params, page })
+    results.push(...(response.results || []))
+    hasNextPage = Boolean(response.next)
+    page += 1
+  }
+
+  return results
+}
 
 const getQuantile = (arr: number[], q: number): number => {
   const pos = (arr.length - 1) * q
@@ -247,11 +263,14 @@ const ProgramPage = () => {
   })
 
   const { data: poScoresData = [], isLoading: poScoresLoading } = useQuery({
-    queryKey: ['program-page-po-scores'],
+    queryKey: ['program-page-po-scores', primaryProgramId, activeTerm?.id],
     queryFn: async () => {
-      const response = await coreStudentPoScoresList()
-      return response.results || []
+      return fetchAllStudentPoScores({
+        program: primaryProgramId,
+        term: activeTerm?.id,
+      })
     },
+    enabled: !!primaryProgramId && !!activeTerm?.id,
   })
 
   const totalCredits = useMemo(

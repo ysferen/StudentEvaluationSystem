@@ -6,7 +6,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { useQueries } from '@tanstack/react-query'
 import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
-import { coreStudentPoScoresList } from '../../../shared/api/generated/core/core'
+import { coreStudentPoScoresList } from '../../../shared/api/generated/scores/scores'
 import type { CourseEnrollment, StudentProgramOutcomeScore } from '../../../shared/api/model'
 
 const StudentDashboard = () => {
