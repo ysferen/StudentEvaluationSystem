@@ -4,6 +4,38 @@ from core.models import Course, LearningOutcome, Program, ProgramOutcome, Studen
 from evaluation.models import CourseEnrollment, StudentGrade
 
 
+def get_academic_cycle_start_year(term_or_academic_year, semester=None):
+    """
+    Return the academic-year start for a term.
+
+    The app stores Güz 2025-2026 as academic_year=2025 and Bahar
+    2025-2026 as academic_year=2026. For cohort/year-level math those
+    are the same academic cycle, so both must normalize to 2025.
+    """
+    if hasattr(term_or_academic_year, "academic_year"):
+        academic_year = term_or_academic_year.academic_year
+        semester = term_or_academic_year.semester
+    else:
+        academic_year = term_or_academic_year
+
+    if academic_year is None:
+        return None
+
+    return academic_year - 1 if semester in {"spring", "summer"} else academic_year
+
+
+def calculate_student_year_level(active_term, enrollment_academic_year, enrollment_semester, duration_years):
+    active_cycle = get_academic_cycle_start_year(active_term)
+    enrollment_cycle = get_academic_cycle_start_year(enrollment_academic_year, enrollment_semester)
+    if active_cycle is None or enrollment_cycle is None:
+        return None
+
+    year_level = active_cycle - enrollment_cycle + 1
+    if 1 <= year_level <= duration_years:
+        return year_level
+    return None
+
+
 def calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years, active_term=None):
     """Calculate year-level breakdown for a program's enrolled students."""
     active_term = active_term or get_active_term()
@@ -17,7 +49,11 @@ def calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years, acti
     enrolled_students = list(
         CourseEnrollment.objects.filter(course_id__in=prog_course_ids, status="active")
         .order_by()
-        .values("student_id", "student__student_profile__enrollment_term__academic_year")
+        .values(
+            "student_id",
+            "student__student_profile__enrollment_term__academic_year",
+            "student__student_profile__enrollment_term__semester",
+        )
         .distinct()
     )
 
@@ -26,12 +62,12 @@ def calculate_year_level_breakdown(prog_course_ids, po_ids, duration_years, acti
 
     for enrollment in enrolled_students:
         enrollment_ay = enrollment.get("student__student_profile__enrollment_term__academic_year")
-        if enrollment_ay is None:
+        enrollment_semester = enrollment.get("student__student_profile__enrollment_term__semester")
+        year_level = calculate_student_year_level(active_term, enrollment_ay, enrollment_semester, duration_years)
+        if year_level is None:
             continue
-        year_level = active_term.academic_year - enrollment_ay + 1
-        if 1 <= year_level <= duration_years:
-            year_buckets[year_level]["student_count"] += 1
-            students_by_year[year_level].append(enrollment["student_id"])
+        year_buckets[year_level]["student_count"] += 1
+        students_by_year[year_level].append(enrollment["student_id"])
 
     for year_num in range(1, duration_years + 1):
         avg_score = None
@@ -77,7 +113,11 @@ def get_enrolled_students_by_year(prog_course_ids, duration_years, active_term):
     enrolled_students = list(
         CourseEnrollment.objects.filter(course_id__in=prog_course_ids, status="active")
         .order_by()
-        .values("student_id", "student__student_profile__enrollment_term__academic_year")
+        .values(
+            "student_id",
+            "student__student_profile__enrollment_term__academic_year",
+            "student__student_profile__enrollment_term__semester",
+        )
         .distinct()
     )
 
@@ -85,11 +125,11 @@ def get_enrolled_students_by_year(prog_course_ids, duration_years, active_term):
 
     for enrollment in enrolled_students:
         enrollment_ay = enrollment.get("student__student_profile__enrollment_term__academic_year")
-        if enrollment_ay is None:
+        enrollment_semester = enrollment.get("student__student_profile__enrollment_term__semester")
+        year_level = calculate_student_year_level(active_term, enrollment_ay, enrollment_semester, duration_years)
+        if year_level is None:
             continue
-        year_level = active_term.academic_year - enrollment_ay + 1
-        if 1 <= year_level <= duration_years:
-            students_by_year[year_level].append(enrollment["student_id"])
+        students_by_year[year_level].append(enrollment["student_id"])
 
     return students_by_year
 

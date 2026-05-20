@@ -121,6 +121,7 @@ const InstructorDashboard = () => {
 
   const currentAnalytics = analyticsQueries[currentIndex]
   const analyticsError = currentAnalytics?.isError ?? false
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'there'
 
   const analyticsMap = useMemo(() => {
     const map = new Map<number, CourseAnalytics>()
@@ -268,7 +269,7 @@ const InstructorDashboard = () => {
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-primary-800 p-8 text-white shadow-lg">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">Instructor Dashboard</h1>
+              <h1 className="text-3xl font-bold mb-2">Welcome, {displayName}</h1>
               <p className="text-primary-100 text-lg">Cross-course insight summary and selected-course detail</p>
             </div>
           </div>

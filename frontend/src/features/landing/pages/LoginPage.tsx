@@ -101,7 +101,7 @@ const LoginPage = () => {
               <div>
                 <span className="font-semibold">Head:</span>
                 <br />
-                headuser / head123
+                headusercse / head123
               </div>
               <div>
                 <span className="font-semibold">Lecturer 1:</span>

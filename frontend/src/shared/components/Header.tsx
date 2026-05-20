@@ -11,10 +11,9 @@ import { useState, useRef, useEffect } from 'react'
 
 interface HeaderProps {
     setSidebarOpen: (isOpen: boolean) => void
-    showOnlyCoreItems?: boolean
 }
 
-export const Header = ({ setSidebarOpen, showOnlyCoreItems = false }: HeaderProps) => {
+export const Header = ({ setSidebarOpen }: HeaderProps) => {
     const { user, logout } = useAuth()
     const [menuOpen, setMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement | null>(null)
@@ -59,7 +58,7 @@ export const Header = ({ setSidebarOpen, showOnlyCoreItems = false }: HeaderProp
 
     return (
         <header className="fixed inset-x-0 top-0 h-16 bg-white/80 backdrop-blur-md border-b border-secondary-200 z-[50]">
-            <div className={`h-full px-4 sm:px-6 flex items-center justify-between relative ${showOnlyCoreItems ? 'lg:px-8' : 'lg:pl-0 lg:pr-8'}`}>
+            <div className="h-full px-4 sm:px-6 flex items-center justify-between relative lg:pl-0 lg:pr-8">
                 {/* Mobile menu button */}
                 <button
                     onClick={() => setSidebarOpen(true)}
@@ -71,20 +70,11 @@ export const Header = ({ setSidebarOpen, showOnlyCoreItems = false }: HeaderProp
 
                 {/* Logo (left) and Navigation buttons */}
                 <div className="flex items-center">
-                    {showOnlyCoreItems ? (
-                        <>
-                            <Link to="/" className="hidden sm:flex items-center mr-4">
-                                <span className="text-xl font-bold text-secondary-900 tracking-tight">SES</span>
-                            </Link>
-                            <div className="hidden sm:block h-12 self-center border-l border-secondary-200 mr-4 lg:hidden" aria-hidden="true" />
-                        </>
-                    ) : (
-                        <div className="hidden sm:flex h-full w-[var(--sidebar-width)] shrink-0 items-center px-4 lg:pr-6 lg:mr-6 lg:border-r lg:border-secondary-200">
-                            <Link to="/" className="flex items-center px-4">
-                                <span className="text-xl font-bold text-secondary-900 tracking-tight">SES</span>
-                            </Link>
-                        </div>
-                    )}
+                    <div className="hidden sm:flex h-full w-[var(--sidebar-width)] shrink-0 items-center px-4 lg:pr-6 lg:mr-6 lg:border-r lg:border-secondary-200">
+                        <Link to="/" className="flex items-center px-4">
+                            <span className="text-xl font-bold text-secondary-900 tracking-tight">SES</span>
+                        </Link>
+                    </div>
                     <div className="flex-1 flex items-center space-x-6">
                     {navItems.map((item) => (
                         <NavLink

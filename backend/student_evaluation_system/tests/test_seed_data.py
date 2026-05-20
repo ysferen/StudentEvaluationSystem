@@ -1,5 +1,6 @@
 import pytest
 
+from core.management.commands import data
 from core.models import (
     InstructorPermission,
     PermissionTier,
@@ -13,7 +14,7 @@ from core.models import (
     Course,
     ProgramOutcome,
 )
-from evaluation.models import AssessmentLearningOutcomeMapping
+from evaluation.models import Assessment, AssessmentLearningOutcomeMapping
 from users.models import CustomUser, InstructorProfile, ProgramHeadProfile
 
 
@@ -31,19 +32,21 @@ def seeded(django_db_blocker):
 
 class TestSeedAcademicStructure:
     def test_creates_university(self, db, seeded):
-        assert University.objects.filter(name="Acıbadem University").exists()
+        assert University.objects.filter(name=data.UNIVERSITIES[0]).exists()
 
     def test_creates_department_linked_to_university(self, db, seeded):
-        uni = University.objects.get(name="Acıbadem University")
+        primary_department = data.DEPARTMENTS[0]
+        uni = University.objects.get(name=primary_department["university"])
         dept = Department.objects.filter(name__icontains="Mühendislik", university=uni).first()
         assert dept is not None
-        assert dept.code == "ENS"
+        assert dept.code == primary_department["code"]
 
     def test_creates_degree_and_program(self, db, seeded):
         assert DegreeLevel.objects.filter(name="Lisans").exists()
+        primary_program = data.PROGRAMS[0]
         program = Program.objects.filter(code="CSE").first()
         assert program is not None
-        assert program.department.code == "ENS"
+        assert program.department.code == primary_program["department"]
 
     def test_creates_terms_with_academic_years(self, db, seeded):
         terms = Term.objects.all()
@@ -56,7 +59,7 @@ class TestSeedAcademicStructure:
 
 class TestSeedCreatesProgramHead:
     def test_program_head_user_and_profile_exist(self, db, seeded):
-        head_user = CustomUser.objects.filter(username="headuser").first()
+        head_user = CustomUser.objects.filter(username="headusercse").first()
         assert head_user is not None
         assert head_user.role == "program_head"
         assert ProgramHeadProfile.objects.filter(user=head_user).exists()
@@ -141,6 +144,13 @@ class TestSeedLearningOutcomesAndAssessments:
             if course.assessments.count() == 0:
                 courses_without_assessments.append(course.code)
         assert not courses_without_assessments, f"Courses missing assessments: {courses_without_assessments}"
+
+    def test_assessments_have_turkish_descriptions(self, db, seeded):
+        missing_descriptions = [
+            assessment.name for assessment in Assessment.objects.all() if not assessment.description.strip()
+        ]
+        assert not missing_descriptions, f"Assessments missing descriptions: {missing_descriptions}"
+        assert Assessment.objects.filter(description__icontains="değerlendirir").exists()
 
     def test_assessments_are_mapped_to_learning_outcomes(self, db, seeded):
         assert AssessmentLearningOutcomeMapping.objects.count() >= 1, "Should create at least one assessment-LO mapping"

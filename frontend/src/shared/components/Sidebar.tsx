@@ -40,42 +40,49 @@ const courseDetailNavigation: NavItem[] = [
     { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
+const studentCourseDetailNavigation: NavItem[] = [
+    { name: 'Assessments', href: '#assessments', icon: DocumentTextIcon },
+    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
+    { name: 'Analytics', href: '#analytics', icon: ChartPieIcon },
+]
+
+const programPageNavigation: NavItem[] = [
+    { name: 'Overview', href: '#overview', icon: BuildingOfficeIcon },
+    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
+    { name: 'Year Levels', href: '#year-levels', icon: UsersIcon },
+    { name: 'Analytics', href: '#analytics', icon: ChartPieIcon },
+    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+]
+
 const roleConfig: Record<Role, RoleNavigation> = {
     student: {
         default: [
-            { name: 'Analytics', href: '/student/analytics', icon: ChartBarIcon },
-            { name: 'Assignments', href: '/student/assignments', icon: ClipboardDocumentListIcon },
-            { name: 'Outcomes', href: '/student/outcomes', icon: ChartPieIcon },
+            { name: 'Dashboard', href: '/student', icon: HomeIcon },
+            { name: 'Courses', href: '/student/courses', icon: ClipboardDocumentListIcon },
         ],
     },
     instructor: {
         default: [
-            { name: 'Assessments', href: '/instructor/assessments', icon: DocumentTextIcon },
-            { name: 'Outcomes', href: '/instructor/outcomes', icon: ChartBarIcon },
-            { name: 'Students', href: '/instructor/students', icon: UsersIcon },
-            { name: 'Analytics', href: '/instructor/analytics', icon: ChartBarIcon },
+            { name: 'Dashboard', href: '/instructor', icon: HomeIcon },
+            { name: 'Courses', href: '/instructor/courses', icon: ClipboardDocumentListIcon },
         ],
         courseDetail: courseDetailNavigation,
     },
     program_head: {
         default: [
-            { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
-            { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
-            { name: 'Students', href: '/head/students', icon: UsersIcon },
-            { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+            { name: 'Dashboard', href: '/head', icon: HomeIcon },
+            { name: 'Program', href: '/head/program', icon: BuildingOfficeIcon },
+            { name: 'Courses', href: '/head/courses', icon: ClipboardDocumentListIcon },
             { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
-            { name: 'My Department', href: '/head/analytics', icon: BuildingOfficeIcon },
         ],
         courseDetail: courseDetailNavigation,
     },
     admin: {
         default: [
-            { name: 'Assessments', href: '/head/assessments', icon: DocumentTextIcon },
-            { name: 'Outcomes', href: '/head/outcomes', icon: ChartBarIcon },
-            { name: 'Students', href: '/head/students', icon: UsersIcon },
-            { name: 'Analytics', href: '/head/analytics', icon: ChartBarIcon },
+            { name: 'Dashboard', href: '/head', icon: HomeIcon },
+            { name: 'Program', href: '/head/program', icon: BuildingOfficeIcon },
+            { name: 'Courses', href: '/head/courses', icon: ClipboardDocumentListIcon },
             { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
-            { name: 'All Departments', href: '/head/analytics', icon: BuildingOfficeIcon },
         ],
         courseDetail: courseDetailNavigation,
     },
@@ -84,20 +91,31 @@ const roleConfig: Record<Role, RoleNavigation> = {
     },
 }
 
-const getNavigationForRole = (role: string | null, isCourseDetailPage: boolean): NavItem[] => {
+const getNavigationForRole = (role: string | null): NavItem[] => {
     if (!role) return [{ name: 'Dashboard', href: '/', icon: HomeIcon }]
     const config = roleConfig[role as Role]
     if (!config) return []
-    return isCourseDetailPage ? (config.courseDetail ?? config.default) : config.default
+    return config.default
 }
 
 export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: SidebarProps) => {
     const { user } = useAuth()
     const location = useLocation()
-    const isCourseDetailPage = /^\/(instructor|head)\/course\/\d+\/?$/.test(location.pathname)
+    const isStaffCourseDetailPage = /^\/(instructor|head)\/course\/[^/]+\/?$/.test(location.pathname)
+    const isStudentCourseDetailPage = /^\/student\/courses\/[^/]+\/?$/.test(location.pathname)
+    const isProgramPage = /^\/head\/program\/?$/.test(location.pathname)
+    const isPageLocalNavigation = isStaffCourseDetailPage || isStudentCourseDetailPage || isProgramPage
 
     let navigation: NavItem[] = []
-    navigation = showOnlyCoreItems ? [] : getNavigationForRole(user?.role || null, isCourseDetailPage)
+    if (isStaffCourseDetailPage) {
+        navigation = courseDetailNavigation
+    } else if (isStudentCourseDetailPage) {
+        navigation = studentCourseDetailNavigation
+    } else if (isProgramPage) {
+        navigation = programPageNavigation
+    } else {
+        navigation = getNavigationForRole(user?.role || null)
+    }
 
     const inAccountArea = location.pathname.startsWith('/settings') || location.pathname.startsWith('/security')
     if (inAccountArea) {
@@ -105,7 +123,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
             { name: 'Account', href: '/settings', icon: Cog6ToothIcon },
             { name: 'Security', href: '/security', icon: ShieldCheckIcon },
         ]
-    } else if (user && !showOnlyCoreItems && !isCourseDetailPage) {
+    } else if (user && !isPageLocalNavigation) {
         const hasSettings = navigation.some(n => n.href === '/settings' || n.name === 'Settings')
         if (!hasSettings) {
             navigation.push({ name: 'Settings', href: '/settings', icon: Cog6ToothIcon })
@@ -126,7 +144,7 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
             <aside className={clsx(
                 "fixed inset-y-0 left-0 z-30 w-[var(--sidebar-width)] bg-white/80 backdrop-blur-md border-r border-secondary-200 transform transition-transform duration-300 ease-in-out lg:top-16 lg:bottom-0 lg:translate-x-0",
                 isOpen ? 'translate-x-0' : '-translate-x-full'
-            )}>
+            )} data-core-only={showOnlyCoreItems || undefined}>
                 <div className="min-h-full flex flex-col">
 
                     {/* Navigation */}
