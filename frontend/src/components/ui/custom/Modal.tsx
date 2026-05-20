@@ -31,7 +31,7 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className={sizeClasses[size]} showCloseButton={false}>
+      <DialogContent className={`${sizeClasses[size]} flex max-h-[90vh] flex-col overflow-hidden`} showCloseButton={false}>
         <DialogHeader className="flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
           <button
@@ -41,7 +41,9 @@ const Modal: React.FC<ModalProps> = ({
             <X className="h-5 w-5" />
           </button>
         </DialogHeader>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   )

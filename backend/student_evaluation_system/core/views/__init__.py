@@ -48,6 +48,7 @@ from .file_import import (
     LearningOutcomesImportViewSet,
     ProgramOutcomesImportViewSet,
     FileUploadRateThrottle,
+    ProgramTemplatesImportViewSet,
 )
 
 # Permissions
@@ -84,6 +85,7 @@ __all__ = [
     "AssignmentScoresImportViewSet",
     "LearningOutcomesImportViewSet",
     "ProgramOutcomesImportViewSet",
+    "ProgramTemplatesImportViewSet",
     "FileUploadRateThrottle",
     # Permissions
     "InstructorPermissionViewSet",

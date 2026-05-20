@@ -3,7 +3,7 @@ import Modal from '@/components/ui/custom/Modal'
 import {
   useCoreCoursesCreate,
   useCoreCoursesPartialUpdate,
-  useCoreCourseTemplatesList,
+  useCoreCourseTemplatesListInfinite,
   useCoreCourseTemplatesInstantiateCreate,
   useCoreCourseTemplatesCreate,
   useCoreProgramsList,
@@ -37,6 +37,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
   const [termOption, setTermOption] = useState<'active' | 'select'>('active')
   const [termId, setTermId] = useState<number | ''>('')
   const [courseTemplateId, setCourseTemplateId] = useState<number | ''>('')
+  const [templateSearch, setTemplateSearch] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState<CourseTemplate | null>(null)
   const [instructorIds, setInstructorIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [showTemplatePrompt, setShowTemplatePrompt] = useState(false)
@@ -70,17 +72,6 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     query: { enabled: isOpen && termOption === 'active' }
   })
 
-  const { data: templatesData } = useCoreCourseTemplatesList(undefined, {
-    query: { enabled: isOpen && flowType === 'template' }
-  })
-
-  const selectedTemplate = useMemo(() => {
-    if (flowType !== 'template' || courseTemplateId === '' || !templatesData?.results) {
-      return null
-    }
-    return templatesData.results.find((t: CourseTemplate) => t.id === Number(courseTemplateId)) ?? null
-  }, [courseTemplateId, flowType, templatesData])
-
   const myProgramId = useMemo(() => {
     if (profileProgramId) return profileProgramId
     if (flowType === 'template' && selectedTemplate) {
@@ -88,6 +79,45 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     }
     return null
   }, [flowType, profileProgramId, selectedTemplate])
+
+  const templateListParams = useMemo(() => {
+    const trimmedSearch = templateSearch.trim()
+    return {
+      ...(profileProgramId ? { program: profileProgramId } : {}),
+      ...(trimmedSearch ? { search: trimmedSearch } : {}),
+    }
+  }, [profileProgramId, templateSearch])
+
+  const {
+    data: templatesData,
+    fetchNextPage: fetchNextTemplatePage,
+    hasNextPage: hasNextTemplatePage,
+    isFetching: isFetchingTemplates,
+    isFetchingNextPage: isFetchingNextTemplatePage,
+  } = useCoreCourseTemplatesListInfinite(templateListParams as { program?: number; search?: string }, {
+    query: {
+      enabled: isOpen && flowType === 'template',
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) => {
+        if (!lastPage.next) return undefined
+        const nextUrl = new URL(lastPage.next, window.location.origin)
+        const page = Number(nextUrl.searchParams.get('page'))
+        return Number.isFinite(page) ? page : undefined
+      },
+    },
+  })
+
+  const templateOptions = useMemo(() => {
+    const byId = new Map<number, CourseTemplate>()
+    templatesData?.pages?.forEach((page) => {
+      page.results?.forEach((template) => {
+        if (typeof template.id === 'number') {
+          byId.set(template.id, template)
+        }
+      })
+    })
+    return Array.from(byId.values())
+  }, [templatesData])
 
   // Auto-populate name/code/credits when a template is selected
   useEffect(() => {
@@ -155,6 +185,8 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
     setTermOption('active')
     setTermId('')
     setCourseTemplateId('')
+    setTemplateSearch('')
+    setSelectedTemplate(null)
     setError(null)
     setShowTemplatePrompt(false)
     setTemplatePromptCourse(null)
@@ -291,7 +323,11 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
                 type="radio"
                 value="blank"
                 checked={flowType === 'blank'}
-                onChange={() => setFlowType('blank')}
+                onChange={() => {
+                  setFlowType('blank')
+                  setCourseTemplateId('')
+                  setSelectedTemplate(null)
+                }}
                 className="text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-secondary-700">Blank</span>
@@ -310,18 +346,79 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
         </div>
 
         {flowType === 'template' && (
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1">Course Template</label>
-            <select
-              value={courseTemplateId}
-              onChange={(e) => setCourseTemplateId(e.target.value === '' ? '' : Number(e.target.value))}
+          <div className="space-y-2">
+            <label htmlFor="templateSearch" className="block text-sm font-medium text-secondary-700">
+              Course Template
+            </label>
+            <input
+              id="templateSearch"
+              type="search"
+              value={templateSearch}
+              onChange={(event) => setTemplateSearch(event.target.value)}
               className={inputClass}
-            >
-              <option value="">Select a template...</option>
-              {templatesData?.results?.map((t) => (
-                <option key={t.id} value={t.id}>{t.code} - {t.name}</option>
+              placeholder="Search by code or name..."
+            />
+            {selectedTemplate && (
+              <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-primary-900">
+                      {selectedTemplate.code} - {selectedTemplate.name}
+                    </p>
+                    <p className="text-xs text-primary-700">{selectedTemplate.credits ?? 3} credits</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCourseTemplateId('')
+                      setSelectedTemplate(null)
+                      setName('')
+                      setCode('')
+                      setCredits(3)
+                    }}
+                    className="text-xs font-medium text-primary-700 hover:text-primary-900"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="max-h-52 min-h-0 overflow-y-auto rounded-xl border border-secondary-200">
+              {templateOptions.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => {
+                    setCourseTemplateId(template.id)
+                    setSelectedTemplate(template)
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm hover:bg-secondary-50 ${
+                    courseTemplateId === template.id ? 'bg-primary-50' : ''
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words font-medium text-secondary-900">{template.code} - {template.name}</span>
+                    <span className="text-xs text-secondary-500">{template.credits ?? 3} credits</span>
+                  </span>
+                  {courseTemplateId === template.id && <span className="text-xs font-semibold text-primary-700">Selected</span>}
+                </button>
               ))}
-            </select>
+              {templateOptions.length === 0 && (
+                <p className="px-4 py-3 text-sm text-secondary-500">
+                  {isFetchingTemplates ? 'Loading templates...' : 'No templates found.'}
+                </p>
+              )}
+            </div>
+            {hasNextTemplatePage && (
+              <button
+                type="button"
+                onClick={() => fetchNextTemplatePage()}
+                disabled={isFetchingNextTemplatePage}
+                className="w-full rounded-lg border border-secondary-300 px-3 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isFetchingNextTemplatePage ? 'Loading...' : 'Load more templates'}
+              </button>
+            )}
           </div>
         )}
 
