@@ -38,6 +38,9 @@ import type {
   Course,
   CourseInstructorsItem,
   CoreLearningOutcome,
+  EvaluationGradesListParams,
+  PaginatedStudentGradeList,
+  StudentGrade,
   StudentLearningOutcomeScore,
 } from '../../../shared/api/model'
 
@@ -57,6 +60,50 @@ interface StudentDetail {
   overallScore: number | null
   assessmentScores: { name: string; score: number }[]
   loScores: { code: string; score: number }[]
+}
+
+type CourseAssignment = {
+  id: number
+  name: string
+  assessment_type?: string
+  total_score?: number
+  weight?: number
+  description?: string
+  date?: string
+}
+
+type CourseGradesData = Omit<PaginatedStudentGradeList, 'results'> & {
+  results: StudentGrade[]
+  assignments?: CourseAssignment[]
+  course_average?: number | null
+}
+
+const fetchAllCourseGrades = async (
+  params: Omit<EvaluationGradesListParams, 'page'>
+): Promise<CourseGradesData> => {
+  const results: StudentGrade[] = []
+  let page = 1
+  let firstPage: CourseGradesData | null = null
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const response = await evaluationGradesList({ ...params, page }) as CourseGradesData
+    if (!firstPage) {
+      firstPage = response
+    }
+    results.push(...(response.results || []))
+    hasNextPage = Boolean(response.next)
+    page += 1
+  }
+
+  return {
+    count: firstPage?.count ?? results.length,
+    next: null,
+    previous: null,
+    assignments: firstPage?.assignments ?? [],
+    course_average: firstPage?.course_average ?? null,
+    results,
+  }
 }
 
 const getInstructorName = (instructor: CourseInstructorsItem): string => {
@@ -285,16 +332,25 @@ const CourseDetail = () => {
 
   const { data: gradesData } = useQuery({
     queryKey: ['grades', courseId],
-    queryFn: async () => {
-      if (!courseId) return { results: [] }
-      const resp = await evaluationGradesList({ course: Number(courseId) })
+    queryFn: async (): Promise<CourseGradesData> => {
+      if (!courseId) {
+        return {
+          count: 0,
+          next: null,
+          previous: null,
+          assignments: [],
+          course_average: null,
+          results: [],
+        }
+      }
+      const resp = await fetchAllCourseGrades({ course: Number(courseId) })
       return resp
     },
     enabled: !!courseId
   })
 
   const assignments = useMemo(() => {
-    return (gradesData as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }> })?.assignments || []
+    return gradesData?.assignments || []
   }, [gradesData])
 
   const { data: enrollmentsData, error: enrollmentsError } = useQuery({
