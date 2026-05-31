@@ -1169,7 +1169,11 @@ const CourseDetail = () => {
             <div>
               <h3 className="text-sm font-semibold text-secondary-800 mb-2">Assessment Scores</h3>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full table-fixed border-collapse text-sm">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment</th>
@@ -1193,7 +1197,11 @@ const CourseDetail = () => {
             <div>
               <h3 className="text-sm font-semibold text-secondary-800 mb-2">Learning Outcome Scores</h3>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full table-fixed border-collapse text-sm">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Learning Outcome</th>

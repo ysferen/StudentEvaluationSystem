@@ -592,29 +592,25 @@ class FileImportService:
                 if not assessment_base_name:
                     raise ValueError("AssessmentType is required")
 
-                quantity = self._parse_positive_int(row["Quantity"], "Quantity")
                 total_weight = self._parse_percentage(row["Percentage"])
                 assessment_type = self._normalize_assessment_type(assessment_base_name)
-                per_assessment_weight = total_weight / quantity
                 existing_course = CourseTemplate.objects.filter(program=program, code=course_code).first()
 
-                for index in range(1, quantity + 1):
-                    assessment_name = assessment_base_name if quantity == 1 else f"{assessment_base_name} {index}"
-                    existing_assessment = None
-                    if existing_course is not None:
-                        existing_assessment = CourseTemplateAssessment.objects.filter(
-                            course_template=existing_course,
-                            name=assessment_name,
-                        ).first()
-                    course_preview["assessments"].append(
-                        {
-                            "name": assessment_name,
-                            "assessment_type": assessment_type,
-                            "total_score": 100,
-                            "weight": per_assessment_weight,
-                            "action": "update" if existing_assessment else "create",
-                        }
-                    )
+                existing_assessment = None
+                if existing_course is not None:
+                    existing_assessment = CourseTemplateAssessment.objects.filter(
+                        course_template=existing_course,
+                        name=assessment_base_name,
+                    ).first()
+                course_preview["assessments"].append(
+                    {
+                        "name": assessment_base_name,
+                        "assessment_type": assessment_type,
+                        "total_score": 100,
+                        "weight": total_weight,
+                        "action": "update" if existing_assessment else "create",
+                    }
+                )
             except Exception as e:
                 errors.append(f"AssessmentMethods row {row_number}: {str(e)}")
 
