@@ -474,6 +474,7 @@ class FileImportService:
         preview = self.preview_program_templates(program_id)
         created_counts = dict.fromkeys(preview["summary"]["created"].keys(), 0)
         updated_counts = dict.fromkeys(preview["summary"]["updated"].keys(), 0)
+        deleted_counts = {"course_template_assessments": 0}
 
         with transaction.atomic():
             course_templates = {}
@@ -500,6 +501,11 @@ class FileImportService:
                     target_counts = created_counts if created else updated_counts
                     target_counts["course_template_assessments"] += 1
 
+                assessment_names = [assessment_data["name"] for assessment_data in course_data["assessments"]]
+                stale_assessments = course_template.assessments.exclude(name__in=assessment_names)
+                deleted_counts["course_template_assessments"] += stale_assessments.count()
+                stale_assessments.delete()
+
                 for learning_outcome_data in course_data["learning_outcomes"]:
                     _, created = CourseTemplateLearningOutcome.objects.update_or_create(
                         course_template=course_template,
@@ -520,6 +526,7 @@ class FileImportService:
 
         self.import_results["created"] = created_counts
         self.import_results["updated"] = updated_counts
+        self.import_results["deleted"] = deleted_counts
         self.import_results["errors"] = preview["errors"]
         self.import_results["skipped"] = preview["skipped"]
         self.import_results["source_program"] = preview["source_program"]
@@ -999,7 +1006,7 @@ class FileImportService:
                             skipped_count += 1
                         continue
 
-                    score_float = score_result
+                    score_float = int(score_result + 0.5)
 
                     _, created = StudentGrade.objects.update_or_create(
                         student=student_user,

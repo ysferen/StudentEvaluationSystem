@@ -351,7 +351,7 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         if course_id:
             queryset = queryset.filter(assessment__course_id=course_id)
 
-        return queryset
+        return queryset.order_by("assessment_id", "student_id", "id")
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)

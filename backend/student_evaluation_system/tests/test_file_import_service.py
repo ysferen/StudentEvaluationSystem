@@ -111,6 +111,7 @@ class TestAssignmentScoresImport:
         assert "grades" in results["created"]
         assert results["created"]["grades"] > 0
         assert StudentGrade.objects.filter(student=student.user).count() == 3
+        assert StudentGrade.objects.get(student=student.user, assessment__name="Midterm Exam").score == 86
 
     def test_import_updates_existing_grades(self, db_setup, student_factory, sample_assessments):
         """Test that import updates existing grades."""
@@ -145,7 +146,7 @@ class TestAssignmentScoresImport:
         assert results["created"]["grades"] >= 0
 
         grade = StudentGrade.objects.get(student=student.user, assessment=assessments[0])
-        assert grade.score == 85.5
+        assert grade.score == 86
 
     def test_import_errors_on_unenrolled_students_by_default(self, db_setup, student_factory, sample_assessments):
         """Test that import errors when students are not enrolled unless explicitly resolved."""

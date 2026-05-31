@@ -161,6 +161,23 @@ class TestProgramTemplateImport:
         assert CourseTemplate.objects.get(code="CS101").name == "Advanced Algorithms"
         assert ProgramOutcomeTemplate.objects.get(code="PO1").description == "Updated program outcome"
 
+    def test_reimport_removes_stale_template_assessments(self, db_setup):
+        assignment_sheets = _valid_template_sheets()
+        assignment_sheets["AssessmentMethods"] = [
+            ["CourseCode", "AssessmentType", "Quantity", "Percentage"],
+            ["CS101", "Assignment", "10", "20"],
+            ["CS101", "Final Exam", "1", "40"],
+        ]
+        FileImportService(_spreadsheetml_upload(assignment_sheets)).import_program_templates(db_setup["program"].id)
+
+        result = FileImportService(_spreadsheetml_upload(_valid_template_sheets())).import_program_templates(
+            db_setup["program"].id
+        )
+
+        assessments = CourseTemplateAssessment.objects.order_by("name")
+        assert list(assessments.values_list("name", flat=True)) == ["Final Exam", "Midterm 1", "Midterm 2"]
+        assert result["deleted"]["course_template_assessments"] == 10
+
     def test_rejects_missing_required_sheet(self, db_setup):
         sheets = _valid_template_sheets()
         del sheets["LearningOutcomes"]

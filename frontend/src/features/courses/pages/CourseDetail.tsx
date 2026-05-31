@@ -18,7 +18,8 @@ import ConfirmDeleteModal from '@/components/ui/custom/ConfirmDeleteModal'
 import Modal from '@/components/ui/custom/Modal'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
-import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { evaluationGradesList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { fetchAllEvaluationEnrollments } from '@/shared/api/enrollments'
 import { downloadReportPdf } from '@/shared/api/reportDownloads'
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
@@ -213,8 +214,9 @@ const CourseDetail = () => {
   const courseTemplateId: number | null = (data as any)?.course?.course_template_id ?? null
 
   const handleUploadComplete = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['grades', courseId] })
     refetch()
-  }, [refetch])
+  }, [courseId, queryClient, refetch])
 
   const getInstructorNames = () => {
     if (!data?.course?.instructors || data.course.instructors.length === 0) {
@@ -357,7 +359,7 @@ const CourseDetail = () => {
     queryKey: ['enrollments', courseId],
     queryFn: async () => {
       if (!courseId) return { results: [] }
-      const resp = await evaluationEnrollmentsList({ course: Number(courseId) })
+      const resp = await fetchAllEvaluationEnrollments({ course: Number(courseId) })
       return resp
     },
     enabled: !!courseId
@@ -465,6 +467,7 @@ const CourseDetail = () => {
   const assessmentRadarData = useMemo(() => {
     const results = gradesData?.results || []
     const map = new Map<number, { name: string; scores: number[] }>()
+    const debugMap = new Map<number, { name: string; totalScore: number; rawScores: number[]; percentageScores: number[] }>()
     for (const grade of results) {
       const aId = grade.assessment.id
       if (!map.has(aId)) {
@@ -475,12 +478,49 @@ const CourseDetail = () => {
       const total = grade.assessment.total_score ?? 100
       const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
       entry.scores.push(pct)
+
+      if (!debugMap.has(aId)) {
+        debugMap.set(aId, {
+          name: grade.assessment.name,
+          totalScore: total,
+          rawScores: [],
+          percentageScores: [],
+        })
+      }
+      const debugEntry = debugMap.get(aId)
+      if (debugEntry) {
+        debugEntry.rawScores.push(grade.score)
+        debugEntry.percentageScores.push(pct)
+      }
     }
-    return Array.from(map.values()).map(a => ({
+    const averages = Array.from(map.values()).map(a => ({
       id: Array.from(map.keys()).find(k => map.get(k) === a) || 0,
       name: a.name,
       avg: a.scores.length > 0 ? Math.round((a.scores.reduce((s, v) => s + v, 0) / a.scores.length) * 10) / 10 : 0
     }))
+
+    if (import.meta.env.DEV) {
+      console.table(averages.map(assessment => {
+        const debugEntry = debugMap.get(assessment.id)
+        return {
+          id: assessment.id,
+          name: assessment.name,
+          count: debugEntry?.rawScores.length ?? 0,
+          totalScore: debugEntry?.totalScore,
+          rawAverage: debugEntry?.rawScores.length
+            ? debugEntry.rawScores.reduce((sum, score) => sum + score, 0) / debugEntry.rawScores.length
+            : 0,
+          percentageAverage: debugEntry?.percentageScores.length
+            ? debugEntry.percentageScores.reduce((sum, score) => sum + score, 0) / debugEntry.percentageScores.length
+            : 0,
+          displayedAverage: assessment.avg,
+          rawScores: debugEntry?.rawScores.join(', '),
+          percentageScores: debugEntry?.percentageScores.join(', '),
+        }
+      }))
+    }
+
+    return averages
   }, [gradesData])
 
   const unifiedAssessments = useMemo(() => {
