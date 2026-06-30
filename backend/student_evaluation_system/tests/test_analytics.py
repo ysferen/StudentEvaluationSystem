@@ -342,6 +342,45 @@ class TestCalculateGpaByYear:
         assert result[2]["gpa"] is None
         assert result[3]["gpa"] is None
 
+    def test_spring_active_term_uses_academic_cycle_for_year_level(
+        self, course_factory, assessment_factory, course_enrollment_factory
+    ):
+        from core.models import Program
+        from factories import DegreeLevelFactory, DepartmentFactory
+        from tests.factories import StudentUserFactory
+
+        active_term = Term.objects.create(
+            name="Bahar 2025-2026",
+            is_active=True,
+            academic_year=2026,
+            semester="spring",
+        )
+        enrollment_term = Term.objects.create(
+            name="Güz 2022-2023",
+            is_active=False,
+            academic_year=2022,
+            semester="fall",
+        )
+        dept = DepartmentFactory()
+        deg = DegreeLevelFactory()
+        program = Program.objects.create(
+            code="SPRING", name="Spring Term Year Test", degree_level=deg, department=dept, duration_years=4
+        )
+        course = course_factory(credits=3, program=program, term=active_term)
+        assessment = assessment_factory(course=course, total_score=100, weight=1.0)
+
+        student = StudentUserFactory()
+        student.student_profile.enrollment_term = enrollment_term
+        student.student_profile.save()
+        course_enrollment_factory(student=student, course=course, status="active")
+        StudentGrade.objects.create(student=student, assessment=assessment, score=85.0)
+
+        result = _calculate_gpa_by_year([course.id], program.duration_years, active_term=active_term)
+
+        assert result[3]["year"] == 4
+        assert result[3]["student_count"] == 1
+        assert result[3]["gpa"] == 3.50
+
     def test_student_with_enrollment_term_missing_academic_year_skipped(
         self, student_user_factory, course_factory, assessment_factory, course_enrollment_factory, _active_term
     ):

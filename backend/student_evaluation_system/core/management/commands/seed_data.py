@@ -1,3 +1,4 @@
+import hashlib
 import random
 import time
 from django.core.management.base import BaseCommand
@@ -65,14 +66,16 @@ class Command(BaseCommand):
         with transaction.atomic():
             # ── Academic structure ──
             self.stdout.write(f"\n[1/{step_count}] Creating academic structure...")
-            uni = University.objects.get_or_create(name="Acıbadem University")[0]
-            dept = Department.objects.get_or_create(
-                name="Mühendislik ve Doğa Bilimleri Fakültesi", code="ENS", university=uni
-            )[0]
-            degree = DegreeLevel.objects.get_or_create(name="Lisans")[0]
-            program = Program.objects.get_or_create(
-                name="Bilgisayar Mühendisliği (İngilizce)", code="CSE", department=dept, degree_level=degree
-            )[0]
+
+            universities = data.UNIVERSITIES
+            departments = data.DEPARTMENTS
+            degree_levels = data.DEGREE_LEVELS
+            programs = data.PROGRAMS
+
+            uni = self._create_universities(universities)[0]
+            dept = self._create_departments(departments)[0]
+            self._create_degree_levels(degree_levels)
+            program = self._create_programs(programs)[0]
             terms = self._create_terms()
             self.stdout.write(f"  ✓ {len(terms)} terms created")
 
@@ -120,6 +123,7 @@ class Command(BaseCommand):
 
                 # Assessments were already cloned from template — map them to LOs
                 for assessment in course.assessments.all():
+                    self._ensure_assessment_description(assessment)
                     self._create_assessment_lo_mappings(assessment, los)
                     all_assessments.append(assessment)
 
@@ -163,7 +167,7 @@ class Command(BaseCommand):
         admin, created = CustomUser.objects.get_or_create(
             username="admin",
             defaults={
-                "email": "admin@example.com",
+                "email": "admin@admin.com",
                 "first_name": "Admin",
                 "last_name": "User",
                 "is_staff": True,
@@ -191,10 +195,47 @@ class Command(BaseCommand):
         """
         offset = (semester_num - 1) // 2
         is_fall = (semester_num % 2) == 1
-        cal_year = cohort_start_cal_year + offset + (0 if is_fall else 1)
-        acad_year = cal_year + 1 if is_fall else cal_year
+        acad_year = cohort_start_cal_year + offset + (0 if is_fall else 1)
         sem = "fall" if is_fall else "spring"
         return (acad_year, sem)
+
+    @staticmethod
+    def _create_universities(universities: list[str]) -> list[University]:
+        results = []
+        for uni_name in universities:
+            uni, _ = University.objects.get_or_create(name=uni_name)
+            results.append(uni)
+        return results
+
+    @staticmethod
+    def _create_departments(departments: list[dict]) -> list[Department]:
+        results = []
+        for dept in departments:
+            name, code, uni_name = dept.values()
+            university = University.objects.get(name=uni_name)
+            dept, _ = Department.objects.get_or_create(name=name, code=code, university=university)
+            results.append(dept)
+        return results
+
+    @staticmethod
+    def _create_degree_levels(degree_levels: list[dict]) -> list[DegreeLevel]:
+        results = []
+        for degree_level in degree_levels:
+            name, level = degree_level.values()
+            degree_level_obj, _ = DegreeLevel.objects.get_or_create(name=name, level=level)
+            results.append(degree_level_obj)
+        return results
+
+    @staticmethod
+    def _create_programs(programs: list[dict]) -> list[Program]:
+        results = []
+        for prog in programs:
+            name, code, dept_code, degree_level = prog.values()
+            dept = Department.objects.get(code=dept_code)
+            degree = DegreeLevel.objects.get(level=degree_level)
+            prog, _ = Program.objects.get_or_create(name=name, code=code, department=dept, degree_level=degree)
+            results.append(prog)
+        return results
 
     def _create_terms(self):
         """Create terms from the oldest cohort's sem1 up to the active term.
@@ -203,24 +244,40 @@ class Command(BaseCommand):
         Year levels: 4/3/2/1 for senior/junior/sophomore/freshman.
         """
         oldest_start = data.FIRST_COHORT_START_YEAR - (data.NUM_COHORTS - 1)
-        min_acad_year = oldest_start + 1  # oldest cohort's sem1 academic_year
-        active_acad_year = data.FIRST_COHORT_START_YEAR + 1
-        max_acad_year = active_acad_year  # stop at the active term
+        active_key = (data.FIRST_COHORT_START_YEAR + 1, "spring")
+        chronological_sem_order = {"spring": 0, "summer": 1, "fall": 2}
+
+        def is_after_active(academic_year, semester):
+            return (academic_year, chronological_sem_order[semester]) > (
+                active_key[0],
+                chronological_sem_order[active_key[1]],
+            )
 
         terms = []
-        for year in range(min_acad_year, max_acad_year + 1):
-            for sem, name, acad_year in [
-                ("fall", f"Güz {year - 1}-{year}", year - 1),
-                ("spring", f"Bahar {year - 1}-{year}", year),
-            ]:
+        for year in range(oldest_start, data.FIRST_COHORT_START_YEAR + 1):
+            term_specs = [
+                ("fall", f"Güz {year}-{year + 1}", year),
+                ("spring", f"Bahar {year}-{year + 1}", year + 1),
+            ]
+            for sem, name, acad_year in term_specs:
+                if is_after_active(acad_year, sem):
+                    continue
                 t, _ = Term.objects.get_or_create(
                     name=name,
                     defaults={"is_active": False, "academic_year": acad_year, "semester": sem},
                 )
+                if t.academic_year != acad_year or t.semester != sem:
+                    t.academic_year = acad_year
+                    t.semester = sem
+                    t.save(update_fields=["academic_year", "semester"])
                 terms.append(t)
 
-        # Ensure exactly one active term (handles re-runs)
-        active_term = next(t for t in terms if t.academic_year == active_acad_year and t.semester == "spring")
+        # Sort terms: academic_year desc, then semester priority: summer, spring, fall
+        sem_order = {"summer": 0, "spring": 1, "fall": 2}
+        terms.sort(key=lambda t: (-t.academic_year, sem_order.get(t.semester, 3)))
+
+        # Ensure the configured snapshot term is active (handles re-runs).
+        active_term = next(t for t in terms if (t.academic_year, t.semester) == active_key)
         if not active_term.is_active:
             active_term.is_active = True
             active_term.save()  # Term.save() auto-deactivates all others
@@ -229,10 +286,10 @@ class Command(BaseCommand):
 
     def _create_program_head(self, program, university, department):
         head_user, created = CustomUser.objects.get_or_create(
-            username="headuser",
+            username="headusercse",
             defaults={
-                "email": "head@example.com",
-                "first_name": "Program",
+                "email": "head@cse.com",
+                "first_name": "CSE Program",
                 "last_name": "Head",
                 "role": "program_head",
                 "department": department,
@@ -428,6 +485,39 @@ class Command(BaseCommand):
                 defaults={"weight": 3},
             )
 
+    @staticmethod
+    def _assessment_description(assessment):
+        course = assessment.course
+        name = assessment.name.lower()
+
+        if "ara sınav" in name:
+            focus = "dönem ortası konularındaki temel kavramları, problem çözme becerilerini ve uygulama yeterliliğini"
+        elif "final" in name:
+            focus = "dersin tüm dönem kazanımlarını bütüncül biçimde kullanma ve kapsamlı problem çözme becerisini"
+        elif "proje" in name:
+            focus = (
+                "ders kapsamındaki bilgi ve becerileri gerçekçi bir problem üzerinde "
+                "tasarım, uygulama ve raporlama yoluyla kullanma düzeyini"
+            )
+        elif "ödev" in name:
+            focus = "bireysel çalışma, düzenli pratik yapma ve kuramsal bilgiyi ders problemlerine uygulama becerisini"
+        elif "laboratuvar" in name:
+            focus = "kuramsal bilgilerin uygulama ortamında deney, gözlem, analiz ve raporlama yoluyla kullanılmasını"
+        elif "rapor" in name:
+            focus = "yapılan çalışmayı teknik doğruluk, yöntem açıklığı ve yazılı ifade kalitesiyle raporlama becerisini"
+        elif "sunum" in name or "savunma" in name:
+            focus = "proje çıktılarının teknik içerik, sözlü anlatım, savunma ve tartışma becerileriyle sunulmasını"
+        else:
+            focus = "ders kazanımlarına yönelik bilgi, beceri ve uygulama performansını"
+
+        return f"{course.code} {course.name} dersinde {focus} değerlendirir."
+
+    def _ensure_assessment_description(self, assessment):
+        if assessment.description:
+            return
+        assessment.description = self._assessment_description(assessment)
+        assessment.save(update_fields=["description"])
+
     def _create_student_cohorts(self, department, program, university, terms, all_courses, courses_by_sem_cohort):
         """Create cohorts and enroll each student in courses matching their
         actual semester progress up to the active term snapshot."""
@@ -481,7 +571,7 @@ class Command(BaseCommand):
                 profile, _ = StudentProfile.objects.get_or_create(
                     user=user,
                     defaults={
-                        "student_id": f"{cohort_start}{i + 1:04d}",
+                        "student_id": f"{cohort_start % 1000}14010{i + 1:04d}",
                         "program": program,
                         "enrollment_term": enrollment_term,
                     },
@@ -511,17 +601,67 @@ class Command(BaseCommand):
 
         return all_students
 
+    def _seed_from_value(self, value):
+        hashed = hashlib.sha256(str(value).encode("utf-8")).hexdigest()
+        return int(hashed[:8], 16)
+
+    def _generate_student_profile(self, student_id):
+        rng = random.Random(self._seed_from_value(student_id))
+
+        student_type = rng.choices(["high_achiever", "average", "struggling", "inconsistent"], weights=[15, 55, 20, 10], k=1)[
+            0
+        ]
+
+        if student_type == "high_achiever":
+            ability = rng.gauss(85, 6)
+            consistency = rng.uniform(3, 7)
+        elif student_type == "average":
+            ability = rng.gauss(68, 10)
+            consistency = rng.uniform(6, 12)
+        elif student_type == "struggling":
+            ability = rng.gauss(48, 10)
+            consistency = rng.uniform(7, 14)
+        else:  # inconsistent
+            ability = rng.gauss(65, 15)
+            consistency = rng.uniform(12, 22)
+
+        return {
+            "type": student_type,
+            "ability": ability,
+            "consistency": consistency,
+            "trend": rng.uniform(-0.8, 0.8),
+            "effort": rng.gauss(0, 5),
+            "exam_anxiety": rng.uniform(0, 8),
+        }
+
     def _generate_student_grades(self, students, assessments):
         grades_to_create = []
 
         for student_data in students:
-            for assessment in assessments:
-                # Only grade if the student is enrolled in the assessment's course
-                student = student_data["user"]
+            student = student_data["user"]
+            profile = self._generate_student_profile(student.id)
+
+            for index, assessment in enumerate(assessments, start=1):
                 if not CourseEnrollment.objects.filter(student=student, course=assessment.course).exists():
                     continue
-                raw = random.gauss(65, 25)
-                score = round(max(0, min(assessment.total_score, raw)))
+
+                rng = random.Random(self._seed_from_value(f"{student.id}-{assessment.id}"))
+
+                assessment_difficulty = rng.gauss(0, 8)
+
+                raw_score_percent = (
+                    profile["ability"]
+                    + profile["effort"]
+                    + profile["trend"] * index
+                    - assessment_difficulty
+                    - profile["exam_anxiety"] * max(assessment_difficulty, 0) / 10
+                    + rng.gauss(0, profile["consistency"])
+                )
+
+                raw_score_percent = max(0, min(100, raw_score_percent))
+
+                score = round((raw_score_percent / 100) * assessment.total_score)
+
                 grades_to_create.append(StudentGrade(student=student, assessment=assessment, score=score))
 
         StudentGrade.objects.bulk_create(grades_to_create, batch_size=1000)
@@ -532,5 +672,5 @@ class Command(BaseCommand):
             try:
                 calculate_course_scores(course.id)
             except Exception:
-                pass
+                self.stdout.write(f"  ✗ Error occurred while calculating scores for course {course.id}")
         self.stdout.write(f"  ✓ Scores calculated for {len(courses)} courses")

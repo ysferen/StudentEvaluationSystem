@@ -47,6 +47,51 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
 
     import_type = None
 
+    def _upload_info(self):
+        required_query_parameters = []
+        if self.import_type == "assignment_scores":
+            required_query_parameters = "course_code and term_id"
+        elif self.import_type == "program_templates":
+            required_query_parameters = "program_id"
+        return {
+            "message": "Upload a file to import data.",
+            "required_query_parameters": required_query_parameters,
+        }
+
+    def _validate_upload_parameters(self, request):
+        course_code = request.query_params.get("course_code")
+        term_id = request.query_params.get("term_id")
+        program_id = request.query_params.get("program_id")
+        if self.import_type == "assignment_scores" and (not course_code or not term_id):
+            return (
+                None,
+                Response(
+                    {"error": {"course_code": "course_code is required", "term_id": "term_id is required"}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                ),
+            )
+        if self.import_type == "program_templates" and not program_id:
+            return None, Response({"error": {"program_id": "program_id is required"}}, status=status.HTTP_400_BAD_REQUEST)
+        return {"course_code": course_code, "term_id": term_id, "program_id": program_id}, None
+
+    def _run_import(self, service, request, upload_params):
+        if self.import_type == "assignment_scores":
+            resolution_policy = self._parse_resolution_policy(request)
+            if isinstance(resolution_policy, Response):
+                return resolution_policy
+            return service.import_assignment_scores(
+                course_code=upload_params["course_code"],
+                term_id=upload_params["term_id"],
+                resolution_policy=resolution_policy,
+            )
+        if self.import_type == "learning_outcomes":
+            return service.import_learning_outcomes()
+        if self.import_type == "program_outcomes":
+            return service.import_program_outcomes()
+        if self.import_type == "program_templates":
+            return service.preview_program_templates(program_id=upload_params["program_id"])
+        return Response({"error": f"Unsupported import type: {self.import_type}"}, status=status.HTTP_400_BAD_REQUEST)
+
     def _parse_resolution_policy(self, request):
         resolution_policy_raw = request.data.get("resolution_policy")
         if resolution_policy_raw is None:
@@ -123,23 +168,11 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
     def upload(self, request):
         """Upload and process file."""
         if request.method.lower() == "get":
-            required_query_parameters = []
-            if self.import_type == "assignment_scores":
-                required_query_parameters = "course_code and term_id"
+            return Response(self._upload_info(), status=status.HTTP_200_OK)
 
-            info = {
-                "message": "Upload a file to import data.",
-                "required_query_parameters": required_query_parameters,
-            }
-            return Response(info, status=status.HTTP_200_OK)
-
-        course_code = request.query_params.get("course_code")
-        term_id = request.query_params.get("term_id")
-        if self.import_type == "assignment_scores" and (not course_code or not term_id):
-            return Response(
-                {"error": {"course_code": "course_code is required", "term_id": "term_id is required"}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        upload_params, validation_error = self._validate_upload_parameters(request)
+        if validation_error is not None:
+            return validation_error
 
         file_obj = request.FILES.get("file")
         if not file_obj:
@@ -148,22 +181,9 @@ class BaseFileImportViewSet(viewsets.GenericViewSet):
         try:
             service = FileImportService(file_obj)
             service.validate_file()
-
-            if self.import_type == "assignment_scores":
-                resolution_policy = self._parse_resolution_policy(request)
-                if isinstance(resolution_policy, Response):
-                    return resolution_policy
-                result = service.import_assignment_scores(
-                    course_code=course_code,
-                    term_id=term_id,
-                    resolution_policy=resolution_policy,
-                )
-            elif self.import_type == "learning_outcomes":
-                result = service.import_learning_outcomes()
-            elif self.import_type == "program_outcomes":
-                result = service.import_program_outcomes()
-            else:
-                return Response({"error": f"Unsupported import type: {self.import_type}"}, status=status.HTTP_400_BAD_REQUEST)
+            result = self._run_import(service, request, upload_params)
+            if isinstance(result, Response):
+                return result
 
             return Response(result, status=status.HTTP_200_OK)
         except FileImportError as e:
@@ -534,3 +554,28 @@ class ProgramOutcomesImportViewSet(BaseFileImportViewSet):
     """ViewSet for importing program outcomes from files."""
 
     import_type = "program_outcomes"
+
+
+class ProgramTemplatesImportViewSet(BaseFileImportViewSet):
+    """ViewSet for importing reusable program/course template data from files."""
+
+    import_type = "program_templates"
+
+    @action(detail=False, methods=["post"])
+    def confirm(self, request):
+        """Approve and create/update the template objects from a previously previewed file."""
+        program_id = request.query_params.get("program_id")
+        if not program_id:
+            return Response({"error": {"program_id": "program_id is required"}}, status=status.HTTP_400_BAD_REQUEST)
+
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            service = FileImportService(file_obj)
+            service.validate_file()
+            result = service.import_program_templates(program_id=program_id)
+            return Response(result, status=status.HTTP_200_OK)
+        except FileImportError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -250,7 +250,7 @@ const StudentCourseDetail = () => {
       </div>
 
       {/* Tab Content */}
-        <div className="space-y-6">
+        <section id="assessments" className="space-y-6 scroll-mt-24">
           <h2 className="text-xl font-semibold text-gray-900">Assessment Scores</h2>
           {studentGrades.length > 0 ? (
             <>
@@ -407,9 +407,9 @@ const StudentCourseDetail = () => {
               </p>
             </Card>
           )}
-        </div>
+        </section>
 
-        <div className="space-y-6">
+        <section id="outcomes" className="space-y-6 scroll-mt-24">
           <h2 className="text-xl font-semibold text-gray-900">Learning Outcomes</h2>
           {learningOutcomes.length > 0 ? (
             <div className="space-y-4">
@@ -450,9 +450,9 @@ const StudentCourseDetail = () => {
               </p>
             </Card>
           )}
-        </div>
+        </section>
 
-        <div className="space-y-6">
+        <section id="analytics" className="space-y-6 scroll-mt-24">
           <h2 className="text-xl font-semibold text-gray-900">Course Analytics</h2>
           {studentGrades.length > 0 ? (
             (() => {
@@ -508,7 +508,7 @@ const StudentCourseDetail = () => {
               </p>
             </Card>
           )}
-        </div>
+        </section>
     </div>
   )
 }

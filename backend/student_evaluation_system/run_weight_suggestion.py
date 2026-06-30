@@ -3,7 +3,7 @@ Celery-based weight suggestion test script.
 
 Usage:
     cd backend/student_evaluation_system
-    uv run python run_weight_suggestion.py [course_id]
+    uv run python run_weight_suggestion.py [course_id] [--raw-embeddings]
 
     If no course_id is provided, picks the first course with LOs from the DB.
     If no assessments exist in DB for the course, the task uses the assessment
@@ -12,21 +12,33 @@ Usage:
 Prerequisites:
     - Django DB accessible
     - Redis running (Celery broker)
-    - Celery worker running (docker compose up celery_worker)
+    - ML Celery worker running (docker compose up celery_worker_ml)
 """
 
+import argparse
 import json
 import os
 import sys
 import time
 
 
-def _resolve_course_id():
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Queue a Celery weight suggestion task for a course.")
+    parser.add_argument("course_id", nargs="?", type=int, help="Course ID. Defaults to the first course with LOs.")
+    parser.add_argument(
+        "--raw-embeddings",
+        action="store_true",
+        help="Include embedding vectors, cosine similarities, and normalization values in the task result.",
+    )
+    return parser.parse_args()
+
+
+def _resolve_course_id(course_id):
     """Resolve course_id from CLI arg or auto-pick first course with LOs."""
     from core.models import Course
 
-    if len(sys.argv) > 1:
-        return int(sys.argv[1])
+    if course_id is not None:
+        return course_id
 
     course = Course.objects.filter(learning_outcomes__isnull=False).distinct().first()
     if course is None:
@@ -58,6 +70,7 @@ def _print_summary_table(mappings):
 
 
 def main():
+    args = _parse_args()
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "student_evaluation_system.settings")
 
     import django
@@ -66,7 +79,7 @@ def main():
 
     from core.models import Course, ProgramOutcome
 
-    course_id = _resolve_course_id()
+    course_id = _resolve_course_id(args.course_id)
     course = Course.objects.get(id=course_id)
     pos = list(ProgramOutcome.objects.filter(term=course.term))
     print("=" * 70)
@@ -89,7 +102,13 @@ def main():
     try:
         from core.tasks import suggest_assessment_lo_weights_task
 
-        async_result = suggest_assessment_lo_weights_task.delay(course_id=course.id)
+        async_result = suggest_assessment_lo_weights_task.apply_async(
+            kwargs={
+                "course_id": course.id,
+                "include_raw_embeddings": args.raw_embeddings,
+            },
+            queue="ml_queue",
+        )
     except Exception as e:
         print(f"ERROR: Could not dispatch task. Is Celery/Redis running?\n{e}")
         sys.exit(1)

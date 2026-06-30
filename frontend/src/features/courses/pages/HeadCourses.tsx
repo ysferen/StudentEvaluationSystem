@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Upload } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import { NextTermModal } from '@/features/head/components/NextTermModal'
+import { ProgramTemplateImportModal } from '@/features/head/components/ProgramTemplateImportModal'
 import {
   BookOpenIcon,
   AcademicCapIcon,
@@ -49,6 +50,7 @@ const HeadCourses = () => {
   const [selectedTermId, setSelectedTermId] = useState<string>('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isNextTermModalOpen, setIsNextTermModalOpen] = useState(false)
+  const [isTemplateImportModalOpen, setIsTemplateImportModalOpen] = useState(false)
   const { data: activeTerm } = useCoreTermsActiveRetrieve()
 
   const { data: statsData, isLoading: statsLoading } =
@@ -171,6 +173,13 @@ const HeadCourses = () => {
           >
             <PlusIcon className="h-5 w-5" />
             <span>New Course</span>
+          </button>
+          <button
+            onClick={() => setIsTemplateImportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <Upload className="h-4 w-4" />
+            Import Templates
           </button>
           {activeTerm && (
             <button
@@ -302,6 +311,11 @@ const HeadCourses = () => {
       <NextTermModal
         isOpen={isNextTermModalOpen}
         onClose={() => setIsNextTermModalOpen(false)}
+      />
+      <ProgramTemplateImportModal
+        isOpen={isTemplateImportModalOpen}
+        onClose={() => setIsTemplateImportModalOpen(false)}
+        programId={userProgramId}
       />
     </div>
   )

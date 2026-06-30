@@ -362,6 +362,11 @@ paths:
         schema:
           type: integer
         description: Filter templates by program ID
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search templates by code or name
       tags:
       - core
       security:
@@ -890,6 +895,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+  /api/core/courses/{id}/report/:
+    get:
+      operationId: core_courses_report_retrieve
+      description: Generate the real Course Performance Snapshot PDF.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
   /api/core/degree-levels/:
     get:
       operationId: core_degree_levels_list
@@ -1278,6 +1306,14 @@ paths:
         updates. Pass comma-separated channel names via the `channels` query parameter
         (e.g. `?channels=jobs.42,notifications.5`).
       summary: Stream job progress via SSE
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - sse
       tags:
       - core
       security:
@@ -1820,6 +1856,207 @@ paths:
   /api/core/file-import/program-outcomes/validate/:
     post:
       operationId: core_file_import_program_outcomes_validate_create
+      description: Validate file without importing.
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportResponse'
+          description: ''
+  /api/core/file-import/program-templates/confirm/:
+    post:
+      operationId: core_file_import_program_templates_confirm_create
+      description: Approve and create/update the template objects from a previously
+        previewed file.
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportResponse'
+          description: ''
+  /api/core/file-import/program-templates/upload/:
+    get:
+      operationId: core_file_import_program_templates_upload_retrieve
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+    post:
+      operationId: core_file_import_program_templates_upload_create
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+  /api/core/file-import/program-templates/validate/:
+    post:
+      operationId: core_file_import_program_templates_validate_create
       description: Validate file without importing.
       tags:
       - core
@@ -2428,6 +2665,164 @@ paths:
               schema:
                 $ref: '#/components/schemas/InstructorPermission'
           description: ''
+  /api/core/program-outcome-templates/:
+    get:
+      operationId: core_program_outcome_templates_list
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProgramOutcomeTemplateList'
+          description: ''
+    post:
+      operationId: core_program_outcome_templates_create
+      description: CRUD operations for reusable program outcome templates.
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+  /api/core/program-outcome-templates/{id}/:
+    get:
+      operationId: core_program_outcome_templates_retrieve
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    put:
+      operationId: core_program_outcome_templates_update
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    patch:
+      operationId: core_program_outcome_templates_partial_update
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - core
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    delete:
+      operationId: core_program_outcome_templates_destroy
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/core/program-outcomes/:
     get:
       operationId: core_program_outcomes_list
@@ -2794,6 +3189,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/core/programs/{id}/report/:
+    get:
+      operationId: core_programs_report_retrieve
+      description: Generate the real Program Outcome Report PDF.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program.
+        required: true
+      tags:
+      - core
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+          description: ''
   /api/core/student-lo-scores/:
     get:
       operationId: core_student_lo_scores_list
@@ -2912,8 +3330,23 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter PO scores by program ID
+      - in: query
+        name: student
+        schema:
+          type: integer
+        description: Filter PO scores by student ID
+      - in: query
+        name: term
+        schema:
+          type: integer
+        description: Filter PO scores by term ID
       tags:
-      - core
+      - Scores
       security:
       - jwtCookie: []
       - {}
@@ -2943,7 +3376,7 @@ paths:
           Score.
         required: true
       tags:
-      - core
+      - Scores
       security:
       - jwtCookie: []
       - {}
@@ -5797,6 +6230,11 @@ paths:
         schema:
           type: integer
         description: Filter templates by program ID
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search templates by code or name
       tags:
       - v1
       security:
@@ -6322,6 +6760,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+  /api/v1/core/courses/{id}/report/:
+    get:
+      operationId: v1_core_courses_report_retrieve
+      description: Generate the real Course Performance Snapshot PDF.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Course.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+          description: ''
   /api/v1/core/degree-levels/:
     get:
       operationId: v1_core_degree_levels_list
@@ -6710,6 +7170,14 @@ paths:
         updates. Pass comma-separated channel names via the `channels` query parameter
         (e.g. `?channels=jobs.42,notifications.5`).
       summary: Stream job progress via SSE
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - sse
       tags:
       - v1
       security:
@@ -7252,6 +7720,207 @@ paths:
   /api/v1/core/file-import/program-outcomes/validate/:
     post:
       operationId: v1_core_file_import_program_outcomes_validate_create
+      description: Validate file without importing.
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportResponse'
+          description: ''
+  /api/v1/core/file-import/program-templates/confirm/:
+    post:
+      operationId: v1_core_file_import_program_templates_confirm_create
+      description: Approve and create/update the template objects from a previously
+        previewed file.
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileImportResponse'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportResponse'
+          description: ''
+  /api/v1/core/file-import/program-templates/upload/:
+    get:
+      operationId: v1_core_file_import_program_templates_upload_retrieve
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+    post:
+      operationId: v1_core_file_import_program_templates_upload_create
+      description: Upload and process file.
+      parameters:
+      - in: query
+        name: course_code
+        schema:
+          type: string
+        description: Course code
+        required: true
+      - in: query
+        name: term_id
+        schema:
+          type: integer
+        description: Term ID
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: object
+                  updated:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  skipped:
+                    type: integer
+                  total_rows:
+                    type: integer
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  is_valid:
+                    type: boolean
+                  phase_reached:
+                    type: string
+                  checks:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                  details:
+                    type: object
+          description: ''
+  /api/v1/core/file-import/program-templates/validate/:
+    post:
+      operationId: v1_core_file_import_program_templates_validate_create
       description: Validate file without importing.
       tags:
       - v1
@@ -7860,6 +8529,164 @@ paths:
               schema:
                 $ref: '#/components/schemas/InstructorPermission'
           description: ''
+  /api/v1/core/program-outcome-templates/:
+    get:
+      operationId: v1_core_program_outcome_templates_list
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProgramOutcomeTemplateList'
+          description: ''
+    post:
+      operationId: v1_core_program_outcome_templates_create
+      description: CRUD operations for reusable program outcome templates.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+  /api/v1/core/program-outcome-templates/{id}/:
+    get:
+      operationId: v1_core_program_outcome_templates_retrieve
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    put:
+      operationId: v1_core_program_outcome_templates_update
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramOutcomeTemplate'
+        required: true
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    patch:
+      operationId: v1_core_program_outcome_templates_partial_update
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProgramOutcomeTemplate'
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramOutcomeTemplate'
+          description: ''
+    delete:
+      operationId: v1_core_program_outcome_templates_destroy
+      description: CRUD operations for reusable program outcome templates.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program Outcome Template.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/v1/core/program-outcomes/:
     get:
       operationId: v1_core_program_outcomes_list
@@ -8226,6 +9053,29 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/core/programs/{id}/report/:
+    get:
+      operationId: v1_core_programs_report_retrieve
+      description: Generate the real Program Outcome Report PDF.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Program.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtCookie: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+          description: ''
   /api/v1/core/student-lo-scores/:
     get:
       operationId: v1_core_student_lo_scores_list
@@ -8344,8 +9194,23 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: program
+        schema:
+          type: integer
+        description: Filter PO scores by program ID
+      - in: query
+        name: student
+        schema:
+          type: integer
+        description: Filter PO scores by student ID
+      - in: query
+        name: term
+        schema:
+          type: integer
+        description: Filter PO scores by term ID
       tags:
-      - v1
+      - Scores
       security:
       - jwtCookie: []
       - {}
@@ -8375,7 +9240,7 @@ paths:
           Score.
         required: true
       tags:
-      - v1
+      - Scores
       security:
       - jwtCookie: []
       - {}
@@ -10896,9 +11761,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -10937,9 +11801,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -11204,9 +12067,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11310,9 +12172,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -11374,6 +12235,10 @@ components:
           type: integer
         program_outcome:
           type: integer
+          nullable: true
+        program_outcome_template:
+          type: integer
+          nullable: true
         weight:
           type: number
           format: double
@@ -11382,7 +12247,6 @@ components:
           description: 0 to 5
       required:
       - id
-      - program_outcome
       - template_learning_outcome
       - weight
     CustomUser:
@@ -11466,9 +12330,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
       required:
       - id
       - name
@@ -12116,6 +12979,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProgramOutcome'
+    PaginatedProgramOutcomeTemplateList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramOutcomeTemplate'
     PaginatedScoreRecomputeJobList:
       type: object
       required:
@@ -12317,9 +13203,8 @@ components:
           format: date
         total_score:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         weight:
           type: number
           format: double
@@ -12432,9 +13317,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12521,9 +13405,8 @@ components:
           maxLength: 255
         credits:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
         program:
           allOf:
           - $ref: '#/components/schemas/Program'
@@ -12571,6 +13454,10 @@ components:
           type: integer
         program_outcome:
           type: integer
+          nullable: true
+        program_outcome_template:
+          type: integer
+          nullable: true
         weight:
           type: number
           format: double
@@ -12651,9 +13538,8 @@ components:
           maxLength: 100
         level:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
     PatchedDepartment:
       type: object
       description: |-
@@ -12789,9 +13675,8 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: Program duration in years, used to cap year-level calculations
     PatchedProgramHeadProfile:
       type: object
@@ -12847,13 +13732,59 @@ components:
         term:
           type: integer
           readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        term_id:
+          type: integer
+          writeOnly: true
         weight:
           type: number
           format: double
           maximum: 1.0
           minimum: 0.0
           description: 0.0 to 1.0
+        program_outcome_template_id:
+          type: integer
+          writeOnly: true
+          nullable: true
         created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedProgramOutcomeTemplate:
+      type: object
+      description: Serializer for reusable program outcome templates.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        description:
+          type: string
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -12917,18 +13848,16 @@ components:
           readOnly: true
         name:
           type: string
-          description: e.g., Fall 2025
+          description: e.g., Güz 2024-2025
           maxLength: 100
         is_active:
           type: boolean
         academic_year:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
-          description: The calendar year the academic year starts (e.g., 2024 for
-            AY 2024-2025)
+          description: The calendar year the semester starts (e.g., 2024 for Güz 2024-2025)
         semester:
           $ref: '#/components/schemas/SemesterEnum'
     PatchedUniversity:
@@ -13033,9 +13962,8 @@ components:
           type: integer
         duration_years:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: Program duration in years, used to cap year-level calculations
       required:
       - code
@@ -13104,12 +14032,22 @@ components:
         term:
           type: integer
           readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        term_id:
+          type: integer
+          writeOnly: true
         weight:
           type: number
           format: double
           maximum: 1.0
           minimum: 0.0
           description: 0.0 to 1.0
+        program_outcome_template_id:
+          type: integer
+          writeOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -13120,7 +14058,54 @@ components:
       - description
       - id
       - program
+      - program_id
       - term
+      - term_id
+    ProgramOutcomeTemplate:
+      type: object
+      description: Serializer for reusable program outcome templates.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 10
+        description:
+          type: string
+        weight:
+          type: number
+          format: double
+          maximum: 1.0
+          minimum: 0.0
+          description: 0.0 to 1.0
+        program:
+          allOf:
+          - $ref: '#/components/schemas/Program'
+          readOnly: true
+        program_id:
+          type: integer
+          writeOnly: true
+        instance_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - description
+      - id
+      - instance_count
+      - program
+      - program_id
+      - updated_at
     ProgramStat:
       type: object
       properties:
@@ -13254,9 +14239,9 @@ components:
       - summer
       type: string
       description: |-
-        * `fall` - Fall
-        * `spring` - Spring
-        * `summer` - Summer
+        * `fall` - Güz
+        * `spring` - Bahar
+        * `summer` - Yaz
     StatusA93Enum:
       enum:
       - pending
@@ -13440,18 +14425,16 @@ components:
           readOnly: true
         name:
           type: string
-          description: e.g., Fall 2025
+          description: e.g., Güz 2024-2025
           maxLength: 100
         is_active:
           type: boolean
         academic_year:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          maximum: 2147483647
+          minimum: -2147483648
           nullable: true
-          description: The calendar year the academic year starts (e.g., 2024 for
-            AY 2024-2025)
+          description: The calendar year the semester starts (e.g., 2024 for Güz 2024-2025)
         semester:
           $ref: '#/components/schemas/SemesterEnum'
       required:

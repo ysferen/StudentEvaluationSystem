@@ -28,11 +28,15 @@ export interface PatchedProgramOutcome {
   description?: string;
   readonly program?: number;
   readonly term?: number;
+  program_id?: number;
+  term_id?: number;
   /**
    * 0.0 to 1.0
    * @minimum 0
    * @maximum 1
    */
   weight?: number;
+  /** @nullable */
+  program_outcome_template_id?: number | null;
   readonly created_at?: string;
 }

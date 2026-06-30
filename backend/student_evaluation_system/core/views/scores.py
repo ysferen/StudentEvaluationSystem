@@ -144,6 +144,32 @@ class StudentLearningOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(results)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Scores"],
+        parameters=[
+            OpenApiParameter(
+                name="program",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter PO scores by program ID",
+            ),
+            OpenApiParameter(
+                name="student",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter PO scores by student ID",
+            ),
+            OpenApiParameter(
+                name="term",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter PO scores by term ID",
+            ),
+        ],
+    ),
+    retrieve=extend_schema(tags=["Scores"]),
+)
 class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only viewset for student program outcome scores.
@@ -178,10 +204,13 @@ class StudentProgramOutcomeScoreViewSet(viewsets.ReadOnlyModelViewSet):
         # Apply filters
         program_id = self.request.query_params.get("program", None)
         student_id = self.request.query_params.get("student", None)
+        term_id = self.request.query_params.get("term", None)
 
         if program_id:
             queryset = queryset.filter(program_outcome__program_id=program_id)
         if student_id:
             queryset = queryset.filter(student_id=student_id)
+        if term_id:
+            queryset = queryset.filter(term_id=term_id)
 
         return queryset

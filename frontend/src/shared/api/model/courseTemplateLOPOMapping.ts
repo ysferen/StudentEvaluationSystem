@@ -12,7 +12,10 @@
 export interface CourseTemplateLOPOMapping {
   readonly id: number;
   template_learning_outcome: number;
-  program_outcome: number;
+  /** @nullable */
+  program_outcome?: number | null;
+  /** @nullable */
+  program_outcome_template?: number | null;
   /**
    * 0 to 5
    * @minimum 0

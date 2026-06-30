@@ -6,7 +6,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { useQueries } from '@tanstack/react-query'
 import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
-import { coreStudentPoScoresList } from '../../../shared/api/generated/core/core'
+import { coreStudentPoScoresList } from '../../../shared/api/generated/scores/scores'
 import type { CourseEnrollment, StudentProgramOutcomeScore } from '../../../shared/api/model'
 
 const StudentDashboard = () => {
@@ -120,6 +120,7 @@ const StudentDashboard = () => {
   }), [poScores, scoreMultiplier])
 
   const isError = results.some(q => q.isError)
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'there'
 
   if (loading) {
     return (
@@ -153,6 +154,15 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-700 p-8 text-white shadow-lg">
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold mb-2">Welcome, {displayName}</h1>
+          <p className="text-teal-100 text-lg">Your courses and outcome progress</p>
+        </div>
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-right" />
+        <div className="absolute right-20 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-bottom-right" />
+      </div>
+
       {/* Courses Overview Section */}
       <section>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">

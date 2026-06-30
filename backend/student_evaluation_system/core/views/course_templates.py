@@ -2,6 +2,7 @@
 Course Template ViewSets.
 """
 
+from django.db import models
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -37,6 +38,12 @@ from core.services.course_template import clone_course_from_template
                 location=OpenApiParameter.QUERY,
                 description="Filter templates by program ID",
             ),
+            OpenApiParameter(
+                name="search",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Search templates by code or name",
+            ),
         ]
     ),
 )
@@ -52,8 +59,11 @@ class CourseTemplateViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         program_id = self.request.query_params.get("program")
+        search_query = self.request.query_params.get("search")
         if program_id:
             queryset = queryset.filter(program_id=program_id)
+        if search_query:
+            queryset = queryset.filter(models.Q(code__icontains=search_query) | models.Q(name__icontains=search_query))
         return queryset
 
     @extend_schema(

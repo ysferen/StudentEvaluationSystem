@@ -5,6 +5,27 @@ Curriculum sourced from:
 https://obs.acibadem.edu.tr/oibs/bologna/index.aspx?lang=tr&curOp=showPac&curUnit=14&curSunit=6246
 """
 
+UNIVERSITIES = [
+    "Acıbadem Üniversitesi",
+    "Orta Doğu Teknik Üniversitesi",
+    "Boğaziçi Üniversitesi",
+    "İstanbul Teknik Üniversitesi",
+]
+
+DEPARTMENTS = [
+    {"name": "Mühendislik ve Doğa Bilimleri Fakültesi", "code": "ENG", "university": "Acıbadem Üniversitesi"},
+    {"name": "Tıp Fakültesi", "code": "MED", "university": "Acıbadem Üniversitesi"},
+]
+
+DEGREE_LEVELS = [{"name": "Lisans", "level": 1}, {"name": "Yüksek Lisans", "level": 2}, {"name": "Doktora", "level": 3}]
+
+PROGRAMS = [
+    {"name": "Bilgisayar Mühendisliği (İngilizce)", "code": "CSE", "department": "ENG", "degree_level": 1},
+    {"name": "Biyomedikal Mühendisliği (İngilizce)", "code": "BME", "department": "ENG", "degree_level": 1},
+    {"name": "Biyomedikal Mühendisliği (İngilizce)", "code": "BMEMS", "department": "ENG", "degree_level": 2},
+    {"name": "Biyomedikal Mühendisliği (İngilizce)", "code": "BMEDR", "department": "ENG", "degree_level": 3},
+]
+
 NAMES = [
     "Ahmet",
     "Ayşe",
@@ -187,36 +208,36 @@ INSTRUCTORS = [
         "title": "Prof. Dr.",
     },
     {
-        "username": "serkanapaydin",
-        "email": "serkan.apaydin@acibadem.edu.tr",
+        "username": "mehmetserkanapaydin",
+        "email": "mehmetserkan.apaydin@acibadem.edu.tr",
         "first_name": "Mehmet Serkan",
         "last_name": "Apaydın",
         "password": "instructor123",
         "title": "Dr. Öğr. Üyesi",
     },
     {
-        "username": "johndoe",
-        "email": "john.doe@acibadem.edu.tr",
-        "first_name": "John",
-        "last_name": "Doe",
+        "username": "mahsaziraksima",
+        "email": "mahsa.ziraksima@acibadem.edu.tr",
+        "first_name": "Mahsa",
+        "last_name": "Ziraksima",
         "password": "instructor123",
-        "title": "Doç. Dr.",
+        "title": "Öğr. Gör. Dr.",
     },
     {
-        "username": "janesmith",
-        "email": "jane.smith@acibadem.edu.tr",
-        "first_name": "Jane",
-        "last_name": "Smith",
+        "username": "sultansütlü",
+        "email": "sultan.sutlu@acibadem.edu.tr",
+        "first_name": "Sultan",
+        "last_name": "Sütlü",
         "password": "instructor123",
-        "title": "Dr. Öğr. Üyesi",
+        "title": "Öğr. Gör. Dr.",
     },
     {
-        "username": "emreyilmaz",
-        "email": "emre.yilmaz@acibadem.edu.tr",
-        "first_name": "Emre",
-        "last_name": "Yılmaz",
+        "username": "cengizriva",
+        "email": "cengiz.riva@acibadem.edu.tr",
+        "first_name": "Cengiz",
+        "last_name": "Riva",
         "password": "instructor123",
-        "title": "Araş. Gör. Dr.",
+        "title": "Öğr. Gör.",
     },
 ]
 
@@ -556,7 +577,7 @@ PROGRAM_OUTCOME_DESCRIPTIONS = [
 
 # Calendar year when the newest (first-year) cohort starts their first fall
 # semester. All term generation and cohort offsets are derived from this.
-FIRST_COHORT_START_YEAR = 2024
+FIRST_COHORT_START_YEAR = 2025
 
 # Number of cohorts to generate. Cohorts are spaced one year apart; the
 # oldest cohort starts (NUM_COHORTS - 1) calendar years before

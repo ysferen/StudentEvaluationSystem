@@ -66,10 +66,10 @@ import type {
   PaginatedLearningOutcomeProgramOutcomeMappingList,
   PaginatedProgramHeadProfileList,
   PaginatedProgramList,
+  PaginatedProgramOutcomeTemplateList,
   PaginatedScoreRecomputeJobList,
   PaginatedStudentGradeList,
   PaginatedStudentProfileList,
-  PaginatedStudentProgramOutcomeScoreList,
   PaginatedTermList,
   PaginatedWeightSuggestionJobList,
   PatchedAssessmentCreate,
@@ -88,18 +88,19 @@ import type {
   PatchedLearningOutcomeProgramOutcomeMapping,
   PatchedProgram,
   PatchedProgramHeadProfile,
+  PatchedProgramOutcomeTemplate,
   PatchedStudentGradeCreate,
   PatchedStudentProfile,
   PatchedTerm,
   PatchedWeightSuggestionJob,
   Program,
   ProgramHeadProfile,
+  ProgramOutcomeTemplate,
   ScoreRecomputeJob,
   StudentGrade,
   StudentGradeCreate,
   StudentLearningOutcomeScore,
   StudentProfile,
-  StudentProgramOutcomeScore,
   Term,
   V1CoreCourseTemplateAssessmentLoMappingsListParams,
   V1CoreCourseTemplateLoPoMappingsListParams,
@@ -107,6 +108,7 @@ import type {
   V1CoreCoursesListParams,
   V1CoreDegreeLevelsListParams,
   V1CoreDepartmentsListParams,
+  V1CoreEventsRetrieveParams,
   V1CoreFileImportAssignmentScoresResolveCreate200,
   V1CoreFileImportAssignmentScoresResolveCreateBody,
   V1CoreFileImportAssignmentScoresResolveCreateParams,
@@ -138,12 +140,19 @@ import type {
   V1CoreFileImportProgramOutcomesUploadRetrieve200,
   V1CoreFileImportProgramOutcomesUploadRetrieve400,
   V1CoreFileImportProgramOutcomesUploadRetrieveParams,
+  V1CoreFileImportProgramTemplatesUploadCreate200,
+  V1CoreFileImportProgramTemplatesUploadCreate400,
+  V1CoreFileImportProgramTemplatesUploadCreateBody,
+  V1CoreFileImportProgramTemplatesUploadCreateParams,
+  V1CoreFileImportProgramTemplatesUploadRetrieve200,
+  V1CoreFileImportProgramTemplatesUploadRetrieve400,
+  V1CoreFileImportProgramTemplatesUploadRetrieveParams,
   V1CoreLoPoMappingsListParams,
   V1CorePermissionsBulkUpdateParams,
   V1CorePermissionsBulkUpdatePartialUpdateParams,
   V1CorePermissionsListParams,
+  V1CoreProgramOutcomeTemplatesListParams,
   V1CoreProgramsListParams,
-  V1CoreStudentPoScoresListParams,
   V1CoreStudentsListParams,
   V1CoreTermsListParams,
   V1CoreWeightSuggestionListParams,
@@ -3124,6 +3133,165 @@ export function useV1CoreCoursesLearningOutcomesRetrieve<TData = Awaited<ReturnT
 
 
 /**
+ * Generate the real Course Performance Snapshot PDF.
+ */
+export const v1CoreCoursesReportRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Course>(
+      {url: `/api/v1/core/courses/${id}/report/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getV1CoreCoursesReportRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/v1/core/courses/${id}/report/`
+    ] as const;
+    }
+
+export const getV1CoreCoursesReportRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/v1/core/courses/${id}/report/`
+    ] as const;
+    }
+
+
+export const getV1CoreCoursesReportRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreCoursesReportRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>> = ({ signal }) => v1CoreCoursesReportRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreCoursesReportRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>
+export type V1CoreCoursesReportRetrieveInfiniteQueryError = unknown
+
+
+export function useV1CoreCoursesReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreCoursesReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreCoursesReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreCoursesReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreCoursesReportRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1CoreCoursesReportRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreCoursesReportRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>> = ({ signal }) => v1CoreCoursesReportRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreCoursesReportRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>>
+export type V1CoreCoursesReportRetrieveQueryError = unknown
+
+
+export function useV1CoreCoursesReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreCoursesReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreCoursesReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreCoursesReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreCoursesReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreCoursesReportRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * CRUD operations for degree levels.
 
 Permissions:
@@ -4296,13 +4464,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Stream job progress via SSE
  */
 export const v1CoreEventsRetrieve = (
-
+    params?: V1CoreEventsRetrieveParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<JobProgressEvent>(
-      {url: `/api/v1/core/events/`, method: 'GET', signal
+      {url: `/api/v1/core/events/`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -4310,75 +4479,75 @@ export const v1CoreEventsRetrieve = (
 
 
 
-export const getV1CoreEventsRetrieveInfiniteQueryKey = () => {
+export const getV1CoreEventsRetrieveInfiniteQueryKey = (params?: V1CoreEventsRetrieveParams,) => {
     return [
-    'infinite', `/api/v1/core/events/`
+    'infinite', `/api/v1/core/events/`, ...(params ? [params]: [])
     ] as const;
     }
 
-export const getV1CoreEventsRetrieveQueryKey = () => {
+export const getV1CoreEventsRetrieveQueryKey = (params?: V1CoreEventsRetrieveParams,) => {
     return [
-    `/api/v1/core/events/`
+    `/api/v1/core/events/`, ...(params ? [params]: [])
     ] as const;
     }
 
 
-export const getV1CoreEventsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>( options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1CoreEventsRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, V1CoreEventsRetrieveParams['page']>, TError = unknown>(params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreEventsRetrieveInfiniteQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreEventsRetrieveInfiniteQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>> = ({ signal }) => v1CoreEventsRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, QueryKey, V1CoreEventsRetrieveParams['page']> = ({ signal, pageParam }) => v1CoreEventsRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type V1CoreEventsRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>
 export type V1CoreEventsRetrieveInfiniteQueryError = unknown
 
 
-export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>(
-  options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, V1CoreEventsRetrieveParams['page']>, TError = unknown>(
+ params: undefined |  V1CoreEventsRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreEventsRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1CoreEventsRetrieve>>
+          Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, QueryKey
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
+export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, V1CoreEventsRetrieveParams['page']>, TError = unknown>(
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreEventsRetrieve>>,
           TError,
-          Awaited<ReturnType<typeof v1CoreEventsRetrieve>>
+          Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, QueryKey
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, V1CoreEventsRetrieveParams['page']>, TError = unknown>(
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Stream job progress via SSE
  */
 
-export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>>, TError = unknown>(
-  options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, V1CoreEventsRetrieveParams['page']>, TError = unknown>(
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData, QueryKey, V1CoreEventsRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1CoreEventsRetrieveInfiniteQueryOptions(options)
+  const queryOptions = getV1CoreEventsRetrieveInfiniteQueryOptions(params,options)
 
   const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -4390,16 +4559,16 @@ export function useV1CoreEventsRetrieveInfinite<TData = InfiniteData<Awaited<Ret
 
 
 
-export const getV1CoreEventsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getV1CoreEventsRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreEventsRetrieveQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreEventsRetrieveQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>> = ({ signal }) => v1CoreEventsRetrieve(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>> = ({ signal }) => v1CoreEventsRetrieve(params, requestOptions, signal);
 
 
 
@@ -4413,7 +4582,7 @@ export type V1CoreEventsRetrieveQueryError = unknown
 
 
 export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
+ params: undefined |  V1CoreEventsRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreEventsRetrieve>>,
           TError,
@@ -4423,7 +4592,7 @@ export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1Core
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof v1CoreEventsRetrieve>>,
           TError,
@@ -4433,7 +4602,7 @@ export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1Core
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -4441,11 +4610,11 @@ export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1Core
  */
 
 export function useV1CoreEventsRetrieve<TData = Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: V1CoreEventsRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreEventsRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getV1CoreEventsRetrieveQueryOptions(options)
+  const queryOptions = getV1CoreEventsRetrieveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -5191,6 +5360,361 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getV1CoreFileImportProgramOutcomesValidateCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Approve and create/update the template objects from a previously previewed file.
+ */
+export const v1CoreFileImportProgramTemplatesConfirmCreate = (
+    fileImportResponse: FileImportResponse,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
+
+      return customInstance<FileImportResponse>(
+      {url: `/api/v1/core/file-import/program-templates/confirm/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getV1CoreFileImportProgramTemplatesConfirmCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>, TError,{data: FileImportResponse}, TContext> => {
+
+const mutationKey = ['v1CoreFileImportProgramTemplatesConfirmCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
+
+          return  v1CoreFileImportProgramTemplatesConfirmCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreFileImportProgramTemplatesConfirmCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>>
+    export type V1CoreFileImportProgramTemplatesConfirmCreateMutationBody = FileImportResponse
+    export type V1CoreFileImportProgramTemplatesConfirmCreateMutationError = unknown
+
+    export const useV1CoreFileImportProgramTemplatesConfirmCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesConfirmCreate>>,
+        TError,
+        {data: FileImportResponse},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreFileImportProgramTemplatesConfirmCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Upload and process file.
+ */
+export const v1CoreFileImportProgramTemplatesUploadRetrieve = (
+    params: V1CoreFileImportProgramTemplatesUploadRetrieveParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<V1CoreFileImportProgramTemplatesUploadRetrieve200>(
+      {url: `/api/v1/core/file-import/program-templates/upload/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getV1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryKey = (params?: V1CoreFileImportProgramTemplatesUploadRetrieveParams,) => {
+    return [
+    'infinite', `/api/v1/core/file-import/program-templates/upload/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getV1CoreFileImportProgramTemplatesUploadRetrieveQueryKey = (params?: V1CoreFileImportProgramTemplatesUploadRetrieveParams,) => {
+    return [
+    `/api/v1/core/file-import/program-templates/upload/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getV1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']> = ({ signal, pageParam }) => v1CoreFileImportProgramTemplatesUploadRetrieve({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>>
+export type V1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryError = V1CoreFileImportProgramTemplatesUploadRetrieve400
+
+
+export function useV1CoreFileImportProgramTemplatesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreFileImportProgramTemplatesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreFileImportProgramTemplatesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreFileImportProgramTemplatesUploadRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData, QueryKey, V1CoreFileImportProgramTemplatesUploadRetrieveParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreFileImportProgramTemplatesUploadRetrieveInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1CoreFileImportProgramTemplatesUploadRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreFileImportProgramTemplatesUploadRetrieveQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>> = ({ signal }) => v1CoreFileImportProgramTemplatesUploadRetrieve(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreFileImportProgramTemplatesUploadRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>>
+export type V1CoreFileImportProgramTemplatesUploadRetrieveQueryError = V1CoreFileImportProgramTemplatesUploadRetrieve400
+
+
+export function useV1CoreFileImportProgramTemplatesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreFileImportProgramTemplatesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreFileImportProgramTemplatesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreFileImportProgramTemplatesUploadRetrieve<TData = Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError = V1CoreFileImportProgramTemplatesUploadRetrieve400>(
+ params: V1CoreFileImportProgramTemplatesUploadRetrieveParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreFileImportProgramTemplatesUploadRetrieveQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Upload and process file.
+ */
+export const v1CoreFileImportProgramTemplatesUploadCreate = (
+    v1CoreFileImportProgramTemplatesUploadCreateBody: V1CoreFileImportProgramTemplatesUploadCreateBody,
+    params: V1CoreFileImportProgramTemplatesUploadCreateParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+if(v1CoreFileImportProgramTemplatesUploadCreateBody.file !== undefined) {
+ formData.append(`file`, v1CoreFileImportProgramTemplatesUploadCreateBody.file)
+ }
+
+      return customInstance<V1CoreFileImportProgramTemplatesUploadCreate200>(
+      {url: `/api/v1/core/file-import/program-templates/upload/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getV1CoreFileImportProgramTemplatesUploadCreateMutationOptions = <TError = V1CoreFileImportProgramTemplatesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>, TError,{data: V1CoreFileImportProgramTemplatesUploadCreateBody;params: V1CoreFileImportProgramTemplatesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>, TError,{data: V1CoreFileImportProgramTemplatesUploadCreateBody;params: V1CoreFileImportProgramTemplatesUploadCreateParams}, TContext> => {
+
+const mutationKey = ['v1CoreFileImportProgramTemplatesUploadCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>, {data: V1CoreFileImportProgramTemplatesUploadCreateBody;params: V1CoreFileImportProgramTemplatesUploadCreateParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  v1CoreFileImportProgramTemplatesUploadCreate(data,params,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreFileImportProgramTemplatesUploadCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>>
+    export type V1CoreFileImportProgramTemplatesUploadCreateMutationBody = V1CoreFileImportProgramTemplatesUploadCreateBody
+    export type V1CoreFileImportProgramTemplatesUploadCreateMutationError = V1CoreFileImportProgramTemplatesUploadCreate400
+
+    export const useV1CoreFileImportProgramTemplatesUploadCreate = <TError = V1CoreFileImportProgramTemplatesUploadCreate400,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>, TError,{data: V1CoreFileImportProgramTemplatesUploadCreateBody;params: V1CoreFileImportProgramTemplatesUploadCreateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesUploadCreate>>,
+        TError,
+        {data: V1CoreFileImportProgramTemplatesUploadCreateBody;params: V1CoreFileImportProgramTemplatesUploadCreateParams},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreFileImportProgramTemplatesUploadCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Validate file without importing.
+ */
+export const v1CoreFileImportProgramTemplatesValidateCreate = (
+    fileImportResponse: FileImportResponse,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`message`, fileImportResponse.message)
+formData.append(`results`, JSON.stringify(fileImportResponse.results));
+
+      return customInstance<FileImportResponse>(
+      {url: `/api/v1/core/file-import/program-templates/validate/`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getV1CoreFileImportProgramTemplatesValidateCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>, TError,{data: FileImportResponse}, TContext> => {
+
+const mutationKey = ['v1CoreFileImportProgramTemplatesValidateCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>, {data: FileImportResponse}> = (props) => {
+          const {data} = props ?? {};
+
+          return  v1CoreFileImportProgramTemplatesValidateCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreFileImportProgramTemplatesValidateCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>>
+    export type V1CoreFileImportProgramTemplatesValidateCreateMutationBody = FileImportResponse
+    export type V1CoreFileImportProgramTemplatesValidateCreateMutationError = unknown
+
+    export const useV1CoreFileImportProgramTemplatesValidateCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>, TError,{data: FileImportResponse}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreFileImportProgramTemplatesValidateCreate>>,
+        TError,
+        {data: FileImportResponse},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreFileImportProgramTemplatesValidateCreateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -6635,6 +7159,566 @@ export function useV1CorePermissionsMyPermissionsRetrieve<TData = Awaited<Return
 
 
 /**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesList = (
+    params?: V1CoreProgramOutcomeTemplatesListParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedProgramOutcomeTemplateList>(
+      {url: `/api/v1/core/program-outcome-templates/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getV1CoreProgramOutcomeTemplatesListInfiniteQueryKey = (params?: V1CoreProgramOutcomeTemplatesListParams,) => {
+    return [
+    'infinite', `/api/v1/core/program-outcome-templates/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+export const getV1CoreProgramOutcomeTemplatesListQueryKey = (params?: V1CoreProgramOutcomeTemplatesListParams,) => {
+    return [
+    `/api/v1/core/program-outcome-templates/`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getV1CoreProgramOutcomeTemplatesListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, V1CoreProgramOutcomeTemplatesListParams['page']>, TError = unknown>(params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramOutcomeTemplatesListInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']> = ({ signal, pageParam }) => v1CoreProgramOutcomeTemplatesList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramOutcomeTemplatesListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>>
+export type V1CoreProgramOutcomeTemplatesListInfiniteQueryError = unknown
+
+
+export function useV1CoreProgramOutcomeTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, V1CoreProgramOutcomeTemplatesListParams['page']>, TError = unknown>(
+ params: undefined |  V1CoreProgramOutcomeTemplatesListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, V1CoreProgramOutcomeTemplatesListParams['page']>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, QueryKey
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, V1CoreProgramOutcomeTemplatesListParams['page']>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramOutcomeTemplatesListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, V1CoreProgramOutcomeTemplatesListParams['page']>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData, QueryKey, V1CoreProgramOutcomeTemplatesListParams['page']>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramOutcomeTemplatesListInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1CoreProgramOutcomeTemplatesListQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError = unknown>(params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramOutcomeTemplatesListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>> = ({ signal }) => v1CoreProgramOutcomeTemplatesList(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramOutcomeTemplatesListQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>>
+export type V1CoreProgramOutcomeTemplatesListQueryError = unknown
+
+
+export function useV1CoreProgramOutcomeTemplatesList<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError = unknown>(
+ params: undefined |  V1CoreProgramOutcomeTemplatesListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesList<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesList<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramOutcomeTemplatesList<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError = unknown>(
+ params?: V1CoreProgramOutcomeTemplatesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramOutcomeTemplatesListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesCreate = (
+    programOutcomeTemplate: NonReadonly<ProgramOutcomeTemplate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProgramOutcomeTemplate>(
+      {url: `/api/v1/core/program-outcome-templates/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: programOutcomeTemplate, signal
+    },
+      options);
+    }
+
+
+
+export const getV1CoreProgramOutcomeTemplatesCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>, TError,{data: NonReadonly<ProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>, TError,{data: NonReadonly<ProgramOutcomeTemplate>}, TContext> => {
+
+const mutationKey = ['v1CoreProgramOutcomeTemplatesCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>, {data: NonReadonly<ProgramOutcomeTemplate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  v1CoreProgramOutcomeTemplatesCreate(data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreProgramOutcomeTemplatesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>>
+    export type V1CoreProgramOutcomeTemplatesCreateMutationBody = NonReadonly<ProgramOutcomeTemplate>
+    export type V1CoreProgramOutcomeTemplatesCreateMutationError = unknown
+
+    export const useV1CoreProgramOutcomeTemplatesCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>, TError,{data: NonReadonly<ProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesCreate>>,
+        TError,
+        {data: NonReadonly<ProgramOutcomeTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreProgramOutcomeTemplatesCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProgramOutcomeTemplate>(
+      {url: `/api/v1/core/program-outcome-templates/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getV1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/v1/core/program-outcome-templates/${id}/`
+    ] as const;
+    }
+
+export const getV1CoreProgramOutcomeTemplatesRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/v1/core/program-outcome-templates/${id}/`
+    ] as const;
+    }
+
+
+export const getV1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>> = ({ signal }) => v1CoreProgramOutcomeTemplatesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>
+export type V1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryError = unknown
+
+
+export function useV1CoreProgramOutcomeTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramOutcomeTemplatesRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramOutcomeTemplatesRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1CoreProgramOutcomeTemplatesRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramOutcomeTemplatesRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>> = ({ signal }) => v1CoreProgramOutcomeTemplatesRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramOutcomeTemplatesRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>>
+export type V1CoreProgramOutcomeTemplatesRetrieveQueryError = unknown
+
+
+export function useV1CoreProgramOutcomeTemplatesRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramOutcomeTemplatesRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramOutcomeTemplatesRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramOutcomeTemplatesRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesUpdate = (
+    id: number,
+    programOutcomeTemplate: NonReadonly<ProgramOutcomeTemplate>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<ProgramOutcomeTemplate>(
+      {url: `/api/v1/core/program-outcome-templates/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: programOutcomeTemplate
+    },
+      options);
+    }
+
+
+
+export const getV1CoreProgramOutcomeTemplatesUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>, TError,{id: number;data: NonReadonly<ProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>, TError,{id: number;data: NonReadonly<ProgramOutcomeTemplate>}, TContext> => {
+
+const mutationKey = ['v1CoreProgramOutcomeTemplatesUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>, {id: number;data: NonReadonly<ProgramOutcomeTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  v1CoreProgramOutcomeTemplatesUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreProgramOutcomeTemplatesUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>>
+    export type V1CoreProgramOutcomeTemplatesUpdateMutationBody = NonReadonly<ProgramOutcomeTemplate>
+    export type V1CoreProgramOutcomeTemplatesUpdateMutationError = unknown
+
+    export const useV1CoreProgramOutcomeTemplatesUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>, TError,{id: number;data: NonReadonly<ProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<ProgramOutcomeTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreProgramOutcomeTemplatesUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesPartialUpdate = (
+    id: number,
+    patchedProgramOutcomeTemplate: NonReadonly<PatchedProgramOutcomeTemplate>,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<ProgramOutcomeTemplate>(
+      {url: `/api/v1/core/program-outcome-templates/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedProgramOutcomeTemplate
+    },
+      options);
+    }
+
+
+
+export const getV1CoreProgramOutcomeTemplatesPartialUpdateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramOutcomeTemplate>}, TContext> => {
+
+const mutationKey = ['v1CoreProgramOutcomeTemplatesPartialUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>, {id: number;data: NonReadonly<PatchedProgramOutcomeTemplate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  v1CoreProgramOutcomeTemplatesPartialUpdate(id,data,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreProgramOutcomeTemplatesPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>>
+    export type V1CoreProgramOutcomeTemplatesPartialUpdateMutationBody = NonReadonly<PatchedProgramOutcomeTemplate>
+    export type V1CoreProgramOutcomeTemplatesPartialUpdateMutationError = unknown
+
+    export const useV1CoreProgramOutcomeTemplatesPartialUpdate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>, TError,{id: number;data: NonReadonly<PatchedProgramOutcomeTemplate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesPartialUpdate>>,
+        TError,
+        {id: number;data: NonReadonly<PatchedProgramOutcomeTemplate>},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreProgramOutcomeTemplatesPartialUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * CRUD operations for reusable program outcome templates.
+ */
+export const v1CoreProgramOutcomeTemplatesDestroy = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/core/program-outcome-templates/${id}/`, method: 'DELETE'
+    },
+      options);
+    }
+
+
+
+export const getV1CoreProgramOutcomeTemplatesDestroyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['v1CoreProgramOutcomeTemplatesDestroy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  v1CoreProgramOutcomeTemplatesDestroy(id,requestOptions)
+        }
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type V1CoreProgramOutcomeTemplatesDestroyMutationResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>>
+
+    export type V1CoreProgramOutcomeTemplatesDestroyMutationError = unknown
+
+    export const useV1CoreProgramOutcomeTemplatesDestroy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof v1CoreProgramOutcomeTemplatesDestroy>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getV1CoreProgramOutcomeTemplatesDestroyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * CRUD operations for programs.
 
 Permissions:
@@ -7219,6 +8303,165 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Generate the real Program Outcome Report PDF.
+ */
+export const v1CoreProgramsReportRetrieve = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Program>(
+      {url: `/api/v1/core/programs/${id}/report/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getV1CoreProgramsReportRetrieveInfiniteQueryKey = (id?: number,) => {
+    return [
+    'infinite', `/api/v1/core/programs/${id}/report/`
+    ] as const;
+    }
+
+export const getV1CoreProgramsReportRetrieveQueryKey = (id?: number,) => {
+    return [
+    `/api/v1/core/programs/${id}/report/`
+    ] as const;
+    }
+
+
+export const getV1CoreProgramsReportRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramsReportRetrieveInfiniteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>> = ({ signal }) => v1CoreProgramsReportRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramsReportRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>
+export type V1CoreProgramsReportRetrieveInfiniteQueryError = unknown
+
+
+export function useV1CoreProgramsReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>, TError = unknown>(
+ id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramsReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramsReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramsReportRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramsReportRetrieveInfiniteQueryOptions(id,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const getV1CoreProgramsReportRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getV1CoreProgramsReportRetrieveQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>> = ({ signal }) => v1CoreProgramsReportRetrieve(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type V1CoreProgramsReportRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>>
+export type V1CoreProgramsReportRetrieveQueryError = unknown
+
+
+export function useV1CoreProgramsReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramsReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>,
+          TError,
+          Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useV1CoreProgramsReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useV1CoreProgramsReportRetrieve<TData = Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreProgramsReportRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getV1CoreProgramsReportRetrieveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Return average LO scores grouped by course.
  */
 export const v1CoreStudentLoScoresCourseAveragesRetrieve = (
@@ -7525,335 +8768,6 @@ export function useV1CoreStudentLoScoresLoAveragesRetrieve<TData = Awaited<Retur
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getV1CoreStudentLoScoresLoAveragesRetrieveQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Read-only viewset for student program outcome scores.
-
-Permissions:
-- Students: View own scores only
-- Instructors: View scores for students in their courses
-- Admins: View all scores
- */
-export const v1CoreStudentPoScoresList = (
-    params?: V1CoreStudentPoScoresListParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<PaginatedStudentProgramOutcomeScoreList>(
-      {url: `/api/v1/core/student-po-scores/`, method: 'GET',
-        params, signal
-    },
-      options);
-    }
-
-
-
-
-export const getV1CoreStudentPoScoresListInfiniteQueryKey = (params?: V1CoreStudentPoScoresListParams,) => {
-    return [
-    'infinite', `/api/v1/core/student-po-scores/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-export const getV1CoreStudentPoScoresListQueryKey = (params?: V1CoreStudentPoScoresListParams,) => {
-    return [
-    `/api/v1/core/student-po-scores/`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-
-export const getV1CoreStudentPoScoresListInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, V1CoreStudentPoScoresListParams['page']>, TError = unknown>(params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentPoScoresListInfiniteQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, QueryKey, V1CoreStudentPoScoresListParams['page']> = ({ signal, pageParam }) => v1CoreStudentPoScoresList({...params, 'page': pageParam || params?.['page']}, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreStudentPoScoresListInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>>
-export type V1CoreStudentPoScoresListInfiniteQueryError = unknown
-
-
-export function useV1CoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, V1CoreStudentPoScoresListParams['page']>, TError = unknown>(
- params: undefined |  V1CoreStudentPoScoresListParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, V1CoreStudentPoScoresListParams['page']>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, QueryKey
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, V1CoreStudentPoScoresListParams['page']>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreStudentPoScoresListInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, V1CoreStudentPoScoresListParams['page']>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData, QueryKey, V1CoreStudentPoScoresListParams['page']>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreStudentPoScoresListInfiniteQueryOptions(params,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getV1CoreStudentPoScoresListQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError = unknown>(params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentPoScoresListQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>> = ({ signal }) => v1CoreStudentPoScoresList(params, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreStudentPoScoresListQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>>
-export type V1CoreStudentPoScoresListQueryError = unknown
-
-
-export function useV1CoreStudentPoScoresList<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError = unknown>(
- params: undefined |  V1CoreStudentPoScoresListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresList<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresList<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreStudentPoScoresList<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError = unknown>(
- params?: V1CoreStudentPoScoresListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreStudentPoScoresListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * Read-only viewset for student program outcome scores.
-
-Permissions:
-- Students: View own scores only
-- Instructors: View scores for students in their courses
-- Admins: View all scores
- */
-export const v1CoreStudentPoScoresRetrieve = (
-    id: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<StudentProgramOutcomeScore>(
-      {url: `/api/v1/core/student-po-scores/${id}/`, method: 'GET', signal
-    },
-      options);
-    }
-
-
-
-
-export const getV1CoreStudentPoScoresRetrieveInfiniteQueryKey = (id?: number,) => {
-    return [
-    'infinite', `/api/v1/core/student-po-scores/${id}/`
-    ] as const;
-    }
-
-export const getV1CoreStudentPoScoresRetrieveQueryKey = (id?: number,) => {
-    return [
-    `/api/v1/core/student-po-scores/${id}/`
-    ] as const;
-    }
-
-
-export const getV1CoreStudentPoScoresRetrieveInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>, TError = unknown>(id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentPoScoresRetrieveInfiniteQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>> = ({ signal }) => v1CoreStudentPoScoresRetrieve(id, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreStudentPoScoresRetrieveInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>
-export type V1CoreStudentPoScoresRetrieveInfiniteQueryError = unknown
-
-
-export function useV1CoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>, TError = unknown>(
- id: number, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreStudentPoScoresRetrieveInfinite<TData = InfiniteData<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreStudentPoScoresRetrieveInfiniteQueryOptions(id,options)
-
-  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-export const getV1CoreStudentPoScoresRetrieveQueryOptions = <TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getV1CoreStudentPoScoresRetrieveQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>> = ({ signal }) => v1CoreStudentPoScoresRetrieve(id, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type V1CoreStudentPoScoresRetrieveQueryResult = NonNullable<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>>
-export type V1CoreStudentPoScoresRetrieveQueryError = unknown
-
-
-export function useV1CoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError = unknown>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>,
-          TError,
-          Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useV1CoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useV1CoreStudentPoScoresRetrieve<TData = Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError = unknown>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof v1CoreStudentPoScoresRetrieve>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getV1CoreStudentPoScoresRetrieveQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -24,10 +24,22 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 import logging
+import re
+import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional
 
-from ..models import Program, Term, Course, LearningOutcome, ProgramOutcome
+from ..models import (
+    Program,
+    Term,
+    Course,
+    LearningOutcome,
+    ProgramOutcome,
+    ProgramOutcomeTemplate,
+    CourseTemplate,
+    CourseTemplateLearningOutcome,
+    CourseTemplateAssessment,
+)
 from evaluation.models import Assessment, StudentGrade, CourseEnrollment, ScoreRecomputeJob
 from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
 from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
@@ -78,7 +90,7 @@ class FileParser(ABC):
         pass
 
     @abstractmethod
-    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None, sheet_name: Optional[str] = None) -> pd.DataFrame:
         """
         Parse a specific sheet/section from the file.
 
@@ -94,6 +106,8 @@ class FileParser(ABC):
 
 class ExcelParser(FileParser):
     """Parser for Excel files (.xlsx, .xls)."""
+
+    SPREADSHEETML_NS = {"ss": "urn:schemas-microsoft-com:office:spreadsheet"}
 
     def validate_file(self, file_obj) -> bool:
         """Validate Excel file format."""
@@ -117,10 +131,70 @@ class ExcelParser(FileParser):
     def get_sheet_names(self, file_obj) -> List[str]:
         """Get Excel sheet names."""
         try:
+            file_obj.seek(0)
             workbook = pd.ExcelFile(file_obj)
             return [str(sheet_name) for sheet_name in workbook.sheet_names]
         except Exception as e:
-            raise FileImportError(f"Error reading Excel file: {str(e)}")
+            try:
+                workbook_root = self._read_spreadsheetml_root(file_obj)
+                return [
+                    str(sheet.attrib.get("{urn:schemas-microsoft-com:office:spreadsheet}Name", ""))
+                    for sheet in workbook_root.findall("ss:Worksheet", self.SPREADSHEETML_NS)
+                ]
+            except Exception:
+                raise FileImportError(f"Error reading Excel file: {str(e)}")
+
+    def _read_spreadsheetml_root(self, file_obj):
+        file_obj.seek(0)
+        raw_content = file_obj.read()
+        if isinstance(raw_content, str):
+            xml_content = raw_content
+        else:
+            xml_content = raw_content.decode("utf-8-sig")
+        return ET.fromstring(xml_content)
+
+    def _parse_spreadsheetml_sheet(self, file_obj, sheet_name: Optional[str] = None) -> pd.DataFrame:
+        workbook_root = self._read_spreadsheetml_root(file_obj)
+        worksheets = workbook_root.findall("ss:Worksheet", self.SPREADSHEETML_NS)
+        selected_sheet = None
+        for worksheet in worksheets:
+            current_name = worksheet.attrib.get("{urn:schemas-microsoft-com:office:spreadsheet}Name", "")
+            if sheet_name is None or current_name == sheet_name:
+                selected_sheet = worksheet
+                break
+
+        if selected_sheet is None:
+            raise FileImportError(f"Sheet '{sheet_name}' not found")
+
+        table = selected_sheet.find("ss:Table", self.SPREADSHEETML_NS)
+        if table is None:
+            return pd.DataFrame()
+
+        parsed_rows = []
+        for row in table.findall("ss:Row", self.SPREADSHEETML_NS):
+            parsed_row = []
+            current_index = 1
+            for cell in row.findall("ss:Cell", self.SPREADSHEETML_NS):
+                index_attr = cell.attrib.get("{urn:schemas-microsoft-com:office:spreadsheet}Index")
+                if index_attr:
+                    target_index = int(index_attr)
+                    while current_index < target_index:
+                        parsed_row.append("")
+                        current_index += 1
+
+                data = cell.find("ss:Data", self.SPREADSHEETML_NS)
+                parsed_row.append(data.text if data is not None and data.text is not None else "")
+                current_index += 1
+            parsed_rows.append(parsed_row)
+
+        if not parsed_rows:
+            return pd.DataFrame()
+
+        max_width = max(len(row) for row in parsed_rows)
+        normalized_rows = [row + [""] * (max_width - len(row)) for row in parsed_rows]
+        headers = [str(value).strip() for value in normalized_rows[0]]
+        data_rows = normalized_rows[1:]
+        return pd.DataFrame(data_rows, columns=headers)
 
     def _get_dtype_mapping(self, import_type: str) -> Dict[str, Any]:
         """
@@ -143,7 +217,7 @@ class ExcelParser(FileParser):
 
         return dtype_mappings.get(import_type, {})
 
-    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None, sheet_name: Optional[str] = None) -> pd.DataFrame:
         """
         Parse Excel sheet with proper dtype specifications.
 
@@ -155,6 +229,7 @@ class ExcelParser(FileParser):
             DataFrame with properly typed columns
         """
         try:
+            file_obj.seek(0)
             workbook = pd.ExcelFile(file_obj)
 
             # Get dtype mapping for this import type
@@ -163,6 +238,7 @@ class ExcelParser(FileParser):
             # Read with explicit dtypes and nullable backend
             df = pd.read_excel(
                 workbook,
+                sheet_name=sheet_name if sheet_name else 0,
                 dtype=dtype_map if dtype_map else None,
                 dtype_backend="numpy_nullable",  # Better null handling
                 na_values=["", "NA", "N/A", "null", "NULL", "-"],  # Standard null values
@@ -170,7 +246,12 @@ class ExcelParser(FileParser):
 
             return df
         except Exception as e:
-            raise FileImportError(f"Error parsing file: {str(e)}")
+            try:
+                return self._parse_spreadsheetml_sheet(file_obj, sheet_name=sheet_name)
+            except FileImportError:
+                raise
+            except Exception:
+                raise FileImportError(f"Error parsing file: {str(e)}")
 
 
 class CSVParser(FileParser):
@@ -196,7 +277,7 @@ class CSVParser(FileParser):
         """CSV files have single sheet."""
         return ["data"]
 
-    def parse_sheet(self, file_obj, import_type: Optional[str] = None) -> pd.DataFrame:
+    def parse_sheet(self, file_obj, import_type: Optional[str] = None, sheet_name: Optional[str] = None) -> pd.DataFrame:
         """Parse CSV into DataFrame with proper dtypes."""
         try:
             return pd.read_csv(file_obj, dtype_backend="numpy_nullable", na_values=["", "NA", "N/A", "null", "NULL", "-"])
@@ -217,6 +298,13 @@ class FileImportService:
         "learning_outcomes": ["code", "description", "course_code"],
         "program_outcomes": ["code", "description", "program_code", "term_name"],
         "assignment_scores": ["öğrenci no", "adı", "soyadı"],
+    }
+
+    PROGRAM_TEMPLATE_SHEETS = {
+        "Courses": ["CourseCode", "CourseTitle", "Credit", "Status"],
+        "AssessmentMethods": ["CourseCode", "AssessmentType", "Quantity", "Percentage"],
+        "LearningOutcomes": ["CourseCode", "OutcomeNo", "OutcomeText"],
+        "ProgramOutcomes": ["ProgramOutcomeNo", "ProgramOutcomeText"],
     }
 
     # Available parsers for different file formats
@@ -245,6 +333,94 @@ class FileImportService:
 
         self.parser = parser_class()
         return self.parser
+
+    @staticmethod
+    def _cell_value(value) -> str:
+        if pd.isna(value):
+            return ""
+        return str(value).strip()
+
+    @staticmethod
+    def _normalize_template_code(prefix: str, value) -> str:
+        raw_value = FileImportService._cell_value(value).upper()
+        if raw_value.startswith(prefix):
+            return raw_value
+        match = re.search(r"\d+", raw_value)
+        if not match:
+            raise ValueError(f"Missing numeric value for {prefix} code")
+        return f"{prefix}{int(match.group(0))}"
+
+    @staticmethod
+    def _parse_positive_int(value, field_name: str) -> int:
+        raw_value = FileImportService._cell_value(value)
+        parsed_value = int(float(raw_value))
+        if parsed_value <= 0:
+            raise ValueError(f"{field_name} must be positive")
+        return parsed_value
+
+    @staticmethod
+    def _parse_percentage(value) -> float:
+        raw_value = FileImportService._cell_value(value).replace("%", "")
+        parsed_value = float(raw_value)
+        if parsed_value < 0:
+            raise ValueError("Percentage must not be negative")
+        return parsed_value / 100
+
+    @staticmethod
+    def _normalize_assessment_type(value) -> str:
+        normalized_value = FileImportService._cell_value(value).lower()
+        normalized_value = re.sub(r"\s+", " ", normalized_value)
+        mapping = {
+            "midterm": "midterm",
+            "final exam": "final",
+            "final": "final",
+            "homework": "homework",
+            "assignment": "homework",
+            "project": "project",
+            "quiz": "quiz",
+        }
+        return mapping.get(normalized_value, "other")
+
+    def _parse_program_template_sheets(self) -> Dict[str, pd.DataFrame]:
+        parser = self._get_parser()
+        available_sheets = set(parser.get_sheet_names(self.file_obj))
+        missing_sheets = [sheet_name for sheet_name in self.PROGRAM_TEMPLATE_SHEETS if sheet_name not in available_sheets]
+        if missing_sheets:
+            raise FileImportError(f"Missing required sheets: {', '.join(missing_sheets)}")
+
+        parsed_sheets = {}
+        for sheet_name, required_columns in self.PROGRAM_TEMPLATE_SHEETS.items():
+            dataframe = parser.parse_sheet(self.file_obj, import_type="program_templates", sheet_name=sheet_name)
+            missing_columns = [column for column in required_columns if column not in dataframe.columns]
+            if missing_columns:
+                raise FileImportError(
+                    f"Missing required columns for {sheet_name}: {', '.join(missing_columns)}. "
+                    f"Found columns: {', '.join(str(column) for column in dataframe.columns.tolist())}"
+                )
+            parsed_sheets[sheet_name] = dataframe
+        return parsed_sheets
+
+    def _validate_program_template_source(self, program: Program, sheets: Dict[str, pd.DataFrame]):
+        source_names = set()
+        source_ids = set()
+        for dataframe in sheets.values():
+            if "ProgramName" in dataframe.columns:
+                source_names.update(
+                    self._cell_value(value) for value in dataframe["ProgramName"].tolist() if self._cell_value(value)
+                )
+            if "ProgramId" in dataframe.columns:
+                source_ids.update(
+                    self._cell_value(value) for value in dataframe["ProgramId"].tolist() if self._cell_value(value)
+                )
+
+        if len(source_names) > 1 or len(source_ids) > 1:
+            raise FileImportError("File contains rows for more than one source program")
+
+        source_name = next(iter(source_names), "")
+        if source_name and source_name.lower() != program.name.lower():
+            raise FileImportError(f"Source ProgramName '{source_name}' does not match selected program '{program.name}'")
+
+        return {"program_name": source_name, "program_id": next(iter(source_ids), "")}
 
     def detect_file_format(self) -> str:
         """
@@ -281,6 +457,277 @@ class FileImportService:
             if isinstance(e, FileImportError):
                 raise
             raise FileImportError(f"Invalid file: {str(e)}")
+
+    def import_program_templates(self, program_id: int):
+        """
+        Import reusable program/course template data from the program SpreadsheetML workbook.
+
+        The import creates or updates template rows only. It intentionally does not
+        instantiate term-specific Course, LearningOutcome, ProgramOutcome, or
+        Assessment rows.
+        """
+        try:
+            program = Program.objects.get(pk=int(program_id))
+        except (Program.DoesNotExist, ValueError, TypeError):
+            raise FileImportError(f"Program with ID '{program_id}' not found")
+
+        preview = self.preview_program_templates(program_id)
+        created_counts = dict.fromkeys(preview["summary"]["created"].keys(), 0)
+        updated_counts = dict.fromkeys(preview["summary"]["updated"].keys(), 0)
+
+        with transaction.atomic():
+            course_templates = {}
+            for course_data in preview["courses"]:
+                course_template, created = CourseTemplate.objects.update_or_create(
+                    program=program,
+                    code=course_data["code"],
+                    defaults={"name": course_data["name"], "credits": course_data["credits"]},
+                )
+                course_templates[course_data["code"]] = course_template
+                target_counts = created_counts if created else updated_counts
+                target_counts["course_templates"] += 1
+
+                for assessment_data in course_data["assessments"]:
+                    _, created = CourseTemplateAssessment.objects.update_or_create(
+                        course_template=course_template,
+                        name=assessment_data["name"],
+                        defaults={
+                            "assessment_type": assessment_data["assessment_type"],
+                            "total_score": assessment_data["total_score"],
+                            "weight": assessment_data["weight"],
+                        },
+                    )
+                    target_counts = created_counts if created else updated_counts
+                    target_counts["course_template_assessments"] += 1
+
+                for learning_outcome_data in course_data["learning_outcomes"]:
+                    _, created = CourseTemplateLearningOutcome.objects.update_or_create(
+                        course_template=course_template,
+                        code=learning_outcome_data["code"],
+                        defaults={"description": learning_outcome_data["description"]},
+                    )
+                    target_counts = created_counts if created else updated_counts
+                    target_counts["course_template_learning_outcomes"] += 1
+
+            for program_outcome_data in preview["program_outcomes"]:
+                _, created = ProgramOutcomeTemplate.objects.update_or_create(
+                    program=program,
+                    code=program_outcome_data["code"],
+                    defaults={"description": program_outcome_data["description"], "weight": 0.0},
+                )
+                target_counts = created_counts if created else updated_counts
+                target_counts["program_outcome_templates"] += 1
+
+        self.import_results["created"] = created_counts
+        self.import_results["updated"] = updated_counts
+        self.import_results["errors"] = preview["errors"]
+        self.import_results["skipped"] = preview["skipped"]
+        self.import_results["source_program"] = preview["source_program"]
+        self.import_results["preview"] = preview
+        self.import_results["message"] = "Program template import completed."
+        return self.import_results
+
+    def _get_program_for_template_import(self, program_id: int) -> Program:
+        try:
+            return Program.objects.get(pk=int(program_id))
+        except (Program.DoesNotExist, ValueError, TypeError):
+            raise FileImportError(f"Program with ID '{program_id}' not found")
+
+    def _preview_course_templates(self, program: Program, courses_df: pd.DataFrame, errors: List[str]):
+        courses_by_code = {}
+        skipped_count = 0
+        for row_offset, row in courses_df.iterrows():
+            row_number = row_offset + 2
+            try:
+                status = self._cell_value(row["Status"]).upper()
+                error_message = self._cell_value(row.get("ErrorMessage", ""))
+                if status != "OK" or error_message:
+                    skipped_count += 1
+                    if error_message:
+                        errors.append(f"Courses row {row_number}: skipped source error - {error_message}")
+                    continue
+
+                course_code = self._cell_value(row["CourseCode"]).upper()
+                course_title = self._cell_value(row["CourseTitle"])
+                credits = self._parse_positive_int(row["Credit"], "Credit")
+                if not course_code or not course_title:
+                    raise ValueError("CourseCode and CourseTitle are required")
+
+                existing_course = CourseTemplate.objects.filter(program=program, code=course_code).first()
+                courses_by_code[course_code] = {
+                    "code": course_code,
+                    "name": course_title,
+                    "credits": credits,
+                    "action": "update" if existing_course else "create",
+                    "assessments": [],
+                    "learning_outcomes": [],
+                }
+            except Exception as e:
+                errors.append(f"Courses row {row_number}: {str(e)}")
+        return courses_by_code, skipped_count
+
+    def _preview_course_template_assessments(
+        self,
+        program: Program,
+        assessments_df: pd.DataFrame,
+        courses_by_code: Dict[str, Dict[str, Any]],
+        errors: List[str],
+    ):
+        for row_offset, row in assessments_df.iterrows():
+            row_number = row_offset + 2
+            try:
+                course_code = self._cell_value(row["CourseCode"]).upper()
+                course_preview = courses_by_code.get(course_code)
+                if course_preview is None:
+                    raise ValueError(f"Course template '{course_code}' was not imported")
+
+                assessment_base_name = self._cell_value(row["AssessmentType"])
+                if not assessment_base_name:
+                    raise ValueError("AssessmentType is required")
+
+                quantity = self._parse_positive_int(row["Quantity"], "Quantity")
+                total_weight = self._parse_percentage(row["Percentage"])
+                assessment_type = self._normalize_assessment_type(assessment_base_name)
+                per_assessment_weight = total_weight / quantity
+                existing_course = CourseTemplate.objects.filter(program=program, code=course_code).first()
+
+                for index in range(1, quantity + 1):
+                    assessment_name = assessment_base_name if quantity == 1 else f"{assessment_base_name} {index}"
+                    existing_assessment = None
+                    if existing_course is not None:
+                        existing_assessment = CourseTemplateAssessment.objects.filter(
+                            course_template=existing_course,
+                            name=assessment_name,
+                        ).first()
+                    course_preview["assessments"].append(
+                        {
+                            "name": assessment_name,
+                            "assessment_type": assessment_type,
+                            "total_score": 100,
+                            "weight": per_assessment_weight,
+                            "action": "update" if existing_assessment else "create",
+                        }
+                    )
+            except Exception as e:
+                errors.append(f"AssessmentMethods row {row_number}: {str(e)}")
+
+    def _preview_course_template_learning_outcomes(
+        self,
+        program: Program,
+        learning_outcomes_df: pd.DataFrame,
+        courses_by_code: Dict[str, Dict[str, Any]],
+        errors: List[str],
+    ):
+        for row_offset, row in learning_outcomes_df.iterrows():
+            row_number = row_offset + 2
+            try:
+                course_code = self._cell_value(row["CourseCode"]).upper()
+                course_preview = courses_by_code.get(course_code)
+                if course_preview is None:
+                    raise ValueError(f"Course template '{course_code}' was not imported")
+
+                lo_code = self._normalize_template_code("LO", row["OutcomeNo"])
+                description = self._cell_value(row["OutcomeText"])
+                if not description:
+                    raise ValueError("OutcomeText is required")
+
+                existing_course = CourseTemplate.objects.filter(program=program, code=course_code).first()
+                existing_lo = None
+                if existing_course is not None:
+                    existing_lo = CourseTemplateLearningOutcome.objects.filter(
+                        course_template=existing_course,
+                        code=lo_code,
+                    ).first()
+                course_preview["learning_outcomes"].append(
+                    {
+                        "code": lo_code,
+                        "description": description,
+                        "action": "update" if existing_lo else "create",
+                    }
+                )
+            except Exception as e:
+                errors.append(f"LearningOutcomes row {row_number}: {str(e)}")
+
+    def _preview_program_outcome_templates(
+        self,
+        program: Program,
+        program_outcomes_df: pd.DataFrame,
+        errors: List[str],
+    ):
+        program_outcomes = []
+        for row_offset, row in program_outcomes_df.iterrows():
+            row_number = row_offset + 2
+            try:
+                po_code = self._normalize_template_code("PO", row["ProgramOutcomeNo"])
+                description = self._cell_value(row["ProgramOutcomeText"])
+                if not description:
+                    raise ValueError("ProgramOutcomeText is required")
+
+                existing_po = ProgramOutcomeTemplate.objects.filter(program=program, code=po_code).first()
+                program_outcomes.append(
+                    {
+                        "code": po_code,
+                        "description": description,
+                        "weight": 0.0,
+                        "action": "update" if existing_po else "create",
+                    }
+                )
+            except Exception as e:
+                errors.append(f"ProgramOutcomes row {row_number}: {str(e)}")
+        return program_outcomes
+
+    def _build_program_template_preview_summary(self, courses, program_outcomes):
+        return {
+            "created": {
+                "course_templates": sum(1 for course in courses if course["action"] == "create"),
+                "course_template_assessments": sum(
+                    1 for course in courses for assessment in course["assessments"] if assessment["action"] == "create"
+                ),
+                "course_template_learning_outcomes": sum(
+                    1
+                    for course in courses
+                    for learning_outcome in course["learning_outcomes"]
+                    if learning_outcome["action"] == "create"
+                ),
+                "program_outcome_templates": sum(1 for outcome in program_outcomes if outcome["action"] == "create"),
+            },
+            "updated": {
+                "course_templates": sum(1 for course in courses if course["action"] == "update"),
+                "course_template_assessments": sum(
+                    1 for course in courses for assessment in course["assessments"] if assessment["action"] == "update"
+                ),
+                "course_template_learning_outcomes": sum(
+                    1
+                    for course in courses
+                    for learning_outcome in course["learning_outcomes"]
+                    if learning_outcome["action"] == "update"
+                ),
+                "program_outcome_templates": sum(1 for outcome in program_outcomes if outcome["action"] == "update"),
+            },
+        }
+
+    def preview_program_templates(self, program_id: int):
+        """Parse a program template workbook and return the objects that would be upserted."""
+        program = self._get_program_for_template_import(program_id)
+        sheets = self._parse_program_template_sheets()
+        source_program = self._validate_program_template_source(program, sheets)
+        errors: List[str] = []
+        courses_by_code, skipped_course_count = self._preview_course_templates(program, sheets["Courses"], errors)
+        self._preview_course_template_assessments(program, sheets["AssessmentMethods"], courses_by_code, errors)
+        self._preview_course_template_learning_outcomes(program, sheets["LearningOutcomes"], courses_by_code, errors)
+        program_outcomes = self._preview_program_outcome_templates(program, sheets["ProgramOutcomes"], errors)
+        courses = list(courses_by_code.values())
+        summary = self._build_program_template_preview_summary(courses, program_outcomes)
+
+        return {
+            "message": "Program template preview generated.",
+            "source_program": source_program,
+            "summary": summary,
+            "skipped": {"course_templates": skipped_course_count},
+            "errors": errors,
+            "courses": courses,
+            "program_outcomes": program_outcomes,
+        }
 
     def import_assignment_scores(
         self,

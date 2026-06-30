@@ -18,15 +18,15 @@ Fields:
 export interface PatchedTerm {
   readonly id?: number;
   /**
-   * e.g., Fall 2025
+   * e.g., Güz 2024-2025
    * @maxLength 100
    */
   name?: string;
   is_active?: boolean;
   /**
-   * The calendar year the academic year starts (e.g., 2024 for AY 2024-2025)
-   * @minimum -9223372036854776000
-   * @maximum 9223372036854776000
+   * The calendar year the semester starts (e.g., 2024 for Güz 2024-2025)
+   * @minimum -2147483648
+   * @maximum 2147483647
    * @nullable
    */
   academic_year?: number | null;

@@ -11,4 +11,16 @@ export type V1CoreStudentPoScoresListParams = {
  * A page number within the paginated result set.
  */
 page?: number;
+/**
+ * Filter PO scores by program ID
+ */
+program?: number;
+/**
+ * Filter PO scores by student ID
+ */
+student?: number;
+/**
+ * Filter PO scores by term ID
+ */
+term?: number;
 };

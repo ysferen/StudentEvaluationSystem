@@ -423,6 +423,31 @@ class TestStudentProgramOutcomeScoreViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) >= 1
 
+    def test_list_student_po_scores_filters_by_term(self, api_client, db_setup, student_factory, term_factory):
+        """Test GET /api/core/student-po-scores/?term=<id>"""
+        program = db_setup["program"]
+        active_term = db_setup["term"]
+        old_term = term_factory(name="Old Term", academic_year=2024, semester="fall")
+        student = student_factory("student1")
+
+        active_po = ProgramOutcome.objects.create(code="PO1", description="Active PO", program=program, term=active_term)
+        old_po = ProgramOutcome.objects.create(code="PO1", description="Old PO", program=program, term=old_term)
+
+        from core.models import StudentProgramOutcomeScore
+
+        active_score = StudentProgramOutcomeScore.objects.create(
+            student=student.user, program_outcome=active_po, score=85.0, term=active_term
+        )
+        StudentProgramOutcomeScore.objects.create(student=student.user, program_outcome=old_po, score=40.0, term=old_term)
+
+        url = reverse("student-po-score-list")
+        response = api_client.get(url, {"term": active_term.id})
+
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data["results"] if isinstance(response.data, dict) else response.data
+        result_ids = [item["id"] for item in results]
+        assert result_ids == [active_score.id]
+
 
 @pytest.mark.django_db
 class TestAssessmentLOMappingBulkSync:

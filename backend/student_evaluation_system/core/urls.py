@@ -34,6 +34,9 @@ router.register(
     r"file-import/learning-outcomes", views.LearningOutcomesImportViewSet, basename="file-import-learning-outcomes"
 )
 router.register(r"file-import/program-outcomes", views.ProgramOutcomesImportViewSet, basename="file-import-program-outcomes")
+router.register(
+    r"file-import/program-templates", views.ProgramTemplatesImportViewSet, basename="file-import-program-templates"
+)
 router.register(r"permissions", views.InstructorPermissionViewSet, basename="instructor-permission")
 router.register(r"weight-suggestion", views.WeightSuggestionViewSet, basename="weightsuggestion")
 

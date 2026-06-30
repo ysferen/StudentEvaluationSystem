@@ -16,7 +16,7 @@ import Modal from '@/components/ui/custom/Modal'
 import { LearningOutcomesPanel } from '@/features/courses/components/LearningOutcomesPanel'
 import type { BoxPlotData } from '@/features/courses/components/BoxPlotChart'
 import type { HeatmapData } from '@/features/courses/components/StudentHeatmap'
-import { coreCoursesList, coreStudentPoScoresList, useCoreTermsActiveRetrieve } from '@/shared/api/generated/core/core'
+import { coreCoursesList, useCoreTermsActiveRetrieve } from '@/shared/api/generated/core/core'
 import { useCoreAnalyticsProgramStatsRetrieve } from '@/shared/api/generated/analytics/analytics'
 import {
   coreProgramOutcomesList,
@@ -24,9 +24,25 @@ import {
   useCoreProgramOutcomesDestroy,
   useCoreProgramOutcomesPartialUpdate,
 } from '@/shared/api/generated/outcomes/outcomes'
+import { coreStudentPoScoresList } from '@/shared/api/generated/scores/scores'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { downloadReportPdf } from '@/shared/api/reportDownloads'
-import type { ProgramOutcome, StudentProgramOutcomeScore } from '@/shared/api/model'
+import type { CoreStudentPoScoresListParams, ProgramOutcome, StudentProgramOutcomeScore } from '@/shared/api/model'
+
+const fetchAllStudentPoScores = async (params: Omit<CoreStudentPoScoresListParams, 'page'>) => {
+  const results: StudentProgramOutcomeScore[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const response = await coreStudentPoScoresList({ ...params, page })
+    results.push(...(response.results || []))
+    hasNextPage = Boolean(response.next)
+    page += 1
+  }
+
+  return results
+}
 
 const getQuantile = (arr: number[], q: number): number => {
   const pos = (arr.length - 1) * q
@@ -247,11 +263,14 @@ const ProgramPage = () => {
   })
 
   const { data: poScoresData = [], isLoading: poScoresLoading } = useQuery({
-    queryKey: ['program-page-po-scores'],
+    queryKey: ['program-page-po-scores', primaryProgramId, activeTerm?.id],
     queryFn: async () => {
-      const response = await coreStudentPoScoresList()
-      return response.results || []
+      return fetchAllStudentPoScores({
+        program: primaryProgramId,
+        term: activeTerm?.id,
+      })
     },
+    enabled: !!primaryProgramId && !!activeTerm?.id,
   })
 
   const totalCredits = useMemo(
@@ -434,6 +453,7 @@ const ProgramPage = () => {
 
   return (
     <div className="space-y-8">
+      <section id="overview" className="scroll-mt-24 space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-secondary-900">{programName}</h1>
@@ -513,7 +533,9 @@ const ProgramPage = () => {
           </div>
         </Card>
       </div>
+      </section>
 
+      <section id="outcomes" className="scroll-mt-24">
       <LearningOutcomesPanel
         title="Program Outcomes"
         subtitle="Average program outcome performance across students"
@@ -533,7 +555,9 @@ const ProgramPage = () => {
         createButtonLabel="New PO"
         emptyMessage="No program outcomes defined for this program"
       />
+      </section>
 
+      <section id="year-levels" className="scroll-mt-24">
       <Card variant="flat" className="bg-white border-secondary-200">
         <h2 className="text-lg font-semibold text-secondary-900 mb-4">Year-Level Context</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -546,7 +570,9 @@ const ProgramPage = () => {
           ))}
         </div>
       </Card>
+      </section>
 
+      <section id="analytics" className="scroll-mt-24">
       <Card className="overflow-hidden">
         <div className="p-6 border-b border-secondary-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -610,6 +636,7 @@ const ProgramPage = () => {
           )}
         </div>
       </Card>
+      </section>
 
       <ProgramOutcomeModal
         isOpen={poCreateModalOpen}

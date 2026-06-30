@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { X } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { AlertTriangle, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,12 @@ const SEMESTER_CYCLE: Record<string, string> = {
   summer: 'fall',
 }
 
+const SEMESTER_LABELS: Record<string, string> = {
+  fall: 'Güz',
+  spring: 'Bahar',
+  summer: 'Yaz',
+}
+
 export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose }) => {
   const { data: activeTerm } = useCoreTermsActiveRetrieve()
   const { data: templatesData } = useCoreCourseTemplatesList()
@@ -36,11 +42,13 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
   const [jobId, setJobId] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showApproval, setShowApproval] = useState(false)
+  const [approvalText, setApprovalText] = useState('')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const templates = (templatesData as any)?.results ?? (templatesData as any) ?? []
 
-  useMemo(() => {
+  useEffect(() => {
     if (activeTerm && isOpen) {
       const nextSem = SEMESTER_CYCLE[activeTerm.semester ?? 'fall'] ?? 'fall'
       setSemester(nextSem)
@@ -50,9 +58,21 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
   }, [activeTerm, isOpen])
 
   const academicYearRange = useMemo(() => {
-    if (semester === 'fall') return `${academicYear}–${academicYear + 1}`
-    return `${academicYear - 1}–${academicYear}`
+    if (semester === 'fall') return `${academicYear}-${academicYear + 1}`
+    return `${academicYear - 1}-${academicYear}`
   }, [semester, academicYear])
+
+  const newTermName = useMemo(() => {
+    return `${SEMESTER_LABELS[semester] ?? semester} ${academicYearRange}`
+  }, [academicYearRange, semester])
+
+  const approvalMatches = approvalText === newTermName
+
+  useEffect(() => {
+    setShowApproval(false)
+    setApprovalText('')
+    setError(null)
+  }, [semester, academicYear, selectedTemplates])
 
   const toggleTemplate = (id: number) => {
     setSelectedTemplates((prev) => {
@@ -75,6 +95,11 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
   }
 
   const handleSubmit = async () => {
+    if (!approvalMatches) {
+      setShowApproval(true)
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
@@ -100,17 +125,42 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
     window.location.reload()
   }
 
+  const handleClose = () => {
+    setShowApproval(false)
+    setApprovalText('')
+    setError(null)
+    onClose()
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader className="flex-row items-center justify-between border-b border-secondary-200 pb-4">
           <DialogTitle className="text-xl font-bold text-secondary-900">Start New Term</DialogTitle>
-          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
+          <button onClick={handleClose} className="text-secondary-400 hover:text-secondary-600 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-700" />
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-amber-900">This action cannot be undone.</p>
+                <p className="text-sm text-amber-900">
+                  All courses that belong to the current term will be archived. A new active term named{' '}
+                  <span className="font-semibold">{newTermName}</span> will be created based on the selected course
+                  templates.
+                </p>
+                <p className="text-sm text-amber-900">
+                  Course templates are reusable course blueprints. They define the course code, name, credits, learning
+                  outcomes, assessments, and outcome mappings that should be copied into a new term.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {activeTerm && (
             <p className="text-sm text-secondary-500">
               Current active term: <span className="font-medium text-secondary-700">{activeTerm.name}</span>
@@ -190,6 +240,26 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
             <JobProgressBar jobId={jobId} onComplete={handleComplete} label="Creating courses..." />
           )}
 
+          {showApproval && !jobId && (
+            <div className="rounded-xl border border-danger-200 bg-danger-50 p-4">
+              <label htmlFor="newTermApproval" className="block text-sm font-semibold text-danger-900 mb-2">
+                Type <span className="font-bold">{newTermName}</span> to approve this term migration.
+              </label>
+              <input
+                id="newTermApproval"
+                type="text"
+                value={approvalText}
+                onChange={(event) => setApprovalText(event.target.value)}
+                placeholder={newTermName}
+                className="block w-full rounded-xl border border-danger-300 px-4 py-2.5 text-sm text-secondary-900 placeholder-secondary-400 focus:border-danger-500 focus:ring-2 focus:ring-danger-500/20 transition"
+                autoFocus
+              />
+              <p className="mt-2 text-xs text-danger-800">
+                The confirmation must match the new term name exactly.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
               <p className="text-danger-800 text-sm">{error}</p>
@@ -199,16 +269,22 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
 
         {!jobId && (
           <DialogFooter>
-            <button onClick={onClose} disabled={submitting} className="px-4 py-2 text-sm font-medium text-secondary-600 hover:text-secondary-900 transition-colors">
+            <button onClick={handleClose} disabled={submitting} className="px-4 py-2 text-sm font-medium text-secondary-600 hover:text-secondary-900 transition-colors">
               Cancel
             </button>
             <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-primary-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Start New Term"
+              onClick={() => {
+                if (!showApproval) {
+                  setShowApproval(true)
+                  return
+                }
+                handleSubmit()
+              }}
+              disabled={submitting || (showApproval && !approvalMatches)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-danger-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-danger-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={showApproval ? 'Confirm New Term Migration' : 'Review New Term Migration'}
             >
-              {submitting ? 'Starting...' : 'Start New Term'}
+              {submitting ? 'Starting...' : showApproval ? 'Confirm New Term' : 'Start New Term'}
             </button>
           </DialogFooter>
         )}

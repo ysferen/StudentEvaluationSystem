@@ -83,16 +83,17 @@ export const StudentHeatmap: React.FC<StudentHeatmapProps> = ({
                   {student.studentName}
                 </td>
                 {loCodes.map((loCode) => {
-                  const score = student.loScores[loCode] ?? 0
-                  const bgColor = getHeatmapColor(score)
-                  const textColor = getTextColor(score)
+                  const score = student.loScores[loCode]
+                  const displayScore = score ?? 0
+                  const bgColor = getHeatmapColor(displayScore)
+                  const textColor = getTextColor(displayScore)
                   return (
                     <td
                       key={loCode}
                       className="px-2 py-1.5 text-center text-xs font-medium border-b border-secondary-200"
                       style={{ backgroundColor: bgColor, color: textColor }}
                     >
-                      {score > 0 ? score.toFixed(1) : '\u2212'}
+                      {score != null ? score.toFixed(1) : '\u2212'}
                     </td>
                   )
                 })}
@@ -164,16 +165,17 @@ export const AssessmentHeatmap: React.FC<AssessmentHeatmapProps> = ({
                   {student.name}
                 </td>
                 {assessments.map((a) => {
-                  const pct = student.scores[a.id] ?? 0
-                  const bgColor = getHeatmapColor(pct)
-                  const textColor = getTextColor(pct)
+                  const pct = student.scores[a.id]
+                  const displayPct = pct ?? 0
+                  const bgColor = getHeatmapColor(displayPct)
+                  const textColor = getTextColor(displayPct)
                   return (
                     <td
                       key={a.id}
                       className="px-2 py-1.5 text-center text-xs font-medium border-b border-secondary-200"
                       style={{ backgroundColor: bgColor, color: textColor }}
                     >
-                      {pct > 0 ? pct.toFixed(1) : '\u2212'}
+                      {pct != null ? pct.toFixed(1) : '\u2212'}
                     </td>
                   )
                 })}

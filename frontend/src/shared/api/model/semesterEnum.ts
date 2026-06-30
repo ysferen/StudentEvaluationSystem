@@ -7,9 +7,9 @@
  */
 
 /**
- * * `fall` - Fall
-* `spring` - Spring
-* `summer` - Summer
+ * * `fall` - Güz
+* `spring` - Bahar
+* `summer` - Yaz
  */
 export type SemesterEnum = typeof SemesterEnum[keyof typeof SemesterEnum];
 

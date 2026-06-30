@@ -7,8 +7,10 @@ import {
   ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
+import { useAuth } from '../../auth/hooks/useAuth'
 
 const HeadDashboard = () => {
+  const { user } = useAuth()
   const { data: statsData, isLoading, error, refetch } = useCoreAnalyticsProgramStatsRetrieve()
 
   const [activeChart, setActiveChart] = useState<'gpa' | 'po'>('gpa')
@@ -53,13 +55,14 @@ const HeadDashboard = () => {
   }
 
   const categories = ['1st Year', '2nd Year', '3rd Year', '4th Year'].slice(0, yearLevelBreakdown.length)
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'there'
 
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 p-8 text-white shadow-lg">
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold mb-2">Program Overview</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome, {displayName}</h1>
           <p className="text-sky-100 text-lg">Program Dashboard</p>
         </div>
         <div className="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-right" />
