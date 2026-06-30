@@ -74,7 +74,7 @@ class StudentGrade(models.Model):
         ordering = ["assessment", "student"]
         constraints = [
             models.UniqueConstraint(fields=["student", "assessment"], name="unique_student_grade"),
-            models.CheckConstraint(check=models.Q(score__gte=0), name="score_non_negative"),
+            models.CheckConstraint(condition=models.Q(score__gte=0), name="score_non_negative"),
         ]
         verbose_name = "Student Grade"
         verbose_name_plural = "Student Grades"
