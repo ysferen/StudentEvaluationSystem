@@ -10,10 +10,13 @@ import {
 } from '../../../shared/api/generated/core/core'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
 import { coreLearningOutcomesDestroy, coreLearningOutcomesList } from '../../../shared/api/generated/outcomes/outcomes'
+import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { isRecord } from '@/shared/utils/guards'
 import { CourseAnalyticsCard } from '../components/CourseAnalyticsCard'
 import { CourseHealthMatrix } from '../components/CourseHealthMatrix'
 import { CourseAttentionList } from '../components/CourseAttentionList'
+import type { BoxPlotData } from '../../courses/components/BoxPlotChart'
+import type { HeatmapData } from '../../courses/components/StudentHeatmap'
 import {
   calculateGradeDistribution,
   calculateAverageCourseGrade,
@@ -26,6 +29,7 @@ import {
 } from '../utils/analytics'
 import type { Course } from '../../../shared/api/model/course'
 import type { CoreLearningOutcome } from '../../../shared/api/model/coreLearningOutcome'
+import type { StudentLearningOutcomeScore } from '../../../shared/api/model/studentLearningOutcomeScore'
 
 interface LoAverageItem {
   lo_code: string
@@ -66,11 +70,115 @@ interface CourseAnalytics {
   loAverages: LoAverageItem[]
   gradeAverages: Array<{ weighted_average: number | null }>
   learningOutcomes: CoreLearningOutcome[]
+  loScores: StudentLearningOutcomeScore[]
 }
 
 const countValidCourseGradeAverages = (
   courseGradeAverages: Array<{ averageCourseGrade: number | null }>
 ): number => courseGradeAverages.filter(({ averageCourseGrade }) => averageCourseGrade !== null).length
+
+const getQuantile = (values: number[], quantile: number): number => {
+  if (values.length === 0) return 0
+  const position = (values.length - 1) * quantile
+  const base = Math.floor(position)
+  const remainder = position - base
+  const next = values[base + 1]
+  if (next !== undefined) {
+    return values[base] + remainder * (next - values[base])
+  }
+  return values[base]
+}
+
+const fetchAllCourseLoScores = async (courseId: number): Promise<StudentLearningOutcomeScore[]> => {
+  const allScores: StudentLearningOutcomeScore[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const response = await coreStudentLoScoresList({ course: courseId, page })
+    allScores.push(...(response.results || []))
+    hasNextPage = Boolean(response.next)
+    page += 1
+  }
+
+  return allScores
+}
+
+const buildBoxPlotData = (
+  learningOutcomes: CoreLearningOutcome[],
+  loScores: StudentLearningOutcomeScore[],
+): BoxPlotData[] => learningOutcomes.map((lo) => {
+  const scores = loScores
+    .filter((score) => score.learning_outcome.code === lo.code)
+    .map((score) => score.score ?? 0)
+    .sort((a, b) => a - b)
+
+  if (scores.length === 0) {
+    return {
+      code: lo.code,
+      min: 0,
+      q1: 0,
+      median: 0,
+      q3: 0,
+      max: 0,
+      mean: 0,
+    }
+  }
+
+  const n = scores.length
+  const min = scores[0]
+  const max = scores[n - 1]
+  const mean = scores.reduce((sum, value) => sum + value, 0) / n
+
+  return {
+    code: lo.code,
+    min: Math.round(min * 100) / 100,
+    q1: Math.round(getQuantile(scores, 0.25) * 100) / 100,
+    median: Math.round(getQuantile(scores, 0.5) * 100) / 100,
+    q3: Math.round(getQuantile(scores, 0.75) * 100) / 100,
+    max: Math.round(max * 100) / 100,
+    mean: Math.round(mean * 100) / 100,
+  }
+})
+
+const buildHeatmapData = (
+  learningOutcomes: CoreLearningOutcome[],
+  loScores: StudentLearningOutcomeScore[],
+): { loCodes: string[]; students: HeatmapData[] } => {
+  const loCodes = learningOutcomes.map((lo) => lo.code)
+  const studentMap = new Map<number, HeatmapData>()
+
+  loScores.forEach((score) => {
+    const studentId = score.student_id
+    const studentName = typeof score.student === 'string'
+      ? score.student.replace(/ \([^)]+\)$/, '')
+      : `Student ${studentId}`
+    const loCode = score.learning_outcome.code
+    const roundedScore = Math.round((score.score ?? 0) * 100) / 100
+    const existing = studentMap.get(studentId)
+
+    if (existing) {
+      existing.loScores[loCode] = roundedScore
+    } else {
+      studentMap.set(studentId, {
+        studentId,
+        studentName,
+        loScores: { [loCode]: roundedScore },
+      })
+    }
+  })
+
+  const students = Array.from(studentMap.values()).map(student => ({
+    ...student,
+    loScores: loCodes.reduce((acc, code) => ({
+      ...acc,
+      [code]: student.loScores[code] ?? 0,
+    }), {} as Record<string, number>),
+  }))
+
+  students.sort((a, b) => a.studentName.localeCompare(b.studentName))
+  return { loCodes, students }
+}
 
 const InstructorDashboard = () => {
   const { user } = useAuth()
@@ -102,16 +210,18 @@ const InstructorDashboard = () => {
     queries: courses.map((course: Course) => ({
       queryKey: ['course-analytics', course.id],
       queryFn: async (): Promise<CourseAnalytics> => {
-        const [loAveragesRes, gradeAveragesRes, learningOutcomesRes] = await Promise.all([
+        const [loAveragesRes, gradeAveragesRes, learningOutcomesRes, loScores] = await Promise.all([
           coreStudentLoScoresLoAveragesRetrieve({ params: { course: course.id } }),
           evaluationGradesCourseAveragesRetrieve({ course: course.id, per_student: true }),
           coreLearningOutcomesList({ course: course.id }),
+          fetchAllCourseLoScores(course.id),
         ])
         return {
           courseId: course.id,
           loAverages: toLoAverages(loAveragesRes),
           gradeAverages: Array.isArray(gradeAveragesRes) ? gradeAveragesRes : [],
           learningOutcomes: learningOutcomesRes.results || [],
+          loScores,
         }
       },
       retry: 1,
@@ -223,6 +333,15 @@ const InstructorDashboard = () => {
   }
 
   const selectedCourseLearningOutcomes = course.learningOutcomes || []
+  const selectedCourseAnalytics = course.id ? analyticsMap.get(course.id) : undefined
+
+  const selectedCourseBoxPlotData = useMemo(() => (
+    buildBoxPlotData(selectedCourseLearningOutcomes, selectedCourseAnalytics?.loScores ?? [])
+  ), [selectedCourseAnalytics?.loScores, selectedCourseLearningOutcomes])
+
+  const selectedCourseHeatmapData = useMemo(() => (
+    buildHeatmapData(selectedCourseLearningOutcomes, selectedCourseAnalytics?.loScores ?? [])
+  ), [selectedCourseAnalytics?.loScores, selectedCourseLearningOutcomes])
 
   const selectedCourseAverageScoresByCode = useMemo(() => (
     (course.loScores || []).reduce<Record<string, number>>((acc, lo) => {
@@ -305,6 +424,9 @@ const InstructorDashboard = () => {
           subtitle={course.name}
           learningOutcomes={selectedCourseLearningOutcomes}
           averageScoresByCode={selectedCourseAverageScoresByCode}
+          loScores={selectedCourseAnalytics?.loScores ?? []}
+          boxPlotData={selectedCourseBoxPlotData}
+          heatmapData={selectedCourseHeatmapData}
           courseId={course.id}
           isLoading={currentCourseAnalyticsLoading}
           errorMessage={analyticsError ? 'Failed to load analytics for this course' : null}

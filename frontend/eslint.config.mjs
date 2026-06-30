@@ -6,6 +6,7 @@ import globals from "globals";
 
 export default defineConfig([
     globalIgnores([
+        "coverage",
         "dist",
         "node_modules",
         "src/shared/api/generated",

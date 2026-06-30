@@ -26,19 +26,23 @@ VIEW_ONLY_AREAS = [
 
 def _ensure_permissions(instructor_profile, program_head):
     for area in COURSE_LEVEL_FULL_AREAS:
-        InstructorPermission.objects.get_or_create(
+        permission, _ = InstructorPermission.objects.get_or_create(
             instructor=instructor_profile,
-            program_head=program_head,
             resource_area=area,
-            defaults={"permission_tier": PermissionTier.FULL},
+            defaults={"program_head": program_head, "permission_tier": PermissionTier.FULL},
         )
+        if permission.program_head_id is None and program_head is not None:
+            permission.program_head = program_head
+            permission.save(update_fields=["program_head", "updated_at"])
     for area in VIEW_ONLY_AREAS:
-        InstructorPermission.objects.get_or_create(
+        permission, _ = InstructorPermission.objects.get_or_create(
             instructor=instructor_profile,
-            program_head=program_head,
             resource_area=area,
-            defaults={"permission_tier": PermissionTier.VIEW},
+            defaults={"program_head": program_head, "permission_tier": PermissionTier.VIEW},
         )
+        if permission.program_head_id is None and program_head is not None:
+            permission.program_head = program_head
+            permission.save(update_fields=["program_head", "updated_at"])
 
 
 @receiver(m2m_changed, sender=Course.instructors.through)

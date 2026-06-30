@@ -366,6 +366,34 @@ class TestCourseTemplateAPI:
         assert course.learning_outcomes.count() == 1
         assert course.assessments.count() == 1
 
+    def test_instantiate_same_template_same_term_is_idempotent(self, api_client, db_setup, fb_admin_factory):
+        admin = fb_admin_factory()
+        api_client.force_authenticate(user=admin)
+        template = CourseTemplate.objects.create(name="CHE 101", code="CHE 101", credits=4, program=db_setup["program"])
+        CourseTemplateLearningOutcome.objects.create(
+            code="LO1",
+            description="Basics",
+            course_template=template,
+        )
+
+        first_response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+        second_response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+
+        assert first_response.status_code == 201
+        assert second_response.status_code == 200
+        assert second_response.data["id"] == first_response.data["id"]
+        assert Course.objects.filter(code="CHE 101", program=db_setup["program"], term=db_setup["term"]).count() == 1
+        course = Course.objects.get(id=first_response.data["id"])
+        assert course.learning_outcomes.count() == 1
+
     def test_instructor_with_full_courses_permission_can_instantiate(self, api_client, db_setup, instructor_user_factory):
         instructor_user = instructor_user_factory(username="template_instructor")
         profile = instructor_user.instructor_profile
@@ -385,6 +413,39 @@ class TestCourseTemplateAPI:
 
         assert response.status_code == 201
         assert response.data["code"] == "CS102"
+        assert Course.objects.get(id=response.data["id"]).instructors.filter(id=instructor_user.id).exists()
+
+    def test_instantiate_reuses_existing_instructor_permission_with_program_head(
+        self,
+        api_client,
+        db_setup,
+        instructor_user_factory,
+        user_factory,
+    ):
+        from users.models import ProgramHeadProfile
+
+        head_user = user_factory("template_head", role="program_head")
+        program_head = ProgramHeadProfile.objects.create(user=head_user, program=db_setup["program"])
+        instructor_user = instructor_user_factory(username="template_existing_permission_instructor")
+        profile = instructor_user.instructor_profile
+        existing_permission = InstructorPermission.objects.create(
+            instructor=profile,
+            resource_area="courses",
+            permission_tier="full",
+        )
+        api_client.force_authenticate(user=instructor_user)
+        template = CourseTemplate.objects.create(name="CS103", code="CS103", credits=3, program=db_setup["program"])
+
+        response = api_client.post(
+            f"/api/core/course-templates/{template.id}/instantiate/",
+            {"term_id": db_setup["term"].id},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert InstructorPermission.objects.filter(instructor=profile, resource_area="courses").count() == 1
+        existing_permission.refresh_from_db()
+        assert existing_permission.program_head == program_head
         assert Course.objects.get(id=response.data["id"]).instructors.filter(id=instructor_user.id).exists()
 
     def test_instantiate_missing_term_id(self, api_client, db_setup, fb_admin_factory):

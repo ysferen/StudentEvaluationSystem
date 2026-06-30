@@ -107,8 +107,7 @@ class TestProgramTemplateImport:
         assert preview["summary"]["created"]["course_templates"] == 1
         assert preview["courses"][0]["code"] == "CS101"
         assert [assessment["name"] for assessment in preview["courses"][0]["assessments"]] == [
-            "Midterm 1",
-            "Midterm 2",
+            "Midterm",
             "Final Exam",
         ]
         assert [outcome["code"] for outcome in preview["courses"][0]["learning_outcomes"]] == ["LO1", "LO2"]
@@ -118,18 +117,33 @@ class TestProgramTemplateImport:
         assert CourseTemplateLearningOutcome.objects.count() == 0
         assert ProgramOutcomeTemplate.objects.count() == 0
 
-    def test_expands_assessments_and_normalizes_weights(self, db_setup):
+    def test_imports_assessment_rows_and_normalizes_weights(self, db_setup):
         upload = _spreadsheetml_upload(_valid_template_sheets())
 
         FileImportService(upload).import_program_templates(db_setup["program"].id)
 
         assessments = CourseTemplateAssessment.objects.order_by("name")
-        assert list(assessments.values_list("name", flat=True)) == ["Final Exam", "Midterm 1", "Midterm 2"]
-        assert CourseTemplateAssessment.objects.get(name="Midterm 1").assessment_type == "midterm"
+        assert list(assessments.values_list("name", flat=True)) == ["Final Exam", "Midterm"]
+        assert CourseTemplateAssessment.objects.get(name="Midterm").assessment_type == "midterm"
         assert CourseTemplateAssessment.objects.get(name="Final Exam").assessment_type == "final"
-        assert CourseTemplateAssessment.objects.get(name="Midterm 1").weight == pytest.approx(0.15)
-        assert CourseTemplateAssessment.objects.get(name="Midterm 2").weight == pytest.approx(0.15)
+        assert CourseTemplateAssessment.objects.get(name="Midterm").weight == pytest.approx(0.30)
         assert CourseTemplateAssessment.objects.get(name="Final Exam").weight == pytest.approx(0.40)
+
+    def test_import_ignores_assessment_quantity(self, db_setup):
+        sheets = _valid_template_sheets()
+        sheets["AssessmentMethods"] = [
+            ["CourseCode", "AssessmentType", "Quantity", "Percentage"],
+            ["CS101", "Assignment", "10", "20"],
+            ["CS101", "Final Exam", "1", "40"],
+        ]
+
+        preview = FileImportService(_spreadsheetml_upload(sheets)).preview_program_templates(db_setup["program"].id)
+
+        assert [assessment["name"] for assessment in preview["courses"][0]["assessments"]] == [
+            "Assignment",
+            "Final Exam",
+        ]
+        assert preview["courses"][0]["assessments"][0]["weight"] == pytest.approx(0.20)
 
     def test_skips_non_ok_course_rows(self, db_setup):
         sheets = _valid_template_sheets()
@@ -156,10 +170,30 @@ class TestProgramTemplateImport:
         assert result["updated"]["course_templates"] == 1
         assert CourseTemplate.objects.count() == 1
         assert CourseTemplateLearningOutcome.objects.count() == 2
-        assert CourseTemplateAssessment.objects.count() == 3
+        assert CourseTemplateAssessment.objects.count() == 2
         assert ProgramOutcomeTemplate.objects.count() == 1
         assert CourseTemplate.objects.get(code="CS101").name == "Advanced Algorithms"
         assert ProgramOutcomeTemplate.objects.get(code="PO1").description == "Updated program outcome"
+
+    def test_reimport_removes_stale_template_assessments(self, db_setup):
+        FileImportService(_spreadsheetml_upload(_valid_template_sheets())).import_program_templates(db_setup["program"].id)
+        template = CourseTemplate.objects.get(code="CS101")
+        for index in range(1, 11):
+            CourseTemplateAssessment.objects.create(
+                course_template=template,
+                name=f"Assignment {index}",
+                assessment_type="homework",
+                total_score=100,
+                weight=0.02,
+            )
+
+        result = FileImportService(_spreadsheetml_upload(_valid_template_sheets())).import_program_templates(
+            db_setup["program"].id
+        )
+
+        assessments = CourseTemplateAssessment.objects.order_by("name")
+        assert list(assessments.values_list("name", flat=True)) == ["Final Exam", "Midterm"]
+        assert result["deleted"]["course_template_assessments"] == 10
 
     def test_rejects_missing_required_sheet(self, db_setup):
         sheets = _valid_template_sheets()

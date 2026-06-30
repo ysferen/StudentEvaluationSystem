@@ -14,6 +14,7 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 from core.models import (
+    Term,
     University,
     ProgramOutcome,
     LearningOutcome,
@@ -161,6 +162,25 @@ class TestTermViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) >= 1
         assert response.data["results"][0]["name"] == term.name
+
+    def test_list_terms_returns_sorted_terms(self, api_client, db_setup):
+        """Test GET /api/core/terms/ returns terms sorted by academic cycle."""
+        db_setup["term"].delete()
+        Term.objects.create(name="Güz 2024-2025", academic_year=2024, semester="fall")
+        Term.objects.create(name="Bahar 2024-2025", academic_year=2025, semester="spring")
+        Term.objects.create(name="Yaz 2024-2025", academic_year=2025, semester="summer")
+        Term.objects.create(name="Güz 2025-2026", academic_year=2025, semester="fall")
+
+        url = reverse("term-list")
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [term["name"] for term in response.data["results"]] == [
+            "Güz 2025-2026",
+            "Bahar 2024-2025",
+            "Güz 2024-2025",
+            "Yaz 2024-2025",
+        ]
 
     def test_get_active_term(self, api_client, db_setup):
         """Test GET /api/core/terms/active/"""

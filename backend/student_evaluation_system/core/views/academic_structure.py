@@ -6,7 +6,7 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Avg
+from django.db.models import Avg, Case, F, IntegerField, Value, When
 from django.http import HttpResponse
 from ..services.file_import import FileImportService
 from ..services.file_import import FileImportError
@@ -209,7 +209,24 @@ class TermViewSet(viewsets.ModelViewSet):
     - Write: Admin only
     """
 
-    queryset = Term.objects.all()
+    queryset = (
+        Term.objects.annotate(
+            academic_cycle_year=Case(
+                When(semester__in=["spring", "summer"], then=F("academic_year") - Value(1)),
+                default=F("academic_year"),
+                output_field=IntegerField(),
+            ),
+            semester_sort=Case(
+                When(semester="spring", then=Value(0)),
+                When(semester="fall", then=Value(1)),
+                When(semester="summer", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+        )
+        .order_by(F("academic_cycle_year").desc(nulls_last=True), "semester_sort", "-name")
+        .all()
+    )
     serializer_class = TermSerializer
     permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
 

@@ -75,13 +75,16 @@ class Command(BaseCommand):
             uni = self._create_universities(universities)[0]
             dept = self._create_departments(departments)[0]
             self._create_degree_levels(degree_levels)
-            program = self._create_programs(programs)[0]
+            program, program2 = self._create_programs(programs)[:2]
             terms = self._create_terms()
             self.stdout.write(f"  ✓ {len(terms)} terms created")
 
             # ── Program head ──
             self.stdout.write(f"\n[2/{step_count}] Creating program head...")
             head_user, head_profile = self._create_program_head(program, uni, dept)
+
+            # Create the second head
+            head_user2, head_profile2 = self._create_program_head_alone(program2, uni, dept)
 
             # ── Instructors ──
             self.stdout.write(f"\n[3/{step_count}] Creating instructors...")
@@ -290,6 +293,25 @@ class Command(BaseCommand):
             defaults={
                 "email": "head@cse.com",
                 "first_name": "CSE Program",
+                "last_name": "Head",
+                "role": "program_head",
+                "department": department,
+                "university": university,
+            },
+        )
+        if created:
+            head_user.set_password("head123")
+            head_user.save()
+        head_profile, _ = ProgramHeadProfile.objects.get_or_create(user=head_user, defaults={"program": program})
+        self.stdout.write(f"  ✓ Program Head: {head_user.get_full_name()}")
+        return head_user, head_profile
+
+    def _create_program_head_alone(self, program, university, department):
+        head_user, created = CustomUser.objects.get_or_create(
+            username="headusercse2",
+            defaults={
+                "email": "head@bme.com",
+                "first_name": "BME Program",
                 "last_name": "Head",
                 "role": "program_head",
                 "department": department,

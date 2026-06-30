@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Modal from '@/components/ui/custom/Modal'
 import {
   useCoreCoursesCreate,
@@ -45,6 +45,7 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
   const [templatePromptCourse, setTemplatePromptCourse] = useState<{
     name: string; code: string; credits: number | undefined; program_id: number
   } | null>(null)
+  const submitInFlightRef = useRef(false)
 
   const resolvedInstructorIds = useMemo(() => {
     if (instructorIds.length > 0) return instructorIds
@@ -219,66 +220,74 @@ const CourseCreateModal: React.FC<CourseCreateModalProps> = React.memo(({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitInFlightRef.current) return
+    submitInFlightRef.current = true
     setError(null)
 
-    if (flowType !== 'template') {
-      if (!name.trim()) {
-        setError('Course name is required')
+    try {
+      if (flowType !== 'template') {
+        if (!name.trim()) {
+          setError('Course name is required')
+          return
+        }
+        if (!code.trim()) {
+          setError('Course code is required')
+          return
+        }
+      }
+
+      const resolvedProgramId = programOption === 'my_program' && myProgramId
+        ? myProgramId
+        : (programId === '' ? undefined : Number(programId))
+
+      const resolvedTermId = termOption === 'active' && activeTerm
+        ? activeTerm.id
+        : (termId === '' ? undefined : Number(termId))
+
+      if (resolvedProgramId === undefined) {
+        setError('Please select a program')
         return
       }
-      if (!code.trim()) {
-        setError('Course code is required')
+
+      if (resolvedTermId === undefined) {
+        setError('Please select a term')
         return
       }
-    }
 
-    const resolvedProgramId = programOption === 'my_program' && myProgramId
-      ? myProgramId
-      : (programId === '' ? undefined : Number(programId))
-
-    const resolvedTermId = termOption === 'active' && activeTerm
-      ? activeTerm.id
-      : (termId === '' ? undefined : Number(termId))
-
-    if (resolvedProgramId === undefined) {
-      setError('Please select a program')
-      return
-    }
-
-    if (resolvedTermId === undefined) {
-      setError('Please select a term')
-      return
-    }
-
-    if (flowType === 'blank') {
-      await createMutation.mutateAsync({
-        data: {
+      if (flowType === 'blank') {
+        await createMutation.mutateAsync({
+          data: {
+            name: name.trim(),
+            code: code.trim(),
+            credits: credits === '' ? undefined : Number(credits),
+            program_id: resolvedProgramId,
+            term_id: resolvedTermId,
+            instructor_ids: resolvedInstructorIds,
+          }
+        })
+        setTemplatePromptCourse({
           name: name.trim(),
           code: code.trim(),
           credits: credits === '' ? undefined : Number(credits),
-          program_id: resolvedProgramId,
-          term_id: resolvedTermId,
-          instructor_ids: resolvedInstructorIds,
+          program_id: resolvedProgramId
+        })
+        setShowTemplatePrompt(true)
+      } else {
+        if (courseTemplateId === '') {
+          setError('Please select a course template')
+          return
         }
-      })
-      setTemplatePromptCourse({
-        name: name.trim(),
-        code: code.trim(),
-        credits: credits === '' ? undefined : Number(credits),
-        program_id: resolvedProgramId
-      })
-      setShowTemplatePrompt(true)
-    } else {
-      if (courseTemplateId === '') {
-        setError('Please select a course template')
-        return
+        await instantiateMutation.mutateAsync({
+          id: Number(courseTemplateId),
+          data: {
+            term_id: resolvedTermId
+          }
+        })
       }
-      await instantiateMutation.mutateAsync({
-        id: Number(courseTemplateId),
-        data: {
-          term_id: resolvedTermId
-        }
-      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create course')
+    } finally {
+      submitInFlightRef.current = false
     }
   }, [name, code, credits, flowType, programOption, myProgramId, programId, termOption, activeTerm, termId, courseTemplateId, createMutation, instantiateMutation, resolvedInstructorIds])
 
