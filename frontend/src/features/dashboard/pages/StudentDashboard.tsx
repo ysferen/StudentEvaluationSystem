@@ -4,8 +4,8 @@ import { Card } from '@/components/ui/custom/Card'
 import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
 import { ChartBarIcon } from '@heroicons/react/24/outline'
 import { useQueries } from '@tanstack/react-query'
-import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
 import { evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
+import { fetchAllEvaluationEnrollments } from '@/shared/api/enrollments'
 import { coreStudentPoScoresList } from '../../../shared/api/generated/scores/scores'
 import type { CourseEnrollment, StudentProgramOutcomeScore } from '../../../shared/api/model'
 
@@ -21,7 +21,7 @@ const StudentDashboard = () => {
           if (!userId) {
             throw new Error('User is required')
           }
-          return evaluationEnrollmentsList({ student: userId })
+          return fetchAllEvaluationEnrollments({ student: userId })
         },
         enabled: !!userId,
       },

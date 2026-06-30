@@ -11,7 +11,7 @@ import {
   CalendarIcon,
   UserIcon,
 } from '@heroicons/react/24/outline'
-import { evaluationEnrollmentsList } from '../../../shared/api/generated/evaluation/evaluation'
+import { fetchAllEvaluationEnrollments } from '@/shared/api/enrollments'
 import type { CourseEnrollment } from '../../../shared/api/model'
 
 const StudentCourses = () => {
@@ -24,7 +24,7 @@ const StudentCourses = () => {
       if (!userId) {
         throw new Error('User is required')
       }
-      return evaluationEnrollmentsList({ student: userId })
+      return fetchAllEvaluationEnrollments({ student: userId })
     },
     enabled: !!userId,
   })

@@ -28,8 +28,8 @@ class InputValidator:
     # Allow alphanumeric, spaces, and common punctuation for names
     SAFE_STRING_PATTERN = re.compile(r"^[\w\s\-\'\.(),:@/]+$")
 
-    # Course code pattern: alphanumeric with optional hyphens
-    COURSE_CODE_PATTERN = re.compile(r"^[A-Z0-9\-]+$", re.IGNORECASE)
+    # Course code pattern: alphanumeric with optional spaces and hyphens
+    COURSE_CODE_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9 \-]*$", re.IGNORECASE)
 
     # Student ID pattern: alphanumeric with optional leading zeros
     STUDENT_ID_PATTERN = re.compile(r"^[A-Z0-9\-]+$", re.IGNORECASE)
@@ -140,7 +140,7 @@ class InputValidator:
             raise ValidationError("Course code too long (max 20 characters)")
 
         if not cls.COURSE_CODE_PATTERN.match(code):
-            raise ValidationError("Course code contains invalid characters. Use only letters, numbers, and hyphens.")
+            raise ValidationError("Course code contains invalid characters. Use only letters, numbers, spaces, and hyphens.")
 
         return code
 

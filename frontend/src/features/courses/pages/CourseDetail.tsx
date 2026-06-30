@@ -18,7 +18,8 @@ import ConfirmDeleteModal from '@/components/ui/custom/ConfirmDeleteModal'
 import Modal from '@/components/ui/custom/Modal'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
-import { evaluationGradesList, evaluationEnrollmentsList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { evaluationGradesList, evaluationAssessmentsDestroy } from '../../../shared/api/generated/evaluation/evaluation'
+import { fetchAllEvaluationEnrollments } from '@/shared/api/enrollments'
 import { downloadReportPdf } from '@/shared/api/reportDownloads'
 import { Card } from '@/components/ui/custom/Card'
 import { ChartWidget } from '@/components/ui/custom/ChartWidget'
@@ -38,6 +39,9 @@ import type {
   Course,
   CourseInstructorsItem,
   CoreLearningOutcome,
+  EvaluationGradesListParams,
+  PaginatedStudentGradeList,
+  StudentGrade,
   StudentLearningOutcomeScore,
 } from '../../../shared/api/model'
 
@@ -57,6 +61,50 @@ interface StudentDetail {
   overallScore: number | null
   assessmentScores: { name: string; score: number }[]
   loScores: { code: string; score: number }[]
+}
+
+type CourseAssignment = {
+  id: number
+  name: string
+  assessment_type?: string
+  total_score?: number
+  weight?: number
+  description?: string
+  date?: string
+}
+
+type CourseGradesData = Omit<PaginatedStudentGradeList, 'results'> & {
+  results: StudentGrade[]
+  assignments?: CourseAssignment[]
+  course_average?: number | null
+}
+
+const fetchAllCourseGrades = async (
+  params: Omit<EvaluationGradesListParams, 'page'>
+): Promise<CourseGradesData> => {
+  const results: StudentGrade[] = []
+  let page = 1
+  let firstPage: CourseGradesData | null = null
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const response = await evaluationGradesList({ ...params, page }) as CourseGradesData
+    if (!firstPage) {
+      firstPage = response
+    }
+    results.push(...(response.results || []))
+    hasNextPage = Boolean(response.next)
+    page += 1
+  }
+
+  return {
+    count: firstPage?.count ?? results.length,
+    next: null,
+    previous: null,
+    assignments: firstPage?.assignments ?? [],
+    course_average: firstPage?.course_average ?? null,
+    results,
+  }
 }
 
 const getInstructorName = (instructor: CourseInstructorsItem): string => {
@@ -166,8 +214,9 @@ const CourseDetail = () => {
   const courseTemplateId: number | null = (data as any)?.course?.course_template_id ?? null
 
   const handleUploadComplete = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['grades', courseId] })
     refetch()
-  }, [refetch])
+  }, [courseId, queryClient, refetch])
 
   const getInstructorNames = () => {
     if (!data?.course?.instructors || data.course.instructors.length === 0) {
@@ -285,23 +334,32 @@ const CourseDetail = () => {
 
   const { data: gradesData } = useQuery({
     queryKey: ['grades', courseId],
-    queryFn: async () => {
-      if (!courseId) return { results: [] }
-      const resp = await evaluationGradesList({ course: Number(courseId) })
+    queryFn: async (): Promise<CourseGradesData> => {
+      if (!courseId) {
+        return {
+          count: 0,
+          next: null,
+          previous: null,
+          assignments: [],
+          course_average: null,
+          results: [],
+        }
+      }
+      const resp = await fetchAllCourseGrades({ course: Number(courseId) })
       return resp
     },
     enabled: !!courseId
   })
 
   const assignments = useMemo(() => {
-    return (gradesData as { assignments?: Array<{ id: number; name: string; assessment_type?: string; total_score?: number; weight?: number; description?: string; date?: string }> })?.assignments || []
+    return gradesData?.assignments || []
   }, [gradesData])
 
   const { data: enrollmentsData, error: enrollmentsError } = useQuery({
     queryKey: ['enrollments', courseId],
     queryFn: async () => {
       if (!courseId) return { results: [] }
-      const resp = await evaluationEnrollmentsList({ course: Number(courseId) })
+      const resp = await fetchAllEvaluationEnrollments({ course: Number(courseId) })
       return resp
     },
     enabled: !!courseId
@@ -409,6 +467,7 @@ const CourseDetail = () => {
   const assessmentRadarData = useMemo(() => {
     const results = gradesData?.results || []
     const map = new Map<number, { name: string; scores: number[] }>()
+    const debugMap = new Map<number, { name: string; totalScore: number; rawScores: number[]; percentageScores: number[] }>()
     for (const grade of results) {
       const aId = grade.assessment.id
       if (!map.has(aId)) {
@@ -419,12 +478,49 @@ const CourseDetail = () => {
       const total = grade.assessment.total_score ?? 100
       const pct = total > 0 ? Math.round((grade.score / total) * 1000) / 10 : 0
       entry.scores.push(pct)
+
+      if (!debugMap.has(aId)) {
+        debugMap.set(aId, {
+          name: grade.assessment.name,
+          totalScore: total,
+          rawScores: [],
+          percentageScores: [],
+        })
+      }
+      const debugEntry = debugMap.get(aId)
+      if (debugEntry) {
+        debugEntry.rawScores.push(grade.score)
+        debugEntry.percentageScores.push(pct)
+      }
     }
-    return Array.from(map.values()).map(a => ({
+    const averages = Array.from(map.values()).map(a => ({
       id: Array.from(map.keys()).find(k => map.get(k) === a) || 0,
       name: a.name,
       avg: a.scores.length > 0 ? Math.round((a.scores.reduce((s, v) => s + v, 0) / a.scores.length) * 10) / 10 : 0
     }))
+
+    if (import.meta.env.DEV) {
+      console.table(averages.map(assessment => {
+        const debugEntry = debugMap.get(assessment.id)
+        return {
+          id: assessment.id,
+          name: assessment.name,
+          count: debugEntry?.rawScores.length ?? 0,
+          totalScore: debugEntry?.totalScore,
+          rawAverage: debugEntry?.rawScores.length
+            ? debugEntry.rawScores.reduce((sum, score) => sum + score, 0) / debugEntry.rawScores.length
+            : 0,
+          percentageAverage: debugEntry?.percentageScores.length
+            ? debugEntry.percentageScores.reduce((sum, score) => sum + score, 0) / debugEntry.percentageScores.length
+            : 0,
+          displayedAverage: assessment.avg,
+          rawScores: debugEntry?.rawScores.join(', '),
+          percentageScores: debugEntry?.percentageScores.join(', '),
+        }
+      }))
+    }
+
+    return averages
   }, [gradesData])
 
   const unifiedAssessments = useMemo(() => {
@@ -1073,7 +1169,11 @@ const CourseDetail = () => {
             <div>
               <h3 className="text-sm font-semibold text-secondary-800 mb-2">Assessment Scores</h3>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full table-fixed border-collapse text-sm">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Assessment</th>
@@ -1097,7 +1197,11 @@ const CourseDetail = () => {
             <div>
               <h3 className="text-sm font-semibold text-secondary-800 mb-2">Learning Outcome Scores</h3>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
+                <table className="w-full table-fixed border-collapse text-sm">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
                   <thead>
                     <tr className="bg-secondary-100">
                       <th className="px-2 py-1.5 text-left text-xs font-semibold text-secondary-700 border-b border-secondary-200">Learning Outcome</th>

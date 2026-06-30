@@ -474,6 +474,7 @@ class FileImportService:
         preview = self.preview_program_templates(program_id)
         created_counts = dict.fromkeys(preview["summary"]["created"].keys(), 0)
         updated_counts = dict.fromkeys(preview["summary"]["updated"].keys(), 0)
+        deleted_counts = {"course_template_assessments": 0}
 
         with transaction.atomic():
             course_templates = {}
@@ -500,6 +501,11 @@ class FileImportService:
                     target_counts = created_counts if created else updated_counts
                     target_counts["course_template_assessments"] += 1
 
+                assessment_names = [assessment_data["name"] for assessment_data in course_data["assessments"]]
+                stale_assessments = course_template.assessments.exclude(name__in=assessment_names)
+                deleted_counts["course_template_assessments"] += stale_assessments.count()
+                stale_assessments.delete()
+
                 for learning_outcome_data in course_data["learning_outcomes"]:
                     _, created = CourseTemplateLearningOutcome.objects.update_or_create(
                         course_template=course_template,
@@ -520,6 +526,7 @@ class FileImportService:
 
         self.import_results["created"] = created_counts
         self.import_results["updated"] = updated_counts
+        self.import_results["deleted"] = deleted_counts
         self.import_results["errors"] = preview["errors"]
         self.import_results["skipped"] = preview["skipped"]
         self.import_results["source_program"] = preview["source_program"]
@@ -585,29 +592,25 @@ class FileImportService:
                 if not assessment_base_name:
                     raise ValueError("AssessmentType is required")
 
-                quantity = self._parse_positive_int(row["Quantity"], "Quantity")
                 total_weight = self._parse_percentage(row["Percentage"])
                 assessment_type = self._normalize_assessment_type(assessment_base_name)
-                per_assessment_weight = total_weight / quantity
                 existing_course = CourseTemplate.objects.filter(program=program, code=course_code).first()
 
-                for index in range(1, quantity + 1):
-                    assessment_name = assessment_base_name if quantity == 1 else f"{assessment_base_name} {index}"
-                    existing_assessment = None
-                    if existing_course is not None:
-                        existing_assessment = CourseTemplateAssessment.objects.filter(
-                            course_template=existing_course,
-                            name=assessment_name,
-                        ).first()
-                    course_preview["assessments"].append(
-                        {
-                            "name": assessment_name,
-                            "assessment_type": assessment_type,
-                            "total_score": 100,
-                            "weight": per_assessment_weight,
-                            "action": "update" if existing_assessment else "create",
-                        }
-                    )
+                existing_assessment = None
+                if existing_course is not None:
+                    existing_assessment = CourseTemplateAssessment.objects.filter(
+                        course_template=existing_course,
+                        name=assessment_base_name,
+                    ).first()
+                course_preview["assessments"].append(
+                    {
+                        "name": assessment_base_name,
+                        "assessment_type": assessment_type,
+                        "total_score": 100,
+                        "weight": total_weight,
+                        "action": "update" if existing_assessment else "create",
+                    }
+                )
             except Exception as e:
                 errors.append(f"AssessmentMethods row {row_number}: {str(e)}")
 
@@ -999,7 +1002,7 @@ class FileImportService:
                             skipped_count += 1
                         continue
 
-                    score_float = score_result
+                    score_float = int(score_result + 0.5)
 
                     _, created = StudentGrade.objects.update_or_create(
                         student=student_user,

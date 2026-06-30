@@ -104,6 +104,11 @@ const LoginPage = () => {
                 headusercse / head123
               </div>
               <div>
+                <span className="font-semibold">Head:</span>
+                <br />
+                headusercse2 / head123
+              </div>
+              <div>
                 <span className="font-semibold">Lecturer 1:</span>
                 <br />
                 ahmetbulut / instructor123

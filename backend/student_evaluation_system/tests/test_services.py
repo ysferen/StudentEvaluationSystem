@@ -36,7 +36,7 @@ class TestCalculateCourseScores:
 
         assert scores.count() == enrollment_count * lo_count
 
-    def test_score_calculation_with_weights(
+    def test_score_calculation_with_assessment_lo_mapping_weights(
         self,
         course_factory,
         assessment_factory,
@@ -45,7 +45,7 @@ class TestCalculateCourseScores:
         course_enrollment_factory,
         student_grade_factory,
     ):
-        """Test that scores are correctly calculated using assessment weights."""
+        """Test that scores are correctly calculated using assessment-LO mapping weights."""
         # Create course with known data
         course = course_factory()
 
@@ -56,7 +56,7 @@ class TestCalculateCourseScores:
         student = student_user_factory()
         course_enrollment_factory(student=student, course=course)
 
-        # Create assessment with weight
+        # Assessment GPA weight is ignored for LO calculation.
         assessment = assessment_factory(course=course, total_score=100, weight=0.5)
 
         # Create LO mapping with weight
@@ -77,7 +77,7 @@ class TestCalculateCourseScores:
         # Verify calculated score
         score = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo)
 
-        # Score should be 80 (80% of 100 * weight 1.0 / total weight 1.0)
+        # Score should be 80 from the assessment score and LO mapping only.
         assert score.score == pytest.approx(80.0, rel=1e-2)
 
     def test_replaces_old_scores_on_recalculation(self, course_with_data_factory):
@@ -278,16 +278,16 @@ class TestCalculateStudentPOScores:
 class TestScoreCalculationEdgeCases:
     """Test edge cases for score calculations."""
 
-    def test_zero_weight_assessments_ignored(
+    def test_zero_gpa_weight_assessments_still_contribute_to_lo_scores(
         self, course_factory, assessment_factory, student_user_factory, learning_outcome_factory, course_enrollment_factory
     ):
-        """Test that assessments with 0 weight don't affect scores."""
+        """Assessment GPA weights are not used for LO calculation."""
         course = course_factory()
         lo = learning_outcome_factory(course=course)
         student = student_user_factory()
         course_enrollment_factory(student=student, course=course)
 
-        # Create assessment with 0 weight
+        # Create assessment with 0 GPA weight.
         assessment = assessment_factory(course=course, weight=0.0)
 
         # Create mapping
@@ -302,14 +302,14 @@ class TestScoreCalculationEdgeCases:
 
         calculate_course_scores(course.id)
 
-        # Score should be 0 (no weight means no contribution)
+        # Score should still use the assessment-LO mapping contribution.
         score = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo)
-        assert score.score == 0.0
+        assert score.score == pytest.approx(100.0, rel=1e-2)
 
-    def test_multiple_assessments_weighted_average(
+    def test_multiple_assessments_use_equal_lo_contribution_when_mappings_match(
         self, course_factory, assessment_factory, student_user_factory, learning_outcome_factory, course_enrollment_factory
     ):
-        """Test calculation with multiple assessments."""
+        """Assessment GPA weights do not change LO contribution."""
         course = course_factory()
         lo = learning_outcome_factory(course=course)
         student = student_user_factory()
@@ -332,5 +332,5 @@ class TestScoreCalculationEdgeCases:
 
         score = StudentLearningOutcomeScore.objects.get(student=student, learning_outcome=lo)
 
-        # Weighted average: (80*0.3 + 100*0.7) / (0.3 + 0.7) = 94
-        assert score.score == pytest.approx(94.0, rel=1e-2)
+        # LO average ignores GPA weights: (80 + 100) / 2 = 90
+        assert score.score == pytest.approx(90.0, rel=1e-2)

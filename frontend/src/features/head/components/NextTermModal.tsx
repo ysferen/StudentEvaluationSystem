@@ -8,15 +8,17 @@ import {
   DialogFooter,
 } from '@/components/ui/shadcn/Dialog'
 import {
-  useCoreCourseTemplatesList,
+  useCoreCourseTemplatesListInfinite,
   useCoreTermsActiveRetrieve,
   useCoreTermsNextTermCreate,
 } from '@/shared/api/generated/core/core'
 import { JobProgressBar } from '@/shared/components/JobProgressBar'
+import type { CourseTemplate } from '@/shared/api/model'
 
 interface NextTermModalProps {
   isOpen: boolean
   onClose: () => void
+  programId?: number
 }
 
 const SEMESTER_CYCLE: Record<string, string> = {
@@ -31,9 +33,26 @@ const SEMESTER_LABELS: Record<string, string> = {
   summer: 'Yaz',
 }
 
-export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose }) => {
+export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose, programId }) => {
   const { data: activeTerm } = useCoreTermsActiveRetrieve()
-  const { data: templatesData } = useCoreCourseTemplatesList()
+  const {
+    data: templatesData,
+    fetchNextPage: fetchNextTemplatePage,
+    hasNextPage: hasNextTemplatePage,
+    isFetching: isFetchingTemplates,
+    isFetchingNextPage: isFetchingNextTemplatePage,
+  } = useCoreCourseTemplatesListInfinite({ program: programId }, {
+    query: {
+      enabled: isOpen && typeof programId === 'number',
+      initialPageParam: 1,
+      getNextPageParam: (lastPage) => {
+        if (!lastPage.next) return undefined
+        const nextUrl = new URL(lastPage.next, window.location.origin)
+        const page = Number(nextUrl.searchParams.get('page'))
+        return Number.isFinite(page) ? page : undefined
+      },
+    },
+  })
   const { mutateAsync: nextTermMutate } = useCoreTermsNextTermCreate()
 
   const [semester, setSemester] = useState('fall')
@@ -44,9 +63,25 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
   const [error, setError] = useState<string | null>(null)
   const [showApproval, setShowApproval] = useState(false)
   const [approvalText, setApprovalText] = useState('')
+  const templatesLoading = isFetchingTemplates || isFetchingNextTemplatePage || Boolean(hasNextTemplatePage)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const templates = (templatesData as any)?.results ?? (templatesData as any) ?? []
+  const templates = useMemo(() => {
+    const byId = new Map<number, CourseTemplate>()
+    templatesData?.pages?.forEach((page) => {
+      page.results?.forEach((template) => {
+        if (typeof template.id === 'number') {
+          byId.set(template.id, template)
+        }
+      })
+    })
+    return Array.from(byId.values())
+  }, [templatesData])
+
+  useEffect(() => {
+    if (isOpen && hasNextTemplatePage && !isFetchingNextTemplatePage) {
+      void fetchNextTemplatePage()
+    }
+  }, [fetchNextTemplatePage, hasNextTemplatePage, isFetchingNextTemplatePage, isOpen])
 
   useEffect(() => {
     if (activeTerm && isOpen) {
@@ -85,8 +120,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
 
   const selectAll = () => {
     if (Array.isArray(templates)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSelectedTemplates(new Set(templates.map((t: any) => t.id)))
+      setSelectedTemplates(new Set(templates.map((template) => template.id).filter((id): id is number => typeof id === 'number')))
     }
   }
 
@@ -208,7 +242,12 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
                 Select Course Templates to Instantiate
               </label>
               <div className="flex gap-2">
-                <button type="button" onClick={selectAll} className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                <button
+                  type="button"
+                  onClick={selectAll}
+                  disabled={templatesLoading || !programId}
+                  className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:cursor-not-allowed disabled:text-secondary-300"
+                >
                   Select All
                 </button>
                 <button type="button" onClick={deselectAll} className="text-xs text-secondary-500 hover:text-secondary-600 font-medium">
@@ -217,7 +256,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
               </div>
             </div>
             <div className="border border-secondary-200 rounded-xl divide-y divide-secondary-100 max-h-48 overflow-y-auto">
-              {Array.isArray(templates) && templates.map((template: { id: number; code?: string; name?: string; credits?: number }) => (
+              {Array.isArray(templates) && templates.map((template) => (
                 <label key={template.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-secondary-50">
                   <input
                     type="checkbox"
@@ -230,8 +269,14 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
                   <span className="text-xs text-secondary-400 ml-auto">{template.credits}cr</span>
                 </label>
               ))}
-              {(!Array.isArray(templates) || templates.length === 0) && (
+              {templatesLoading && (
+                <p className="px-4 py-3 text-sm text-secondary-400">Loading course templates...</p>
+              )}
+              {!templatesLoading && programId && templates.length === 0 && (
                 <p className="px-4 py-3 text-sm text-secondary-400">No course templates available.</p>
+              )}
+              {!programId && (
+                <p className="px-4 py-3 text-sm text-secondary-400">No program selected.</p>
               )}
             </div>
           </div>
@@ -280,7 +325,7 @@ export const NextTermModal: React.FC<NextTermModalProps> = ({ isOpen, onClose })
                 }
                 handleSubmit()
               }}
-              disabled={submitting || (showApproval && !approvalMatches)}
+              disabled={submitting || templatesLoading || !programId || (showApproval && !approvalMatches)}
               className="flex items-center gap-2 px-6 py-2.5 bg-danger-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-danger-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={showApproval ? 'Confirm New Term Migration' : 'Review New Term Migration'}
             >

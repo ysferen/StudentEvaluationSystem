@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Upload } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import { NextTermModal } from '@/features/head/components/NextTermModal'
@@ -11,6 +11,7 @@ import {
   AcademicCapIcon,
   UsersIcon,
   ChartBarIcon,
+  ArrowUpTrayIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import {
@@ -63,31 +64,6 @@ const HeadCourses = () => {
       const response = await coreTermsList()
       return response.results || []
     },
-    // The select function transforms/sorts the data before it gets passed to your component
-    select: (data) => {
-      return [...data].sort((a, b) => {
-        // Extract the term name and the academic year using Regex
-        // This splits "Güz 2024-2025" into match[1] = "Güz" and match[2] = "2024-2025"
-        const regex = /(.*?)\s*(\d{4}-\d{4})/
-        const matchA = a.name?.match(regex)
-        const matchB = b.name?.match(regex)
-
-        const yearA = matchA ? matchA[2] : ''
-        const nameA = matchA ? matchA[1] : a.name || ''
-
-        const yearB = matchB ? matchB[2] : ''
-        const nameB = matchB ? matchB[1] : b.name || ''
-
-        // 1. Sort by year first (Descending: 2026-2027 comes before 2024-2025)
-        if (yearA !== yearB) {
-          return yearB.localeCompare(yearA)
-        }
-
-        // 2. If years are the same, sort by the term name alphabetically
-        // (e.g., "Bahar" comes before "Güz")
-        return nameA.localeCompare(nameB)
-      })
-    }
   })
 
   useEffect(() => {
@@ -176,10 +152,10 @@ const HeadCourses = () => {
           </button>
           <button
             onClick={() => setIsTemplateImportModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
           >
-            <Upload className="h-4 w-4" />
-            Import Templates
+            <ArrowUpTrayIcon className="h-5 w-5" />
+            <span>Import Templates</span>
           </button>
           {activeTerm && (
             <button
@@ -311,6 +287,7 @@ const HeadCourses = () => {
       <NextTermModal
         isOpen={isNextTermModalOpen}
         onClose={() => setIsNextTermModalOpen(false)}
+        programId={userProgramId}
       />
       <ProgramTemplateImportModal
         isOpen={isTemplateImportModalOpen}

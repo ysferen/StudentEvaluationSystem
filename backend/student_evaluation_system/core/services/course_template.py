@@ -4,6 +4,7 @@ Service for cloning CourseTemplate data into per-term Course instances.
 
 from __future__ import annotations
 
+from django.db import transaction
 from django.utils import timezone
 
 from core.models import (
@@ -170,26 +171,27 @@ def clone_course_from_template(
     if term is None:
         raise ValueError("term is required")
 
-    # 1. Create the Course
-    course = Course.objects.create(
-        name=template.name,
-        code=template.code,
-        credits=template.credits,
-        program=template.program,
-        term=term,
-        course_template=template,
-    )
+    with transaction.atomic():
+        # 1. Create the Course
+        course = Course.objects.create(
+            name=template.name,
+            code=template.code,
+            credits=template.credits,
+            program=template.program,
+            term=term,
+            course_template=template,
+        )
 
-    # 2. Clone template LOs → real LearningOutcomes
-    lo_map = _clone_learning_outcomes(template, course, user)
+        # 2. Clone template LOs → real LearningOutcomes
+        lo_map = _clone_learning_outcomes(template, course, user)
 
-    # 3. Clone template assessments → real Assessments
-    assessment_map = _clone_assessments(template, course, user)
+        # 3. Clone template assessments → real Assessments
+        assessment_map = _clone_assessments(template, course, user)
 
-    # 4. Clone assessment-LO mappings
-    _clone_assessment_lo_mappings(template, assessment_map, lo_map)
+        # 4. Clone assessment-LO mappings
+        _clone_assessment_lo_mappings(template, assessment_map, lo_map)
 
-    # 5. Clone LO-PO mappings — use new-term POs when a po_map is provided
-    _clone_lo_po_mappings(template, course, lo_map, po_map)
+        # 5. Clone LO-PO mappings — use new-term POs when a po_map is provided
+        _clone_lo_po_mappings(template, course, lo_map, po_map)
 
     return course

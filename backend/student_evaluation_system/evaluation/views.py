@@ -85,15 +85,6 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def perform_update(self, serializer):
-        """After updating an assessment, recalculate if weight changed."""
-        old_weight = self.get_object().weight
-        assessment = serializer.save()
-
-        # Only recalculate if weight changed (expensive operation)
-        if old_weight != assessment.weight:
-            calculate_course_scores(assessment.course_id)
-
     def perform_destroy(self, instance):
         """After deleting an assessment, recalculate scores."""
         course_id = instance.course_id
@@ -360,7 +351,7 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         if course_id:
             queryset = queryset.filter(assessment__course_id=course_id)
 
-        return queryset
+        return queryset.order_by("assessment_id", "student_id", "id")
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
