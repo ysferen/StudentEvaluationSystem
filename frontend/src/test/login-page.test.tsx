@@ -82,7 +82,7 @@ describe('Login page', () => {
     expect(await screen.findByText('Instructor Route')).toBeInTheDocument();
   });
 
-  it('redirects authenticated admin to head route', async () => {
+  it('redirects authenticated admin to system admin route', async () => {
     mockUseAuth.mockReturnValue({
       login: mockLogin,
       isAuthenticated: true,
@@ -93,11 +93,11 @@ describe('Login page', () => {
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/head" element={<div>Head Route</div>} />
+          <Route path="/system-admin" element={<div>System Admin Route</div>} />
         </Routes>
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Head Route')).toBeInTheDocument();
+    expect(await screen.findByText('System Admin Route')).toBeInTheDocument();
   });
 });

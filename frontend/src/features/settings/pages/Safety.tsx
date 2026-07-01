@@ -1,6 +1,20 @@
 import React, { useState } from 'react'
+import { axiosInstance } from '@/shared/api/mutator'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { AxiosError } from 'axios'
+
+const passwordError = (error: unknown): string => {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { error?: string | string[]; detail?: string } | undefined
+    if (Array.isArray(data?.error)) return data.error.join(' ')
+    if (typeof data?.error === 'string') return data.error
+    if (typeof data?.detail === 'string') return data.detail
+  }
+  return error instanceof Error ? error.message : 'Could not change the password.'
+}
 
 const Safety: React.FC = () => {
+  const { user } = useAuth()
   const [twoFAEnabled, setTwoFAEnabled] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -38,29 +52,20 @@ const Safety: React.FC = () => {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem('access_token')
-      const res = await fetch('/api/users/change_password/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+      await axiosInstance.post('/api/users/change_password/', {
+        current_password: currentPassword,
+        new_password: newPassword,
       })
-
-      if (res.ok) {
+      {
         setMessage('Password changed successfully')
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
-      } else {
-        const data = await res.json().catch(() => null)
-        const errMsg = data?.detail || data?.error || JSON.stringify(data) || `Request failed (${res.status})`
-        setError(String(errMsg))
+        const destination = user?.role === 'admin' ? '/system-admin' : user?.role === 'program_head' ? '/head' : '/instructor'
+        window.location.href = destination
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Network error'
-      setError(errorMessage)
+      setError(passwordError(err))
     } finally {
       setLoading(false)
     }
@@ -69,7 +74,9 @@ const Safety: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold text-secondary-900">Security</h1>
-      <p className="mt-4 text-secondary-600">Manage your account security and privacy settings.</p>
+      <p className="mt-4 text-secondary-600">
+        {user?.must_change_password ? 'Change your temporary password before continuing.' : 'Manage your account security and privacy settings.'}
+      </p>
 
       <section className="mt-8 max-w-md space-y-4">
         <section>

@@ -83,7 +83,7 @@ class TestProgramTemplateImport:
         assert {"Courses", "AssessmentMethods", "LearningOutcomes", "ProgramOutcomes"}.issubset(set(sheets))
         assert courses_df.iloc[0]["CourseCode"] == "CS101"
 
-    def test_import_creates_templates_only(self, db_setup):
+    def test_import_creates_templates_and_active_term_outcomes(self, db_setup):
         upload = _spreadsheetml_upload(_valid_template_sheets())
 
         result = FileImportService(upload).import_program_templates(db_setup["program"].id)
@@ -96,7 +96,7 @@ class TestProgramTemplateImport:
         assert ProgramOutcomeTemplate.objects.get(code="PO1").weight == 0.0
         assert Course.objects.count() == 1
         assert LearningOutcome.objects.count() == 0
-        assert ProgramOutcome.objects.count() == 0
+        assert ProgramOutcome.objects.filter(program=db_setup["program"], term__is_active=True, code="PO1").exists()
         assert Assessment.objects.count() == 0
 
     def test_preview_returns_objects_without_creating_templates(self, db_setup):

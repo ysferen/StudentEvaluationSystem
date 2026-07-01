@@ -16,6 +16,8 @@ const InstructorCoursesPage = lazy(() => import('./features/courses/pages/Instru
 const HeadCoursesPage = lazy(() => import('./features/courses/pages/HeadCourses'))
 const SettingsPage = lazy(() => import('./features/settings/pages/Settings'))
 const SafetyPage = lazy(() => import('./features/settings/pages/Safety'))
+const SystemAdminDashboard = lazy(() => import('./features/admin/pages/SystemAdminDashboard'))
+const PeoplePage = lazy(() => import('./features/head/pages/PeoplePage'))
 
 // Loading fallback component for route transitions
 function RouteLoadingFallback() {
@@ -60,6 +62,11 @@ function App() {
         <Route path="program" element={<ProgramPage />} />
         <Route path="courses" element={<HeadCoursesPage />} />
         <Route path="permissions" element={<HeadPermissionsPage />} />
+        <Route path="people" element={<PeoplePage />} />
+      </Route>
+
+      <Route path="/system-admin" element={<Layout showOnlyCoreItems={true} />}>
+        <Route index element={<SystemAdminDashboard />} />
       </Route>
       <Route path="/head/course/:id" element={<Layout showOnlyCoreItems={false} requireAuth={false} />}>
         <Route index element={<CourseDetailPage />} />

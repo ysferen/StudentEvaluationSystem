@@ -74,15 +74,13 @@ const roleConfig: Record<Role, RoleNavigation> = {
             { name: 'Program', href: '/head/program', icon: BuildingOfficeIcon },
             { name: 'Courses', href: '/head/courses', icon: ClipboardDocumentListIcon },
             { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+            { name: 'People', href: '/head/people', icon: UsersIcon },
         ],
         courseDetail: courseDetailNavigation,
     },
     admin: {
         default: [
-            { name: 'Dashboard', href: '/head', icon: HomeIcon },
-            { name: 'Program', href: '/head/program', icon: BuildingOfficeIcon },
-            { name: 'Courses', href: '/head/courses', icon: ClipboardDocumentListIcon },
-            { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
+            { name: 'System Setup', href: '/system-admin', icon: HomeIcon },
         ],
         courseDetail: courseDetailNavigation,
     },

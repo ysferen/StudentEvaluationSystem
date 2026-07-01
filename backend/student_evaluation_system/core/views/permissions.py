@@ -30,7 +30,7 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
         if user.is_admin_user:
             return self.queryset
         if user.is_program_head:
-            return self.queryset.filter(program_head__user=user)
+            return self.queryset.filter(instructor__user__department_id=user.department_id)
         if user.is_instructor:
             return self.queryset.filter(instructor__user=user)
         return self.queryset.none()
@@ -69,6 +69,9 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        if request.user.is_program_head and instructor.user.department_id != request.user.department_id:
+            return Response({"detail": "Instructor is outside your department."}, status=status.HTTP_403_FORBIDDEN)
+
         if request.user.is_admin_user:
             program_head = None
         else:
@@ -106,7 +109,7 @@ class InstructorPermissionViewSet(viewsets.ModelViewSet):
         if user.is_admin_user:
             allowed_qs = InstructorPermission.objects
         elif user.is_program_head:
-            allowed_qs = self.queryset.filter(program_head__user=user)
+            allowed_qs = self.queryset.filter(instructor__user__department_id=user.department_id)
         else:
             return Response(
                 {"detail": "You do not have permission to update permissions."},

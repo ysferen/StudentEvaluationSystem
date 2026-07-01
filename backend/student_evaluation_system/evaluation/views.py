@@ -340,6 +340,13 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_student:
+            queryset = queryset.filter(student=user)
+        elif user.is_instructor:
+            queryset = queryset.filter(assessment__course__instructors=user)
+        elif user.is_program_head:
+            queryset = queryset.filter(assessment__course__program__department_id=user.department_id)
         student_id = self.request.query_params.get("student", None)
         assessment_id = self.request.query_params.get("assessment", None)
         course_id = self.request.query_params.get("course", None)
@@ -427,7 +434,7 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         calculate_course_scores(course_id)
 
     @action(detail=False, methods=["get"])
-    def course_averages(self, request):
+    def course_averages(self, request):  # noqa: C901 - response shape depends on the requested aggregation
         """
         Calculate weighted course averages based on assessment grades and weights.
         This is used for lecturer analytics and charts.
@@ -449,6 +456,10 @@ class StudentGradeViewSet(viewsets.ModelViewSet):
         student_id = request.query_params.get("student")
         course_id = request.query_params.get("course")
         per_student = request.query_params.get("per_student", "false").lower() == "true"
+
+        if request.user.is_student:
+            student_id = str(request.user.id)
+            per_student = False
 
         if not student_id and not course_id:
             return Response(
@@ -598,6 +609,13 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_student:
+            queryset = queryset.filter(student=user)
+        elif user.is_instructor:
+            queryset = queryset.filter(course__instructors=user)
+        elif user.is_program_head:
+            queryset = queryset.filter(course__program__department_id=user.department_id)
         student_id = self.request.query_params.get("student", None)
         course_id = self.request.query_params.get("course", None)
 

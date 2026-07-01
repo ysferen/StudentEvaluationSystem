@@ -6,6 +6,8 @@ import { CustomUser } from '../../../shared/api/model/customUser'
 
 export type AuthenticatedUser = Omit<CustomUser, 'permissions'> & {
   permissions?: string[]
+  must_change_password?: boolean
+  impersonated_by?: number | null
 }
 
 const normalizePermissions = (user: CustomUser): AuthenticatedUser => {

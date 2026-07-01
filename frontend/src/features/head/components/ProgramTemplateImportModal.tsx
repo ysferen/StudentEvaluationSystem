@@ -49,6 +49,7 @@ interface ProgramTemplateImportModalProps {
   isOpen: boolean
   onClose: () => void
   programId?: number
+  onImported?: () => void
 }
 
 const postProgramTemplateFile = async (
@@ -90,7 +91,7 @@ const ActionPill = ({ action }: { action: 'create' | 'update' }) => (
   </span>
 )
 
-export const ProgramTemplateImportModal = ({ isOpen, onClose, programId }: ProgramTemplateImportModalProps) => {
+export const ProgramTemplateImportModal = ({ isOpen, onClose, programId, onImported }: ProgramTemplateImportModalProps) => {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -121,6 +122,7 @@ export const ProgramTemplateImportModal = ({ isOpen, onClose, programId }: Progr
       setError(null)
       queryClient.invalidateQueries({ queryKey: ['coreCourseTemplatesList'] })
       queryClient.invalidateQueries({ queryKey: ['head-courses'] })
+      onImported?.()
     },
     onError: (err) => setError(getErrorMessage(err)),
   })

@@ -42,6 +42,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                     { to: '/instructor/courses', label: 'Courses' }
                 ]
             case 'admin':
+                return [{ to: '/system-admin', label: 'System Setup' }]
             case 'program_head':
                 return [
                     { to: '/head', label: 'Homepage' },
@@ -55,6 +56,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
     }
 
     const navItems = getNavItems()
+    const roleLabel = user?.role ? ({ program_head: 'Program Head', admin: 'System Admin', instructor: 'Instructor', student: 'Student', guest: 'Guest' } as Record<string, string>)[user.role] ?? user.role : ''
 
     return (
         <header className="fixed inset-x-0 top-0 h-16 bg-white/80 backdrop-blur-md border-b border-secondary-200 z-[50]">
@@ -107,7 +109,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                                     <p className="text-sm font-semibold text-secondary-900">
                                         {user.first_name || user.username} {user.last_name || ''}
                                     </p>
-                                    <p className="text-xs text-secondary-500 capitalize">{user.role}</p>
+                                    <p className="text-xs text-secondary-500">{roleLabel}</p>
                                 </div>
                                 <div className="inline-flex items-center" ref={menuRef}>
                                     <div className="p-1 rounded-full">

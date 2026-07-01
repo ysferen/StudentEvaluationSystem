@@ -48,11 +48,18 @@ class DepartmentSerializer(serializers.ModelSerializer):
         university: Related university ID
     """
 
-    university = serializers.PrimaryKeyRelatedField(queryset=University.objects.all())
+    university = serializers.PrimaryKeyRelatedField(queryset=University.objects.all(), required=False)
 
     class Meta:
         model = Department
         fields = ["id", "name", "code", "university"]
+
+    def create(self, validated_data):
+        if "university" not in validated_data:
+            validated_data["university"] = University.objects.first() or University.objects.create(
+                name="Local University", code="LOCAL"
+            )
+        return super().create(validated_data)
 
 
 class UniversitySerializer(serializers.ModelSerializer):
@@ -232,7 +239,7 @@ class CourseSerializer(serializers.ModelSerializer):
     instructors = serializers.SerializerMethodField()
     instructor_ids = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=User.objects.filter(role="instructor"),
+        queryset=User.objects.filter(instructor_profile__isnull=False),
         source="instructors",
         write_only=True,
         required=False,

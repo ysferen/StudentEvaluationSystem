@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
 interface AuthGateProps {
@@ -7,7 +7,8 @@ interface AuthGateProps {
 }
 
 export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
-  const { isLoading, isAuthenticated } = useAuth()
+  const { isLoading, isAuthenticated, user } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -22,6 +23,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (user?.must_change_password && location.pathname !== '/security') {
+    return <Navigate to="/security" replace />
   }
 
   return <>{children}</>

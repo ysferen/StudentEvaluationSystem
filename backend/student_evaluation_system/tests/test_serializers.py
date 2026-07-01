@@ -112,6 +112,32 @@ class TestCourseSerializer:
         assert "instructors" in data
         assert len(cast(list[Any], data["instructors"])) == 1
 
+    def test_course_accepts_program_head_instructor_profile(self, fb_course_factory, django_user_model):
+        from users.models import InstructorProfile, ProgramHeadProfile
+
+        course = fb_course_factory()
+        head = django_user_model.objects.create_user(
+            username="teaching-head",
+            role="program_head",
+            department=course.program.department,
+        )
+        ProgramHeadProfile.objects.create(user=head, program=course.program)
+        InstructorProfile.objects.create(user=head, title="Professor")
+
+        serializer = CourseSerializer(
+            data={
+                "code": "HEAD101",
+                "name": "Head Taught Course",
+                "credits": 3,
+                "program_id": course.program_id,
+                "term_id": course.term_id,
+                "instructor_ids": [head.id],
+            }
+        )
+
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.save().instructors.filter(pk=head.id).exists()
+
 
 @pytest.mark.django_db
 class TestProgramOutcomeSerializer:

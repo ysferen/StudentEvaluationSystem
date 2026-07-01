@@ -280,13 +280,13 @@ class TestInstructorProfile:
         with pytest.raises(Exception):  # IntegrityError
             InstructorProfile.objects.create(user=user, title="Associate Professor")
 
-    def test_instructor_profile_validation_requires_instructor_role(self, user_factory):
+    def test_instructor_profile_validation_requires_teaching_role(self, user_factory):
         """Test that user must have instructor role."""
         user = user_factory("student1", role="student")
 
         profile = InstructorProfile(user=user, title="Professor")
 
-        with pytest.raises(ValidationError, match="must have instructor role"):
+        with pytest.raises(ValidationError, match="must have instructor or program head role"):
             profile.full_clean()
 
     def test_full_name_property(self, user_factory):

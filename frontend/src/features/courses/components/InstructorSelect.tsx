@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useUsersInstructorsListInfinite } from '../../../shared/api/generated/users/users'
+import { useQuery } from '@tanstack/react-query'
+import { axiosInstance } from '@/shared/api/mutator'
 
 interface InstructorSelectProps {
   selectedIds: number[]
@@ -21,43 +22,22 @@ const InstructorSelect = ({ selectedIds, onChange }: InstructorSelectProps) => {
   const [highlightIndex, setHighlightIndex] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Fetch all pages of instructors
-  const { data, fetchNextPage, hasNextPage, isLoading, isError } = useUsersInstructorsListInfinite(
-    { page: 1 },
-    {
-      query: {
-        getNextPageParam: (lastPage) => {
-          if (!lastPage.next) return undefined
-          const url = new URL(lastPage.next)
-          const page = url.searchParams.get('page')
-          return page ? Number(page) : undefined
-        },
-      },
-    }
-  )
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['course-instructor-options'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/users/instructors/')
+      return response.data.results ?? response.data
+    },
+  })
 
-  // Fetch all pages on mount
-  useEffect(() => {
-    if (hasNextPage) {
-      fetchNextPage()
-    }
-  }, [hasNextPage, fetchNextPage])
-
-  // Flatten all pages into a single array
   const allInstructors: InstructorItem[] = useMemo(() => {
-    if (!data?.pages) return []
-    const items: InstructorItem[] = []
-    for (const page of data.pages) {
-      for (const profile of page.results) {
-        items.push({
-          id: profile.user.id,
-          first_name: profile.user.first_name ?? '',
-          last_name: profile.user.last_name ?? '',
-          title: profile.title ?? '',
-        })
-      }
-    }
-    return items
+    if (!data) return []
+    return data.map((profile: { title?: string; user: { id: number; first_name?: string; last_name?: string } }) => ({
+      id: profile.user.id,
+      first_name: profile.user.first_name ?? '',
+      last_name: profile.user.last_name ?? '',
+      title: profile.title ?? '',
+    }))
   }, [data])
 
   // Filter by search, exclude already selected

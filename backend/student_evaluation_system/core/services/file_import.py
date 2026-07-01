@@ -462,9 +462,8 @@ class FileImportService:
         """
         Import reusable program/course template data from the program SpreadsheetML workbook.
 
-        The import creates or updates template rows only. It intentionally does not
-        instantiate term-specific Course, LearningOutcome, ProgramOutcome, or
-        Assessment rows.
+        The import creates or updates reusable templates and synchronizes program
+        outcomes into the active term. Courses remain templates until instantiated.
         """
         try:
             program = Program.objects.get(pk=int(program_id))
@@ -524,6 +523,12 @@ class FileImportService:
                 target_counts = created_counts if created else updated_counts
                 target_counts["program_outcome_templates"] += 1
 
+            active_term = Term.objects.filter(is_active=True).first()
+            if active_term:
+                from .course_template import instantiate_program_outcomes_from_templates
+
+                instantiate_program_outcomes_from_templates(active_term, program)
+
         self.import_results["created"] = created_counts
         self.import_results["updated"] = updated_counts
         self.import_results["deleted"] = deleted_counts
@@ -531,7 +536,7 @@ class FileImportService:
         self.import_results["skipped"] = preview["skipped"]
         self.import_results["source_program"] = preview["source_program"]
         self.import_results["preview"] = preview
-        self.import_results["message"] = "Program template import completed."
+        self.import_results["message"] = "Program template import completed and active-term outcomes synchronized."
         return self.import_results
 
     def _get_program_for_template_import(self, program_id: int) -> Program:

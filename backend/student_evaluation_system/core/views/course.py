@@ -15,6 +15,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
@@ -80,6 +81,19 @@ class CourseViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, InstructorPermissionMixin]
     resource_area = "courses"
 
+    def _check_department(self, program):
+        user = self.request.user
+        if not user.is_admin_user and program.department_id != user.department_id:
+            raise PermissionDenied("The program is outside your department.")
+
+    def perform_create(self, serializer):
+        self._check_department(serializer.validated_data["program"])
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._check_department(serializer.validated_data.get("program", serializer.instance.program))
+        serializer.save()
+
     def get_permissions(self):
         """
         Keep backward compatibility for non-versioned endpoints while
@@ -103,7 +117,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             enrolled_course_ids = CourseEnrollment.objects.filter(student=user).values_list("course_id", flat=True)
             return queryset.filter(id__in=enrolled_course_ids)
         if hasattr(user, "program_head_profile"):
-            programs = Program.objects.filter(pk=user.program_head_profile.program_id)
+            programs = Program.objects.filter(department_id=user.department_id)
             return queryset.filter(program__in=programs)
         return queryset.none()
 

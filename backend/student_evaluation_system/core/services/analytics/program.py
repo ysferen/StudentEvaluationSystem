@@ -244,7 +244,7 @@ def get_programs_for_user(user):
     head_profile = getattr(user, "program_head_profile", None)
     if head_profile is None:
         return None
-    return Program.objects.filter(pk=head_profile.program_id).select_related("department", "degree_level")
+    return Program.objects.filter(department_id=user.department_id).select_related("department", "degree_level")
 
 
 def get_term_course_ids(program_ids, term):

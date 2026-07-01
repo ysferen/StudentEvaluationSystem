@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
         ("admin", "Admin"),
     )
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default="guest")
+    must_change_password = models.BooleanField(default=False)
     department = models.ForeignKey("core.Department", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
     university = models.ForeignKey("core.University", on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
 
@@ -19,6 +20,11 @@ class CustomUser(AbstractUser):
         ordering = ["username"]
         verbose_name = "User"
         verbose_name_plural = "Users"
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.role = "admin"
+        super().save(*args, **kwargs)
 
     @property
     def is_student(self):
@@ -33,7 +39,7 @@ class CustomUser(AbstractUser):
     @property
     def is_admin_user(self):
         """Check if user has admin role."""
-        return self.role == "admin"
+        return self.is_superuser or self.role == "admin"
 
     @property
     def is_program_head(self):
@@ -90,10 +96,10 @@ class InstructorProfile(models.Model):
         verbose_name_plural = "Instructor Profiles"
 
     def clean(self):
-        """Validate that user has instructor role."""
+        """Validate that user can teach courses."""
         super().clean()
-        if self.user.role != "instructor":
-            raise ValidationError({"user": "User must have instructor role"})
+        if self.user.role not in {"instructor", "program_head"}:
+            raise ValidationError({"user": "User must have instructor or program head role"})
 
     @property
     def full_name(self):
@@ -116,9 +122,11 @@ class ProgramHeadProfile(models.Model):
     )
     program = models.OneToOneField(
         "core.Program",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="program_head_profile",
         unique=True,
+        null=True,
+        blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -136,4 +144,5 @@ class ProgramHeadProfile(models.Model):
         return self.user.get_full_name() or self.user.username
 
     def __str__(self):
-        return f"{self.full_name} - {self.program.name}"
+        scope = self.program or self.user.department or "Unassigned"
+        return f"{self.full_name} - {scope}"

@@ -13,7 +13,7 @@ from ..services.file_import import FileImportError
 from ..services.reports.course_report import ReportDataError
 from ..services.reports.program_report import build_program_report_data, generate_program_report_pdf
 from ..services.validation import AssignmentScoreValidator
-from ..permissions import IsAdminOrProgramHeadOrReadOnly, InstructorPermissionMixin
+from ..permissions import IsAdminOrProgramHeadOrReadOnly, IsAdminOrReadOnly, InstructorPermissionMixin
 from rest_framework import serializers
 from ..services.audit import log_audit
 
@@ -92,7 +92,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
 
     queryset = University.objects.all()
     serializer_class = UniversitySerializer
-    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 
 @extend_schema_view(
@@ -118,7 +118,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     queryset = Department.objects.select_related("university").all()
     serializer_class = DepartmentSerializer
-    permission_classes = [AllowAny, IsAdminOrProgramHeadOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()

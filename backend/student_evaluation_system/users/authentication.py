@@ -30,6 +30,16 @@ class CookieJWTAuthentication(JWTAuthentication):
         except Exception as exc:
             raise AuthenticationFailed(f"Authentication failed: {exc}")
 
+        if user.must_change_password and request.path.rstrip("/") not in {
+            "/api/users/auth/me",
+            "/api/v1/users/auth/me",
+            "/api/users/change_password",
+            "/api/v1/users/change_password",
+            "/api/users/auth/logout",
+            "/api/v1/users/auth/logout",
+        }:
+            raise AuthenticationFailed("Password change required", code="password_change_required")
+
         if request.method not in SAFE_METHODS:
             self._validate_csrf(request)
 

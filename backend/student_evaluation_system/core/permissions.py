@@ -198,13 +198,9 @@ class IsInstructorOfCourse(BasePermission):
         if course is None:
             return False
 
-        # Program heads have access to courses in their program
+        # Department heads have access to courses in their department.
         if request.user.is_program_head and hasattr(course, "program_id"):
-            try:
-                head_program = request.user.program_head_profile.program
-                return course.program_id == head_program.id
-            except Exception:
-                return False
+            return course.program.department_id == request.user.department_id
 
         # Check if user is an instructor of this course
         if hasattr(course, "instructors"):
@@ -417,11 +413,11 @@ class IsProgramHead(BasePermission):
         from core.models import Program
 
         if isinstance(obj, Program):
-            return obj.id == program_head_profile.program_id
+            return obj.department_id == user.department_id
         obj_program = getattr(obj, "program", None)
         if obj_program is None:
             return True
-        return program_head_profile.program_id == obj_program.id
+        return obj_program.department_id == user.department_id
 
 
 class IsAdminOrProgramHead(BasePermission):
@@ -473,16 +469,12 @@ class IsEnrolledStudentOrInstructorOrAdmin(BasePermission):
         if request.user.is_admin_user:
             return True
 
-        # Program heads have access to enrollments in their program's courses
+        # Department heads have access to enrollments in their department's courses.
         if request.user.is_program_head:
             course = getattr(obj, "course", None)
             if course and hasattr(course, "program_id"):
-                try:
-                    head_program = request.user.program_head_profile.program
-                    return course.program_id == head_program.id
-                except Exception:
-                    return False
-            return True
+                return course.program.department_id == request.user.department_id
+            return False
 
         if request.user.is_instructor:
             course = getattr(obj, "course", None)

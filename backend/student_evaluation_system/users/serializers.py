@@ -11,12 +11,23 @@ class CustomUserSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField(read_only=True)
     university = serializers.StringRelatedField(read_only=True)
     department_id = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(), source="department", write_only=True, required=False, allow_null=True
+        queryset=Department.objects.all(), source="department", required=False, allow_null=True
     )
     university_id = serializers.PrimaryKeyRelatedField(
         queryset=University.objects.all(), source="university", write_only=True, required=False, allow_null=True
     )
     permissions = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField()
+
+    def get_title(self, obj):
+        profile = getattr(obj, "instructor_profile", None)
+        return profile.title if profile else ""
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_superuser:
+            data["role"] = "admin"
+        return data
 
     def get_permissions(self, obj):
         """Return effective permission codenames for the user.
@@ -100,16 +111,18 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "title",
             "department",
             "department_id",
             "university",
             "university_id",
             "is_active",
             "is_staff",
+            "must_change_password",
             "date_joined",
             "permissions",
         ]
-        read_only_fields = ["id", "date_joined", "permissions"]
+        read_only_fields = ["id", "date_joined", "permissions", "must_change_password", "title"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -189,6 +202,8 @@ class ProgramHeadProfileSerializer(serializers.ModelSerializer):
         queryset=Program.objects.all(),
         source="program",
         write_only=True,
+        required=False,
+        allow_null=True,
     )
 
     class Meta:
@@ -199,9 +214,12 @@ class ProgramHeadProfileSerializer(serializers.ModelSerializer):
             "user_id",
             "program",
             "program_id",
+            "department",
             "created_at",
         ]
         read_only_fields = ["created_at"]
+
+    department = serializers.CharField(source="user.department", read_only=True)
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

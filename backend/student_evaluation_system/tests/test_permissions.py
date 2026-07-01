@@ -210,7 +210,7 @@ class TestIsProgramHeadPermission:
         perm = IsProgramHead()
         assert perm.has_object_permission(cast(Request, request), None, program) is True
 
-    def test_program_head_object_permission_different_program(self, db):
+    def test_department_head_can_access_another_program_in_department(self, db):
         from users.models import CustomUser, ProgramHeadProfile
         from core.models import University, Department, DegreeLevel, Program
 
@@ -229,7 +229,7 @@ class TestIsProgramHeadPermission:
         request = factory.get("/api/test/")
         request.user = head_user
         perm = IsProgramHead()
-        assert perm.has_object_permission(cast(Request, request), None, program2) is False
+        assert perm.has_object_permission(cast(Request, request), None, program2) is True
 
 
 @pytest.mark.django_db
