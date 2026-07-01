@@ -68,8 +68,9 @@ Thumbs.db
 .env.*.local
 
 # Keep template env files
-!.env.development
-!.env.production
+!/frontend/.env.development
+!/frontend/.env.production
+.env.production
 
 # =============================================================================
 # AI Agents
