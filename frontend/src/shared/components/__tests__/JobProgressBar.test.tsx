@@ -8,7 +8,8 @@ const mockEventSource = {
   onerror: null as (() => void) | null,
 }
 
-const MockEventSource = vi.fn((_url: string, _config?: EventSourceInit) => {
+// Regular function, not arrow — EventSource must be new-able
+const MockEventSource = vi.fn(function (this: any, _url: string, _config?: EventSourceInit) {
   Object.assign(mockEventSource, {
     close: vi.fn(),
     onmessage: null as ((event: MessageEvent) => void) | null,

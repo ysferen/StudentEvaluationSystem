@@ -1,7 +1,7 @@
 ---
 description: Implementation agent for building components, writing backend logic, and integrating APIs.
 mode: subagent
-model: openai/gpt-5.5
+model: deepseek/deepseek-v4-pro
 temperature: 0.2
 color: "#4f9cf7"
 permission:

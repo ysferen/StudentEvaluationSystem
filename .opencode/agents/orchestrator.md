@@ -1,7 +1,7 @@
 ---
 description: Primary orchestrator. Decomposes tasks, dispatches specialized subagents, critiques outputs, and synthesizes the best solution.
 mode: primary
-model: openai/gpt-5.5
+model: deepseek/deepseek-v4-pro
 temperature: 0.2
 permission:
   bash:
