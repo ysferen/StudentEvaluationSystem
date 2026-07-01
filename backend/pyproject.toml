@@ -22,6 +22,7 @@ dependencies = [
     "plotly>=5.24.1",
     "kaleido==0.2.1",
     "reportlab>=4.2.5",
+    "gunicorn>=23.0,<24",
     "defusedxml>=0.7.1",
 ]
 

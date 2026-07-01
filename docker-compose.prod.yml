@@ -76,8 +76,14 @@ services:
   backend:
     image: ghcr.io/ysferen/ses-backend:latest
     container_name: ses-backend
-    # ponytail: runserver for now; switch to gunicorn when it's added to pyproject.toml and images rebuilt
-    command: uv run python student_evaluation_system/manage.py runserver 0.0.0.0:8000
+    command: >
+      uv run gunicorn --chdir student_evaluation_system
+      student_evaluation_system.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS:-4}
+      --access-logfile -
+      --error-logfile -
+      --log-level ${LOG_LEVEL:-warning}
     ports:
       - "8000:8000"
     environment:

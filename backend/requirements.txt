@@ -86,6 +86,8 @@ fsspec==2026.4.0
     # via
     #   huggingface-hub
     #   torch
+gunicorn==23.0.0
+    # via backend
 hf-xet==1.4.3 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
 huggingface-hub==0.36.2
@@ -173,6 +175,7 @@ openpyxl==3.1.5
     # via backend
 packaging==26.0
     # via
+    #   gunicorn
     #   huggingface-hub
     #   kombu
     #   plotly
