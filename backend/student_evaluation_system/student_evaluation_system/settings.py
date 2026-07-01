@@ -26,16 +26,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(50))"
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key-change-in-production")
+_DEV_KEY_SENTINEL = "django-insecure-dev-key-only-for-local-development-change-in-production"
+SECRET_KEY = os.getenv("SECRET_KEY", _DEV_KEY_SENTINEL)
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes")
 
-if not DEBUG and SECRET_KEY == "django-insecure-dev-key-only-for-local-development-change-in-production":  # nosec
+if not DEBUG and SECRET_KEY == _DEV_KEY_SENTINEL:
     raise ImproperlyConfigured("SECRET_KEY must be set to a secure value in production")
 
 # SECURITY WARNING: don't allow all hosts in production!
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+# Email backend — console for dev, SMTP for production
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "false").lower() in ("1", "true", "yes")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@ses.local")
 
 
 # =============================================================================
@@ -137,11 +146,12 @@ USE_TZ = True
 # STATIC FILES
 # =============================================================================
 
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = "static/"
+STATIC_ROOT = os.getenv("STATIC_ROOT", BASE_DIR / "staticfiles")
+MEDIA_URL = os.getenv("MEDIA_URL", "media/")
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
@@ -170,8 +180,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("ANON_THROTTLE_RATE", "100/day"),
-        "user": os.getenv("USER_THROTTLE_RATE", "1000/day"),
+        "anon": os.getenv("ANON_THROTTLE_RATE", "20/day"),
+        "user": os.getenv("USER_THROTTLE_RATE", "200/day"),
         "login": os.getenv("LOGIN_THROTTLE_RATE", "5/minute"),
         "file_upload": os.getenv("FILE_UPLOAD_THROTTLE_RATE", "10/minute"),
     },

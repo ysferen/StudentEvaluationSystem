@@ -95,36 +95,38 @@ const LoginPage = () => {
             </Button>
           </form>
 
-          <div className="mt-6 pt-4 border-t text-sm text-secondary-500">
-            <p className="font-medium mb-2">Demo Accounts:</p>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <span className="font-semibold">Head:</span>
-                <br />
-                headusercse / head123
-              </div>
-              <div>
-                <span className="font-semibold">Head:</span>
-                <br />
-                headusercse2 / head123
-              </div>
-              <div>
-                <span className="font-semibold">Lecturer 1:</span>
-                <br />
-                ahmetbulut / instructor123
-              </div>
-              <div>
-                <span className="font-semibold">Lecturer 2:</span>
-                <br />
-                serkanapaydin / instructor123
-              </div>
-              <div>
-                <span className="font-semibold">Student:</span>
-                <br />
-                student000 / student000
+          {import.meta.env.MODE !== 'production' && (
+            <div className="mt-6 pt-4 border-t text-sm text-secondary-500">
+              <p className="font-medium mb-2">Demo Accounts:</p>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <span className="font-semibold">Head:</span>
+                  <br />
+                  headusercse / head123
+                </div>
+                <div>
+                  <span className="font-semibold">Head:</span>
+                  <br />
+                  headusercse2 / head123
+                </div>
+                <div>
+                  <span className="font-semibold">Lecturer 1:</span>
+                  <br />
+                  ahmetbulut / instructor123
+                </div>
+                <div>
+                  <span className="font-semibold">Lecturer 2:</span>
+                  <br />
+                  mehmetserkanapaydin / instructor123
+                </div>
+                <div>
+                  <span className="font-semibold">Student:</span>
+                  <br />
+                  student000 / student000
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
