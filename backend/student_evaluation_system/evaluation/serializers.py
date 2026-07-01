@@ -110,23 +110,6 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
         fields = ["id", "student", "student_id", "course", "enrolled_at"]
 
 
-class MyGradesSerializer(serializers.ModelSerializer):
-    """Custom serializer for students to view their grades"""
-
-    assessment_name = serializers.CharField(source="assessment.name")
-    course_name = serializers.CharField(source="assessment.course.name")
-    course_code = serializers.CharField(source="assessment.course.code")
-    total_score = serializers.IntegerField(source="assessment.total_score")
-    percentage = serializers.SerializerMethodField()
-
-    class Meta:
-        model = StudentGrade
-        fields = ["id", "course_code", "course_name", "assessment_name", "score", "total_score", "percentage"]
-
-    def get_percentage(self, obj):
-        return (obj.score / obj.assessment.total_score) * 100 if obj.assessment.total_score > 0 else 0
-
-
 class ScoreRecomputeJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScoreRecomputeJob

@@ -20,19 +20,19 @@ factory = APIRequestFactory()
 @pytest.fixture
 def admin_user(db):
     """Create an admin user."""
-    return User.objects.create_user(username="admin", password="admin123", role="admin")
+    return User.objects.create_user(username="admin", password="admin123", role="admin")  # nosec
 
 
 @pytest.fixture
 def instructor_user(db):
     """Create an instructor user."""
-    return User.objects.create_user(username="instructor", password="instructor123", role="instructor")
+    return User.objects.create_user(username="instructor", password="instructor123", role="instructor")  # nosec
 
 
 @pytest.fixture
 def student_user(db):
     """Create a student user."""
-    return User.objects.create_user(username="student", password="student123", role="student")
+    return User.objects.create_user(username="student", password="student123", role="student")  # nosec
 
 
 @pytest.fixture
@@ -163,7 +163,7 @@ class TestIsProgramHeadPermission:
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -200,7 +200,7 @@ class TestIsProgramHeadPermission:
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -221,7 +221,7 @@ class TestIsProgramHeadPermission:
         program2 = Program.objects.create(name="Program2", code="P2", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -250,7 +250,7 @@ class TestIsAdminOrProgramHeadPermission:
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -288,7 +288,7 @@ class TestGetInstructorPermissionTier:
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -310,7 +310,7 @@ class TestGetInstructorPermissionTier:
         instr_profile = InstructorProfile.objects.create(user=instr_user, title="Prof")
         head_user = CustomUser.objects.create_user(
             username="headperm",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )
@@ -337,7 +337,7 @@ class TestProgramHeadWriteAccess:
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
         head_user = CustomUser.objects.create_user(
             username="head_write",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )

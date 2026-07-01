@@ -11,6 +11,7 @@ from rest_framework import serializers
 from core.models import (
     Course,
     CourseTemplate,
+    CourseTemplateAssessment,
     CourseTemplateAssessmentLOMapping,
     CourseTemplateLearningOutcome,
     CourseTemplateLOPOMapping,
@@ -585,14 +586,14 @@ class CourseTemplateAssessmentSerializer(serializers.ModelSerializer):
     """Serializer for CourseTemplateAssessment."""
 
     class Meta:
-        model = WeightSuggestionJob
+        model = CourseTemplateAssessment
         fields = [
             "id",
-            "status",
-            "result",
-            "error",
-            "started_at",
-            "finished_at",
+            "name",
+            "assessment_type",
+            "total_score",
+            "weight",
+            "course_template",
             "created_at",
             "updated_at",
         ]

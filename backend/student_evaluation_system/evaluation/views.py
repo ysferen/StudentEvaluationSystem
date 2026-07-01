@@ -1,4 +1,4 @@
-from rest_framework import generics, viewsets, status
+from rest_framework import viewsets, status
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -676,28 +676,6 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(enrollments, many=True)
         return Response({"enrolled_count": len(enrollments), "enrollments": serializer.data})
-
-
-# Legacy views for backward compatibility
-class EvaluationListView(generics.ListAPIView):
-    """List all student grades (evaluations)."""
-
-    queryset = StudentGrade.objects.select_related("student", "assessment", "assessment__course").all()
-    serializer_class = StudentGradeSerializer
-
-
-class EvaluationDetailView(generics.RetrieveAPIView):
-    """Retrieve a single student grade by PK."""
-
-    queryset = StudentGrade.objects.select_related("student", "assessment", "assessment__course").all()
-    serializer_class = StudentGradeSerializer
-
-
-class EvaluationCreateView(generics.CreateAPIView):
-    """Create a student grade (evaluation)."""
-
-    queryset = StudentGrade.objects.all()
-    serializer_class = StudentGradeCreateSerializer
 
 
 @extend_schema_view(

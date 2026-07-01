@@ -1,10 +1,4 @@
-import {
-    Bars3Icon,
-    UserCircleIcon,
-    EllipsisVerticalIcon,
-    Cog6ToothIcon,
-    ArrowRightOnRectangleIcon,
-} from '@heroicons/react/24/outline'
+import { Menu, UserCircle, MoreVertical, Settings, LogOut } from 'lucide-react'
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import { useState, useRef, useEffect } from 'react'
@@ -67,7 +61,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                     className="lg:hidden p-2 rounded-full hover:bg-secondary-100 transition-colors"
                     aria-label="Open menu"
                 >
-                    <Bars3Icon className="h-6 w-6 text-secondary-600" />
+                    <Menu className="h-6 w-6 text-secondary-600" />
                 </button>
 
                 {/* Logo (left) and Navigation buttons */}
@@ -99,11 +93,6 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                 <div className="flex items-center space-x-4">
                     {user ? (
                         <>
-                            {/* Bell icon commented out */}
-                            {/* <button className="p-2 rounded-full hover:bg-secondary-100 transition-colors relative group">
-                                <BellIcon className="h-6 w-6 text-secondary-600 group-hover:text-secondary-900 transition-colors" />
-                                <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 bg-danger-500 border-2 border-white rounded-full"></span>
-                            </button> */}
                             <div className="flex items-center space-x-3 pl-4 border-l border-secondary-200">
                                 <div className="text-right hidden sm:block">
                                     <p className="text-sm font-semibold text-secondary-900">
@@ -113,14 +102,14 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                                 </div>
                                 <div className="inline-flex items-center" ref={menuRef}>
                                     <div className="p-1 rounded-full">
-                                        <UserCircleIcon className="h-9 w-9 text-secondary-400" />
+                                        <UserCircle className="h-9 w-9 text-secondary-400" />
                                     </div>
                                     <button
                                         aria-expanded={menuOpen}
                                         onClick={() => setMenuOpen((s) => !s)}
                                         className="ml-1 p-2 rounded-full hover:bg-secondary-100 transition-colors inline-flex items-center"
                                     >
-                                        <EllipsisVerticalIcon className="h-6 w-6 text-secondary-600" />
+                                        <MoreVertical className="h-6 w-6 text-secondary-600" />
                                     </button>
                                     {menuOpen && (
                                         <div className="absolute right-4 top-full mt-2 w-40 bg-white border border-secondary-200 rounded-md shadow-lg py-1 z-50">
@@ -131,7 +120,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 flex items-center"
                                             >
-                                                <Cog6ToothIcon className="h-4 w-4 mr-2 text-secondary-500" />
+                                                <Settings className="h-4 w-4 mr-2 text-secondary-500" />
                                                 Settings
                                             </button>
                                             <button
@@ -141,7 +130,7 @@ export const Header = ({ setSidebarOpen }: HeaderProps) => {
                                                 }}
                                                 className="w-full text-left px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 flex items-center"
                                             >
-                                                <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2 text-danger-600" />
+                                                <LogOut className="h-4 w-4 mr-2 text-danger-600" />
                                                 Sign out
                                             </button>
                                         </div>

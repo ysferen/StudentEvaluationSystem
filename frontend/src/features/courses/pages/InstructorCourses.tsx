@@ -4,12 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
-import {
-  BookOpenIcon,
-  AcademicCapIcon,
-  UsersIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { BookOpen, GraduationCap, Users, Plus } from 'lucide-react'
 import {
   coreCoursesList,
   coreTermsList,
@@ -208,7 +203,7 @@ const InstructorCourses = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
             >
-              <PlusIcon className="h-5 w-5" />
+              <Plus className="h-5 w-5" />
               <span>New Course</span>
             </button>
           )}
@@ -219,7 +214,7 @@ const InstructorCourses = () => {
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-primary-700" />
+              <BookOpen className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Active Courses</p>
@@ -231,7 +226,7 @@ const InstructorCourses = () => {
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <UsersIcon className="h-8 w-8 text-cyan-700" />
+              <Users className="h-8 w-8 text-cyan-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Students</p>
@@ -243,7 +238,7 @@ const InstructorCourses = () => {
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <AcademicCapIcon className="h-8 w-8 text-emerald-700" />
+              <GraduationCap className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Credits</p>
@@ -322,7 +317,7 @@ const InstructorCourses = () => {
         </div>
       ) : (
         <Card className="text-center py-16">
-          <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
+          <BookOpen className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
           <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses assigned</h3>
           <p className="text-secondary-500 mb-6">You haven't been assigned to any courses yet.</p>
           {canCreateCourse && (
@@ -330,7 +325,7 @@ const InstructorCourses = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors"
             >
-              <PlusIcon className="h-5 w-5" />
+              <Plus className="h-5 w-5" />
               <span>Create Course</span>
             </button>
           )}

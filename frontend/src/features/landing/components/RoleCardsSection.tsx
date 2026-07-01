@@ -1,12 +1,8 @@
-import {
-  AcademicCapIcon,
-  UserGroupIcon,
-  BuildingLibraryIcon,
-} from '@heroicons/react/24/outline'
+import { GraduationCap, Users, Library } from 'lucide-react'
 
 const roles = [
   {
-    icon: AcademicCapIcon,
+    icon: GraduationCap,
     title: 'Students',
     description:
       'Track your progress across courses. See how each assessment contributes to your learning outcomes and where you stand.',
@@ -16,7 +12,7 @@ const roles = [
     href: '/login',
   },
   {
-    icon: UserGroupIcon,
+    icon: Users,
     title: 'Instructors',
     description:
       "Manage assessments and see how students perform against learning outcomes. Identify what's working and what's not.",
@@ -26,7 +22,7 @@ const roles = [
     href: '/login',
   },
   {
-    icon: BuildingLibraryIcon,
+    icon: Library,
     title: 'Program Heads',
     description:
       'Oversee program-level outcomes and generate accreditation reports. Make strategic decisions backed by real data.',

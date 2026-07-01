@@ -1,9 +1,12 @@
 from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.dispatch import receiver
+import logging
 
 from core.models import Course, InstructorPermission, ResourceArea, PermissionTier
 from core.services.audit import log_audit
 from evaluation.models import StudentGrade
+
+logger = logging.getLogger(__name__)
 
 
 # Resource areas where course instructors get full CRUD access (since they teach the course).
@@ -58,7 +61,7 @@ def create_instructor_permissions_on_course_add(sender, instance, action, pk_set
     try:
         program_head = course.program.program_head_profile
     except Exception:
-        pass
+        logger.warning("Could not resolve program head for course %s", course.id)
 
     from users.models import InstructorProfile
 

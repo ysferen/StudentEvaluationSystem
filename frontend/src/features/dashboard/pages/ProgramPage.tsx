@@ -1,16 +1,10 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, useCallback } from 'react'
 import type { FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  AcademicCapIcon,
-  BookOpenIcon,
-  ChartBarIcon,
-  DocumentChartBarIcon,
-  UsersIcon,
-} from '@heroicons/react/24/outline'
+import { GraduationCap, BookOpen, BarChart3, FileChartColumn, Users } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import ConfirmDeleteModal from '@/components/ui/custom/ConfirmDeleteModal'
-import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
+const ChartWidget = lazy(() => import('@/components/ui/custom/ChartWidget').then(m => ({ default: m.ChartWidget })))
 import Modal from '@/components/ui/custom/Modal'
 import { LearningOutcomesPanel } from '@/features/courses/components/LearningOutcomesPanel'
 import type { BoxPlotData } from '@/features/courses/components/BoxPlotChart'
@@ -465,7 +459,7 @@ const ProgramPage = () => {
             disabled={!canGenerateProgramReport || isGeneratingReport}
             className="bg-secondary-100 text-secondary-700 px-4 py-2 rounded-lg hover:bg-secondary-200 flex items-center space-x-2 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <DocumentChartBarIcon className="h-5 w-5" />
+            <FileChartColumn className="h-5 w-5" />
             <span>{isGeneratingReport ? 'Generating...' : 'Generate Report'}</span>
           </button>
         </div>
@@ -481,7 +475,7 @@ const ProgramPage = () => {
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-primary-700" />
+              <BookOpen className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Credits</p>
@@ -492,7 +486,7 @@ const ProgramPage = () => {
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <UsersIcon className="h-8 w-8 text-cyan-700" />
+              <Users className="h-8 w-8 text-cyan-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Instructors</p>
@@ -503,7 +497,7 @@ const ProgramPage = () => {
         <Card variant="flat" className="bg-violet-50 border-violet-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-violet-100 rounded-xl">
-              <AcademicCapIcon className="h-8 w-8 text-violet-700" />
+              <GraduationCap className="h-8 w-8 text-violet-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Program Outcomes</p>
@@ -514,7 +508,7 @@ const ProgramPage = () => {
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <ChartBarIcon className="h-8 w-8 text-emerald-700" />
+              <BarChart3 className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Average PO Score</p>
@@ -596,35 +590,39 @@ const ProgramPage = () => {
 
         <div className="p-6">
           {activeChart === 'gpa' ? (
-            <ChartWidget
-              title="Average GPA by year level"
-              subtitle="Credit-weighted average GPA on the 4.0 scale"
-              type="bar"
-              series={[{
-                name: 'Average GPA',
-                data: gpaByYear.map(y => y.gpa ?? 0),
-              }]}
-              options={{
-                xaxis: { categories },
-                colors: ['#0ea5e9'],
-                yaxis: { min: 0, max: 4 },
-              }}
-            />
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 300}} />}>
+              <ChartWidget
+                title="Average GPA by year level"
+                subtitle="Credit-weighted average GPA on the 4.0 scale"
+                type="bar"
+                series={[{
+                  name: 'Average GPA',
+                  data: gpaByYear.map(y => y.gpa ?? 0),
+                }]}
+                options={{
+                  xaxis: { categories },
+                  colors: ['#0ea5e9'],
+                  yaxis: { min: 0, max: 4 },
+                }}
+              />
+            </Suspense>
           ) : (
-            <ChartWidget
-              title="Average PO score by year level"
-              subtitle="Average program outcome score by enrolled student year level"
-              type="bar"
-              series={[{
-                name: 'Average PO score',
-                data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
-              }]}
-              options={{
-                xaxis: { categories },
-                colors: ['#8b5cf6'],
-                yaxis: { min: 0, max: 100 },
-              }}
-            />
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 300}} />}>
+              <ChartWidget
+                title="Average PO score by year level"
+                subtitle="Average program outcome score by enrolled student year level"
+                type="bar"
+                series={[{
+                  name: 'Average PO score',
+                  data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
+                }]}
+                options={{
+                  xaxis: { categories },
+                  colors: ['#8b5cf6'],
+                  yaxis: { min: 0, max: 100 },
+                }}
+              />
+            </Suspense>
           )}
         </div>
       </Card>

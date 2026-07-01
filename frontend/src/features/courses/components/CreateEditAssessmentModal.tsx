@@ -8,6 +8,7 @@ import {
 import { coreCourseTemplatesAssessmentsRetrieve } from '../../../shared/api/generated/core/core'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { AssessmentTypeEnum } from '../../../shared/api/model'
+import { isRecord } from '@/shared/utils/guards'
 
 interface CreateEditAssessmentModalProps {
   isOpen: boolean
@@ -34,9 +35,6 @@ type TemplateAssessment = {
   description?: string
   total_score?: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isTemplateAssessment = (value: unknown): value is TemplateAssessment =>
   isRecord(value) && typeof value.id === 'number'

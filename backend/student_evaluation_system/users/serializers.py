@@ -132,30 +132,6 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, style={"input_type": "password"})
-    password2 = serializers.CharField(
-        write_only=True, required=True, style={"input_type": "password"}, label="Confirm Password"
-    )
-
-    class Meta:
-        model = CustomUser
-        fields = ["username", "email", "password", "password2", "first_name", "last_name", "role"]
-
-    def validate(self, data):
-        if data["password"] != data["password2"]:
-            raise serializers.ValidationError({"password": "Passwords don't match"})
-        return data
-
-    def create(self, validated_data):
-        validated_data.pop("password2")
-        password = validated_data.pop("password")
-        user = CustomUser(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
-
-
 class StudentProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     enrollment_term = serializers.StringRelatedField(read_only=True)

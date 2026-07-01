@@ -397,12 +397,12 @@ class Command(BaseCommand):
             and CourseTemplateLOPOMapping.objects.filter(template_learning_outcome__course_template=template).count() == 0
         ):
             for tlo in template.learning_outcomes.all():
-                k = min(random.randint(2, 4), len(po_templates))
-                for po_template in random.sample(list(po_templates), k=k):
+                k = min(random.randint(2, 4), len(po_templates))  # nosec B311
+                for po_template in random.sample(list(po_templates), k=k):  # nosec B311
                     CourseTemplateLOPOMapping.objects.get_or_create(
                         template_learning_outcome=tlo,
                         program_outcome_template=po_template,
-                        defaults={"weight": random.randint(1, 5)},
+                        defaults={"weight": random.randint(1, 5)},  # nosec B311
                     )
 
     def _build_curriculum(self, program, terms, instructors, head_user, po_templates, po_by_term):
@@ -445,7 +445,7 @@ class Command(BaseCommand):
                         except IntegrityError:
                             course = Course.objects.get(code=code, program=program, term=term)
 
-                    instructor = random.choice(instructors)
+                    instructor = random.choice(instructors)  # nosec B311
                     course.instructors.add(instructor)
                     sem_cohort_key = (semester_num, cohort_start)
                     courses_by_sem_cohort.setdefault(sem_cohort_key, []).append(course)
@@ -486,10 +486,10 @@ class Command(BaseCommand):
             term_pos = [po for po in program_outcomes if po.term_id == course_term.id]
             if not term_pos:
                 continue
-            k = min(random.randint(2, 4), len(term_pos))
-            selected = random.sample(term_pos, k=k)
+            k = min(random.randint(2, 4), len(term_pos))  # nosec B311
+            selected = random.sample(term_pos, k=k)  # nosec B311
             for po in selected:
-                w = random.randint(1, 5)
+                w = random.randint(1, 5)  # nosec B311
                 LearningOutcomeProgramOutcomeMapping.objects.get_or_create(
                     course=lo.course,
                     learning_outcome=lo,
@@ -628,7 +628,7 @@ class Command(BaseCommand):
         return int(hashed[:8], 16)
 
     def _generate_student_profile(self, student_id):
-        rng = random.Random(self._seed_from_value(student_id))
+        rng = random.Random(self._seed_from_value(student_id))  # nosec B311
 
         student_type = rng.choices(["high_achiever", "average", "struggling", "inconsistent"], weights=[15, 55, 20, 10], k=1)[
             0
@@ -667,7 +667,7 @@ class Command(BaseCommand):
                 if not CourseEnrollment.objects.filter(student=student, course=assessment.course).exists():
                     continue
 
-                rng = random.Random(self._seed_from_value(f"{student.id}-{assessment.id}"))
+                rng = random.Random(self._seed_from_value(f"{student.id}-{assessment.id}"))  # nosec B311
 
                 assessment_difficulty = rng.gauss(0, 8)
 

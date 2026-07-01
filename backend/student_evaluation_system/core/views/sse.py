@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import time
 from collections.abc import Generator
@@ -13,6 +14,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from core.serializers import JobProgressEventSerializer
 from core.services.sse import get_redis_client
+
+logger = logging.getLogger(__name__)
 
 
 class SSERenderer(BaseRenderer):
@@ -117,7 +120,7 @@ def _cleanup_pubsub(pubsub, client, channel_list):
         try:
             cleanup()
         except Exception:
-            pass
+            logger.exception("SSE cleanup callback failed")
 
 
 def _get_job_for_channel(job_id: int) -> object | None:

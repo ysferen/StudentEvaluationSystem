@@ -15,26 +15,12 @@ const passwordError = (error: unknown): string => {
 
 const Safety: React.FC = () => {
   const { user } = useAuth()
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const toggleTwoFA = async () => {
-    // placeholder: call backend to enable/disable 2FA
-    setMessage(null)
-    try {
-      // simulate API call
-      await new Promise((res) => setTimeout(res, 600))
-      setTwoFAEnabled((s) => !s)
-      setMessage('Security settings updated')
-    } catch {
-      setMessage('Failed to update settings')
-    }
-  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,28 +111,6 @@ const Safety: React.FC = () => {
           </form>
         </section>
 
-        <div className="flex items-center justify-between p-4 border border-secondary-200 rounded-lg">
-          <div>
-            <h2 className="text-lg font-semibold text-secondary-900">Two-Factor Authentication</h2>
-            <p className="text-sm text-secondary-600">Add an extra layer of security to your account.</p>
-          </div>
-          <button
-            onClick={toggleTwoFA}
-            className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            {twoFAEnabled ? 'Disable' : 'Enable'}
-          </button>
-        </div>
-
-        <div className="p-4 border border-secondary-200 rounded-lg">
-          <h2 className="text-lg font-semibold text-secondary-900">Active Sessions</h2>
-          <p className="text-sm text-secondary-600 mt-2">Sign out of other devices to protect your account.</p>
-          <div className="mt-3">
-            <button className="px-3 py-2 bg-white border border-secondary-200 rounded-lg hover:bg-secondary-50">Sign out other sessions</button>
-          </div>
-        </div>
-
-        {message && <div className="text-sm text-emerald-700">{message}</div>}
       </section>
     </div>
   )

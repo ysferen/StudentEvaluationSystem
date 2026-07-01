@@ -1,14 +1,10 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '@/components/ui/custom/Card'
-import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
-import {
-  ChartBarIcon,
-  AcademicCapIcon,
-  ChartPieIcon,
-} from '@heroicons/react/24/outline'
+const ChartWidget = lazy(() => import('@/components/ui/custom/ChartWidget').then(m => ({ default: m.ChartWidget })))
+import { BarChart3, GraduationCap, PieChart } from 'lucide-react'
 import { coreCoursesRetrieve, coreCoursesLearningOutcomesRetrieve } from '../../../shared/api/generated/core/core'
 import { coreStudentLoScoresList } from '../../../shared/api/generated/scores/scores'
 import { evaluationGradesList, evaluationGradesCourseAveragesRetrieve } from '../../../shared/api/generated/evaluation/evaluation'
@@ -231,7 +227,7 @@ const StudentCourseDetail = () => {
     return (
       <div className="flex justify-center items-center min-h-96">
         <div className="text-center">
-          <ChartBarIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+          <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Course not found</h3>
           <p className="text-gray-500">The requested course could not be found.</p>
         </div>
@@ -261,23 +257,25 @@ const StudentCourseDetail = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Score Distribution
                   </h3>
-                  <ChartWidget
-                    title=""
-                    type="bar"
-                    series={[{
-                      name: 'Score',
-                      data: studentGrades.map((g) => Math.round((g.score / (g.assessment?.total_score || 1)) * 100)),
-                    }]}
-                    options={{
-                      ...barChartData.options,
-                      xaxis: {
-                        categories: studentGrades.map((g) => g.assessment?.name || ''),
-                        labels: { style: { fontSize: '12px' } },
-                      },
-                    }}
-                    height={300}
-                    className="border-0 shadow-none p-0"
-                  />
+                  <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 300}} />}>
+                    <ChartWidget
+                      title=""
+                      type="bar"
+                      series={[{
+                        name: 'Score',
+                        data: studentGrades.map((g) => Math.round((g.score / (g.assessment?.total_score || 1)) * 100)),
+                      }]}
+                      options={{
+                        ...barChartData.options,
+                        xaxis: {
+                          categories: studentGrades.map((g) => g.assessment?.name || ''),
+                          labels: { style: { fontSize: '12px' } },
+                        },
+                      }}
+                      height={300}
+                      className="border-0 shadow-none p-0"
+                    />
+                  </Suspense>
                 </Card>
 
                 {/* Learning Outcome Radar Chart */}
@@ -287,46 +285,48 @@ const StudentCourseDetail = () => {
                   </h3>
                   <div className="flex-1 flex items-center justify-center min-h-[280px]">
                     {learningOutcomes.length > 0 ? (
-                      <ChartWidget
-                        title=""
-                        type="radar"
-                        series={[{
-                          name: 'Score',
-                          data: learningOutcomes.map((lo) => {
-                            const scoreData = loScores.find((s) => s.learning_outcome?.id === lo.id)
-                            return scoreData ? Math.round((scoreData.score || 0) * scoreMultiplier) : 0
-                          }),
-                        }]}
-                        options={{
-                          ...radarChartData.options,
-                          chart: {
-                            ...radarChartData.options.chart,
-                            height: '100%',
-                            parentHeightOffset: 0,
-                          },
-                          plotOptions: {
-                            radar: {
-                              size: 120,
-                              polygons: {
-                                strokeColors: '#e5e7eb',
-                                connectorColors: '#e5e7eb',
-                                fill: {
-                                  colors: ['#f9fafb', '#fff'],
+                      <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 280}} />}>
+                        <ChartWidget
+                          title=""
+                          type="radar"
+                          series={[{
+                            name: 'Score',
+                            data: learningOutcomes.map((lo) => {
+                              const scoreData = loScores.find((s) => s.learning_outcome?.id === lo.id)
+                              return scoreData ? Math.round((scoreData.score || 0) * scoreMultiplier) : 0
+                            }),
+                          }]}
+                          options={{
+                            ...radarChartData.options,
+                            chart: {
+                              ...radarChartData.options.chart,
+                              height: '100%',
+                              parentHeightOffset: 0,
+                            },
+                            plotOptions: {
+                              radar: {
+                                size: 120,
+                                polygons: {
+                                  strokeColors: '#e5e7eb',
+                                  connectorColors: '#e5e7eb',
+                                  fill: {
+                                    colors: ['#f9fafb', '#fff'],
+                                  },
                                 },
                               },
                             },
-                          },
-                          xaxis: {
-                            categories: learningOutcomes.map((lo) => lo.code),
-                            labels: {
-                              style: { fontSize: '11px', fontWeight: 600 },
-                              offsetY: 0,
+                            xaxis: {
+                              categories: learningOutcomes.map((lo) => lo.code),
+                              labels: {
+                                style: { fontSize: '11px', fontWeight: 600 },
+                                offsetY: 0,
+                              },
                             },
-                          },
-                        }}
-                        height={280}
-                        className="border-0 shadow-none p-0 w-full"
-                      />
+                          }}
+                          height={280}
+                          className="border-0 shadow-none p-0 w-full"
+                        />
+                      </Suspense>
                     ) : (
                       <p className="text-gray-500 text-sm">No learning outcomes defined</p>
                     )}
@@ -398,7 +398,7 @@ const StudentCourseDetail = () => {
             </div>
           ) : (
             <Card className="text-center py-12">
-              <ChartBarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No assessment data
               </h3>
@@ -441,7 +441,7 @@ const StudentCourseDetail = () => {
             </div>
           ) : (
             <Card className="text-center py-12">
-              <AcademicCapIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <GraduationCap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No learning outcomes
               </h3>
@@ -499,7 +499,7 @@ const StudentCourseDetail = () => {
             })()
           ) : (
             <Card className="text-center py-12">
-              <ChartPieIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <PieChart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No analytics data
               </h3>

@@ -21,14 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/shadcn/Dialog'
-import {
-  XMarkIcon,
-  LinkIcon,
-  AcademicCapIcon,
-  ClipboardDocumentListIcon,
-  ChartBarIcon,
-  QuestionMarkCircleIcon,
-} from '@heroicons/react/24/outline'
+import { X, Link, GraduationCap, ClipboardList, BarChart3, HelpCircle } from 'lucide-react'
 import {
   useEvaluationAssessmentsList,
   useEvaluationAssessmentLoMappingsList,
@@ -216,7 +209,7 @@ const WeightModal = ({
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="font-medium">{fromLabel}</span>
-            <LinkIcon className="h-4 w-4" />
+            <Link className="h-4 w-4" />
             <span className="font-medium">{toLabel}</span>
           </div>
 
@@ -861,7 +854,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                 Drag assessments to learning outcomes, and learning outcomes to program outcomes
               </p>
               <div className="group relative flex-shrink-0">
-                <QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-help" />
+                <HelpCircle className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-help" />
                 <div className="absolute left-0 top-8 hidden group-hover:block z-50 w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl">
                   <div className="space-y-1.5">
                     <p><span className="font-semibold">Drag & Drop:</span> Assessment → LO or LO → PO</p>
@@ -904,7 +897,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                 className="p-2 hover:bg-gray-100 rounded-lg"
                 aria-label="Close"
               >
-                <XMarkIcon className="h-6 w-6 text-gray-500" />
+                <X className="h-6 w-6 text-gray-500" />
               </button>
             )}
           </div>
@@ -916,7 +909,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <ClipboardDocumentListIcon className="h-5 w-5 text-primary-600" />
+                <ClipboardList className="h-5 w-5 text-primary-600" />
                 <h3 className="font-semibold text-gray-900">Assessments</h3>
               </div>
               {(() => {
@@ -977,7 +970,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <AcademicCapIcon className="h-5 w-5 text-teal-600" />
+                <GraduationCap className="h-5 w-5 text-teal-600" />
                 <h3 className="font-semibold text-gray-900">Learning Outcomes</h3>
               </div>
               {(() => {
@@ -1063,7 +1056,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                       title="Remove mapping"
                                       aria-label="Remove mapping"
                                     >
-                                      <XMarkIcon className="h-3 w-3" />
+                                      <X className="h-3 w-3" />
                                     </button>
                                   </span>
                                 )
@@ -1116,7 +1109,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                       title="Remove mapping"
                                       aria-label="Remove mapping"
                                     >
-                                      <XMarkIcon className="h-3 w-3" />
+                                      <X className="h-3 w-3" />
                                     </button>
                                   </span>
                                 )
@@ -1136,7 +1129,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
           <Card className="p-4 flex flex-col overflow-hidden min-h-0">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <ChartBarIcon className="h-5 w-5 text-purple-600" />
+                <BarChart3 className="h-5 w-5 text-purple-600" />
                 <h3 className="font-semibold text-gray-900">Program Outcomes</h3>
               </div>
               {(() => {
@@ -1219,7 +1212,7 @@ const MappingEditor = ({ courseId, termId, onClose }: MappingEditorProps) => {
                                     title="Remove mapping"
                                     aria-label="Remove mapping"
                                   >
-                                    <XMarkIcon className="h-3 w-3" />
+                                    <X className="h-3 w-3" />
                                   </button>
                                 </span>
                               )

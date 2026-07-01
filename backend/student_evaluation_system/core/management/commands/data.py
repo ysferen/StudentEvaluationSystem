@@ -204,7 +204,7 @@ INSTRUCTORS = [
         "email": "ahmet.bulut@acibadem.edu.tr",
         "first_name": "Ahmet",
         "last_name": "Bulut",
-        "password": "instructor123",
+        "password": "instructor123",  # nosec
         "title": "Prof. Dr.",
     },
     {
@@ -212,7 +212,7 @@ INSTRUCTORS = [
         "email": "mehmetserkan.apaydin@acibadem.edu.tr",
         "first_name": "Mehmet Serkan",
         "last_name": "Apaydın",
-        "password": "instructor123",
+        "password": "instructor123",  # nosec
         "title": "Dr. Öğr. Üyesi",
     },
     {
@@ -220,7 +220,7 @@ INSTRUCTORS = [
         "email": "mahsa.ziraksima@acibadem.edu.tr",
         "first_name": "Mahsa",
         "last_name": "Ziraksima",
-        "password": "instructor123",
+        "password": "instructor123",  # nosec
         "title": "Öğr. Gör. Dr.",
     },
     {
@@ -228,7 +228,7 @@ INSTRUCTORS = [
         "email": "sultan.sutlu@acibadem.edu.tr",
         "first_name": "Sultan",
         "last_name": "Sütlü",
-        "password": "instructor123",
+        "password": "instructor123",  # nosec
         "title": "Öğr. Gör. Dr.",
     },
     {
@@ -236,7 +236,7 @@ INSTRUCTORS = [
         "email": "cengiz.riva@acibadem.edu.tr",
         "first_name": "Cengiz",
         "last_name": "Riva",
-        "password": "instructor123",
+        "password": "instructor123",  # nosec
         "title": "Öğr. Gör.",
     },
 ]

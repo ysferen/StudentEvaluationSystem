@@ -21,6 +21,8 @@ from .course_report import (
     PDF_FONT_REGULAR,
     THEME,
     _avg,
+    _build_recommendations_panel,
+    _build_threshold_legend,
     _chart_image,
     _chart_panel,
     _draw_page_frame,
@@ -145,6 +147,16 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
 
     story.extend(_build_page_two_header(data, styles))
     story.append(Spacer(1, THEME["spacing"]["sm"] * mm))
+    _weakest_po = min(data.program_outcomes, key=lambda item: _avg(item.scores))
+    _weakest_course = min(data.active_courses, key=lambda item: item.average_score)
+    _at_risk = sorted(
+        [student for student in data.students if student.program_average < THEME["thresholds"]["danger"]],
+        key=lambda item: item.program_average,
+    )
+    _support_names = ", ".join(escape(student.name) for student in _at_risk[:5]) or "No students currently below threshold"
+    _rec1 = f"1. Reinforce <b>{escape(_weakest_po.code)}</b> evidence across mapped courses and document corrective action."
+    _rec2 = f"2. Review <b>{escape(_weakest_course.code)}</b> assessment alignment before closing the program file."
+    _rec3 = f"3. Prioritize program-level support for: <b>{_support_names}</b>."
     story.append(
         Table(
             [
@@ -178,7 +190,7 @@ def generate_program_report_pdf(data: ProgramReportData) -> bytes:
                     ),
                     "",
                 ],
-                [_build_recommendations_panel(data, styles), ""],
+                [_build_recommendations_panel(styles, _rec1, _rec2, _rec3), ""],
             ],
             colWidths=[90 * mm, 90 * mm],
             rowHeights=[66 * mm, 94 * mm, 52 * mm],
@@ -526,136 +538,10 @@ def _build_interpretation_panel(data, styles):
         [
             [Paragraph("Summary Interpretation", styles["SectionTitle"])],
             [Paragraph(text, styles["BodyTextSmall"])],
-            [_build_threshold_legend(styles)],
+            [_build_threshold_legend(styles, prefix="Program")],
         ],
         colWidths=[94 * mm],
     )
-    table.setStyle(_panel_style(colors))
-    return table
-
-
-def _build_threshold_legend(styles):
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.units import mm
-    from reportlab.platypus import Paragraph, Table, TableStyle
-
-    title_style = ParagraphStyle(
-        "ThresholdLegendTitle",
-        parent=styles["KpiLabel"],
-        alignment=TA_CENTER,
-        fontSize=7.4,
-        leading=9,
-        textColor=colors.HexColor(BRAND["teal"]),
-    )
-    label_style = ParagraphStyle(
-        "ThresholdLegendLabel",
-        parent=styles["BodyTextSmall"],
-        fontSize=7.0,
-        leading=8.2,
-        alignment=TA_CENTER,
-    )
-
-    items = [
-        (BRAND["red"], "Danger", "&lt; 60", "Immediate action"),
-        (BRAND["amber"], "Warning", "60-69", "At risk"),
-        (BRAND["blue"], "Developing", "70-79", "On track"),
-        (BRAND["teal"], "Success", "&gt;= 80", "Meets target"),
-    ]
-
-    item_tables = []
-    for color, label, score_range, note in items:
-        swatch = Table([[""]], colWidths=[3 * mm], rowHeights=[3 * mm])
-        swatch.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(color)),
-                    ("BOX", (0, 0), (-1, -1), 0.2, colors.HexColor(color)),
-                ]
-            )
-        )
-        item = Table(
-            [
-                [swatch],
-                [
-                    Paragraph(
-                        f"<b>{label}</b><br/>{score_range}<br/><font color='{BRAND['muted']}'>{note}</font>",
-                        label_style,
-                    )
-                ],
-            ],
-            colWidths=[17 * mm],
-        )
-        item.setStyle(
-            TableStyle(
-                [
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0.5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0.5),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
-                ]
-            )
-        )
-        item_tables.append(item)
-
-    legend = Table(
-        [
-            [Paragraph("THRESHOLD LEGEND", title_style), "", "", ""],
-            item_tables,
-        ],
-        colWidths=[19 * mm, 19 * mm, 19 * mm, 19 * mm],
-    )
-    legend.setStyle(
-        TableStyle(
-            [
-                ("SPAN", (0, 0), (-1, 0)),
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-                ("BOX", (0, 0), (-1, -1), 0.7, colors.HexColor(BRAND["teal"])),
-                ("INNERGRID", (0, 1), (-1, -1), 0.35, colors.HexColor(BRAND["line"])),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0.5),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0.5),
-            ]
-        )
-    )
-    return legend
-
-
-def _build_recommendations_panel(data, styles):
-    from reportlab.lib import colors
-    from reportlab.lib.units import mm
-    from reportlab.platypus import Paragraph, Table
-
-    weakest_po = min(data.program_outcomes, key=lambda item: _avg(item.scores))
-    weakest_course = min(data.active_courses, key=lambda item: item.average_score)
-    at_risk = sorted(
-        [student for student in data.students if student.program_average < THEME["thresholds"]["danger"]],
-        key=lambda item: item.program_average,
-    )
-    support_names = ", ".join(escape(student.name) for student in at_risk[:5]) or "No students currently below threshold"
-    rows = [
-        [Paragraph("Recommended Actions", styles["SectionTitle"])],
-        [
-            Paragraph(
-                f"1. Reinforce <b>{escape(weakest_po.code)}</b> evidence across mapped courses "
-                "and document corrective action.",
-                styles["BodyTextSmall"],
-            )
-        ],
-        [
-            Paragraph(
-                f"2. Review <b>{escape(weakest_course.code)}</b> assessment alignment before closing the program file.",
-                styles["BodyTextSmall"],
-            )
-        ],
-        [Paragraph(f"3. Prioritize program-level support for: <b>{support_names}</b>.", styles["BodyTextSmall"])],
-    ]
-    table = Table(rows, colWidths=[180 * mm])
     table.setStyle(_panel_style(colors))
     return table
 

@@ -1,45 +1,38 @@
-import {
-  ChartBarIcon,
-  ArrowTrendingUpIcon,
-  CheckBadgeIcon,
-  UserGroupIcon,
-  ClipboardDocumentListIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline'
+import { BarChart3, TrendingUp, BadgeCheck, Users, ClipboardList, RefreshCw } from 'lucide-react'
 
 const features = [
   {
-    icon: ChartBarIcon,
+    icon: BarChart3,
     title: 'Outcome Tracking',
     description: 'Map assessments to learning outcomes and program outcomes automatically.',
     accent: 'primary',
   },
   {
-    icon: ArrowTrendingUpIcon,
+    icon: TrendingUp,
     title: 'Data-Driven Insights',
     description: 'Visual dashboards that reveal trends across courses, departments, and programs.',
     accent: 'amber',
   },
   {
-    icon: CheckBadgeIcon,
+    icon: BadgeCheck,
     title: 'Accreditation Ready',
     description: 'Generate reports that align with ABET and institutional accreditation standards.',
     accent: 'blue',
   },
   {
-    icon: UserGroupIcon,
+    icon: Users,
     title: 'Multi-Role Access',
     description: 'Tailored views for students, instructors, and program heads — one system, three perspectives.',
     accent: 'pink',
   },
   {
-    icon: ClipboardDocumentListIcon,
+    icon: ClipboardList,
     title: 'Assessment Management',
     description: 'Create, assign, and evaluate assessments with direct outcome alignment built in.',
     accent: 'violet',
   },
   {
-    icon: ArrowPathIcon,
+    icon: RefreshCw,
     title: 'Continuous Improvement',
     description: 'Close the loop — use evaluation data to refine curriculum and teaching methods cycle over cycle.',
     accent: 'green',

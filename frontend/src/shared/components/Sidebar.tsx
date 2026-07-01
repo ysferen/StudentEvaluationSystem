@@ -1,17 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../features/auth/hooks/useAuth'
-import {
-    HomeIcon,
-    DocumentTextIcon,
-    ChartBarIcon,
-    UsersIcon,
-    Cog6ToothIcon,
-    ClipboardDocumentListIcon,
-    ChartPieIcon,
-    ShieldCheckIcon,
-    BuildingOfficeIcon,
-} from '@heroicons/react/24/outline'
+import { Home, FileText, BarChart3, Users, Settings, ClipboardList, PieChart, ShieldCheck, Building2 } from 'lucide-react'
 import clsx from 'clsx'
 
 type Role = 'student' | 'instructor' | 'program_head' | 'admin' | 'guest'
@@ -34,53 +24,53 @@ interface RoleNavigation {
 }
 
 const courseDetailNavigation: NavItem[] = [
-    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
-    { name: 'Assessments', href: '#assessments', icon: DocumentTextIcon },
-    { name: 'Students', href: '#students', icon: UsersIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    { name: 'Outcomes', href: '#outcomes', icon: BarChart3 },
+    { name: 'Assessments', href: '#assessments', icon: FileText },
+    { name: 'Students', href: '#students', icon: Users },
+    { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 const studentCourseDetailNavigation: NavItem[] = [
-    { name: 'Assessments', href: '#assessments', icon: DocumentTextIcon },
-    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
-    { name: 'Analytics', href: '#analytics', icon: ChartPieIcon },
+    { name: 'Assessments', href: '#assessments', icon: FileText },
+    { name: 'Outcomes', href: '#outcomes', icon: BarChart3 },
+    { name: 'Analytics', href: '#analytics', icon: PieChart },
 ]
 
 const programPageNavigation: NavItem[] = [
-    { name: 'Overview', href: '#overview', icon: BuildingOfficeIcon },
-    { name: 'Outcomes', href: '#outcomes', icon: ChartBarIcon },
-    { name: 'Year Levels', href: '#year-levels', icon: UsersIcon },
-    { name: 'Analytics', href: '#analytics', icon: ChartPieIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    { name: 'Overview', href: '#overview', icon: Building2 },
+    { name: 'Outcomes', href: '#outcomes', icon: BarChart3 },
+    { name: 'Year Levels', href: '#year-levels', icon: Users },
+    { name: 'Analytics', href: '#analytics', icon: PieChart },
+    { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
 const roleConfig: Record<Role, RoleNavigation> = {
     student: {
         default: [
-            { name: 'Dashboard', href: '/student', icon: HomeIcon },
-            { name: 'Courses', href: '/student/courses', icon: ClipboardDocumentListIcon },
+            { name: 'Dashboard', href: '/student', icon: Home },
+            { name: 'Courses', href: '/student/courses', icon: ClipboardList },
         ],
     },
     instructor: {
         default: [
-            { name: 'Dashboard', href: '/instructor', icon: HomeIcon },
-            { name: 'Courses', href: '/instructor/courses', icon: ClipboardDocumentListIcon },
+            { name: 'Dashboard', href: '/instructor', icon: Home },
+            { name: 'Courses', href: '/instructor/courses', icon: ClipboardList },
         ],
         courseDetail: courseDetailNavigation,
     },
     program_head: {
         default: [
-            { name: 'Dashboard', href: '/head', icon: HomeIcon },
-            { name: 'Program', href: '/head/program', icon: BuildingOfficeIcon },
-            { name: 'Courses', href: '/head/courses', icon: ClipboardDocumentListIcon },
-            { name: 'Permissions', href: '/head/permissions', icon: ShieldCheckIcon },
-            { name: 'People', href: '/head/people', icon: UsersIcon },
+            { name: 'Dashboard', href: '/head', icon: Home },
+            { name: 'Program', href: '/head/program', icon: Building2 },
+            { name: 'Courses', href: '/head/courses', icon: ClipboardList },
+            { name: 'Permissions', href: '/head/permissions', icon: ShieldCheck },
+            { name: 'People', href: '/head/people', icon: Users },
         ],
         courseDetail: courseDetailNavigation,
     },
     admin: {
         default: [
-            { name: 'System Setup', href: '/system-admin', icon: HomeIcon },
+            { name: 'System Setup', href: '/system-admin', icon: Home },
         ],
         courseDetail: courseDetailNavigation,
     },
@@ -90,7 +80,7 @@ const roleConfig: Record<Role, RoleNavigation> = {
 }
 
 const getNavigationForRole = (role: string | null): NavItem[] => {
-    if (!role) return [{ name: 'Dashboard', href: '/', icon: HomeIcon }]
+    if (!role) return [{ name: 'Dashboard', href: '/', icon: Home }]
     const config = roleConfig[role as Role]
     if (!config) return []
     return config.default
@@ -118,13 +108,13 @@ export const Sidebar = ({ isOpen, setIsOpen, showOnlyCoreItems = false }: Sideba
     const inAccountArea = location.pathname.startsWith('/settings') || location.pathname.startsWith('/security')
     if (inAccountArea) {
         navigation = [
-            { name: 'Account', href: '/settings', icon: Cog6ToothIcon },
-            { name: 'Security', href: '/security', icon: ShieldCheckIcon },
+            { name: 'Account', href: '/settings', icon: Settings },
+            { name: 'Security', href: '/security', icon: ShieldCheck },
         ]
     } else if (user && !isPageLocalNavigation) {
         const hasSettings = navigation.some(n => n.href === '/settings' || n.name === 'Settings')
         if (!hasSettings) {
-            navigation.push({ name: 'Settings', href: '/settings', icon: Cog6ToothIcon })
+            navigation.push({ name: 'Settings', href: '/settings', icon: Settings })
         }
     }
 

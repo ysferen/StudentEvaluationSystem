@@ -53,11 +53,6 @@ class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // In production, you might want to send this to an error reporting service
-    // like Sentry, LogRocket, etc.
-    if (import.meta.env.PROD) {
-      // Example: sendErrorToReportingService(error, errorInfo);
-    }
   }
 
   private handleReset = () => {

@@ -25,8 +25,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 import logging
 import re
-import xml.etree.ElementTree as ET
-from abc import ABC, abstractmethod
+import defusedxml.ElementTree as ET
 from typing import Any, Dict, Iterable, List, Optional
 
 from ..models import (
@@ -41,7 +40,8 @@ from ..models import (
     CourseTemplateAssessment,
 )
 from evaluation.models import Assessment, StudentGrade, CourseEnrollment, ScoreRecomputeJob
-from .validators import InputValidator, FileValidator, ValidationError as CustomValidationError
+from .validators import InputValidator, FileValidator
+from django.core.exceptions import ValidationError
 from .column_parsing import extract_assessment_columns, clean_assessment_name, find_student_id_column
 from .validation import AssignmentScoreValidator
 
@@ -55,56 +55,7 @@ class FileImportError(Exception):
     pass
 
 
-class FileParser(ABC):
-    """
-    Abstract base class for file parsers.
-
-    This allows for modular extension to support different file formats.
-    Each parser implements specific logic for reading its file type.
-    """
-
-    @abstractmethod
-    def validate_file(self, file_obj) -> bool:
-        """
-        Validate if the file can be parsed by this parser.
-
-        Args:
-            file_obj: Uploaded file object
-
-        Returns:
-            bool: True if file is valid for this parser
-        """
-        pass
-
-    @abstractmethod
-    def get_sheet_names(self, file_obj) -> List[str]:
-        """
-        Get list of available sheets/data sections in file.
-
-        Args:
-            file_obj: Uploaded file object
-
-        Returns:
-            List[str]: Available sheet/section names
-        """
-        pass
-
-    @abstractmethod
-    def parse_sheet(self, file_obj, import_type: Optional[str] = None, sheet_name: Optional[str] = None) -> pd.DataFrame:
-        """
-        Parse a specific sheet/section from the file.
-
-        Args:
-            file_obj: Uploaded file object
-            sheet_name (str): Name of sheet/section to parse
-
-        Returns:
-            pd.DataFrame: Parsed data
-        """
-        pass
-
-
-class ExcelParser(FileParser):
+class ExcelParser:
     """Parser for Excel files (.xlsx, .xls)."""
 
     SPREADSHEETML_NS = {"ss": "urn:schemas-microsoft-com:office:spreadsheet"}
@@ -114,13 +65,13 @@ class ExcelParser(FileParser):
         # Validate file extension
         try:
             InputValidator.validate_file_extension(file_obj.name)
-        except CustomValidationError as e:
+        except ValidationError as e:
             raise FileImportError(str(e))
 
         # Validate file size
         try:
             FileValidator.validate_file_size(file_obj.size)
-        except CustomValidationError as e:
+        except ValidationError as e:
             raise FileImportError(str(e))
 
         if file_obj.size == 0:
@@ -254,37 +205,6 @@ class ExcelParser(FileParser):
                 raise FileImportError(f"Error parsing file: {str(e)}")
 
 
-class CSVParser(FileParser):
-    """Parser for CSV files - Future implementation."""
-
-    def validate_file(self, file_obj) -> bool:
-        """Validate CSV file format."""
-        # Validate file extension
-        try:
-            InputValidator.validate_file_extension(file_obj.name)
-        except CustomValidationError as e:
-            raise FileImportError(str(e))
-
-        # Validate file size
-        try:
-            FileValidator.validate_file_size(file_obj.size)
-        except CustomValidationError as e:
-            raise FileImportError(str(e))
-
-        return True
-
-    def get_sheet_names(self, file_obj) -> List[str]:
-        """CSV files have single sheet."""
-        return ["data"]
-
-    def parse_sheet(self, file_obj, import_type: Optional[str] = None, sheet_name: Optional[str] = None) -> pd.DataFrame:
-        """Parse CSV into DataFrame with proper dtypes."""
-        try:
-            return pd.read_csv(file_obj, dtype_backend="numpy_nullable", na_values=["", "NA", "N/A", "null", "NULL", "-"])
-        except Exception as e:
-            raise FileImportError(f"Error parsing CSV file: {str(e)}")
-
-
 class FileImportService:
     """
     Main service for handling file imports.
@@ -308,7 +228,7 @@ class FileImportService:
     }
 
     # Available parsers for different file formats
-    PARSERS = {"excel": ExcelParser, "csv": CSVParser}
+    PARSERS = {"excel": ExcelParser}
 
     def __init__(self, file_obj):
         """
@@ -321,7 +241,7 @@ class FileImportService:
         self.parser = None
         self.import_results = {"created": {}, "updated": {}, "errors": []}
 
-    def _get_parser(self) -> FileParser:
+    def _get_parser(self):
         """Get or initialize the parser for the current file."""
         if self.parser is not None:
             return self.parser
@@ -834,7 +754,7 @@ class FileImportService:
             if validated_term_id <= 0:
                 raise ValueError("Term ID must be positive")
             return validated_course_code, validated_term_id
-        except (ValueError, CustomValidationError) as e:
+        except (ValueError, ValidationError) as e:
             raise FileImportError(f"Invalid input parameters: {str(e)}")
 
     def _find_missing_assessments(self, assessment_columns, assessment_lookup):
@@ -911,7 +831,7 @@ class FileImportService:
     ):
         try:
             return InputValidator.validate_score(score, max_score=assessment.total_score)
-        except CustomValidationError:
+        except ValidationError:
             if policy.get("clamp_scores"):
                 try:
                     raw_score = float(score)
@@ -949,7 +869,7 @@ class FileImportService:
 
         try:
             student_id = InputValidator.validate_student_id(raw_student_id)
-        except CustomValidationError as e:
+        except ValidationError as e:
             self.import_results["errors"].append(f"Row {row_number}: Invalid student ID '{raw_student_id}': {str(e)}")
             return created_count, updated_count, skipped_count
 
@@ -1178,25 +1098,6 @@ class FileImportService:
         except Exception as e:
             raise FileImportError(f"Error importing program outcomes: {str(e)}")
 
-    def _validate_assignment_scores(self, dataframe: pd.DataFrame, course: Course, term: Term):
-        """
-        Validate that all required columns are present in dataframe for assessment scores.
-
-        Args:
-            dataframe (pd.DataFrame): Data to validate
-            course (Course): Course to check assessments against
-            term (Term): Term to check assessments against
-        Raises:
-            FileImportError: If required columns are missing
-        """
-        try:
-            self._validate_required_columns(
-                dataframe, "assignment_scores", assessments=self._get_assessments_by_course(course)
-            )
-            self._validate_students(dataframe, course)
-        except Exception as e:
-            raise FileImportError(f"Validation error: {str(e)}")
-
     def _validate_required_columns(
         self, dataframe: pd.DataFrame, sheet_type: str, assessments: Optional[Iterable[Assessment]] = None
     ):
@@ -1368,10 +1269,6 @@ class FileImportService:
             return Assessment.objects.get(name=assessment_name)
         except Assessment.DoesNotExist:
             raise FileImportError(f"Assessment with name '{assessment_name}' not found")
-
-    def _get_assessments_by_course(self, course: Course):
-        """Get all assessments for a course."""
-        return Assessment.objects.filter(course=course)
 
     def get_import_summary(self) -> Dict[str, Any]:
         """

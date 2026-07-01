@@ -8,6 +8,7 @@ export type AuthenticatedUser = Omit<CustomUser, 'permissions'> & {
   permissions?: string[]
   must_change_password?: boolean
   impersonated_by?: number | null
+  title?: string
 }
 
 const normalizePermissions = (user: CustomUser): AuthenticatedUser => {

@@ -1,9 +1,5 @@
 import React from 'react'
-import {
-  UserGroupIcon,
-  AcademicCapIcon,
-  BookOpenIcon,
-} from '@heroicons/react/24/outline'
+import { Users, GraduationCap, BookOpen } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import { AtRiskPanel } from './AtRiskPanel'
 
@@ -84,7 +80,7 @@ export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
       <Card variant="flat" className="bg-white border-secondary-200">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-primary-100 rounded-xl">
-            <UserGroupIcon className="h-8 w-8 text-primary-600" />
+            <Users className="h-8 w-8 text-primary-600" />
           </div>
           <div>
             <p className="text-sm text-secondary-600 font-medium">Students</p>
@@ -96,7 +92,7 @@ export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
       <Card variant="flat" className="bg-white border-secondary-200">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-violet-100 rounded-xl">
-            <AcademicCapIcon className="h-8 w-8 text-violet-600" />
+            <GraduationCap className="h-8 w-8 text-violet-600" />
           </div>
           <div>
             <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
@@ -114,7 +110,7 @@ export const CourseAnalyticsCard: React.FC<CourseAnalyticsCardProps> = ({
       <Card variant="flat" className="bg-white border-secondary-200">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-violet-100 rounded-xl">
-            <BookOpenIcon className="h-8 w-8 text-violet-600" />
+            <BookOpen className="h-8 w-8 text-violet-600" />
           </div>
           <div>
             <p className="text-sm text-secondary-600 font-medium">{courseCount === undefined ? 'Credits' : 'Courses'}</p>

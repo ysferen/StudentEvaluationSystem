@@ -1,19 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, BookOpen, GraduationCap, Users, BarChart3, Upload, Plus } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import CourseCreateModal from '../components/CourseCreateModal'
 import { NextTermModal } from '@/features/head/components/NextTermModal'
 import { ProgramTemplateImportModal } from '@/features/head/components/ProgramTemplateImportModal'
-import {
-  BookOpenIcon,
-  AcademicCapIcon,
-  UsersIcon,
-  ChartBarIcon,
-  ArrowUpTrayIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
 import {
   coreCoursesList,
   coreTermsList,
@@ -147,14 +139,14 @@ const HeadCourses = () => {
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
           >
-            <PlusIcon className="h-5 w-5" />
+            <Plus className="h-5 w-5" />
             <span>New Course</span>
           </button>
           <button
             onClick={() => setIsTemplateImportModalOpen(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2 transition-colors"
           >
-            <ArrowUpTrayIcon className="h-5 w-5" />
+            <Upload className="h-5 w-5" />
             <span>Import Templates</span>
           </button>
           {activeTerm && (
@@ -174,7 +166,7 @@ const HeadCourses = () => {
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-primary-700" />
+              <BookOpen className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Courses</p>
@@ -186,7 +178,7 @@ const HeadCourses = () => {
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <UsersIcon className="h-8 w-8 text-cyan-700" />
+              <Users className="h-8 w-8 text-cyan-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Students</p>
@@ -198,7 +190,7 @@ const HeadCourses = () => {
         <Card variant="flat" className="bg-violet-50 border-violet-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-violet-100 rounded-xl">
-              <AcademicCapIcon className="h-8 w-8 text-violet-700" />
+              <GraduationCap className="h-8 w-8 text-violet-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Instructors</p>
@@ -210,7 +202,7 @@ const HeadCourses = () => {
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <ChartBarIcon className="h-8 w-8 text-emerald-700" />
+              <BarChart3 className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Credits</p>
@@ -270,7 +262,7 @@ const HeadCourses = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-secondary-200">
-          <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
+          <BookOpen className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
           <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses found</h3>
           <p className="text-secondary-500 mb-6">No courses are available in your program for this term.</p>
         </div>

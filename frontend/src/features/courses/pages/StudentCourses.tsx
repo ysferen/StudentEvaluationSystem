@@ -4,13 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { Card } from '@/components/ui/custom/Card'
 import { Badge } from '@/components/ui/custom/Badge'
-import {
-  BookOpenIcon,
-  AcademicCapIcon,
-  ChartBarIcon,
-  CalendarIcon,
-  UserIcon,
-} from '@heroicons/react/24/outline'
+import { BookOpen, GraduationCap, BarChart3, Calendar, User } from 'lucide-react'
 import { fetchAllEvaluationEnrollments } from '@/shared/api/enrollments'
 import type { CourseEnrollment } from '../../../shared/api/model'
 
@@ -59,7 +53,7 @@ const StudentCourses = () => {
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-primary-700" />
+              <BookOpen className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Active Courses</p>
@@ -71,7 +65,7 @@ const StudentCourses = () => {
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <AcademicCapIcon className="h-8 w-8 text-cyan-700" />
+              <GraduationCap className="h-8 w-8 text-cyan-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Credits</p>
@@ -83,7 +77,7 @@ const StudentCourses = () => {
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <ChartBarIcon className="h-8 w-8 text-emerald-700" />
+              <BarChart3 className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Completed</p>
@@ -115,7 +109,7 @@ const StudentCourses = () => {
                         {enrollment.course.code}
                       </h3>
                       <p className="text-xs text-secondary-500 flex items-center gap-1">
-                        <CalendarIcon className="h-3 w-3" />
+                        <Calendar className="h-3 w-3" />
                         {enrollment.course.term?.name || 'Current Term'}
                       </p>
                     </div>
@@ -131,14 +125,14 @@ const StudentCourses = () => {
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm text-secondary-600">
-                    <UserIcon className="h-4 w-4 mr-2" />
+                    <User className="h-4 w-4 mr-2" />
                     {enrollment.course.instructors.length > 0
                       ? `${enrollment.course.instructors[0].first_name} ${enrollment.course.instructors[0].last_name}`
                       : 'Not assigned'
                     }
                   </div>
                   <div className="flex items-center text-sm text-secondary-600">
-                    <AcademicCapIcon className="h-4 w-4 mr-2" />
+                    <GraduationCap className="h-4 w-4 mr-2" />
                     {enrollment.course.credits} credits
                   </div>
                 </div>
@@ -155,7 +149,7 @@ const StudentCourses = () => {
         </div>
       ) : (
         <Card className="text-center py-16">
-          <BookOpenIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
+          <BookOpen className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
           <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courses enrolled</h3>
           <p className="text-secondary-500">You haven't enrolled in any courses yet.</p>
         </Card>

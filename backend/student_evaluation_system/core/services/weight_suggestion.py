@@ -153,20 +153,6 @@ class WeightSuggester:
         return embeddings
 
     @staticmethod
-    def _normalize_scores(scores):
-        """Normalize similarity scores to 0-5 integer weights.
-
-        Blends row-wise min/max normalization with rank-based normalization
-        so that narrow cosine ranges still create useful 0-5 contrast.
-
-        Configurable via env vars:
-          WEIGHT_SUGGESTION_BLEND  — rank influence (0=raw only, 1=rank only)
-                                     default 0.5 balances both.
-        """
-        weights, _components = WeightSuggester._normalize_scores_with_components(scores)
-        return weights
-
-    @staticmethod
     def _normalize_scores_with_components(scores):
         """Normalize scores and return the intermediate values used."""
         cosine_scores = np.asarray(scores, dtype=np.float32)

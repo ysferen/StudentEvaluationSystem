@@ -1,11 +1,7 @@
-import { useMemo, useState, useCallback } from 'react'
+import { lazy, Suspense, useMemo, useState, useCallback } from 'react'
 import { Card } from '@/components/ui/custom/Card'
-import { LazyChartWidget as ChartWidget } from '@/components/ui/custom/LazyChartWidget'
-import {
-  UserGroupIcon,
-  BookOpenIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline'
+const ChartWidget = lazy(() => import('@/components/ui/custom/ChartWidget').then(m => ({ default: m.ChartWidget })))
+import { Users, BookOpen, BarChart3 } from 'lucide-react'
 import { useCoreAnalyticsProgramStatsRetrieve } from '../../../shared/api/generated/analytics/analytics'
 import { useAuth } from '../../auth/hooks/useAuth'
 
@@ -74,7 +70,7 @@ const HeadDashboard = () => {
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-sky-100 rounded-xl">
-              <UserGroupIcon className="h-8 w-8 text-sky-600" />
+              <Users className="h-8 w-8 text-sky-600" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Students</p>
@@ -85,7 +81,7 @@ const HeadDashboard = () => {
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-indigo-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-indigo-600" />
+              <BookOpen className="h-8 w-8 text-indigo-600" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Courses</p>
@@ -96,7 +92,7 @@ const HeadDashboard = () => {
         <Card variant="flat" className="bg-white border-secondary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <ChartBarIcon className="h-8 w-8 text-emerald-600" />
+              <BarChart3 className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Average PO score</p>
@@ -163,45 +159,49 @@ const HeadDashboard = () => {
 
         <div className="p-6">
           {activeChart === 'gpa' ? (
-            <ChartWidget
-              title="Average GPA by year level"
-              subtitle="Credit-weighted average GPA on the 4.0 scale"
-              type="bar"
-              series={[{
-                name: 'Average GPA',
-                data: gpaByYear.map(y => y.gpa ?? 0),
-              }]}
-              options={{
-                xaxis: {
-                  categories,
-                },
-                colors: ['#0ea5e9'],
-                yaxis: {
-                  min: 0,
-                  max: 4,
-                },
-              }}
-            />
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 300}} />}>
+              <ChartWidget
+                title="Average GPA by year level"
+                subtitle="Credit-weighted average GPA on the 4.0 scale"
+                type="bar"
+                series={[{
+                  name: 'Average GPA',
+                  data: gpaByYear.map(y => y.gpa ?? 0),
+                }]}
+                options={{
+                  xaxis: {
+                    categories,
+                  },
+                  colors: ['#0ea5e9'],
+                  yaxis: {
+                    min: 0,
+                    max: 4,
+                  },
+                }}
+              />
+            </Suspense>
           ) : (
-            <ChartWidget
-              title="Average PO score by year level"
-              subtitle="Average program outcome score by enrolled student year level"
-              type="bar"
-              series={[{
-                name: 'Average PO score',
-                data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
-              }]}
-              options={{
-                xaxis: {
-                  categories,
-                },
-                colors: ['#8b5cf6'],
-                yaxis: {
-                  min: 0,
-                  max: 100,
-                },
-              }}
-            />
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg" style={{height: 300}} />}>
+              <ChartWidget
+                title="Average PO score by year level"
+                subtitle="Average program outcome score by enrolled student year level"
+                type="bar"
+                series={[{
+                  name: 'Average PO score',
+                  data: yearLevelBreakdown.map(y => y.avg_score ?? 0),
+                }]}
+                options={{
+                  xaxis: {
+                    categories,
+                  },
+                  colors: ['#8b5cf6'],
+                  yaxis: {
+                    min: 0,
+                    max: 100,
+                  },
+                }}
+              />
+            </Suspense>
           )}
         </div>
       </Card>

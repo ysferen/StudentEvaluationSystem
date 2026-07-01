@@ -9,14 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/shadcn/Dialog'
-import {
-  ShieldCheckIcon,
-  PencilIcon,
-  CheckIcon,
-  XMarkIcon,
-  MagnifyingGlassIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline'
+import { ShieldCheck, Pencil, Check, X, Search, AlertTriangle } from 'lucide-react'
 import {
   corePermissionsList,
   corePermissionsBulkUpdatePartialUpdate,
@@ -247,7 +240,7 @@ const HeadPermissionsPage = () => {
                 onClick={handleCancelEdit}
                 className="flex items-center space-x-2 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors"
               >
-                <XMarkIcon className="h-4 w-4" />
+                <X className="h-4 w-4" />
                 <span>Cancel</span>
               </button>
               <button
@@ -255,7 +248,7 @@ const HeadPermissionsPage = () => {
                 disabled={!hasChanges || bulkPartialUpdateMutation.isPending}
                 className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
-                <CheckIcon className="h-4 w-4" />
+                <Check className="h-4 w-4" />
                 <span>{bulkPartialUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </>
@@ -264,7 +257,7 @@ const HeadPermissionsPage = () => {
               onClick={handleStartEdit}
               className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              <PencilIcon className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
               <span>Edit Permissions</span>
             </button>
           )}
@@ -274,13 +267,13 @@ const HeadPermissionsPage = () => {
       {/* Error toast */}
       {errorMessage && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
-          <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+          <AlertTriangle className="h-5 w-5 text-red-500" />
           <p className="text-red-700 text-sm">{errorMessage}</p>
           <button
             onClick={() => setErrorMessage(null)}
             className="ml-auto text-red-500 hover:text-red-700"
           >
-            <XMarkIcon className="h-4 w-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -318,7 +311,7 @@ const HeadPermissionsPage = () => {
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <ShieldCheckIcon className="h-8 w-8 text-primary-700" />
+              <ShieldCheck className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Total Permissions</p>
@@ -330,7 +323,7 @@ const HeadPermissionsPage = () => {
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <ShieldCheckIcon className="h-8 w-8 text-emerald-700" />
+              <ShieldCheck className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Instructors</p>
@@ -344,7 +337,7 @@ const HeadPermissionsPage = () => {
         <Card variant="flat" className="bg-amber-50 border-amber-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-amber-100 rounded-xl">
-              <ShieldCheckIcon className="h-8 w-8 text-amber-700" />
+              <ShieldCheck className="h-8 w-8 text-amber-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Resource Areas</p>
@@ -356,7 +349,7 @@ const HeadPermissionsPage = () => {
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <ShieldCheckIcon className="h-8 w-8 text-cyan-700" />
+              <ShieldCheck className="h-8 w-8 text-cyan-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Full Access</p>
@@ -370,7 +363,7 @@ const HeadPermissionsPage = () => {
 
       {/* Search input */}
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
         <input
           type="text"
           placeholder="Search instructors..."
@@ -482,7 +475,7 @@ const HeadPermissionsPage = () => {
           </div>
         ) : (
           <div className="text-center py-16">
-            <ShieldCheckIcon className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
+            <ShieldCheck className="h-16 w-16 mx-auto mb-4 text-secondary-300" />
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">
               No permissions found
             </h3>

@@ -27,7 +27,7 @@ class TestCustomUser:
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             first_name="Test",
             last_name="User",
             university=university,
@@ -51,7 +51,7 @@ class TestCustomUser:
         student = User.objects.create_user(
             username="student1",
             email="student@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="student",
             university=university,
             department=department,
@@ -69,7 +69,7 @@ class TestCustomUser:
         student = User.objects.create_user(
             username="student1",
             email="student@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="student",
             university=university,
             department=department,
@@ -78,7 +78,7 @@ class TestCustomUser:
         instructor = User.objects.create_user(
             username="instructor1",
             email="instructor@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="instructor",
             university=university,
             department=department,
@@ -95,7 +95,7 @@ class TestCustomUser:
         instructor = User.objects.create_user(
             username="instructor1",
             email="instructor@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="instructor",
             university=university,
             department=department,
@@ -104,7 +104,7 @@ class TestCustomUser:
         student = User.objects.create_user(
             username="student1",
             email="student@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="student",
             university=university,
             department=department,
@@ -121,7 +121,7 @@ class TestCustomUser:
         admin = User.objects.create_user(
             username="admin1",
             email="admin@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="admin",
             university=university,
             department=department,
@@ -130,7 +130,7 @@ class TestCustomUser:
         student = User.objects.create_user(
             username="student1",
             email="student@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="student",
             university=university,
             department=department,
@@ -147,7 +147,7 @@ class TestCustomUser:
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             first_name="John",
             last_name="Doe",
             role="student",
@@ -167,7 +167,7 @@ class TestCustomUser:
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
-            password="testpass123",
+            password="testpass123",  # nosec
             role="student",
             university=university,
             department=department,
@@ -388,23 +388,23 @@ class TestProgramHeadRole:
     def test_program_head_is_valid_role(self, db):
         from users.models import CustomUser
 
-        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")  # nosec
         assert user.role == "program_head"
 
     def test_is_program_head_property_returns_true(self, db):
         from users.models import CustomUser
 
-        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")
+        user = CustomUser.objects.create_user(username="headtest", password="pass", role="program_head")  # nosec
         assert user.is_program_head is True
 
     def test_is_program_head_property_returns_false_for_other_roles(self, db):
         from users.models import CustomUser
 
-        student = CustomUser.objects.create_user(username="studenttest", password="pass", role="student")
+        student = CustomUser.objects.create_user(username="studenttest", password="pass", role="student")  # nosec
         assert student.is_program_head is False
-        instructor = CustomUser.objects.create_user(username="instrtest", password="pass", role="instructor")
+        instructor = CustomUser.objects.create_user(username="instrtest", password="pass", role="instructor")  # nosec
         assert instructor.is_program_head is False
-        admin = CustomUser.objects.create_user(username="admintest", password="pass", role="admin")
+        admin = CustomUser.objects.create_user(username="admintest", password="pass", role="admin")  # nosec
         assert admin.is_program_head is False
 
 
@@ -426,7 +426,7 @@ class TestProgramHeadProfile:
         program = setup_data["program"]
         user = CustomUser.objects.create_user(
             username="head1", password="pass", role="program_head", department=program.department
-        )
+        )  # nosec
         profile = ProgramHeadProfile.objects.create(user=user, program=program)
         assert profile.user == user
         assert profile.program == program
@@ -438,7 +438,7 @@ class TestProgramHeadProfile:
         program = setup_data["program"]
         user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             first_name="Jane",
             last_name="Doe",
@@ -453,7 +453,7 @@ class TestProgramHeadProfile:
         from django.core.exceptions import ValidationError
 
         program = setup_data["program"]
-        user = CustomUser.objects.create_user(username="not_head", password="pass", role="instructor")
+        user = CustomUser.objects.create_user(username="not_head", password="pass", role="instructor")  # nosec
         profile = ProgramHeadProfile(user=user, program=program)
         with pytest.raises(ValidationError):
             profile.clean()
@@ -465,11 +465,11 @@ class TestProgramHeadProfile:
         program = setup_data["program"]
         user1 = CustomUser.objects.create_user(
             username="head1", password="pass", role="program_head", department=program.department
-        )
+        )  # nosec
         ProgramHeadProfile.objects.create(user=user1, program=program)
         user2 = CustomUser.objects.create_user(
             username="head2", password="pass", role="program_head", department=program.department
-        )
+        )  # nosec
         with pytest.raises(IntegrityError):
             ProgramHeadProfile.objects.create(user=user2, program=program)
 
@@ -479,7 +479,7 @@ class TestProgramHeadProfile:
         program = setup_data["program"]
         user = CustomUser.objects.create_user(
             username="head1", password="pass", role="program_head", department=program.department
-        )
+        )  # nosec
         profile = ProgramHeadProfile.objects.create(user=user, program=program)
         assert profile.created_at is not None
 
@@ -495,11 +495,11 @@ class TestInstructorPermission:
         dept = Department.objects.create(name="Test Dept", code="TD", university=university)
         degree = DegreeLevel.objects.create(name="Bachelor")
         program = Program.objects.create(name="Test Program", code="TP", department=dept, degree_level=degree)
-        instr_user = CustomUser.objects.create_user(username="instr1", password="pass", role="instructor")
+        instr_user = CustomUser.objects.create_user(username="instr1", password="pass", role="instructor")  # nosec
         instr_profile = InstructorProfile.objects.create(user=instr_user, title="Prof")
         head_user = CustomUser.objects.create_user(
             username="head1",
-            password="pass",
+            password="pass",  # nosec
             role="program_head",
             department=dept,
         )

@@ -35,10 +35,4 @@ describe('Dashboard widgets and analytics', () => {
     // It will verify the widget handles empty series without crashing.
   });
 
-  it.skip('LazyChartWidget should show fallback first and chart after load', () => {
-    // TODO(TEST): Implement scenario - widgets/lazy-chart/fallback-then-resolved-chart
-    // This test will render lazy chart widget.
-    // It will verify fallback loading UI is shown before the chart module resolves.
-    // It will verify actual chart appears after lazy import completes.
-  });
 });

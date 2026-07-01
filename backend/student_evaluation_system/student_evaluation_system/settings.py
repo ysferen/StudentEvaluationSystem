@@ -10,22 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
-from environs import Env
-
-# Initialize environs
-env = Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Read .env file if it exists (for local development)
-# In production, environment variables should be set directly
-env_path = BASE_DIR.parent / ".env"
-if env_path.exists():
-    env.read_env(str(env_path))
 
 
 # =============================================================================
@@ -34,16 +26,16 @@ if env_path.exists():
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(50))"
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key-change-in-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=False)
+DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes")
 
-if not DEBUG and SECRET_KEY == "django-insecure-dev-key-only-for-local-development-change-in-production":
+if not DEBUG and SECRET_KEY == "django-insecure-dev-key-only-for-local-development-change-in-production":  # nosec
     raise ImproperlyConfigured("SECRET_KEY must be set to a secure value in production")
 
 # SECURITY WARNING: don't allow all hosts in production!
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # =============================================================================
@@ -106,7 +98,7 @@ WSGI_APPLICATION = "student_evaluation_system.wsgi.application"
 # =============================================================================
 
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-DATABASES = {"default": env.dj_db_url("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
+DATABASES = {"default": dj_database_url.config(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
 
 
 # =============================================================================
@@ -178,10 +170,10 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": env("ANON_THROTTLE_RATE", default="100/day"),
-        "user": env("USER_THROTTLE_RATE", default="1000/day"),
-        "login": env("LOGIN_THROTTLE_RATE", default="5/minute"),
-        "file_upload": env("FILE_UPLOAD_THROTTLE_RATE", default="10/minute"),
+        "anon": os.getenv("ANON_THROTTLE_RATE", "100/day"),
+        "user": os.getenv("USER_THROTTLE_RATE", "1000/day"),
+        "login": os.getenv("LOGIN_THROTTLE_RATE", "5/minute"),
+        "file_upload": os.getenv("FILE_UPLOAD_THROTTLE_RATE", "10/minute"),
     },
     # API Versioning (currently using URL path versioning via explicit routes)
     # When adding v2, uncomment below and implement version switching logic
@@ -196,8 +188,8 @@ REST_FRAMEWORK = {
 # JWT SETTINGS
 # =============================================================================
 
-ACCESS_TOKEN_LIFETIME_MINUTES = env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=60)
-REFRESH_TOKEN_LIFETIME_DAYS = env.int("REFRESH_TOKEN_LIFETIME_DAYS", default=7)
+ACCESS_TOKEN_LIFETIME_MINUTES = int(os.getenv("ACCESS_TOKEN_LIFETIME_MINUTES", "60"))
+REFRESH_TOKEN_LIFETIME_DAYS = int(os.getenv("REFRESH_TOKEN_LIFETIME_DAYS", "7"))
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
@@ -245,27 +237,15 @@ SPECTACULAR_SETTINGS = {
 # CORS SETTINGS
 # =============================================================================
 
-CORS_ALLOWED_ORIGINS = env.list(
-    "CORS_ALLOWED_ORIGINS",
-    default=[
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:3000",  # Alternative React port
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
-)
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
+).split(",")
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = env.list(
-    "CSRF_TRUSTED_ORIGINS",
-    default=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-)
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
 
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -284,7 +264,7 @@ CORS_ALLOW_HEADERS = [
 # FILE UPLOAD SETTINGS
 # =============================================================================
 
-MAX_UPLOAD_SIZE_MB = env.int("MAX_UPLOAD_SIZE_MB", default=10)
+MAX_UPLOAD_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
@@ -293,7 +273,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 # LOGGING
 # =============================================================================
 
-LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 LOGGING = {
     "version": 1,
@@ -338,17 +318,17 @@ LOGGING = {
 # CELERY SETTINGS
 # =============================================================================
 
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=CELERY_BROKER_URL)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = env.int("CELERY_TASK_TIME_LIMIT", default=900)
-CELERY_TASK_SOFT_TIME_LIMIT = env.int("CELERY_TASK_SOFT_TIME_LIMIT", default=840)
-CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
-CELERY_TASK_EAGER_PROPAGATES = env.bool("CELERY_TASK_EAGER_PROPAGATES", default=True)
+CELERY_TASK_TIME_LIMIT = int(os.getenv("CELERY_TASK_TIME_LIMIT", "900"))
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv("CELERY_TASK_SOFT_TIME_LIMIT", "840"))
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "false").lower() in ("1", "true", "yes")
+CELERY_TASK_EAGER_PROPAGATES = os.getenv("CELERY_TASK_EAGER_PROPAGATES", "true").lower() in ("1", "true", "yes")
 
 
 # =============================================================================
@@ -358,7 +338,7 @@ CELERY_TASK_EAGER_PROPAGATES = env.bool("CELERY_TASK_EAGER_PROPAGATES", default=
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": env("REDIS_CACHE_URL", default="redis://redis:6379/1"),
+        "LOCATION": os.getenv("REDIS_CACHE_URL", "redis://redis:6379/1"),
         "TIMEOUT": 300,  # 5 minute default TTL
     }
 }
@@ -370,11 +350,11 @@ CACHES = {
 
 if not DEBUG:
     # HTTPS settings
-    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "true").lower() in ("1", "true", "yes")
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # HSTS
-    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000)  # 1 year
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 

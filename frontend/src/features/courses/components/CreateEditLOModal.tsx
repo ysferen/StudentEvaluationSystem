@@ -7,6 +7,7 @@ import {
 } from '../../../shared/api/generated/outcomes/outcomes'
 import { coreCourseTemplatesLearningOutcomesRetrieve } from '../../../shared/api/generated/core/core'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { isRecord } from '@/shared/utils/guards'
 
 interface CreateEditLOModalProps {
   isOpen: boolean
@@ -28,9 +29,6 @@ type TemplateLearningOutcome = {
   code?: string
   description?: string
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isTemplateLearningOutcome = (value: unknown): value is TemplateLearningOutcome =>
   isRecord(value) && typeof value.id === 'number'

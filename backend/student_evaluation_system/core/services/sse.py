@@ -40,4 +40,4 @@ def publish_progress(channel: str, data: dict):
         try:
             client.close()
         except Exception:
-            pass
+            logger.exception("Failed to close SSE client")

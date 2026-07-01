@@ -1,5 +1,5 @@
 import React from 'react'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 
 interface AtRiskPanelProps {
@@ -43,7 +43,7 @@ export const AtRiskPanel: React.FC<AtRiskPanelProps> = ({ riskCount, riskRatio, 
     <Card variant="flat" className="bg-white border-secondary-200">
       <div className="flex items-center space-x-4">
         <div className="p-3 bg-danger-100 rounded-xl">
-          <ExclamationTriangleIcon className="h-8 w-8 text-danger-600" />
+          <AlertTriangle className="h-8 w-8 text-danger-600" />
         </div>
         <div>
           <p className="text-sm text-secondary-600 font-medium">Students at Risk</p>

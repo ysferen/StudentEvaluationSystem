@@ -11,8 +11,4 @@ router.register(r"score-recompute-jobs", views.ScoreRecomputeJobViewSet, basenam
 
 urlpatterns = [
     path("", include(router.urls)),
-    # Legacy endpoints for backward compatibility
-    path("evaluation/", views.EvaluationListView.as_view(), name="evaluation-list-legacy"),
-    path("evaluation/<int:pk>/", views.EvaluationDetailView.as_view(), name="evaluation-detail-legacy"),
-    path("evaluation/create/", views.EvaluationCreateView.as_view(), name="evaluation-create-legacy"),
 ]

@@ -289,6 +289,21 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
 
     story.extend(_build_page_two_header(data, styles))
     story.append(Spacer(1, THEME["spacing"]["sm"] * mm))
+    _weakest_lo = min(data.learning_outcomes, key=lambda item: _avg(item.scores))
+    _difficult_assessment = min(data.assessments, key=lambda item: _avg(item.scores))
+    _at_risk = sorted(
+        [student for student in data.students if student.course_grade < THEME["thresholds"]["danger"]],
+        key=lambda item: item.course_grade,
+    )
+    _support_names = ", ".join(escape(student.name) for student in _at_risk[:5]) or "No students currently below threshold"
+    _rec1 = (
+        f"1. Reinforce <b>{escape(_weakest_lo.code)}</b> ({escape(_weakest_lo.title)}) "
+        "with targeted practice and a short reassessment."
+    )
+    _rec2 = (
+        f"2. Review <b>{escape(_difficult_assessment.name)}</b> evidence and rubric alignment before closing the course file."
+    )
+    _rec3 = f"3. Prioritize support meetings for: <b>{_support_names}</b>."
     diagnostic_rows = [
         [
             _chart_panel(
@@ -320,7 +335,7 @@ def generate_course_report_pdf(data: CourseReportData) -> bytes:
             ),
             "",
         ],
-        [_build_recommendations_panel(data, styles), ""],
+        [_build_recommendations_panel(styles, _rec1, _rec2, _rec3), ""],
     ]
     story.append(
         Table(
@@ -574,7 +589,7 @@ def _build_interpretation_panel(data, styles):
     return table
 
 
-def _build_threshold_legend(styles):
+def _build_threshold_legend(styles, prefix=""):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER
     from reportlab.lib.styles import ParagraphStyle
@@ -582,7 +597,7 @@ def _build_threshold_legend(styles):
     from reportlab.platypus import Paragraph, Table, TableStyle
 
     title_style = ParagraphStyle(
-        "ThresholdLegendTitle",
+        f"{prefix}ThresholdLegendTitle",
         parent=styles["KpiLabel"],
         alignment=TA_CENTER,
         fontSize=7.4,
@@ -590,7 +605,7 @@ def _build_threshold_legend(styles):
         textColor=colors.HexColor(BRAND["teal"]),
     )
     label_style = ParagraphStyle(
-        "ThresholdLegendLabel",
+        f"{prefix}ThresholdLegendLabel",
         parent=styles["BodyTextSmall"],
         fontSize=7.0,
         leading=8.2,
@@ -666,35 +681,16 @@ def _build_threshold_legend(styles):
     return legend
 
 
-def _build_recommendations_panel(data, styles):
+def _build_recommendations_panel(styles, rec1, rec2, rec3):
     from reportlab.lib import colors
     from reportlab.lib.units import mm
     from reportlab.platypus import Paragraph, Table
 
-    weakest_lo = min(data.learning_outcomes, key=lambda item: _avg(item.scores))
-    difficult_assessment = min(data.assessments, key=lambda item: _avg(item.scores))
-    at_risk = sorted(
-        [student for student in data.students if student.course_grade < THEME["thresholds"]["danger"]],
-        key=lambda item: item.course_grade,
-    )
-    support_names = ", ".join(escape(student.name) for student in at_risk[:5]) or "No students currently below threshold"
     rows = [
         [Paragraph("Recommended Actions", styles["SectionTitle"])],
-        [
-            Paragraph(
-                f"1. Reinforce <b>{escape(weakest_lo.code)}</b> ({escape(weakest_lo.title)}) "
-                "with targeted practice and a short reassessment.",
-                styles["BodyTextSmall"],
-            )
-        ],
-        [
-            Paragraph(
-                f"2. Review <b>{escape(difficult_assessment.name)}</b> evidence and rubric alignment "
-                "before closing the course file.",
-                styles["BodyTextSmall"],
-            )
-        ],
-        [Paragraph(f"3. Prioritize support meetings for: <b>{support_names}</b>.", styles["BodyTextSmall"])],
+        [Paragraph(rec1, styles["BodyTextSmall"])],
+        [Paragraph(rec2, styles["BodyTextSmall"])],
+        [Paragraph(rec3, styles["BodyTextSmall"])],
     ]
     table = Table(rows, colWidths=[180 * mm])
     table.setStyle(_panel_style(colors))

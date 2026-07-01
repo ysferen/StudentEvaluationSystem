@@ -1,7 +1,7 @@
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from rest_framework import generics, viewsets, status, serializers
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -194,7 +194,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     )
                     ProgramHeadProfile.objects.create(user=user, program=program)
                     InstructorProfile.objects.create(user=user, title=str(request.data.get("title", "")).strip())
-                log_audit(actor, "CREATE", "CustomUser", user.id, metadata={"role": role, "temporary_password": True})
+                log_audit(actor, "CREATE", "CustomUser", user.id, metadata={"role": role, "temporary_password": True})  # nosec
         except Exception as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
@@ -309,11 +309,26 @@ class UserViewSet(viewsets.ModelViewSet):
         log_audit(actor, "UPDATE", "CustomUser", actor.id, metadata={"event": "impersonation_ended"})
         return response
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get", "patch"])
     def me(self, request):
-        """Get current user info."""
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+        """Get or update the current user's non-privileged profile fields."""
+        user = request.user
+        if request.method == "PATCH":
+            for field in ("username", "email", "first_name", "last_name"):
+                if field in request.data:
+                    setattr(user, field, str(request.data[field]).strip())
+            try:
+                with transaction.atomic():
+                    user.full_clean(exclude=["password"])
+                    user.save()
+                    if user.role in {"instructor", "program_head"}:
+                        profile, _ = InstructorProfile.objects.get_or_create(user=user)
+                        profile.title = str(request.data.get("title", profile.title)).strip()
+                        profile.save(update_fields=["title"])
+                    log_audit(user, "UPDATE", "CustomUser", user.id, metadata={"event": "self_profile_updated"})
+            except ValidationError as exc:
+                return Response(exc.message_dict, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.get_serializer(user).data)
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
@@ -432,31 +447,13 @@ class CookieTokenRefreshView(APIView):
         access_token = access_token_raw
         refresh_token_value = refresh_token_raw if isinstance(refresh_token_raw, str) and refresh_token_raw else None
 
-        secure = not settings.DEBUG
-        same_site = "Strict" if not settings.DEBUG else "Lax"
         access_max_age = int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds())
         refresh_max_age = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
 
         response = Response({"detail": "Token refreshed"}, status=status.HTTP_200_OK)
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=secure,
-            samesite=same_site,
-            max_age=access_max_age,
-            path="/",
-        )
+        _set_auth_cookie(response, "access_token", access_token, access_max_age)
         if refresh_token_value is not None:
-            response.set_cookie(
-                key="refresh_token",
-                value=refresh_token_value,
-                httponly=True,
-                secure=secure,
-                samesite=same_site,
-                max_age=refresh_max_age,
-                path="/",
-            )
+            _set_auth_cookie(response, "refresh_token", refresh_token_value, refresh_max_age)
         return response
 
 
@@ -593,35 +590,12 @@ class LoginView(APIView):
         # Build response with user data
         response = Response({"user": user_serializer.data})
 
-        # Configure cookie security based on DEBUG mode
-        # production: Secure=True, SameSite=Strict (prevents CSRF)
-        # development: Secure=False, SameSite=Lax (allows localhost)
-        secure = not settings.DEBUG
-        same_site = "Strict" if not settings.DEBUG else "Lax"
-
         # Set access token cookie (1 hour = 3600 seconds)
         # HttpOnly=True prevents JavaScript access (XSS protection)
-        response.set_cookie(
-            key="access_token",
-            value=str(refresh.access_token),
-            httponly=True,
-            secure=secure,
-            samesite=same_site,
-            max_age=60 * 60,
-            path="/",
-        )
+        _set_auth_cookie(response, "access_token", str(refresh.access_token), 60 * 60)
 
         # Set refresh token cookie (7 days = 604800 seconds)
-        # Used to obtain new access tokens without re-login
-        response.set_cookie(
-            key="refresh_token",
-            value=str(refresh),
-            httponly=True,
-            secure=secure,
-            samesite=same_site,
-            max_age=60 * 60 * 24 * 7,
-            path="/",
-        )
+        _set_auth_cookie(response, "refresh_token", str(refresh), 60 * 60 * 24 * 7)
 
         return response
 
@@ -633,7 +607,7 @@ class LoginView(APIView):
     tags=["Authentication"],
 )
 class CurrentUserView(APIView):
-    """Get current authenticated user."""
+    """Get and update current authenticated user."""
 
     permission_classes = [IsAuthenticated]
 
@@ -642,17 +616,16 @@ class CurrentUserView(APIView):
         data["impersonated_by"] = request.auth.get("impersonated_by") if request.auth else None
         return Response(data)
 
-
-# Legacy views for backward compatibility
-class UserListView(generics.ListAPIView):
-    """List all users."""
-
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-
-
-class UserDetailView(generics.RetrieveAPIView):
-    """Retrieve a single user by PK."""
-
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+    def patch(self, request):
+        user = request.user
+        for field in ("first_name", "last_name", "username", "email"):
+            if field in request.data:
+                setattr(user, field, str(request.data[field]).strip())
+        user.save(update_fields=[f for f in ("first_name", "last_name", "username", "email") if f in request.data])
+        title = request.data.get("title")
+        if title is not None and user.role in ("instructor", "program_head"):
+            profile, _ = InstructorProfile.objects.get_or_create(user=user)
+            profile.title = str(title).strip()
+            profile.save(update_fields=["title"])
+        log_audit(user, "UPDATE", "CustomUser", user.id, metadata={"event": "self_updated"})
+        return Response(CustomUserSerializer(user).data)

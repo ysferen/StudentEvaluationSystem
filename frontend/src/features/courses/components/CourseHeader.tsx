@@ -1,10 +1,5 @@
 import React from 'react'
-import {
-  BookOpenIcon,
-  UsersIcon,
-  AcademicCapIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline'
+import { BookOpen, Users, GraduationCap, BarChart3 } from 'lucide-react'
 import { Card } from '@/components/ui/custom/Card'
 import type { Course } from '../../../shared/api/model'
 
@@ -104,7 +99,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
         <Card variant="flat" className="bg-primary-50 border-primary-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-100 rounded-xl">
-              <BookOpenIcon className="h-8 w-8 text-primary-700" />
+              <BookOpen className="h-8 w-8 text-primary-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Credits</p>
@@ -116,7 +111,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
         <Card variant="flat" className="bg-cyan-50 border-cyan-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-cyan-100 rounded-xl">
-              <UsersIcon className="h-8 w-8 text-cyan-700" />
+              <Users className="h-8 w-8 text-cyan-700" />
             </div>
             <div className="min-w-0">
               <p className="text-sm text-secondary-600 font-medium">Instructors</p>
@@ -128,7 +123,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
         <Card variant="flat" className="bg-emerald-50 border-emerald-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-emerald-100 rounded-xl">
-              <AcademicCapIcon className="h-8 w-8 text-emerald-700" />
+              <GraduationCap className="h-8 w-8 text-emerald-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Average course grade</p>
@@ -140,7 +135,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
         <Card variant="flat" className="bg-violet-50 border-violet-200">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-violet-100 rounded-xl">
-              <ChartBarIcon className="h-8 w-8 text-violet-700" />
+              <BarChart3 className="h-8 w-8 text-violet-700" />
             </div>
             <div>
               <p className="text-sm text-secondary-600 font-medium">Learning Outcomes</p>
